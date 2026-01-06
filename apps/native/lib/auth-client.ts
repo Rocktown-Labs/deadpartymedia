@@ -1,18 +1,22 @@
-import { expoClient } from "@better-auth/expo/client";
-import { convexClient } from "@convex-dev/better-auth/client/plugins";
 import { env } from "@dpmedia/env/native";
-import { createAuthClient } from "better-auth/react";
-import Constants from "expo-constants";
-import * as SecureStore from "expo-secure-store";
 
-export const authClient = createAuthClient({
-  baseURL: env.EXPO_PUBLIC_CONVEX_SITE_URL,
-  plugins: [
-    expoClient({
-      scheme: Constants.expoConfig?.scheme as string,
-      storagePrefix: Constants.expoConfig?.scheme as string,
-      storage: SecureStore,
-    }),
-    convexClient(),
-  ],
-});
+// TODO: Implement Django auth client for native app
+// This is a placeholder that will be replaced when native app auth is implemented
+export const authClient = {
+  signIn: {
+    email: async (_params: { email: string; password: string }, _callbacks?: any) => {
+      // TODO: Implement Django auth sign in
+      console.warn("Native auth not yet implemented - using Django REST API");
+    },
+  },
+  signUp: {
+    email: async (_params: { name: string; email: string; password: string }, _callbacks?: any) => {
+      // TODO: Implement Django auth sign up
+      console.warn("Native auth not yet implemented - using Django REST API");
+    },
+  },
+  signOut: async () => {
+    // TODO: Implement Django auth sign out
+    console.warn("Native auth not yet implemented - using Django REST API");
+  },
+};

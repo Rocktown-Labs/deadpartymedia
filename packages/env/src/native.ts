@@ -4,8 +4,7 @@ import { z } from "zod";
 export const env = createEnv({
   clientPrefix: "EXPO_PUBLIC_",
   client: {
-    EXPO_PUBLIC_CONVEX_URL: z.url(),
-    EXPO_PUBLIC_CONVEX_SITE_URL: z.url(),
+    EXPO_PUBLIC_API_URL: z.string().url().optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
