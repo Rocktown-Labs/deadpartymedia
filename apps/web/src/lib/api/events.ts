@@ -55,7 +55,13 @@ export function useEvents(genre?: string) {
       const response = await apiClient.get<any>(`/events/${params}`)
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
-      return Array.isArray(response) ? response : (response.results || [])
+      if (Array.isArray(response)) {
+        return response
+      }
+      if (response && typeof response === 'object' && 'results' in response && Array.isArray(response.results)) {
+        return response.results
+      }
+      return []
     },
   })
 }
