@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ArrowRight, Music, MapPin, Instagram, Youtube, Twitter } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useOnboardArtist } from "@/lib/api/artists"
+import { toast } from "sonner"
 
 type OnboardingStep = 1 | 2 | 3 | 4
 
@@ -40,8 +42,6 @@ export default function OnboardingPage() {
       setCurrentStep((currentStep - 1) as OnboardingStep)
     }
   }
-
-  const onboardArtist = useOnboardArtist()
 
   const handleSubmit = async () => {
     try {
@@ -316,10 +316,10 @@ export default function OnboardingPage() {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading}
+                disabled={onboardArtist.isPending}
                 className="ml-auto bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase px-8"
               >
-                {isLoading ? "Creating Profile..." : "Complete Setup"}
+                {onboardArtist.isPending ? "Creating Profile..." : "Complete Setup"}
               </Button>
             )}
           </div>
