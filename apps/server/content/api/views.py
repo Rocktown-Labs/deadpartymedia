@@ -59,8 +59,30 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """Override list to return all articles (not just published) for admin."""
-        # For now, return published only. Admin will use Django admin interface.
-        return super().list(request, *args, **kwargs)
+        try:
+            response = super().list(request, *args, **kwargs)
+            # Track article list views
+            category = request.query_params.get("category")
+            metrics.increment("api.articles.list", tags={"category": category or "all"})
+            return response
+        except Exception as e:
+            logger.error(f"Error listing articles: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
+
+    def retrieve(self, request, *args, **kwargs):
+        """Override retrieve to track article views."""
+        try:
+            instance = self.get_object()
+            instance.views += 1
+            instance.save(update_fields=["views"])
+            logger.info(f"Article viewed: {instance.slug} (views: {instance.views})")
+            metrics.increment("api.articles.viewed", tags={"article_slug": instance.slug, "category": instance.category})
+            return super().retrieve(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error retrieving article: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
 
     @action(detail=True, methods=["get", "post"])
     def comments(self, request, slug=None):
@@ -153,18 +175,30 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get"])
     def articles(self, request, slug=None):
         """Get articles for an artist."""
-        artist = self.get_object()
-        articles = artist.get_articles().filter(status="published").select_related("author")
-        serializer = ArticleListSerializer(articles, many=True)
-        return Response(serializer.data)
+        try:
+            artist = self.get_object()
+            articles = artist.get_articles().filter(status="published").select_related("author")
+            serializer = ArticleListSerializer(articles, many=True)
+            metrics.increment("api.artist.articles.viewed", tags={"artist_slug": slug})
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error getting articles for artist {slug}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
 
     @action(detail=True, methods=["get"])
     def events(self, request, slug=None):
         """Get events for an artist."""
-        artist = self.get_object()
-        events = artist.get_events().filter(status="published")
-        serializer = EventListSerializer(events, many=True)
-        return Response(serializer.data)
+        try:
+            artist = self.get_object()
+            events = artist.get_events().filter(status="published")
+            serializer = EventListSerializer(events, many=True)
+            metrics.increment("api.artist.events.viewed", tags={"artist_slug": slug})
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error getting events for artist {slug}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def onboard(self, request):
@@ -205,11 +239,17 @@ class CategoryViewSet(viewsets.ViewSet):
 
     def list(self, request):
         """List all categories with article counts."""
-        categories = (
-            Article.objects.filter(status="published")
-            .values("category")
-            .annotate(count=Count("id"))
-            .order_by("category")
-        )
-        return Response(categories)
+        try:
+            categories = (
+                Article.objects.filter(status="published")
+                .values("category")
+                .annotate(count=Count("id"))
+                .order_by("category")
+            )
+            metrics.increment("api.categories.list")
+            return Response(categories)
+        except Exception as e:
+            logger.error(f"Error listing categories: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
 

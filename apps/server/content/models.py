@@ -156,15 +156,21 @@ class Article(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-generate slug from title if not provided."""
-        if not self.slug:
-            self.slug = slugify(self.title)
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while Article.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-        super().save(*args, **kwargs)
+        try:
+            if not self.slug:
+                self.slug = slugify(self.title)
+                # Ensure uniqueness
+                original_slug = self.slug
+                counter = 1
+                while Article.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                    self.slug = f"{original_slug}-{counter}"
+                    counter += 1
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error saving article {self.title}: {e}", exc_info=True)
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)
+            raise
 
 
 class ArticleArtist(models.Model):
