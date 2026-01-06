@@ -2,7 +2,7 @@
 
 import { TAGS } from "@/lib/constants"
 import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/lib/fourthwall"
-import { revalidateTag } from "next/cache"
+import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
@@ -34,7 +34,7 @@ export async function addItem(prevState: any, selectedVariantId: string | undefi
     }
 
     await addToCart(cartId, [{ merchandiseId: selectedVariantId, quantity: 1 }])
-    revalidateTag(TAGS.cart)
+    revalidatePath("/")
   } catch (e) {
     return "Error adding item to cart"
   }
@@ -53,7 +53,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
 
     if (lineItem && lineItem.id) {
       await removeFromCart(cartId, [lineItem.id])
-      revalidateTag(TAGS.cart)
+      revalidatePath("/")
     } else {
       return "Item not found in cart"
     }
@@ -97,7 +97,7 @@ export async function updateItemQuantity(
       await addToCart(cartId, [{ merchandiseId, quantity }])
     }
 
-    revalidateTag(TAGS.cart)
+    revalidatePath("/")
   } catch (e) {
     console.error(e)
     return "Error updating item quantity"
