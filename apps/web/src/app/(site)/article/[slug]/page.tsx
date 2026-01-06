@@ -167,7 +167,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
             {/* Comments List */}
             <div className="space-y-6">
-              {comments && comments.length > 0 ? (
+              {comments && Array.isArray(comments) && comments.length > 0 ? (
                 comments.map((comment: any) => (
                   <div key={comment.id} className="border-b border-gray-800 pb-6">
                     <div className="flex items-start gap-4">

@@ -85,11 +85,35 @@ export function useArticle(slug: string) {
   });
 }
 
+export interface Comment {
+  id: number;
+  content: string;
+  user_name?: string;
+  user_email?: string;
+  created_at: string;
+  updated_at: string;
+  replies?: Comment[];
+}
+
 export function useArticleComments(slug: string) {
-  return useQuery({
+  return useQuery<Comment[]>({
     queryKey: ["article-comments", slug],
     queryFn: async () => {
-      return apiClient.get(`/articles/${slug}/comments/`);
+      const response = await apiClient.get<any>(`/articles/${slug}/comments/`);
+      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
+      // Or direct array if pagination is disabled
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (
+        response &&
+        typeof response === "object" &&
+        "results" in response &&
+        Array.isArray(response.results)
+      ) {
+        return response.results;
+      }
+      return [];
     },
     enabled: !!slug,
   });
