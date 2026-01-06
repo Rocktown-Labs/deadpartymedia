@@ -145,51 +145,6 @@ export default function MerchPage() {
           )}
         </div>
       </main>
-
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slideInFromLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes expandWidth {
-          from {
-            width: 0;
-          }
-          to {
-            width: 8rem;
-          }
-        }
-
-        .animate-fadeInUp {
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .animate-slideInFromLeft {
-          animation: slideInFromLeft 0.8s ease-out forwards;
-        }
-
-        .animate-expandWidth {
-          animation: expandWidth 1s ease-out forwards;
-        }
-      `}</style>
     </div>
   )
 }
