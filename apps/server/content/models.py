@@ -2,8 +2,10 @@ from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from ckeditor.fields import RichTextField
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class Writer(models.Model):

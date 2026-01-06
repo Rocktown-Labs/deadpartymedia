@@ -1,8 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+import logging
+import sentry_sdk
 from content.models import Article, Event, Artist, Writer, Comment
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class WriterSerializer(serializers.ModelSerializer):
@@ -199,28 +202,40 @@ class ArtistOnboardSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Create artist profile from onboarding data."""
-        user = self.context["request"].user
-        socials = validated_data.get("socials", {})
+        try:
+            user = self.context["request"].user
+            socials = validated_data.get("socials", {})
 
-        artist = Artist.objects.create(
-            name=validated_data["artistName"],
-            location=validated_data["location"],
-            genre=validated_data["genre"],
-            bio=validated_data["bio"],
-            spotify_artist_id=validated_data.get("spotifyId", ""),
-            spotify_url=f"https://open.spotify.com/artist/{validated_data.get('spotifyId', '')}" if validated_data.get("spotifyId") else None,
-            instagram=socials.get("instagram", ""),
-            twitter=socials.get("twitter", ""),
-            website=socials.get("website", ""),
-            image=validated_data.get("profileImage"),
-            claimed=True,
-            claimed_by=user,
-        )
+            artist = Artist.objects.create(
+                name=validated_data["artistName"],
+                location=validated_data["location"],
+                genre=validated_data["genre"],
+                bio=validated_data["bio"],
+                spotify_artist_id=validated_data.get("spotifyId", ""),
+                spotify_url=f"https://open.spotify.com/artist/{validated_data.get('spotifyId', '')}" if validated_data.get("spotifyId") else None,
+                instagram=socials.get("instagram", ""),
+                twitter=socials.get("twitter", ""),
+                website=socials.get("website", ""),
+                image=validated_data.get("profileImage"),
+                claimed=True,
+                claimed_by=user,
+            )
 
-        # Update user role if needed
-        if user.role != "artist":
-            user.role = "artist"
-            user.save()
+            # Update user role if needed
+            if user.role != "artist":
+                user.role = "artist"
+                user.save()
+                logger.info(f"User {user.id} role updated to artist")
 
-        return artist
+            logger.info(f"Artist profile created: {artist.slug} by user {user.id}")
+            return artist
+        except Exception as e:
+            logger.error(f"Error creating artist profile for user {user.id}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            sentry_sdk.set_context("artist_onboard_create", {
+                "user_id": user.id,
+                "artist_name": validated_data.get("artistName"),
+                "genre": validated_data.get("genre"),
+            })
+            raise
 

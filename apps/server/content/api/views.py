@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Count
+import logging
+import sentry_sdk
+from sentry_sdk import metrics
 from content.models import Article, Event, Artist, Writer, Comment
 from .serializers import (
     ArticleSerializer,
@@ -15,6 +18,8 @@ from .serializers import (
     CommentSerializer,
     ArtistOnboardSerializer,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
@@ -60,22 +65,40 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get", "post"])
     def comments(self, request, slug=None):
         """Get or create comments for an article."""
-        article = self.get_object()
+        try:
+            article = self.get_object()
 
-        if request.method == "GET":
-            comments = article.comments.filter(parent=None).select_related("user").prefetch_related("replies")
-            serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data)
+            if request.method == "GET":
+                comments = article.comments.filter(parent=None).select_related("user").prefetch_related("replies")
+                serializer = CommentSerializer(comments, many=True)
+                metrics.increment("api.article.comments.viewed", tags={"article_slug": slug})
+                return Response(serializer.data)
 
-        elif request.method == "POST":
-            if not request.user.is_authenticated:
-                return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+            elif request.method == "POST":
+                if not request.user.is_authenticated:
+                    logger.warning(f"Unauthenticated comment attempt on article {slug}")
+                    metrics.increment("api.article.comments.unauthorized")
+                    return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            serializer = CommentSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(article=article, user=request.user)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                serializer = CommentSerializer(data=request.data)
+                if serializer.is_valid():
+                    comment = serializer.save(article=article, user=request.user)
+                    logger.info(f"Comment created by user {request.user.id} on article {slug}")
+                    metrics.increment("api.article.comments.created", tags={"article_slug": slug, "user_id": request.user.id})
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                
+                logger.warning(f"Invalid comment data from user {request.user.id} on article {slug}: {serializer.errors}")
+                metrics.increment("api.article.comments.validation_failed", tags={"article_slug": slug})
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in article comments endpoint for article {slug}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            sentry_sdk.set_context("article_comments", {
+                "article_slug": slug,
+                "method": request.method,
+                "user_id": request.user.id if request.user.is_authenticated else None,
+            })
+            raise
 
 
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
@@ -146,13 +169,28 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def onboard(self, request):
         """Create artist profile from onboarding data."""
-        # Handle FormData for file uploads
-        data = request.data.dict() if hasattr(request.data, "dict") else request.data
-        serializer = ArtistOnboardSerializer(data=data, context={"request": request})
-        if serializer.is_valid():
-            artist = serializer.save()
-            return Response(ArtistSerializer(artist).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Handle FormData for file uploads
+            data = request.data.dict() if hasattr(request.data, "dict") else request.data
+            serializer = ArtistOnboardSerializer(data=data, context={"request": request})
+            if serializer.is_valid():
+                artist = serializer.save()
+                logger.info(f"Artist profile created via onboarding by user {request.user.id}: {artist.slug}")
+                metrics.increment("api.artist.onboarded", tags={"user_id": request.user.id, "genre": artist.genre})
+                sentry_sdk.set_user({"id": request.user.id, "email": request.user.email})
+                return Response(ArtistSerializer(artist).data, status=status.HTTP_201_CREATED)
+            
+            logger.warning(f"Invalid artist onboarding data from user {request.user.id}: {serializer.errors}")
+            metrics.increment("api.artist.onboard.validation_failed", tags={"user_id": request.user.id})
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in artist onboarding for user {request.user.id}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            sentry_sdk.set_context("artist_onboard", {
+                "user_id": request.user.id,
+                "user_email": request.user.email,
+            })
+            raise
 
 
 class WriterViewSet(viewsets.ReadOnlyModelViewSet):
