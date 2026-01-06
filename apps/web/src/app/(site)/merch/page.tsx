@@ -86,7 +86,9 @@ export default function MerchPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredItems.map((product) => (
+            {filteredItems
+              .filter((product) => product.handle) // Only show products with valid handles
+              .map((product) => (
               <Link key={product.id} href={`/merch/${product.handle}`}>
                 <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group cursor-pointer">
                   <div className="relative h-96 overflow-hidden bg-black">

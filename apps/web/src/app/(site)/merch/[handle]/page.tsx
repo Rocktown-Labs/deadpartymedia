@@ -6,8 +6,14 @@ import { ProductDescription } from "@/components/product/product-description"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-export default async function ProductPage({ params }: { params: { handle: string } }) {
-  const product = await getProduct(params.handle, "USD")
+export default async function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
+  const { handle } = await params
+  
+  if (!handle) {
+    return notFound()
+  }
+  
+  const product = await getProduct(handle, "USD")
 
   if (!product) return notFound()
 

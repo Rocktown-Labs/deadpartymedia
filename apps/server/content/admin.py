@@ -2,6 +2,11 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from .models import Article, Event, Artist, Writer, ArticleArtist, EventArtist, Comment
 
 
@@ -47,11 +52,11 @@ class ArticleAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """Writers and super_admins can add articles."""
-        return request.user.role in ["writer", "super_admin"]
+        return request.user.is_superuser or request.user.role in ["writer", "super_admin"]
 
     def has_change_permission(self, request, obj=None):
         """Writers can change their own articles, super_admins can change all."""
-        if request.user.role == "super_admin":
+        if request.user.is_superuser or request.user.role == "super_admin":
             return True
         if request.user.role == "writer":
             if obj:
@@ -65,7 +70,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete articles."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
 
 class EventArtistInline(admin.TabularInline):
@@ -105,11 +110,11 @@ class EventAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """Writers and super_admins can add events."""
-        return request.user.role in ["writer", "super_admin"]
+        return request.user.is_superuser or request.user.role in ["writer", "super_admin"]
 
     def has_change_permission(self, request, obj=None):
         """Writers can change their own events, super_admins can change all."""
-        if request.user.role == "super_admin":
+        if request.user.is_superuser or request.user.role == "super_admin":
             return True
         if request.user.role == "writer":
             if obj:
@@ -119,7 +124,7 @@ class EventAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete events."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def save_model(self, request, obj, form, change):
         """Set created_by to current user if not set."""
@@ -142,7 +147,7 @@ class ArtistAdmin(admin.ModelAdmin):
         ("Basic Information", {"fields": ("name", "slug", "bio", "image", "location", "genre")}),
         ("Spotify", {"fields": ("spotify_url", "spotify_artist_id")}),
         ("Social Media", {"fields": ("instagram", "twitter", "tiktok", "website")}),
-        ("Claiming", {"fields": ("claimed", "claimed_by")}),
+        ("Claiming", {"fields": ("email", "claimed", "claimed_by")}),
         ("Statistics", {"fields": ("article_count", "event_count", "profile_views")}),
         ("Related Content", {"fields": ("related_articles", "related_events")}),
         ("Timestamps", {"fields": ("created_at", "updated_at")}),
@@ -188,15 +193,57 @@ class ArtistAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """Writers and super_admins can add artists."""
-        return request.user.role in ["writer", "super_admin"]
+        return request.user.is_superuser or request.user.role in ["writer", "super_admin"]
 
     def has_change_permission(self, request, obj=None):
         """Only super_admins can change artists."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete artists."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
+
+    def save_model(self, request, obj, form, change):
+        """Send claim invitation email when email is provided."""
+        email_sent = False
+        if obj.email and not change:
+            # New artist with email, send claim invitation
+            email_sent = True
+        
+        super().save_model(request, obj, form, change)
+        
+        if email_sent and obj.email:
+            # Send claim invitation email
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            site_domain = current_site.domain
+            
+            subject = f"Claim Your Artist Profile on {site_name}"
+            html_message = render_to_string(
+                "admin/artist_claim_email.html",
+                {
+                    "artist": obj,
+                    "site_name": site_name,
+                    "site_domain": site_domain,
+                    "claim_url": f"http://{site_domain}/onboarding?artist={obj.slug}",
+                },
+            )
+            plain_message = strip_tags(html_message)
+            
+            try:
+                send_mail(
+                    subject,
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [obj.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Log error but don't fail the save
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send artist claim email: {e}")
 
 
 @admin.register(Writer)
@@ -210,7 +257,7 @@ class WriterAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic Information", {"fields": ("user", "name", "bio", "image", "role")}),
-        ("Social Media", {"fields": ("twitter", "instagram")}),
+        ("Social Media", {"fields": ("instagram", "cashtag")}),
         ("Statistics", {"fields": ("article_count",)}),
         ("Timestamps", {"fields": ("created_at", "updated_at")}),
     )
@@ -223,15 +270,52 @@ class WriterAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """Only super_admins can add writers."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_change_permission(self, request, obj=None):
         """Only super_admins can change writers."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete writers."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
+
+    def save_model(self, request, obj, form, change):
+        """Send email invitation when creating a new writer."""
+        super().save_model(request, obj, form, change)
+        
+        if not change and obj.user and obj.user.email:
+            # New writer created, send access email
+            current_site = get_current_site(request)
+            site_name = current_site.name
+            site_domain = current_site.domain
+            
+            subject = f"Welcome to {site_name} - Writer Access"
+            html_message = render_to_string(
+                "admin/writer_invitation_email.html",
+                {
+                    "writer": obj,
+                    "site_name": site_name,
+                    "site_domain": site_domain,
+                    "login_url": f"http://{site_domain}/accounts/login/",
+                },
+            )
+            plain_message = strip_tags(html_message)
+            
+            try:
+                send_mail(
+                    subject,
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [obj.user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Log error but don't fail the save
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send writer invitation email: {e}")
 
 
 @admin.register(Comment)
@@ -256,12 +340,12 @@ class CommentAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         """Only super_admins can add comments (users create via API)."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_change_permission(self, request, obj=None):
         """Only super_admins can change comments."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete comments."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"

@@ -42,7 +42,10 @@ export function useArtists(genre?: string) {
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      return apiClient.get<Artist[]>(`/artists/${params}`);
+      const response = await apiClient.get<any>(`/artists/${params}`);
+      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
+      // Or direct array if pagination is disabled
+      return Array.isArray(response) ? response : (response.results || []);
     },
   });
 }

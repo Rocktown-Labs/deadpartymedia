@@ -22,12 +22,12 @@ class UserAdmin(BaseUserAdmin):
 
     def has_add_permission(self, request):
         """Only super_admins can add users."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_change_permission(self, request, obj=None):
         """Only super_admins can change users."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"
 
     def has_delete_permission(self, request, obj=None):
         """Only super_admins can delete users."""
-        return request.user.role == "super_admin"
+        return request.user.is_superuser or request.user.role == "super_admin"

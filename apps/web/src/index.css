@@ -121,9 +121,11 @@
     outline-color: var(--color-ring) / 0.5;
   }
   body {
-    @apply font-sans bg-background text-foreground;
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
   }
 }

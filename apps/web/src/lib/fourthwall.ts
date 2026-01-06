@@ -282,6 +282,11 @@ export async function getProducts(currency = "USD"): Promise<Product[]> {
 }
 
 export async function getProduct(slug: string, currency = "USD"): Promise<Product | undefined> {
+  if (!slug || slug === "undefined") {
+    console.error("getProduct called with invalid slug:", slug)
+    return undefined
+  }
+  
   try {
     const data = await fourthwallFetch<FourthwallProduct>({
       path: `products/${slug}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
@@ -291,6 +296,7 @@ export async function getProduct(slug: string, currency = "USD"): Promise<Produc
 
     return transformProduct(data)
   } catch (e) {
+    console.error("Error fetching product:", e)
     return undefined
   }
 }

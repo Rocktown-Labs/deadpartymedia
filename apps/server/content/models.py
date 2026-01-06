@@ -14,8 +14,8 @@ class Writer(models.Model):
     bio = models.TextField()
     image = models.ImageField(upload_to="writers/", blank=True, null=True)
     role = models.CharField(max_length=255, blank=True)
-    twitter = models.URLField(blank=True, null=True)
     instagram = models.URLField(blank=True, null=True)
+    cashtag = models.CharField(max_length=50, blank=True, null=True, help_text="Cash App cashtag (e.g., $username)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -55,6 +55,7 @@ class Artist(models.Model):
     twitter = models.URLField(blank=True, null=True)
     tiktok = models.URLField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True, help_text="Email to send claim invitation")
     claimed = models.BooleanField(default=False)
     claimed_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="claimed_artists"

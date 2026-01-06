@@ -16,10 +16,10 @@ interface HomepageClientProps {
 }
 
 export default function HomepageClient({
-  featuredArticles,
-  articlesData,
-  upcomingEvents,
-  featuredProducts,
+  featuredArticles = [],
+  articlesData = [],
+  upcomingEvents = [],
+  featuredProducts = [],
 }: HomepageClientProps) {
   const [visibleArticles, setVisibleArticles] = useState(9)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -65,13 +65,14 @@ export default function HomepageClient({
         <div className="container mx-auto my-2.5">
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Main Cover Story */}
+            {featuredArticles.length > 0 && (
             <div className="lg:col-span-8">
               <Link href={`/article/${featuredArticles[0]?.slug}`}>
                 <div className="relative group cursor-pointer h-full">
                   {/* Cover Image */}
                   <div className="relative h-full min-h-[600px] overflow-hidden bg-gradient-to-br from-gray-900 to-black">
                     <Image
-                      src={featuredArticles[0]?.image || "/placeholder.svg"}
+                      src={featuredArticles[0]?.image || featuredArticles[0]?.cover_image || "/placeholder.svg"}
                       alt={featuredArticles[0]?.title || "Featured Article"}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
@@ -99,9 +100,17 @@ export default function HomepageClient({
 
                       {/* Byline */}
                       <div className="flex items-center space-x-6 text-sm text-gray-400 uppercase tracking-wider">
-                        <span className="font-medium">By {featuredArticles[0]?.author}</span>
+                        <span className="font-medium">
+                          By {typeof featuredArticles[0]?.author === "string" 
+                            ? featuredArticles[0]?.author 
+                            : featuredArticles[0]?.author?.name || "Unknown"}
+                        </span>
                         <span>•</span>
-                        <span>{featuredArticles[0]?.date}</span>
+                        <span>{featuredArticles[0]?.date || 
+                          (featuredArticles[0]?.published_at 
+                            ? new Date(featuredArticles[0].published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            : "")}
+                        </span>
                         <span>•</span>
                         <span className="text-[#7CFC00]">Featured</span>
                       </div>
@@ -115,6 +124,7 @@ export default function HomepageClient({
                 </div>
               </Link>
             </div>
+            )}
 
             {/* Sidebar - In This Issue */}
             <div className="lg:col-span-4 flex flex-col gap-6">
@@ -142,28 +152,34 @@ export default function HomepageClient({
                   In This Issue
                 </h3>
                 <div className="space-y-6">
-                  {featuredArticles.slice(1, 3).map((article, index) => (
-                    <Link key={article.id} href={`/article/${article.slug}`}>
-                      <div className="group cursor-pointer my-0 py-0 mb-2">
-                        <div className="relative h-48 mb-4 overflow-hidden">
-                          <Image
-                            src={article.image || "/placeholder.svg"}
-                            alt={article.title}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  {featuredArticles.length > 1 ? (
+                    featuredArticles.slice(1, 3).map((article, index) => (
+                      <Link key={article.id || index} href={`/article/${article.slug}`}>
+                        <div className="group cursor-pointer my-0 py-0 mb-2">
+                          <div className="relative h-48 mb-4 overflow-hidden">
+                            <Image
+                              src={article.image || article.cover_image || "/placeholder.svg"}
+                              alt={article.title}
+                              fill
+                              className="object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                          </div>
+                          <div className="text-xs tracking-wider text-[#7CFC00] mb-2 uppercase font-bold">
+                            {article.category}
+                          </div>
+                          <h4 className="text-lg font-bold leading-tight mb-2 group-hover:text-[#7CFC00] transition-colors">
+                            {article.title}
+                          </h4>
+                          <div className="text-xs text-gray-500 uppercase tracking-wider">
+                            By {typeof article.author === "string" ? article.author : article.author?.name || "Unknown"}
+                          </div>
                         </div>
-                        <div className="text-xs tracking-wider text-[#7CFC00] mb-2 uppercase font-bold">
-                          {article.category}
-                        </div>
-                        <h4 className="text-lg font-bold leading-tight mb-2 group-hover:text-[#7CFC00] transition-colors">
-                          {article.title}
-                        </h4>
-                        <div className="text-xs text-gray-500 uppercase tracking-wider">By {article.author}</div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-sm">More articles coming soon...</p>
+                  )}
                 </div>
               </div>
 
@@ -201,43 +217,58 @@ export default function HomepageClient({
           </div>
 
           {/* Magazine Grid Layout */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-            {articlesData.slice(3, visibleArticles).map((article, index) => (
-              <Link key={article.id} href={`/article/${article.slug}`}>
-                <article className="group cursor-pointer">
-                  {/* Image */}
-                  <div className="relative h-80 mb-6 overflow-hidden bg-black">
-                    <Image
-                      src={article.image || "/placeholder.svg"}
-                      alt={article.title}
-                      fill
-                      className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="inline-block px-3 py-1 bg-black/80 backdrop-blur-sm text-[#7CFC00] text-xs font-bold tracking-wider uppercase">
-                        {article.category}
-                      </span>
+          {articlesData.length > 3 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+              {articlesData.slice(3, visibleArticles).map((article, index) => (
+                <Link key={article.id} href={`/article/${article.slug}`}>
+                  <article className="group cursor-pointer">
+                    {/* Image */}
+                    <div className="relative h-80 mb-6 overflow-hidden bg-black">
+                      <Image
+                        src={article.image || article.cover_image || "/placeholder.svg"}
+                        alt={article.title}
+                        fill
+                        className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="inline-block px-3 py-1 bg-black/80 backdrop-blur-sm text-[#7CFC00] text-xs font-bold tracking-wider uppercase">
+                          {article.category}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Content */}
-                  <div className="space-y-3">
-                    <h3 className="text-2xl font-black leading-tight group-hover:text-[#7CFC00] transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">{article.excerpt}</p>
-                    <div className="flex items-center text-xs text-gray-500 uppercase tracking-wider pt-4 border-t border-gray-800">
-                      <span className="font-medium">{article.author}</span>
-                      <span className="mx-2">•</span>
-                      <span>{article.date}</span>
+                    {/* Content */}
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-black leading-tight group-hover:text-[#7CFC00] transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">{article.excerpt}</p>
+                      <div className="flex items-center text-xs text-gray-500 uppercase tracking-wider pt-4 border-t border-gray-800">
+                        <span className="font-medium">
+                          {typeof article.author === "string" 
+                            ? article.author 
+                            : article.author?.name || "Unknown"}
+                        </span>
+                        <span className="mx-2">•</span>
+                        <span>
+                          {article.date || 
+                            (article.published_at 
+                              ? new Date(article.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              : new Date(article.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }))}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
-          </div>
+                  </article>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-gray-400 text-lg">More articles coming soon...</p>
+            </div>
+          )}
 
-          {visibleArticles < articlesData.length && (
+          {articlesData.length > 3 && visibleArticles < articlesData.length && (
             <div className="text-center mt-16">
               <Button
                 onClick={loadMoreArticles}
@@ -322,7 +353,9 @@ export default function HomepageClient({
 
           {featuredProducts.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredProducts.map((product) => (
+              {featuredProducts
+                .filter((product) => product.handle) // Only show products with valid handles
+                .map((product) => (
                 <Link key={product.id} href={`/merch/${product.handle}`}>
                   <div className="group cursor-pointer">
                     <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">

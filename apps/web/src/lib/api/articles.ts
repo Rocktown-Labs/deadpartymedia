@@ -56,7 +56,10 @@ export function useArticles(category?: string) {
     queryKey: ["articles", category],
     queryFn: async () => {
       const params = category ? `?category=${category}` : ""
-      return apiClient.get<ArticleList[]>(`/articles/${params}`)
+      const response = await apiClient.get<any>(`/articles/${params}`)
+      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
+      // Or direct array if pagination is disabled
+      return Array.isArray(response) ? response : (response.results || [])
     },
   })
 }

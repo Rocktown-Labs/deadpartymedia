@@ -54,6 +54,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -61,7 +62,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "config" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -116,6 +117,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "config" / "static",
+]
 
 # Media files
 MEDIA_URL = "/media/"
@@ -138,6 +142,26 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Set to "mandatory" for production
 ACCOUNT_UNIQUE_EMAIL = True
+
+# Email Configuration - Resend SMTP
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@notifications.deadpartymedia.com")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+# Resend SMTP Configuration
+RESEND_SMTP_HOST = "smtp.resend.com"
+RESEND_SMTP_PORT = 587
+RESEND_SMTP_USERNAME = "resend"
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+
+# Django SMTP settings (using Resend)
+EMAIL_HOST = RESEND_SMTP_HOST
+EMAIL_PORT = RESEND_SMTP_PORT
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = RESEND_SMTP_USERNAME
+EMAIL_HOST_PASSWORD = RESEND_API_KEY
 
 # Django REST Framework
 REST_FRAMEWORK = {
@@ -243,7 +267,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     "related_modal_active": False,
-    "custom_css": None,
+    "custom_css": "admin/css/custom_admin.css",
     "custom_js": None,
     "use_google_fonts_cdn": True,
     "show_ui_builder": False,
@@ -277,6 +301,8 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_flat_style": False,
     "theme": "darkly",
     "dark_mode_theme": "darkly",
+    "body_bg": "#000000",
+    "body_text": "#ffffff",
     "button_classes": {
         "primary": "btn-primary",
         "secondary": "btn-secondary",
