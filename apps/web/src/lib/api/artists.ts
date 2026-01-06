@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
+import type { ArticleList } from "./articles";
+import type { EventList } from "./events";
 
 export interface Artist {
   id: number;
@@ -42,7 +44,7 @@ export function useArtists(genre?: string) {
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await apiClient.get<any>(`/artists/${params}`);
+      const response = await apiClient.get<Artist[] | { results: Artist[] }>(`/artists/${params}`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -67,10 +69,10 @@ export function useArtist(slug: string) {
 }
 
 export function useArtistArticles(slug: string) {
-  return useQuery<any[]>({
+  return useQuery<ArticleList[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      const response = await apiClient.get<any>(`/artists/${slug}/articles/`);
+      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(`/artists/${slug}/articles/`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -91,10 +93,10 @@ export function useArtistArticles(slug: string) {
 }
 
 export function useArtistEvents(slug: string) {
-  return useQuery<any[]>({
+  return useQuery<EventList[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      const response = await apiClient.get<any>(`/artists/${slug}/events/`);
+      const response = await apiClient.get<EventList[] | { results: EventList[] }>(`/artists/${slug}/events/`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {

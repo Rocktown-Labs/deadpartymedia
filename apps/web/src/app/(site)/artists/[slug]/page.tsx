@@ -144,7 +144,7 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6">Articles Featuring {artist.name}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {articlesArray.map((article: any) => (
+                {articlesArray.map((article) => (
                   <Link
                     key={article.id}
                     href={`/article/${article.slug}`}
@@ -178,7 +178,7 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
             <div>
               <h2 className="text-2xl font-bold mb-6">Events Featuring {artist.name}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {eventsArray.map((event: any) => (
+                {eventsArray.map((event) => (
                   <Link
                     key={event.id}
                     href={`/events/${event.slug}`}
