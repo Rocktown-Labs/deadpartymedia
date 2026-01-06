@@ -131,7 +131,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
           {/* Article Content */}
           <article
             className="prose prose-invert prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: String(article.content || "") }}
           />
 
           {/* Comments Section */}

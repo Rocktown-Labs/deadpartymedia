@@ -78,7 +78,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <h2 className="text-2xl font-bold mb-4">About This Event</h2>
                 <div
                   className="prose prose-invert max-w-none text-gray-300"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
+                  dangerouslySetInnerHTML={{ __html: String(event.description || "") }}
                 />
               </div>
 
