@@ -52,7 +52,7 @@ export function useEvents(genre?: string) {
     queryKey: ["events", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : ""
-      const response = await apiClient.get<any>(`/events/${params}`)
+      const response = await apiClient.get<EventList[] | { results: EventList[] }>(`/events/${params}`)
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
