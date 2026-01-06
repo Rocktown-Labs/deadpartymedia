@@ -82,7 +82,7 @@ export default function MusicPage() {
               if (articles.length === 0) return null
 
               const categorySlug = getCategorySlug(category)
-              const categoryHref = `/${categorySlug}` as const
+              const categoryHref: string = `/${categorySlug}`
 
               return (
                 <section key={category} className="animate-fadeInUp">
@@ -93,7 +93,7 @@ export default function MusicPage() {
                       <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }}></div>
                     </div>
                     <Link
-                      href={categoryHref}
+                      href={categoryHref as any}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all
