@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight } from "lucide-react"
-import { useArticles } from "@/lib/api/articles"
+import { useArticles, type ArticleList } from "@/lib/api/articles"
 
 const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]
 
@@ -28,7 +28,7 @@ export default function MusicPage() {
     OTHER: (allArticles || []).filter((a) => a.category === "OTHER"),
   }
 
-  const ArticleCard = ({ article }: { article: typeof allArticles[0] }) => (
+  const ArticleCard = ({ article }: { article: ArticleList }) => (
     <Link href={`/article/${article.slug}`}>
       <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
         <div className="relative overflow-hidden bg-[#111111] h-40">
