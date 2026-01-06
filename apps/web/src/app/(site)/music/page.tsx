@@ -81,16 +81,19 @@ export default function MusicPage() {
               const articles = categoryGroups[category as keyof typeof categoryGroups] || []
               if (articles.length === 0) return null
 
+              const categorySlug = getCategorySlug(category)
+              const categoryHref = `/${categorySlug}` as const
+
               return (
                 <section key={category} className="animate-fadeInUp">
                   {/* Category Header */}
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center">
                       <h2 className="text-3xl font-black tracking-wider">{category}</h2>
-                      <div className="ml-6 h-1 bg-[#7CFC00] flex-grow" style={{ maxWidth: "200px" }}></div>
+                      <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }}></div>
                     </div>
                     <Link
-                      href={`/${getCategorySlug(category)}` as string}
+                      href={categoryHref}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all
