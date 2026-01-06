@@ -80,15 +80,21 @@ class Artist(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-generate slug from name if not provided."""
-        if not self.slug:
-            self.slug = slugify(self.name)
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while Artist.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-        super().save(*args, **kwargs)
+        try:
+            if not self.slug:
+                self.slug = slugify(self.name)
+                # Ensure uniqueness
+                original_slug = self.slug
+                counter = 1
+                while Artist.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                    self.slug = f"{original_slug}-{counter}"
+                    counter += 1
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error saving artist {self.name}: {e}", exc_info=True)
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)
+            raise
 
     @property
     def article_count(self):
