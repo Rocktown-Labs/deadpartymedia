@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "name": "Billy Jeter",
+    "spotifyId": "4M5nttNvXHuSJaMIlZyAan",
+    "location": "Little Rock, AR",
+    "genre": "Country",
+    "bio": "Billy Jeter's journey through country music has been anything but conventional. From his early days playing honky-tonks across Arkansas to his recent album release.",
+    "articleCount": 3,
+    "socials": {
+      "instagram": "https://instagram.com/billyjeter",
+      "twitter": "https://twitter.com/billyjeter",
+      "youtube": "https://youtube.com/@billyjeter",
+      "tiktok": "https://tiktok.com/@billyjeter",
+      "website": "https://billyjeter.com"
+    },
+    "status": "active",
+    "email": "billy@example.com",
+    "phone": "",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-06-20T14:30:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Grace Wells",
+    "spotifyId": "5bw8UvI8tgEqhZqY9IcxGC",
+    "location": "Fayetteville, AR",
+    "genre": "Country",
+    "bio": "Grace Wells brings a fresh perspective to Arkansas country music with her powerful vocals and authentic storytelling.",
+    "articleCount": 2,
+    "socials": {
+      "instagram": "https://instagram.com/gracewells",
+      "twitter": "https://twitter.com/gracewells",
+      "youtube": "https://youtube.com/@gracewells",
+      "tiktok": "",
+      "website": "https://gracewells.com"
+    },
+    "status": "active",
+    "email": "grace@example.com",
+    "phone": "",
+    "createdAt": "2024-02-10T10:00:00Z",
+    "updatedAt": "2024-06-18T11:20:00Z"
+  },
+  {
+    "id": 3,
+    "name": "BABYFACECAM",
+    "spotifyId": "6VTpCIFWgi9ZwNzd3uq2U0",
+    "location": "Little Rock, AR",
+    "genre": "Hip-Hop & R&B",
+    "bio": "BABYFACECAM is making waves in the Arkansas hip-hop scene with innovative production and authentic lyrics.",
+    "articleCount": 5,
+    "socials": {
+      "instagram": "https://instagram.com/babyfacecam",
+      "twitter": "https://twitter.com/babyfacecam",
+      "youtube": "https://youtube.com/@babyfacecam",
+      "tiktok": "https://tiktok.com/@babyfacecam",
+      "website": ""
+    },
+    "status": "active",
+    "email": "babyfacecam@example.com",
+    "phone": "",
+    "createdAt": "2024-03-05T10:00:00Z",
+    "updatedAt": "2024-06-22T16:45:00Z"
+  }
+]

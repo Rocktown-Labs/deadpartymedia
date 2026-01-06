@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "title": "Summer Music Festival 2024",
+    "date": "July 15, 2024",
+    "time": "6:00 PM",
+    "venue": "Arkansas Music Pavilion",
+    "location": "Rogers, AR",
+    "category": "COUNTRY",
+    "image": "https://picsum.photos/800/500?random=100",
+    "description": "Join us for an incredible evening of country music featuring local Arkansas artists.",
+    "ticketLink": "https://example.com/tickets",
+    "price": "$25-$50",
+    "status": "published",
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "title": "EDM Night at The Venue",
+    "date": "July 20, 2024",
+    "time": "9:00 PM",
+    "venue": "The Venue",
+    "location": "Little Rock, AR",
+    "category": "EDM",
+    "image": "https://picsum.photos/800/500?random=101",
+    "description": "Experience the best EDM artists in Arkansas for one night only.",
+    "ticketLink": "https://example.com/tickets",
+    "price": "$20",
+    "status": "published",
+    "createdAt": "2024-06-05T10:00:00Z",
+    "updatedAt": "2024-06-05T10:00:00Z"
+  }
+]

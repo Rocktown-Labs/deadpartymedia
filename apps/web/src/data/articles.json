@@ -1,0 +1,343 @@
+[
+  {
+    "id": 1,
+    "slug": "behind-the-lens-concert-photography-arkansas",
+    "title": "Behind the Lens: Concert Photography in Arkansas",
+    "category": "OTHER",
+    "image": "https://picsum.photos/800/500?random=4",
+    "excerpt": "Meet the photographers capturing Arkansas music moments.",
+    "author": "Sarah Mitchell",
+    "date": "June 20, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "In the dimly lit venues across Arkansas, a dedicated group of photographers work tirelessly to capture the raw energy and emotion of live music performances. These visual storytellers play a crucial role in documenting the state's vibrant music scene, creating lasting memories for both artists and fans."
+      },
+      {
+        "type": "paragraph",
+        "text": "From the intimate settings of White Water Tavern in Little Rock to the grand stages of Verizon Arena, concert photographers face unique challenges in their quest to freeze moments of musical magic. The combination of low light, fast movement, and unpredictable stage lighting requires both technical skill and artistic vision."
+      },
+      {
+        "type": "image",
+        "src": "https://picsum.photos/600/400?random=24",
+        "caption": "A photographer captures the energy of a live performance at Rev Room"
+      },
+      {
+        "type": "paragraph",
+        "text": "Local photographer Jake Reynolds has been documenting Arkansas music for over a decade. 'Every show is different,' he explains. 'You have to be ready for anything – from explosive rock performances to intimate acoustic sets. The key is understanding the music and anticipating those peak moments.'"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "vinyl-revival-record-stores-arkansas",
+    "title": "Vinyl Revival: Record Stores Across the State",
+    "category": "OTHER",
+    "image": "https://picsum.photos/800/500?random=5",
+    "excerpt": "The comeback of physical music in the digital age.",
+    "author": "Mike Thompson",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Despite predictions of its demise in the digital age, vinyl records have experienced a remarkable resurgence across Arkansas. Independent record stores are thriving, serving as cultural hubs for music lovers and supporting both established and emerging artists."
+      },
+      {
+        "type": "paragraph",
+        "text": "The appeal of vinyl goes beyond nostalgia. For many music enthusiasts, records offer a tangible connection to their favorite artists and a listening experience that digital formats can't replicate."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "billy-jeter-following-long-road-home",
+    "title": "Billy Jeter: Following the Long Road Home Through Song",
+    "category": "COUNTRY",
+    "image": "https://picsum.photos/800/500?random=60",
+    "excerpt": "Billy Jeter's journey through country music has been anything but conventional.",
+    "author": "J.L. Jones",
+    "date": "June 22, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Billy Jeter's journey through country music has been anything but conventional. From his early days playing honky-tonks across Arkansas to his recent album release, Jeter has carved out a unique space in the state's country music landscape."
+      },
+      {
+        "type": "paragraph",
+        "text": "His storytelling approach combines traditional country themes with modern sensibilities, creating songs that resonate with both longtime country fans and newcomers to the genre."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "zachary-smith-multi-genre-musician",
+    "title": "Zachary Smith: The Multi-Genre Musician Who Won't Be Boxed In",
+    "category": "COUNTRY",
+    "image": "https://picsum.photos/800/500?random=61",
+    "excerpt": "In a world where artists are often pressured to stick to one genre, Zachary Smith refuses to be categorized.",
+    "author": "J.L. Jones",
+    "date": "June 20, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "In a world where artists are often pressured to stick to one genre, Zachary Smith refuses to be categorized. The Arkansas native seamlessly blends country, rock, and folk influences in his music, creating a sound that's uniquely his own."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "electronic-pulse-conway-beat-scene",
+    "title": "Electronic Pulse: Conway's Beat Scene",
+    "category": "EDM",
+    "image": "https://picsum.photos/800/500?random=70",
+    "excerpt": "Conway's electronic music scene has been quietly building momentum.",
+    "author": "Gretchen",
+    "date": "June 22, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Conway's electronic music scene has been quietly building momentum over the past few years, with a new generation of producers and DJs creating innovative sounds that blend traditional electronic elements with Southern influences."
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "slug": "arkansas-rave-culture-underground",
+    "title": "Neon Nights: Inside Arkansas Rave Culture",
+    "category": "EDM",
+    "image": "https://picsum.photos/800/500?random=71",
+    "excerpt": "The rave scene in Arkansas has evolved from small underground gatherings.",
+    "author": "Gretchen",
+    "date": "June 20, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "The rave scene in Arkansas has evolved from small underground gatherings to organized events that draw electronic music fans from across the region."
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "slug": "underground-kings-little-rock",
+    "title": "The Underground Kings of Little Rock",
+    "category": "HARDCORE & ROCK",
+    "image": "https://picsum.photos/800/500?random=80",
+    "excerpt": "Little Rock's underground music scene has always been a breeding ground for raw, unfiltered expression.",
+    "author": "Dead Party Media",
+    "date": "June 22, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Little Rock's underground music scene has always been a breeding ground for raw, unfiltered expression. The city's hardcore and rock bands are carrying on a tradition of rebellion and authenticity that dates back decades."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "slug": "metal-mayhem-arkansas-heavy-scene",
+    "title": "Metal Mayhem: Arkansas's Heavy Music Scene",
+    "category": "HARDCORE & ROCK",
+    "image": "https://picsum.photos/800/500?random=81",
+    "excerpt": "From death metal to black metal, Arkansas has cultivated a surprisingly robust heavy music scene.",
+    "author": "Dead Party Media",
+    "date": "June 20, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "From death metal to black metal, Arkansas has cultivated a surprisingly robust heavy music scene. Local bands are gaining recognition beyond state borders."
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "slug": "beats-natural-state-arkansas-hip-hop",
+    "title": "Beats from the Natural State: The Rise of Arkansas Hip-Hop",
+    "category": "HIP-HOP & R&B",
+    "image": "https://picsum.photos/800/500?random=90",
+    "excerpt": "Arkansas hip-hop has evolved from underground cyphers to mainstream recognition.",
+    "author": "Dead Party Media",
+    "date": "June 22, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Arkansas hip-hop has evolved from underground cyphers to mainstream recognition, with artists drawing inspiration from Southern rap traditions while creating their own unique sound."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "slug": "arkansas-r-b-soul-revival",
+    "title": "Soul Revival: Arkansas R&B's New Generation",
+    "category": "HIP-HOP & R&B",
+    "image": "https://picsum.photos/800/500?random=91",
+    "excerpt": "A new generation of Arkansas R&B artists is breathing fresh life into the genre.",
+    "author": "Dead Party Media",
+    "date": "June 20, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "A new generation of Arkansas R&B artists is breathing fresh life into the genre, combining classic soul influences with contemporary production techniques."
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "slug": "anna-brinker-keeping-tradition-alive",
+    "title": "Anna Brinker: Keeping Tradition Alive in Country Music",
+    "category": "COUNTRY",
+    "image": "https://picsum.photos/800/500?random=62",
+    "excerpt": "Anna Brinker represents the new generation of country artists who honor the genre's roots.",
+    "author": "J.L. Jones",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Anna Brinker represents the new generation of country artists who honor the genre's roots while pushing it forward. Her traditional approach to songwriting, combined with contemporary production techniques, has earned her recognition throughout Arkansas and beyond."
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "slug": "payton-joy-rising-star-country-rock",
+    "title": "Payton Joy: A Rising Star in Country-Rock",
+    "category": "COUNTRY",
+    "image": "https://picsum.photos/800/500?random=63",
+    "excerpt": "Payton Joy's energetic blend of country and rock has been turning heads.",
+    "author": "J.L. Jones",
+    "date": "June 15, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Payton Joy's energetic blend of country and rock has been turning heads across Arkansas's music scene. Her powerful vocals and dynamic stage presence have made her a favorite at festivals and venues throughout the state."
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "slug": "bass-drops-arkansas-dubstep",
+    "title": "Bass Drops and Heavy Beats: Arkansas Dubstep Scene",
+    "category": "EDM",
+    "image": "https://picsum.photos/800/500?random=72",
+    "excerpt": "Arkansas's dubstep scene has grown exponentially.",
+    "author": "Gretchen",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Arkansas's dubstep scene has grown exponentially, with local producers creating tracks that compete on a national level. The heavy bass and intricate sound design that defines dubstep has found a passionate audience in the Natural State."
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "slug": "house-music-little-rock-revival",
+    "title": "House Party: Little Rock's House Music Revival",
+    "category": "EDM",
+    "image": "https://picsum.photos/800/500?random=73",
+    "excerpt": "House music is experiencing a renaissance in Little Rock.",
+    "author": "Gretchen",
+    "date": "June 15, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "House music is experiencing a renaissance in Little Rock, with DJs and producers drawing inspiration from Chicago house, Detroit techno, and modern electronic influences."
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "slug": "punk-rock-arkansas-diy-spirit",
+    "title": "Punk Rock Arkansas: The DIY Spirit Lives On",
+    "category": "HARDCORE & ROCK",
+    "image": "https://picsum.photos/800/500?random=82",
+    "excerpt": "The punk rock ethos of do-it-yourself creativity continues to thrive in Arkansas.",
+    "author": "Dead Party Media",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "The punk rock ethos of do-it-yourself creativity and anti-establishment sentiment continues to thrive in Arkansas. Local punk bands are organizing their own shows, releasing their own records, and building a community based on mutual support."
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "slug": "alternative-rock-arkansas-indie-scene",
+    "title": "Alternative Arkansas: The State's Indie Rock Movement",
+    "category": "HARDCORE & ROCK",
+    "image": "https://picsum.photos/800/500?random=83",
+    "excerpt": "Arkansas's alternative rock scene offers a refreshing take on indie music.",
+    "author": "Dead Party Media",
+    "date": "June 15, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Arkansas's alternative rock scene offers a refreshing take on indie music, blending influences from grunge, post-punk, and experimental rock."
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "slug": "trap-music-arkansas-scene",
+    "title": "Trap State: Arkansas's Growing Trap Music Scene",
+    "category": "HIP-HOP & R&B",
+    "image": "https://picsum.photos/800/500?random=92",
+    "excerpt": "The trap music movement has found fertile ground in Arkansas.",
+    "author": "Dead Party Media",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "The trap music movement has found fertile ground in Arkansas, with local producers and rappers creating hard-hitting tracks that resonate with audiences across the South."
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "slug": "neo-soul-arkansas-artists",
+    "title": "Neo-Soul Arkansas: Modern Takes on Classic Sounds",
+    "category": "HIP-HOP & R&B",
+    "image": "https://picsum.photos/800/500?random=93",
+    "excerpt": "Arkansas's neo-soul movement represents a sophisticated approach to contemporary R&B.",
+    "author": "Dead Party Media",
+    "date": "June 15, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Arkansas's neo-soul movement represents a sophisticated approach to contemporary R&B, with artists incorporating elements of jazz, funk, and hip-hop into their sound."
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "slug": "music-education-arkansas-schools",
+    "title": "Passing the Torch: Music Education in Arkansas",
+    "category": "OTHER",
+    "image": "https://picsum.photos/800/500?random=102",
+    "excerpt": "Music education programs across Arkansas are nurturing the next generation.",
+    "author": "Emily Rodriguez",
+    "date": "June 18, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Music education programs across Arkansas are nurturing the next generation of musicians, providing students with the skills and knowledge they need to pursue their musical dreams."
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "slug": "music-venues-arkansas-guide",
+    "title": "If These Walls Could Sing: Historic Music Venues",
+    "category": "OTHER",
+    "image": "https://picsum.photos/800/500?random=103",
+    "excerpt": "Arkansas's historic music venues have witnessed decades of musical evolution.",
+    "author": "Robert Johnson Jr.",
+    "date": "June 15, 2024",
+    "content": [
+      {
+        "type": "paragraph",
+        "text": "Arkansas's historic music venues have witnessed decades of musical evolution, hosting everyone from local acts to international superstars."
+      }
+    ]
+  }
+]

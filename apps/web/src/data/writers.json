@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "name": "J.L. Jones",
+    "category": "Country",
+    "bio": "Hey, my name is J.L. Jones! I'm a musician, singer and songwriter from Central Arkansas. I love alternative music of all kinds but I'm especially excited about highlighting artists in the alternative Country and Folk genre!",
+    "cashTag": "$JLJones6",
+    "instagram": "https://instagram.com/jljones"
+  },
+  {
+    "id": 2,
+    "name": "Gretchen",
+    "category": "EDM",
+    "bio": "Hey! My name is Gretchen and I am currently in college studying to become a Journalist with an online emphasis. I want to use my degree to uplift our local music scene and give an unbiased look into the EDM community in Arkansas!",
+    "cashTag": "$GretchenBullinger",
+    "instagram": "https://instagram.com/gretchen"
+  },
+  {
+    "id": 3,
+    "name": "Dead Party Media",
+    "category": "All",
+    "bio": "The Dead Party Media team covers all genres of music across Arkansas.",
+    "cashTag": "$DeadPartyMedia",
+    "instagram": "https://instagram.com/deadpartymedia"
+  },
+  {
+    "id": 4,
+    "name": "Sarah Mitchell",
+    "category": "Other",
+    "bio": "Covering the diverse landscape of Arkansas music beyond traditional genres.",
+    "cashTag": "$SarahMitchell",
+    "instagram": "https://instagram.com/sarahmitchell"
+  },
+  {
+    "id": 5,
+    "name": "Mike Thompson",
+    "category": "Other",
+    "bio": "Exploring the cultural side of Arkansas music scene.",
+    "cashTag": "$MikeThompson",
+    "instagram": "https://instagram.com/mikethompson"
+  },
+  {
+    "id": 6,
+    "name": "Emily Rodriguez",
+    "category": "Other",
+    "bio": "Passionate about music education and community building through music.",
+    "cashTag": "$EmilyRodriguez",
+    "instagram": "https://instagram.com/emilyrodriguez"
+  },
+  {
+    "id": 7,
+    "name": "Robert Johnson Jr.",
+    "category": "Other",
+    "bio": "Historian and chronicler of Arkansas music venues and culture.",
+    "cashTag": "$RobertJohnsonJr",
+    "instagram": "https://instagram.com/robertjohnsonjr"
+  }
+]

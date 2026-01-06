@@ -1,29 +1,26 @@
-"use client";
+"use client"
 
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { env } from "@dpmedia/env/web";
-import { ConvexReactClient } from "convex/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ThemeProvider } from "./theme-provider"
+import { Toaster } from "./ui/sonner"
+import { useState } from "react"
 
-import { authClient } from "@/lib/auth-client";
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
-import { ThemeProvider } from "./theme-provider";
-import { Toaster } from "./ui/sonner";
-
-const convex = new ConvexReactClient(env.NEXT_PUBLIC_CONVEX_URL);
-
-export default function Providers({
-  children,
-  initialToken,
-}: {
-  children: React.ReactNode;
-  initialToken?: string | null;
-}) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <ConvexBetterAuthProvider client={convex} authClient={authClient} initialToken={initialToken}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         {children}
-      </ConvexBetterAuthProvider>
-      <Toaster richColors />
-    </ThemeProvider>
-  );
+        <Toaster richColors />
+      </ThemeProvider>
+    </QueryClientProvider>
+  )
 }

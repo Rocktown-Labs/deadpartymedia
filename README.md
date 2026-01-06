@@ -1,65 +1,144 @@
-# dpmedia
+# Dead Party Media
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Convex, and more.
+Your #1 outlet for Arkansas music.
 
-## Features
+## Quick Start
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **React Native** - Build mobile apps using React
-- **Expo** - Tools for React Native development
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **Convex** - Reactive backend-as-a-service platform
-- **Authentication** - Better-Auth
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
-- **Turborepo** - Optimized monorepo build system
+### Prerequisites
 
-## Getting Started
+- Node.js 20+ and pnpm
+- Python 3.11+ and [UV](https://github.com/astral-sh/uv)
+- Docker (for local PostgreSQL)
 
-First, install the dependencies:
+### Setup
 
-```bash
-pnpm install
-```
+1. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
 
-## Convex Setup
+2. **Set up environment variables:**
+   ```bash
+   # Backend - create .env file (gitignored)
+   cp apps/server/.env.example apps/server/.env
+   # Edit apps/server/.env with your settings
+   # Defaults work with Docker PostgreSQL (see docker-compose.yml)
+   
+   # Frontend - create .env.local file (gitignored)
+   cp apps/web/.env.example apps/web/.env.local
+   # Edit apps/web/.env.local with your settings
+   # Default: NEXT_PUBLIC_API_URL=http://localhost:8000/api
+   ```
 
-This project uses Convex as a backend. You'll need to set up Convex before running the app:
+3. **Start PostgreSQL (Docker):**
+   ```bash
+   docker-compose up -d
+   ```
 
-```bash
-pnpm run dev:setup
-```
+4. **Set up Django database:**
+   ```bash
+   cd apps/server
+   uv run python manage.py makemigrations
+   uv run python manage.py migrate
+   uv run python manage.py createsuperuser
+   ```
 
-Follow the prompts to create a new Convex project and connect it to your application.
+5. **Run the application:**
+   ```bash
+   # From root directory - runs both frontend and backend
+   pnpm dev
+   ```
 
-Then, run the development server:
-
-```bash
-pnpm run dev
-```
-
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-Use the Expo Go app to run the mobile application.
-Your app will connect to the Convex cloud backend automatically.
+   Or run individually:
+   ```bash
+   pnpm dev:web      # Frontend: http://localhost:3001
+   pnpm dev:server   # Backend: http://localhost:8000
+   ```
 
 ## Project Structure
 
-```
-dpmedia/
-├── apps/
-│   ├── web/         # Frontend application (Next.js)
-│   ├── native/      # Mobile application (React Native, Expo)
-├── packages/
-│   ├── backend/     # Convex backend functions and schema
+See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed documentation on:
+- Directory structure
+- Environment variables
+- Configuration files
+- API endpoints
+- Content management
+- Common tasks
+
+## Tech Stack
+
+### Frontend
+- Next.js 16 (App Router)
+- React 19
+- TanStack Query
+- Tailwind CSS v4
+- Shadcn UI
+
+### Backend
+- Django 5.2
+- Django REST Framework
+- Django Admin (Jazzmin)
+- PostgreSQL
+- Amazon S3 (for image storage)
+- Django Allauth (authentication)
+
+## Development
+
+### Running Services
+
+```bash
+# Both frontend and backend
+pnpm dev
+
+# Individual services
+pnpm dev:web      # Next.js frontend
+pnpm dev:server   # Django backend
 ```
 
-## Available Scripts
+### Database
 
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run dev:web`: Start only the web application
-- `pnpm run dev:setup`: Setup and configure your Convex project
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run dev:native`: Start the React Native/Expo development server
-- `pnpm run check`: Run Oxlint and Oxfmt
+Local development uses Docker PostgreSQL:
+```bash
+docker-compose up -d    # Start
+docker-compose down     # Stop
+docker-compose logs     # View logs
+```
+
+### Admin Access
+
+- Django Admin: http://localhost:8000/admin/
+- Create superuser: `cd apps/server && uv run python manage.py createsuperuser`
+
+## Environment Variables
+
+### Backend (`apps/server/.env`)
+**Location:** `apps/server/.env` (create from `.env.example`)
+
+- `SECRET_KEY` - Django secret key (generate with: `python -c "import secrets; print(secrets.token_urlsafe(50))"`)
+- `DEBUG` - Debug mode (True for dev, False for prod)
+- `DB_*` - PostgreSQL connection (defaults match docker-compose.yml)
+- `USE_S3` - Enable S3 storage (False for local dev, True for prod)
+- `AWS_*` - S3 credentials (only needed if USE_S3=True)
+
+### Frontend (`apps/web/.env.local`)
+**Location:** `apps/web/.env.local` (create from `.env.example`)
+
+- `NEXT_PUBLIC_API_URL` - Django API URL (default: http://localhost:8000/api)
+
+## Production
+
+1. **Backend:** Update `apps/server/.env` with production values:
+   - Set `DEBUG=False`
+   - Set `USE_S3=True` and configure AWS credentials
+   - Update `DB_*` with production database connection
+   - Set `ALLOWED_HOSTS` with your domain
+
+2. **Frontend:** Update `apps/web/.env.local`:
+   - Set `NEXT_PUBLIC_API_URL` to production API URL
+
+3. **Deploy:**
+   - Build frontend: `pnpm build`
+   - Deploy Django backend (Gunicorn + Nginx recommended)
+   - Run migrations on production database
+
+See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) and [SETUP.md](./SETUP.md) for detailed production setup.
