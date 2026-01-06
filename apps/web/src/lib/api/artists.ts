@@ -67,20 +67,48 @@ export function useArtist(slug: string) {
 }
 
 export function useArtistArticles(slug: string) {
-  return useQuery({
+  return useQuery<any[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      return apiClient.get(`/artists/${slug}/articles/`);
+      const response = await apiClient.get<any>(`/artists/${slug}/articles/`);
+      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
+      // Or direct array if pagination is disabled
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (
+        response &&
+        typeof response === "object" &&
+        "results" in response &&
+        Array.isArray(response.results)
+      ) {
+        return response.results;
+      }
+      return [];
     },
     enabled: !!slug,
   });
 }
 
 export function useArtistEvents(slug: string) {
-  return useQuery({
+  return useQuery<any[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      return apiClient.get(`/artists/${slug}/events/`);
+      const response = await apiClient.get<any>(`/artists/${slug}/events/`);
+      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
+      // Or direct array if pagination is disabled
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (
+        response &&
+        typeof response === "object" &&
+        "results" in response &&
+        Array.isArray(response.results)
+      ) {
+        return response.results;
+      }
+      return [];
     },
     enabled: !!slug,
   });

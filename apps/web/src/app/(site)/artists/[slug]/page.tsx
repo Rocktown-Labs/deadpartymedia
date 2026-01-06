@@ -8,6 +8,10 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
   const { data: artist, isLoading: artistLoading } = useArtist(params.slug)
   const { data: articles } = useArtistArticles(params.slug)
   const { data: events } = useArtistEvents(params.slug)
+  
+  // Ensure articles and events are arrays
+  const articlesArray = Array.isArray(articles) ? articles : []
+  const eventsArray = Array.isArray(events) ? events : []
 
   if (artistLoading) {
     return (
@@ -136,11 +140,11 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
           </div>
 
           {/* Related Articles */}
-          {articles && articles.length > 0 && (
+          {articlesArray.length > 0 && (
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6">Articles Featuring {artist.name}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {articles.map((article: any) => (
+                {articlesArray.map((article: any) => (
                   <Link
                     key={article.id}
                     href={`/article/${article.slug}`}
@@ -170,11 +174,11 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
           )}
 
           {/* Related Events */}
-          {events && events.length > 0 && (
+          {eventsArray.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Events Featuring {artist.name}</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event: any) => (
+                {eventsArray.map((event: any) => (
                   <Link
                     key={event.id}
                     href={`/events/${event.slug}`}
