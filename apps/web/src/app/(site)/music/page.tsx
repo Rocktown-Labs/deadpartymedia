@@ -90,7 +90,7 @@ export default function MusicPage() {
                       <div className="ml-6 h-1 bg-[#7CFC00] flex-grow" style={{ maxWidth: "200px" }}></div>
                     </div>
                     <Link
-                      href={`/${getCategorySlug(category)}`}
+                      href={`/${getCategorySlug(category)}` as string}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all
