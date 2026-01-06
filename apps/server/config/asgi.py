@@ -17,7 +17,8 @@ load_dotenv(BASE_DIR / ".env")
 
 from django.core.asgi import get_asgi_application
 
-# Use production settings by default for ASGI (can be overridden)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
+# Use development settings by default for consistency with manage.py
+# Override with DJANGO_SETTINGS_MODULE environment variable for production
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
 
 application = get_asgi_application()
