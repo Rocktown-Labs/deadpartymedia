@@ -1,24 +1,24 @@
-"use client"
-import Link from "next/link"
-import type { Route } from "next"
-import { ArrowLeft, ArrowRight } from "lucide-react"
-import { useArticles, type ArticleList } from "@/lib/api/articles"
+"use client";
+import Link from "next/link";
+import type { Route } from "next";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useArticles, type ArticleList } from "@/lib/api/articles";
 
-const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]
+const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
 
 const getCategorySlug = (category: string): string => {
-  return category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")
-}
+  return category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-");
+};
 
 export default function MusicPage() {
-  const { data: allArticles, isLoading } = useArticles()
+  const { data: allArticles, isLoading } = useArticles();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   const categoryGroups = {
@@ -27,7 +27,7 @@ export default function MusicPage() {
     "HARDCORE & ROCK": (allArticles || []).filter((a) => a.category === "HARDCORE & ROCK"),
     "HIP-HOP & R&B": (allArticles || []).filter((a) => a.category === "HIP-HOP & R&B"),
     OTHER: (allArticles || []).filter((a) => a.category === "OTHER"),
-  }
+  };
 
   const ArticleCard = ({ article }: { article: ArticleList }) => (
     <Link href={`/article/${article.slug}`}>
@@ -51,7 +51,7 @@ export default function MusicPage() {
         </div>
       </div>
     </Link>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -73,17 +73,19 @@ export default function MusicPage() {
               <h1 className="text-5xl font-black tracking-wider">MUSIC</h1>
               <div className="ml-8 w-32 h-1 bg-[#7CFC00]"></div>
             </div>
-            <p className="text-xl text-gray-400">Explore the diverse sounds and stories of Arkansas music</p>
+            <p className="text-xl text-gray-400">
+              Explore the diverse sounds and stories of Arkansas music
+            </p>
           </div>
 
           {/* Music Categories */}
           <div className="space-y-16">
             {categoryOrder.map((category) => {
-              const articles = categoryGroups[category as keyof typeof categoryGroups] || []
-              if (articles.length === 0) return null
+              const articles = categoryGroups[category as keyof typeof categoryGroups] || [];
+              if (articles.length === 0) return null;
 
-              const categorySlug = getCategorySlug(category)
-              const categoryHref = `/${categorySlug}` as Route
+              const categorySlug = getCategorySlug(category);
+              const categoryHref = `/${categorySlug}` as Route;
 
               return (
                 <section key={category} className="animate-fadeInUp">
@@ -91,7 +93,10 @@ export default function MusicPage() {
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center">
                       <h2 className="text-3xl font-black tracking-wider">{category}</h2>
-                      <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }}></div>
+                      <div
+                        className="ml-6 h-1 bg-[#7CFC00] grow"
+                        style={{ maxWidth: "200px" }}
+                      ></div>
                     </div>
                     <Link
                       href={categoryHref}
@@ -110,11 +115,11 @@ export default function MusicPage() {
                     ))}
                   </div>
                 </section>
-              )
+              );
             })}
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

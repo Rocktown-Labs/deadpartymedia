@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import { useCurrentUserArtist, useArtistArticles } from "@/lib/api/artists"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
-import { FileText, Calendar, User } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { format } from "date-fns"
+import { useCurrentUserArtist, useArtistArticles } from "@/lib/api/artists";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { FileText, Calendar, User } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { format } from "date-fns";
 
 export default function ArtistArticlesPage() {
-  const { data: artist, isLoading: artistLoading } = useCurrentUserArtist()
-  const { data: articles, isLoading: articlesLoading } = useArtistArticles(artist?.slug || "")
+  const { data: artist, isLoading: artistLoading } = useCurrentUserArtist();
+  const { data: articles, isLoading: articlesLoading } = useArtistArticles(artist?.slug || "");
 
-  const isLoading = artistLoading || articlesLoading
+  const isLoading = artistLoading || articlesLoading;
 
   if (isLoading) {
     return (
@@ -31,7 +37,7 @@ export default function ArtistArticlesPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   if (!artist) {
@@ -57,10 +63,10 @@ export default function ArtistArticlesPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
-  const articlesArray = Array.isArray(articles) ? articles : []
+  const articlesArray = Array.isArray(articles) ? articles : [];
 
   if (articlesArray.length === 0) {
     return (
@@ -85,7 +91,7 @@ export default function ArtistArticlesPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -94,7 +100,9 @@ export default function ArtistArticlesPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">My Articles</h1>
-            <p className="text-gray-400">Articles featuring {artist.name} ({articlesArray.length})</p>
+            <p className="text-gray-400">
+              Articles featuring {artist.name} ({articlesArray.length})
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -119,9 +127,7 @@ export default function ArtistArticlesPage() {
                     <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
                       {article.title}
                     </h3>
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                      {article.excerpt}
-                    </p>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
@@ -132,7 +138,11 @@ export default function ArtistArticlesPage() {
                       {article.author && (
                         <div className="flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          <span>{typeof article.author === "string" ? article.author : article.author.name}</span>
+                          <span>
+                            {typeof article.author === "string"
+                              ? article.author
+                              : article.author.name}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -144,6 +154,5 @@ export default function ArtistArticlesPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
-

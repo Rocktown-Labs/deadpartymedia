@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export default function ContactPage() {
   return (
@@ -53,13 +53,14 @@ export default function ContactPage() {
                 ></textarea>
               </div>
               <div className="text-center">
-                <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded">Send</Button>
+                <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded">
+                  Send
+                </Button>
               </div>
             </form>
           </Card>
         </div>
       </main>
-
     </div>
-  )
+  );
 }

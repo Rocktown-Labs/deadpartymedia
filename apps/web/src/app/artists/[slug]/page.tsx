@@ -1,26 +1,26 @@
-"use client"
-import { use } from "react"
-import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists"
+"use client";
+import { use } from "react";
+import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 
 export default function ArtistDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
-  const { data: artist, isLoading: artistLoading } = useArtist(slug)
-  const { data: articles } = useArtistArticles(slug)
-  const { data: events } = useArtistEvents(slug)
-  
+  const { slug } = use(params);
+  const { data: artist, isLoading: artistLoading } = useArtist(slug);
+  const { data: articles } = useArtistArticles(slug);
+  const { data: events } = useArtistEvents(slug);
+
   // Ensure articles and events are arrays
-  const articlesArray = Array.isArray(articles) ? articles : []
-  const eventsArray = Array.isArray(events) ? events : []
+  const articlesArray = Array.isArray(articles) ? articles : [];
+  const eventsArray = Array.isArray(events) ? events : [];
 
   if (artistLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   if (!artist) {
@@ -33,7 +33,7 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -42,7 +42,10 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-6xl">
           {/* Back Button */}
-          <Link href="/artists" className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8">
+          <Link
+            href="/artists"
+            className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Artists
           </Link>
@@ -201,7 +204,9 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
                       <p className="text-sm text-gray-400">
                         {new Date(event.date).toLocaleDateString()} at {event.time}
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">{event.venue}, {event.location}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {event.venue}, {event.location}
+                      </p>
                     </div>
                   </Link>
                 ))}
@@ -211,5 +216,5 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -26,10 +26,7 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      return apiClient.post<User & { userType: string }>(
-        "/auth/register/",
-        data
-      );
+      return apiClient.post<User & { userType: string }>("/auth/register/", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["current-user"] });

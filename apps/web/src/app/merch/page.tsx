@@ -1,39 +1,41 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, Filter } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { getProducts } from "@/lib/fourthwall"
-import type { Product } from "@/lib/types"
+import { useState, useEffect } from "react";
+import { ArrowLeft, Filter } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { getProducts } from "@/lib/fourthwall";
+import type { Product } from "@/lib/types";
 
 export default function MerchPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All")
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProducts() {
       try {
-        console.log("Starting to load products...")
-        const fetchedProducts = await getProducts("USD")
-        console.log("Products loaded:", fetchedProducts.length)
-        setProducts(fetchedProducts)
+        console.log("Starting to load products...");
+        const fetchedProducts = await getProducts("USD");
+        console.log("Products loaded:", fetchedProducts.length);
+        setProducts(fetchedProducts);
       } catch (error) {
-        console.error("Error loading products:", error)
+        console.error("Error loading products:", error);
         // Set empty array on error so page still renders
-        setProducts([])
+        setProducts([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    loadProducts()
-  }, [])
+    loadProducts();
+  }, []);
 
-  const categories = ["All", ...Array.from(new Set(products.map((p) => p.title.split(" ")[0])))]
+  const categories = ["All", ...Array.from(new Set(products.map((p) => p.title.split(" ")[0])))];
 
   const filteredItems =
-    selectedCategory === "All" ? products : products.filter((item) => item.title.startsWith(selectedCategory))
+    selectedCategory === "All"
+      ? products
+      : products.filter((item) => item.title.startsWith(selectedCategory));
 
   if (loading) {
     return (
@@ -43,7 +45,7 @@ export default function MerchPage() {
           <p className="text-gray-400 text-lg">Loading merch...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -63,7 +65,10 @@ export default function MerchPage() {
               <h1 className="text-5xl font-black tracking-wider">MERCH</h1>
               <div className="ml-8 w-32 h-1 bg-[#7CFC00] animate-expandWidth"></div>
             </div>
-            <p className="text-xl text-gray-400 animate-fadeInUp" style={{ animationDelay: "0.3s" }}>
+            <p
+              className="text-xl text-gray-400 animate-fadeInUp"
+              style={{ animationDelay: "0.3s" }}
+            >
               Official Dead Party Media merchandise - rep Arkansas music culture
             </p>
           </div>
@@ -89,50 +94,57 @@ export default function MerchPage() {
             {filteredItems
               .filter((product) => product.handle) // Only show products with valid handles
               .map((product) => (
-              <Link key={product.id} href={`/merch/${product.handle}`}>
-                <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group cursor-pointer">
-                  <div className="relative h-96 overflow-hidden bg-black">
-                    <Image
-                      src={product.featuredImage.url || "/placeholder.svg"}
-                      alt={product.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">MERCH</div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
-                      {product.title}
-                    </h3>
-                    {product.descriptionHtml || product.description ? (
-                      <div 
-                        className="text-sm text-gray-400 mb-4 line-clamp-2"
-                        dangerouslySetInnerHTML={{ 
-                          __html: (product.descriptionHtml || product.description || "").replace(/<[^>]*>/g, '')
-                        }}
+                <Link key={product.id} href={`/merch/${product.handle}`}>
+                  <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group cursor-pointer">
+                    <div className="relative h-96 overflow-hidden bg-black">
+                      <Image
+                        src={product.featuredImage.url || "/placeholder.svg"}
+                        alt={product.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                    ) : null}
-                    {product.variants.length > 1 && (
-                      <div className="mb-4">
-                        <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
-                          {product.variants.length} variants available
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                      <div className="absolute top-4 left-4">
+                        <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">
+                          MERCH
                         </div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-                      <div className="text-2xl font-black text-[#7CFC00]">${product.variants[0]?.price.amount}</div>
-                      <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
-                        <span>View Details</span>
-                        <span className="ml-2">→</span>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
+                        {product.title}
+                      </h3>
+                      {product.descriptionHtml || product.description ? (
+                        <div
+                          className="text-sm text-gray-400 mb-4 line-clamp-2"
+                          dangerouslySetInnerHTML={{
+                            __html: (product.descriptionHtml || product.description || "").replace(
+                              /<[^>]*>/g,
+                              "",
+                            ),
+                          }}
+                        />
+                      ) : null}
+                      {product.variants.length > 1 && (
+                        <div className="mb-4">
+                          <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                            {product.variants.length} variants available
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-800">
+                        <div className="text-2xl font-black text-[#7CFC00]">
+                          ${product.variants[0]?.price.amount}
+                        </div>
+                        <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
+                          <span>View Details</span>
+                          <span className="ml-2">→</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
           </div>
 
           {filteredItems.length === 0 && !loading && (
@@ -153,5 +165,5 @@ export default function MerchPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

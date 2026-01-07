@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { Toaster } from "./ui/sonner"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "./ui/sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -10,7 +10,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-})
+});
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -18,5 +18,5 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <Toaster richColors />
     </QueryClientProvider>
-  )
+  );
 }

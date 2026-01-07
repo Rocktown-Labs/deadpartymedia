@@ -1,13 +1,9 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { History, MessageSquare, Settings, LogOut, LayoutDashboard } from "lucide-react"
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { History, MessageSquare, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,40 +12,40 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useCurrentUser, useLogout } from "@/lib/api/auth"
-import { getDashboardRoute } from "@/lib/utils/dashboard"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/dropdown-menu";
+import { useCurrentUser, useLogout } from "@/lib/api/auth";
+import { getDashboardRoute } from "@/lib/utils/dashboard";
+import { Button } from "@/components/ui/button";
 
 function getInitials(name: string): string {
-  if (!name) return "U"
-  const parts = name.trim().split(" ")
+  if (!name) return "U";
+  const parts = name.trim().split(" ");
   if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase()
+    return parts[0].charAt(0).toUpperCase();
   }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 export function UserAvatarMenu() {
-  const router = useRouter()
-  const { data: user, isLoading } = useCurrentUser()
-  const logout = useLogout()
+  const router = useRouter();
+  const { data: user, isLoading } = useCurrentUser();
+  const logout = useLogout();
 
   if (isLoading || !user) {
-    return null
+    return null;
   }
 
   const handleLogout = async () => {
     try {
-      await logout.mutateAsync()
-      router.push("/")
+      await logout.mutateAsync();
+      router.push("/");
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Error signing out:", error);
     }
-  }
+  };
 
-  const dashboardRoute = getDashboardRoute(user.role)
-  const initials = getInitials(user.name)
+  const dashboardRoute = getDashboardRoute(user.role);
+  const initials = getInitials(user.name);
 
   return (
     <DropdownMenu>
@@ -95,13 +91,19 @@ export function UserAvatarMenu() {
           </DropdownMenuItem>
           {user.role === "fan" && (
             <>
-              <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-900 focus:bg-gray-900">
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer hover:bg-gray-900 focus:bg-gray-900"
+              >
                 <Link href="/dashboard/history" className="flex items-center gap-2">
                   <History className="w-4 h-4" />
                   History
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-900 focus:bg-gray-900">
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer hover:bg-gray-900 focus:bg-gray-900"
+              >
                 <Link href="/dashboard/comments" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
                   Comments
@@ -126,6 +128,5 @@ export function UserAvatarMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
-

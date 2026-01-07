@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
+import Image from "next/image";
+import Link from "next/link";
 
 interface Article {
-  id: number
-  slug: string
-  title: string
-  category: string
-  image: string
-  excerpt: string
-  author: string
-  date: string
+  id: number;
+  slug: string;
+  title: string;
+  category: string;
+  image: string;
+  excerpt: string;
+  author: string;
+  date: string;
 }
 
 interface ArticleCardProps {
-  article: Article
-  categoryColor?: string
+  article: Article;
+  categoryColor?: string;
 }
 
 export default function ArticleCard({ article, categoryColor = "#7CFC00" }: ArticleCardProps) {
@@ -62,5 +62,5 @@ export default function ArticleCard({ article, categoryColor = "#7CFC00" }: Arti
         </div>
       </article>
     </Link>
-  )
+  );
 }

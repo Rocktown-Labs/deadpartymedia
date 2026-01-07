@@ -60,9 +60,7 @@ export function useArtists(genre?: string) {
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await apiClient.get<Artist[] | { results: Artist[] }>(
-        `/artists/${params}`
-      );
+      const response = await apiClient.get<Artist[] | { results: Artist[] }>(`/artists/${params}`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -95,9 +93,9 @@ export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      const response = await apiClient.get<
-        ArticleList[] | { results: ArticleList[] }
-      >(`/artists/${slug}/articles/`);
+      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(
+        `/artists/${slug}/articles/`,
+      );
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -121,9 +119,9 @@ export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      const response = await apiClient.get<
-        EventList[] | { results: EventList[] }
-      >(`/artists/${slug}/events/`);
+      const response = await apiClient.get<EventList[] | { results: EventList[] }>(
+        `/artists/${slug}/events/`,
+      );
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -231,8 +229,7 @@ export function useOnboardArtist() {
         formData.append("profileImage", data.profileImage);
       }
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
       const response = await fetch(`${apiUrl}/artists/onboard/`, {
         method: "POST",
         body: formData,
@@ -240,14 +237,8 @@ export function useOnboardArtist() {
       });
 
       if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ error: response.statusText }));
-        throw new Error(
-          error.error ||
-            error.detail ||
-            `HTTP error! status: ${response.status}`
-        );
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
       }
 
       return response.json();
@@ -264,7 +255,9 @@ export function useSearchSpotifyArtists(query: string) {
     queryKey: ["spotify-search", query],
     queryFn: async () => {
       if (!query || query.length < 2) return [];
-      return apiClient.get<SpotifyArtist[]>(`/artists/search_spotify/?q=${encodeURIComponent(query)}`);
+      return apiClient.get<SpotifyArtist[]>(
+        `/artists/search_spotify/?q=${encodeURIComponent(query)}`,
+      );
     },
     enabled: query.length >= 2,
     staleTime: 5 * 60 * 1000, // 5 minutes

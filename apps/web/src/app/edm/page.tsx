@@ -1,17 +1,17 @@
-"use client"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { useArticles } from "@/lib/api/articles"
+"use client";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { useArticles } from "@/lib/api/articles";
 
 export default function EdmPage() {
-  const { data: articles, isLoading } = useArticles("EDM")
+  const { data: articles, isLoading } = useArticles("EDM");
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -62,5 +62,5 @@ export default function EdmPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

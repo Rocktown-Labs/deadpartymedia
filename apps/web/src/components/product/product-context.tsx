@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import { useRouter, useSearchParams } from "next/navigation"
-import type React from "react"
-import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react"
+import { useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react";
 
 type ProductState = {
-  [key: string]: string
+  [key: string]: string;
 } & {
-  image?: string
-}
+  image?: string;
+};
 
 type ProductContextType = {
-  state: ProductState
-  updateOption: (name: string, value: string) => ProductState
-  updateImage: (index: string) => ProductState
-}
+  state: ProductState;
+  updateOption: (name: string, value: string) => ProductState;
+  updateImage: (index: string) => ProductState;
+};
 
-const ProductContext = createContext<ProductContextType | undefined>(undefined)
+const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
   const getInitialState = () => {
-    const params: ProductState = {}
+    const params: ProductState = {};
     for (const [key, value] of searchParams.entries()) {
-      params[key] = value
+      params[key] = value;
     }
-    return params
-  }
+    return params;
+  };
 
   const [state, setOptimisticState] = useOptimistic(
     getInitialState(),
@@ -35,23 +35,23 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
       ...prevState,
       ...update,
     }),
-  )
+  );
 
   const updateOption = (name: string, value: string) => {
-    const newState = { [name]: value }
+    const newState = { [name]: value };
     startTransition(() => {
-      setOptimisticState(newState)
-    })
-    return { ...state, ...newState }
-  }
+      setOptimisticState(newState);
+    });
+    return { ...state, ...newState };
+  };
 
   const updateImage = (index: string) => {
-    const newState = { image: index }
+    const newState = { image: index };
     startTransition(() => {
-      setOptimisticState(newState)
-    })
-    return { ...state, ...newState }
-  }
+      setOptimisticState(newState);
+    });
+    return { ...state, ...newState };
+  };
 
   const value = useMemo(
     () => ({
@@ -60,27 +60,27 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
       updateImage,
     }),
     [state],
-  )
+  );
 
-  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>
+  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 }
 
 export function useProduct() {
-  const context = useContext(ProductContext)
+  const context = useContext(ProductContext);
   if (context === undefined) {
-    throw new Error("useProduct must be used within a ProductProvider")
+    throw new Error("useProduct must be used within a ProductProvider");
   }
-  return context
+  return context;
 }
 
 export function useUpdateURL() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (state: ProductState) => {
-    const newParams = new URLSearchParams(window.location.search)
+    const newParams = new URLSearchParams(window.location.search);
     Object.entries(state).forEach(([key, value]) => {
-      newParams.set(key, value)
-    })
-    router.push(`?${newParams.toString()}`, { scroll: false })
-  }
+      newParams.set(key, value);
+    });
+    router.push(`?${newParams.toString()}`, { scroll: false });
+  };
 }

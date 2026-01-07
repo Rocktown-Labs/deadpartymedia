@@ -1,28 +1,32 @@
-"use client"
+"use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useProduct, useUpdateURL } from "./product-context"
-import type { Product } from "@/lib/types"
-import Image from "next/image"
-import clsx from "clsx"
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useProduct, useUpdateURL } from "./product-context";
+import type { Product } from "@/lib/types";
+import Image from "next/image";
+import clsx from "clsx";
 
 export function Gallery({ product }: { product: Product }) {
-  const { state, updateImage } = useProduct()
-  const updateURL = useUpdateURL()
-  const imageIndex = state.image ? Number.parseInt(state.image) : 0
+  const { state, updateImage } = useProduct();
+  const updateURL = useUpdateURL();
+  const imageIndex = state.image ? Number.parseInt(state.image) : 0;
 
   const selectedVariant = product.variants.find((variant) => {
-    return variant.selectedOptions.find((option) => option.name === "Color" && option.value === state["color"])
-  })
+    return variant.selectedOptions.find(
+      (option) => option.name === "Color" && option.value === state["color"],
+    );
+  });
 
   const images =
-    selectedVariant?.images && selectedVariant.images.length > 0 ? selectedVariant.images : product.images.slice(0, 5)
+    selectedVariant?.images && selectedVariant.images.length > 0
+      ? selectedVariant.images
+      : product.images.slice(0, 5);
 
-  const nextImageIndex = imageIndex + 1 < images.length ? imageIndex + 1 : 0
-  const previousImageIndex = imageIndex === 0 ? images.length - 1 : imageIndex - 1
+  const nextImageIndex = imageIndex + 1 < images.length ? imageIndex + 1 : 0;
+  const previousImageIndex = imageIndex === 0 ? images.length - 1 : imageIndex - 1;
 
   const buttonClassName =
-    "h-full px-4 transition-all ease-in-out hover:scale-110 hover:text-[#7CFC00] flex items-center justify-center"
+    "h-full px-4 transition-all ease-in-out hover:scale-110 hover:text-[#7CFC00] flex items-center justify-center";
 
   return (
     <>
@@ -44,8 +48,8 @@ export function Gallery({ product }: { product: Product }) {
               <button
                 type="button"
                 onClick={() => {
-                  const newState = updateImage(previousImageIndex.toString())
-                  updateURL(newState)
+                  const newState = updateImage(previousImageIndex.toString());
+                  updateURL(newState);
                 }}
                 aria-label="Previous product image"
                 className={buttonClassName}
@@ -56,8 +60,8 @@ export function Gallery({ product }: { product: Product }) {
               <button
                 type="button"
                 onClick={() => {
-                  const newState = updateImage(nextImageIndex.toString())
-                  updateURL(newState)
+                  const newState = updateImage(nextImageIndex.toString());
+                  updateURL(newState);
                 }}
                 aria-label="Next product image"
                 className={buttonClassName}
@@ -72,15 +76,15 @@ export function Gallery({ product }: { product: Product }) {
       {images.length > 1 ? (
         <ul className="my-8 flex items-center justify-center gap-2 overflow-auto py-1">
           {images.map((image, index) => {
-            const isActive = index === imageIndex
+            const isActive = index === imageIndex;
 
             return (
               <li key={image.url} className="h-20 w-20">
                 <button
                   type="button"
                   onClick={() => {
-                    const newState = updateImage(index.toString())
-                    updateURL(newState)
+                    const newState = updateImage(index.toString());
+                    updateURL(newState);
                   }}
                   aria-label="Select product image"
                   className={clsx(
@@ -97,10 +101,10 @@ export function Gallery({ product }: { product: Product }) {
                   />
                 </button>
               </li>
-            )
+            );
           })}
         </ul>
       ) : null}
     </>
-  )
+  );
 }

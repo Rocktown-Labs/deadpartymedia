@@ -1,4 +1,4 @@
-import type { Route } from "next"
+import type { Route } from "next";
 
 /**
  * Get the dashboard route based on user role.
@@ -16,4 +16,3 @@ export function getDashboardRoute(role: string): Route {
       return "/dashboard" as Route;
   }
 }
-

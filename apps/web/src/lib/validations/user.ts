@@ -1,14 +1,8 @@
 import { z } from "zod";
 
 export const userUpdateSchema = z.object({
-  first_name: z
-    .string()
-    .min(1, "First name is required")
-    .max(150, "First name is too long"),
-  last_name: z
-    .string()
-    .min(1, "Last name is required")
-    .max(150, "Last name is too long"),
+  first_name: z.string().min(1, "First name is required").max(150, "First name is too long"),
+  last_name: z.string().min(1, "Last name is required").max(150, "Last name is too long"),
   email: z.string().email("Invalid email address").min(1, "Email is required"),
 });
 

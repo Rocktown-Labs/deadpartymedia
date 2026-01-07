@@ -1,18 +1,24 @@
-"use client"
+"use client";
 
-import { useCurrentUserArtist, useArtistEvents } from "@/lib/api/artists"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
-import { Calendar, MapPin, ExternalLink } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { format } from "date-fns"
+import { useCurrentUserArtist, useArtistEvents } from "@/lib/api/artists";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { Calendar, MapPin, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { format } from "date-fns";
 
 export default function ArtistEventsPage() {
-  const { data: artist, isLoading: artistLoading } = useCurrentUserArtist()
-  const { data: events, isLoading: eventsLoading } = useArtistEvents(artist?.slug || "")
+  const { data: artist, isLoading: artistLoading } = useCurrentUserArtist();
+  const { data: events, isLoading: eventsLoading } = useArtistEvents(artist?.slug || "");
 
-  const isLoading = artistLoading || eventsLoading
+  const isLoading = artistLoading || eventsLoading;
 
   if (isLoading) {
     return (
@@ -31,7 +37,7 @@ export default function ArtistEventsPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   if (!artist) {
@@ -57,10 +63,10 @@ export default function ArtistEventsPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
-  const eventsArray = Array.isArray(events) ? events : []
+  const eventsArray = Array.isArray(events) ? events : [];
 
   if (eventsArray.length === 0) {
     return (
@@ -85,7 +91,7 @@ export default function ArtistEventsPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -94,7 +100,9 @@ export default function ArtistEventsPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">My Events</h1>
-            <p className="text-gray-400">Events featuring {artist.name} ({eventsArray.length})</p>
+            <p className="text-gray-400">
+              Events featuring {artist.name} ({eventsArray.length})
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -106,12 +114,7 @@ export default function ArtistEventsPage() {
                 <div className="flex gap-4">
                   {event.image && (
                     <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                      <Image
-                        src={event.image}
-                        alt={event.title}
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={event.image} alt={event.title} fill className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -122,19 +125,17 @@ export default function ArtistEventsPage() {
                         </h3>
                       </Link>
                     </div>
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                      {event.description}
-                    </p>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{event.description}</p>
                     <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>
-                          {format(new Date(event.date), "PPP")}
-                        </span>
+                        <span>{format(new Date(event.date), "PPP")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        <span>{event.venue} - {event.location}</span>
+                        <span>
+                          {event.venue} - {event.location}
+                        </span>
                       </div>
                       {event.ticket_link && (
                         <a
@@ -156,6 +157,5 @@ export default function ArtistEventsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
-

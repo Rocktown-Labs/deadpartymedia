@@ -1,15 +1,21 @@
-"use client"
+"use client";
 
-import { useReadArticles } from "@/lib/api/user-activity"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
-import { BookOpen, Calendar } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
-import { formatDistanceToNow } from "date-fns"
+import { useReadArticles } from "@/lib/api/user-activity";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { BookOpen, Calendar } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
 
 export default function HistoryPage() {
-  const { data: readArticles, isLoading } = useReadArticles()
+  const { data: readArticles, isLoading } = useReadArticles();
 
   if (isLoading) {
     return (
@@ -28,10 +34,10 @@ export default function HistoryPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
-  const articles = readArticles?.results || []
+  const articles = readArticles?.results || [];
 
   if (articles.length === 0) {
     return (
@@ -56,7 +62,7 @@ export default function HistoryPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -68,53 +74,48 @@ export default function HistoryPage() {
             <p className="text-gray-400">Articles you've read ({articles.length})</p>
           </div>
 
-      <div className="space-y-4">
-        {articles.map((item) => {
-          const article = item.article
-          return (
-            <Link
-              key={item.id}
-              href={`/article/${article.slug}`}
-              className="block bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
-            >
-              <div className="flex gap-4">
-                {article.cover_image && (
-                  <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                    <Image
-                      src={article.cover_image}
-                      alt={article.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                    {article.excerpt}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>
-                        Read {formatDistanceToNow(new Date(item.read_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    {article.author && (
-                      <span>By {article.author.name}</span>
+          <div className="space-y-4">
+            {articles.map((item) => {
+              const article = item.article;
+              return (
+                <Link
+                  key={item.id}
+                  href={`/article/${article.slug}`}
+                  className="block bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
+                >
+                  <div className="flex gap-4">
+                    {article.cover_image && (
+                      <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
+                        <Image
+                          src={article.cover_image}
+                          alt={article.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                     )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                        {article.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">{article.excerpt}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            Read {formatDistanceToNow(new Date(item.read_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        {article.author && <span>By {article.author.name}</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </Link>
-          )
-        })}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }
-

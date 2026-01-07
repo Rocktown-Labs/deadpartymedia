@@ -1,22 +1,29 @@
-"use client"
+"use client";
 
-import clsx from "clsx"
-import { useProduct, useUpdateURL } from "./product-context"
-import type { ProductOption, ProductVariant } from "@/lib/types"
+import clsx from "clsx";
+import { useProduct, useUpdateURL } from "./product-context";
+import type { ProductOption, ProductVariant } from "@/lib/types";
 
 type Combination = {
-  id: string
-  availableForSale: boolean
-  [key: string]: string | boolean
-}
+  id: string;
+  availableForSale: boolean;
+  [key: string]: string | boolean;
+};
 
-export function VariantSelector({ options, variants }: { options: ProductOption[]; variants: ProductVariant[] }) {
-  const { state, updateOption } = useProduct()
-  const updateURL = useUpdateURL()
-  const hasNoOptionsOrJustOneOption = !options.length || (options.length === 1 && options[0]?.values.length === 1)
+export function VariantSelector({
+  options,
+  variants,
+}: {
+  options: ProductOption[];
+  variants: ProductVariant[];
+}) {
+  const { state, updateOption } = useProduct();
+  const updateURL = useUpdateURL();
+  const hasNoOptionsOrJustOneOption =
+    !options.length || (options.length === 1 && options[0]?.values.length === 1);
 
   if (hasNoOptionsOrJustOneOption) {
-    return null
+    return null;
   }
 
   const combinations: Combination[] = variants.map((variant) => ({
@@ -26,7 +33,7 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
       (accumulator, option) => ({ ...accumulator, [option.name.toLowerCase()]: option.value }),
       {},
     ),
-  }))
+  }));
 
   return options.map((option) => (
     <div key={option.id}>
@@ -34,25 +41,29 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
         <dt className="mb-4 text-sm uppercase tracking-wide font-bold">{option.name}</dt>
         <dd className="flex flex-wrap gap-3">
           {option.values.map((value) => {
-            const optionNameLowerCase = option.name.toLowerCase()
+            const optionNameLowerCase = option.name.toLowerCase();
 
-            const optionParams = { ...state, [optionNameLowerCase]: value }
+            const optionParams = { ...state, [optionNameLowerCase]: value };
 
             const filtered = Object.entries(optionParams).filter(([key, value]) =>
-              options.find((option) => option.name.toLowerCase() === key && option.values.includes(value)),
-            )
+              options.find(
+                (option) => option.name.toLowerCase() === key && option.values.includes(value),
+              ),
+            );
             const isAvailableForSale = combinations.find((combination) =>
-              filtered.every(([key, value]) => combination[key] === value && combination.availableForSale),
-            )
+              filtered.every(
+                ([key, value]) => combination[key] === value && combination.availableForSale,
+              ),
+            );
 
-            const isActive = state[optionNameLowerCase] === value
+            const isActive = state[optionNameLowerCase] === value;
 
             return (
               <button
                 type="button"
                 onClick={() => {
-                  const newState = updateOption(optionNameLowerCase, value)
-                  updateURL(newState)
+                  const newState = updateOption(optionNameLowerCase, value);
+                  updateURL(newState);
                 }}
                 key={value}
                 aria-disabled={!isAvailableForSale}
@@ -71,10 +82,10 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
               >
                 {value}
               </button>
-            )
+            );
           })}
         </dd>
       </dl>
     </div>
-  ))
+  ));
 }

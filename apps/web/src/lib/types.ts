@@ -1,79 +1,79 @@
 export type Money = {
-  amount: string
-  currencyCode: string
-}
+  amount: string;
+  currencyCode: string;
+};
 
 export type Image = {
-  url: string
-  altText: string
-  width: number
-  height: number
-}
+  url: string;
+  altText: string;
+  width: number;
+  height: number;
+};
 
 export type ProductOption = {
-  id: string
-  name: string
-  values: string[]
-}
+  id: string;
+  name: string;
+  values: string[];
+};
 
 export type SelectedOption = {
-  name: string
-  value: string
-}
+  name: string;
+  value: string;
+};
 
 export type ProductVariant = {
-  id: string
-  title: string
-  availableForSale: boolean
-  selectedOptions: SelectedOption[]
-  price: Money
-  images?: Image[]
-}
+  id: string;
+  title: string;
+  availableForSale: boolean;
+  selectedOptions: SelectedOption[];
+  price: Money;
+  images?: Image[];
+};
 
 export type Product = {
-  id: string
-  handle: string
-  title: string
-  description: string
-  descriptionHtml?: string
-  featuredImage: Image
-  images: Image[]
-  variants: ProductVariant[]
-  options: ProductOption[]
-  availableForSale: boolean
-  tags?: string[]
+  id: string;
+  handle: string;
+  title: string;
+  description: string;
+  descriptionHtml?: string;
+  featuredImage: Image;
+  images: Image[];
+  variants: ProductVariant[];
+  options: ProductOption[];
+  availableForSale: boolean;
+  tags?: string[];
   priceRange: {
-    minVariantPrice: Money
-    maxVariantPrice: Money
-  }
-}
+    minVariantPrice: Money;
+    maxVariantPrice: Money;
+  };
+};
 
 export type CartItem = {
-  id: string
-  quantity: number
+  id: string;
+  quantity: number;
   cost: {
-    totalAmount: Money
-  }
+    totalAmount: Money;
+  };
   merchandise: {
-    id: string
-    title: string
-    selectedOptions: SelectedOption[]
+    id: string;
+    title: string;
+    selectedOptions: SelectedOption[];
     product: {
-      id: string
-      handle: string
-      title: string
-      featuredImage: Image
-    }
-  }
-}
+      id: string;
+      handle: string;
+      title: string;
+      featuredImage: Image;
+    };
+  };
+};
 
 export type Cart = {
-  id: string | undefined
-  totalQuantity: number
-  lines: CartItem[]
-  currency: string
+  id: string | undefined;
+  totalQuantity: number;
+  lines: CartItem[];
+  currency: string;
   cost: {
-    subtotalAmount: Money
-    totalAmount: Money
-  }
-}
+    subtotalAmount: Money;
+    totalAmount: Money;
+  };
+};

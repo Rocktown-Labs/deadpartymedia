@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ArrowLeft, MapPin } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useArtists } from "@/lib/api/artists"
+import { useState } from "react";
+import { ArrowLeft, MapPin } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useArtists } from "@/lib/api/artists";
 
 export default function ArtistsPage() {
-  const [filterGenre, setFilterGenre] = useState<string>("ALL")
-  const { data: artists, isLoading } = useArtists(filterGenre !== "ALL" ? filterGenre : undefined)
+  const [filterGenre, setFilterGenre] = useState<string>("ALL");
+  const { data: artists, isLoading } = useArtists(filterGenre !== "ALL" ? filterGenre : undefined);
 
-  const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"]
+  const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -99,5 +99,5 @@ export default function ArtistsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

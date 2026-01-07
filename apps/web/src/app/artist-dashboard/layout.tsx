@@ -1,22 +1,18 @@
-"use client"
+"use client";
 
-import { useCurrentUser } from "@/lib/api/auth"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useCurrentUser } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function ArtistDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { data: user, isLoading } = useCurrentUser()
-  const router = useRouter()
+export default function ArtistDashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: user, isLoading } = useCurrentUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "artist")) {
-      router.push("/sign-in")
+      router.push("/sign-in");
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -26,13 +22,12 @@ export default function ArtistDashboardLayout({
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user || user.role !== "artist") {
-    return null
+    return null;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
-

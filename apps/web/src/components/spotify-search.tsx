@@ -1,53 +1,53 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Music, Search, Loader2 } from "lucide-react"
-import { useSearchSpotifyArtists, type SpotifyArtist } from "@/lib/api/artists"
-import { useDebounce } from "@/hooks/use-debounce"
-import { cn } from "@/lib/utils"
+import { useState, useRef, useEffect } from "react";
+import { Music, Search, Loader2 } from "lucide-react";
+import { useSearchSpotifyArtists, type SpotifyArtist } from "@/lib/api/artists";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 
 interface SpotifySearchProps {
-  value?: string
-  onSelect: (artist: SpotifyArtist) => void
-  className?: string
+  value?: string;
+  onSelect: (artist: SpotifyArtist) => void;
+  className?: string;
 }
 
 /**
  * Extracts Spotify Artist ID from a full Spotify URL or returns the ID if already provided.
  */
 function extractSpotifyId(input: string): string | null {
-  if (!input) return null
-  
+  if (!input) return null;
+
   // If it's already just an ID (alphanumeric, no slashes or dots)
   if (/^[a-zA-Z0-9]+$/.test(input.trim())) {
-    return input.trim()
+    return input.trim();
   }
-  
+
   // Try to extract from URL patterns:
   // https://open.spotify.com/artist/4iHNK0tOyZPYnBU7iGc4UU
   // spotify:artist:4iHNK0tOyZPYnBU7iGc4UU
-  const urlMatch = input.match(/artist\/([a-zA-Z0-9]+)/)
+  const urlMatch = input.match(/artist\/([a-zA-Z0-9]+)/);
   if (urlMatch) {
-    return urlMatch[1]
+    return urlMatch[1];
   }
-  
-  return null
+
+  return null;
 }
 
 export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedArtist, setSelectedArtist] = useState<SpotifyArtist | null>(null)
-  const debouncedQuery = useDebounce(searchQuery, 500)
-  const { data: artists, isLoading, error } = useSearchSpotifyArtists(debouncedQuery)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState<SpotifyArtist | null>(null);
+  const debouncedQuery = useDebounce(searchQuery, 500);
+  const { data: artists, isLoading, error } = useSearchSpotifyArtists(debouncedQuery);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Handle pasted URLs
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const pastedText = e.clipboardData.getData("text")
-    const extractedId = extractSpotifyId(pastedText)
-    
+    const pastedText = e.clipboardData.getData("text");
+    const extractedId = extractSpotifyId(pastedText);
+
     if (extractedId) {
       // If we extracted an ID from a URL, create a minimal artist object
       // The user will need to search to get full details, but we can set the ID
@@ -57,50 +57,50 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
         images: [],
         external_urls: { spotify: `https://open.spotify.com/artist/${extractedId}` },
         genres: [],
-      }
-      setSelectedArtist(urlArtist)
-      setSearchQuery("")
-      setIsOpen(false)
-      onSelect(urlArtist)
+      };
+      setSelectedArtist(urlArtist);
+      setSearchQuery("");
+      setIsOpen(false);
+      onSelect(urlArtist);
     }
-  }
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    setSearchQuery(newValue)
-    setIsOpen(true)
-    setSelectedArtist(null)
-  }
+    const newValue = e.target.value;
+    setSearchQuery(newValue);
+    setIsOpen(true);
+    setSelectedArtist(null);
+  };
 
   // Handle artist selection
   const handleSelectArtist = (artist: SpotifyArtist) => {
-    setSelectedArtist(artist)
-    setSearchQuery(artist.name)
-    setIsOpen(false)
-    onSelect(artist)
-  }
+    setSelectedArtist(artist);
+    setSearchQuery(artist.name);
+    setIsOpen(false);
+    onSelect(artist);
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Show selected artist name if value is provided
   useEffect(() => {
     if (value && !searchQuery && !selectedArtist) {
-      setSearchQuery(value)
+      setSearchQuery(value);
     }
-  }, [value, searchQuery, selectedArtist])
+  }, [value, searchQuery, selectedArtist]);
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -152,7 +152,7 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
                       <Music className="w-6 h-6 text-gray-500" />
                     </div>
                   )}
-                  
+
                   {/* Artist Info */}
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-white truncate">{artist.name}</div>
@@ -177,6 +177,5 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
         Search for your artist or paste a Spotify artist URL
       </p>
     </div>
-  )
+  );
 }
-

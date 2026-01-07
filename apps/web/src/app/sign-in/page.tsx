@@ -1,43 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useLogin } from "@/lib/api/auth"
-import { getDashboardRoute } from "@/lib/utils/dashboard"
-import { toast } from "sonner"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLogin } from "@/lib/api/auth";
+import { getDashboardRoute } from "@/lib/utils/dashboard";
+import { toast } from "sonner";
 
 export default function SignInPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const login = useLogin()
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const login = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null) // Clear previous errors
+    e.preventDefault();
+    setError(null); // Clear previous errors
     try {
-      const user = await login.mutateAsync({ email, password })
-      toast.success("Signed in successfully!")
+      const user = await login.mutateAsync({ email, password });
+      toast.success("Signed in successfully!");
       // Redirect to appropriate dashboard based on role
-      const dashboardRoute = getDashboardRoute(user.role)
-      router.push(dashboardRoute)
+      const dashboardRoute = getDashboardRoute(user.role);
+      router.push(dashboardRoute);
     } catch (error: any) {
-      console.error("Error signing in:", error)
-      setError(error.message || "Failed to sign in. Please check your credentials.")
+      console.error("Error signing in:", error);
+      setError(error.message || "Failed to sign in. Please check your credentials.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20">
       <div className="w-full max-w-md">
-        <Link href="/" className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8">
+        <Link
+          href="/"
+          className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Home
         </Link>
@@ -71,12 +74,12 @@ export default function SignInPage() {
                 type="email"
                 value={email}
                 onChange={(e) => {
-                  setEmail(e.target.value)
-                  setError(null) // Clear error when user types
+                  setEmail(e.target.value);
+                  setError(null); // Clear error when user types
                 }}
                 className={`w-full pl-11 pr-4 py-3 bg-[#111111] border rounded-lg text-white placeholder-gray-500 focus:outline-none ${
-                  error 
-                    ? "border-red-500 focus:border-red-500" 
+                  error
+                    ? "border-red-500 focus:border-red-500"
                     : "border-gray-800 focus:border-[#7CFC00]"
                 }`}
                 placeholder="you@example.com"
@@ -86,19 +89,21 @@ export default function SignInPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Password</label>
+            <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+              Password
+            </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => {
-                  setPassword(e.target.value)
-                  setError(null) // Clear error when user types
+                  setPassword(e.target.value);
+                  setError(null); // Clear error when user types
                 }}
                 className={`w-full pl-11 pr-4 py-3 bg-[#111111] border rounded-lg text-white placeholder-gray-500 focus:outline-none ${
-                  error 
-                    ? "border-red-500 focus:border-red-500" 
+                  error
+                    ? "border-red-500 focus:border-red-500"
                     : "border-gray-800 focus:border-[#7CFC00]"
                 }`}
                 placeholder="••••••••"
@@ -136,5 +141,5 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

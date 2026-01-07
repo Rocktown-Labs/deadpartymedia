@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { ArrowRight, MapPin, Instagram, Youtube, Twitter } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useOnboardArtist, useCurrentUserArtist, type SpotifyArtist } from "@/lib/api/artists"
-import { useCurrentUser } from "@/lib/api/auth"
-import { SpotifySearch } from "@/components/spotify-search"
-import { toast } from "sonner"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { ArrowRight, MapPin, Instagram, Youtube, Twitter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useOnboardArtist, useCurrentUserArtist, type SpotifyArtist } from "@/lib/api/artists";
+import { useCurrentUser } from "@/lib/api/auth";
+import { SpotifySearch } from "@/components/spotify-search";
+import { toast } from "sonner";
 
-type OnboardingStep = 1 | 2 | 3 | 4
+type OnboardingStep = 1 | 2 | 3 | 4;
 
 export default function OnboardingPage() {
-  const router = useRouter()
-  const { data: user, isLoading: userLoading } = useCurrentUser()
-  const { data: existingArtist, isLoading: artistLoading } = useCurrentUserArtist()
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1)
-  const onboardArtist = useOnboardArtist()
+  const router = useRouter();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: existingArtist, isLoading: artistLoading } = useCurrentUserArtist();
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
+  const onboardArtist = useOnboardArtist();
   const [artistData, setArtistData] = useState({
     artistName: "",
     location: "",
@@ -31,21 +31,21 @@ export default function OnboardingPage() {
       website: "",
     },
     profileImage: "",
-  })
+  });
 
   // Authentication check - redirect if not logged in
   useEffect(() => {
     if (!userLoading && !user) {
-      router.push("/sign-in")
+      router.push("/sign-in");
     }
-  }, [user, userLoading, router])
+  }, [user, userLoading, router]);
 
   // Check if user already has an artist profile - redirect to dashboard
   useEffect(() => {
     if (!artistLoading && existingArtist) {
-      router.push("/artist-dashboard")
+      router.push("/artist-dashboard");
     }
-  }, [existingArtist, artistLoading, router])
+  }, [existingArtist, artistLoading, router]);
 
   // Show loading state while checking auth/artist
   if (userLoading || artistLoading) {
@@ -56,34 +56,39 @@ export default function OnboardingPage() {
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Don't render if not authenticated or already has artist
   if (!user || existingArtist) {
-    return null
+    return null;
   }
 
-  const genres = ["Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"]
+  const genres = ["Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
 
   const handleNext = () => {
     if (currentStep < 4) {
-      setCurrentStep((currentStep + 1) as OnboardingStep)
+      setCurrentStep((currentStep + 1) as OnboardingStep);
     }
-  }
+  };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep((currentStep - 1) as OnboardingStep)
+      setCurrentStep((currentStep - 1) as OnboardingStep);
     }
-  }
+  };
 
   const handleSubmit = async () => {
     try {
       await onboardArtist.mutateAsync({
         artistName: artistData.artistName,
         location: artistData.location,
-        genre: artistData.genre as "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other",
+        genre: artistData.genre as
+          | "Country"
+          | "EDM"
+          | "Hardcore & Rock"
+          | "Hip-Hop & R&B"
+          | "Other",
         bio: artistData.bio,
         spotifyId: artistData.spotifyId || undefined,
         socials: {
@@ -92,17 +97,19 @@ export default function OnboardingPage() {
           youtube: artistData.socials.youtube || undefined,
           website: artistData.socials.website || undefined,
         },
-        profileImage: artistData.profileImage ? (artistData.profileImage as unknown as File) : undefined,
-      })
-      toast.success("Artist profile created successfully!")
-      router.push("/artist-dashboard")
+        profileImage: artistData.profileImage
+          ? (artistData.profileImage as unknown as File)
+          : undefined,
+      });
+      toast.success("Artist profile created successfully!");
+      router.push("/artist-dashboard");
     } catch (error: any) {
-      console.error("Error creating artist profile:", error)
-      toast.error(error.message || "Failed to create artist profile. Please try again.")
+      console.error("Error creating artist profile:", error);
+      toast.error(error.message || "Failed to create artist profile. Please try again.");
     }
-  }
+  };
 
-  const progressPercentage = (currentStep / 4) * 100
+  const progressPercentage = (currentStep / 4) * 100;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -146,7 +153,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Artist/Band Name</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Artist/Band Name
+                  </label>
                   <input
                     type="text"
                     value={artistData.artistName}
@@ -157,7 +166,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Location</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Location
+                  </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
@@ -171,7 +182,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Primary Genre</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Primary Genre
+                  </label>
                   <div className="grid grid-cols-2 gap-3">
                     {genres.map((genre) => (
                       <button
@@ -201,7 +214,9 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Artist Bio</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Artist Bio
+                  </label>
                   <textarea
                     value={artistData.bio}
                     onChange={(e) => setArtistData({ ...artistData, bio: e.target.value })}
@@ -209,18 +224,22 @@ export default function OnboardingPage() {
                     className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00] resize-none"
                     placeholder="Share your musical journey, influences, and what makes your sound unique..."
                   />
-                  <p className="text-xs text-gray-500 mt-2">{artistData.bio.length}/500 characters</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {artistData.bio.length}/500 characters
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Profile Image</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Profile Image
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => {
-                      const file = e.target.files?.[0]
+                      const file = e.target.files?.[0];
                       if (file) {
-                        setArtistData({ ...artistData, profileImage: file as any })
+                        setArtistData({ ...artistData, profileImage: file as any });
                       }
                     }}
                     className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white focus:outline-none focus:border-[#7CFC00]"
@@ -240,7 +259,7 @@ export default function OnboardingPage() {
                 <SpotifySearch
                   value={artistData.spotifyId}
                   onSelect={(artist: SpotifyArtist) => {
-                    setArtistData({ ...artistData, spotifyId: artist.id })
+                    setArtistData({ ...artistData, spotifyId: artist.id });
                   }}
                 />
               </div>
@@ -255,14 +274,19 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Instagram</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Instagram
+                  </label>
                   <div className="relative">
                     <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       value={artistData.socials.instagram}
                       onChange={(e) =>
-                        setArtistData({ ...artistData, socials: { ...artistData.socials, instagram: e.target.value } })
+                        setArtistData({
+                          ...artistData,
+                          socials: { ...artistData.socials, instagram: e.target.value },
+                        })
                       }
                       className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                       placeholder="https://instagram.com/yourhandle"
@@ -271,14 +295,19 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Twitter/X</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Twitter/X
+                  </label>
                   <div className="relative">
                     <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       value={artistData.socials.twitter}
                       onChange={(e) =>
-                        setArtistData({ ...artistData, socials: { ...artistData.socials, twitter: e.target.value } })
+                        setArtistData({
+                          ...artistData,
+                          socials: { ...artistData.socials, twitter: e.target.value },
+                        })
                       }
                       className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                       placeholder="https://twitter.com/yourhandle"
@@ -287,14 +316,19 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">YouTube</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    YouTube
+                  </label>
                   <div className="relative">
                     <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       value={artistData.socials.youtube}
                       onChange={(e) =>
-                        setArtistData({ ...artistData, socials: { ...artistData.socials, youtube: e.target.value } })
+                        setArtistData({
+                          ...artistData,
+                          socials: { ...artistData.socials, youtube: e.target.value },
+                        })
                       }
                       className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                       placeholder="https://youtube.com/@yourchannel"
@@ -303,12 +337,17 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Website (Optional)</label>
+                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                    Website (Optional)
+                  </label>
                   <input
                     type="text"
                     value={artistData.socials.website}
                     onChange={(e) =>
-                      setArtistData({ ...artistData, socials: { ...artistData.socials, website: e.target.value } })
+                      setArtistData({
+                        ...artistData,
+                        socials: { ...artistData.socials, website: e.target.value },
+                      })
                     }
                     className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                     placeholder="https://yourwebsite.com"
@@ -351,5 +390,5 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

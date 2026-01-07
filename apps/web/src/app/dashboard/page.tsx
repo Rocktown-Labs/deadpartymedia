@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import { useDashboardStats } from "@/lib/api/user-activity"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
-import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useCurrentUser } from "@/lib/api/auth"
-import type { Route } from "next"
+import { useDashboardStats } from "@/lib/api/user-activity";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/lib/api/auth";
+import type { Route } from "next";
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useDashboardStats()
-  const { data: user } = useCurrentUser()
+  const { data: stats, isLoading } = useDashboardStats();
+  const { data: user } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -30,7 +36,7 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   if (!stats) {
@@ -45,22 +51,23 @@ export default function DashboardPage() {
                 </EmptyMedia>
                 <EmptyTitle>Unable to load dashboard</EmptyTitle>
                 <EmptyDescription>
-                  There was an error loading your dashboard statistics. Please try refreshing the page.
+                  There was an error loading your dashboard statistics. Please try refreshing the
+                  page.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   const statsCards: Array<{
-    title: string
-    value: number
-    icon: typeof BookOpen
-    href: Route
-    color: string
+    title: string;
+    value: number;
+    icon: typeof BookOpen;
+    href: Route;
+    color: string;
   }> = [
     {
       title: "Articles Read",
@@ -83,13 +90,13 @@ export default function DashboardPage() {
       href: "/dashboard/comments" as Route,
       color: "text-[#7CFC00]",
     },
-  ]
+  ];
 
   const actionButtons: Array<{
-    title: string
-    description: string
-    icon: typeof History
-    href: Route
+    title: string;
+    description: string;
+    icon: typeof History;
+    href: Route;
   }> = [
     {
       title: "Reading History",
@@ -109,7 +116,7 @@ export default function DashboardPage() {
       icon: MessageSquare,
       href: "/dashboard/comments" as Route,
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -117,13 +124,15 @@ export default function DashboardPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Dashboard</h1>
-            <p className="text-gray-400">Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!</p>
+            <p className="text-gray-400">
+              Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+            </p>
           </div>
 
           {/* Stats */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             {statsCards.map((card) => {
-              const Icon = card.icon
+              const Icon = card.icon;
               return (
                 <Link key={card.title} href={card.href}>
                   <div className="bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors cursor-pointer">
@@ -134,14 +143,14 @@ export default function DashboardPage() {
                     <div className="text-sm text-gray-400">{card.title}</div>
                   </div>
                 </Link>
-              )
+              );
             })}
           </div>
 
           {/* Action Buttons */}
           <div className="grid md:grid-cols-3 gap-4">
             {actionButtons.map((button) => {
-              const Icon = button.icon
+              const Icon = button.icon;
               return (
                 <Link key={button.title} href={button.href}>
                   <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
@@ -152,12 +161,11 @@ export default function DashboardPage() {
                     </div>
                   </Button>
                 </Link>
-              )
+              );
             })}
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }
-

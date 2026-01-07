@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useCurrentUser } from "@/lib/api/auth"
+import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/lib/api/auth";
 
 export default function ArtistDashboardPage() {
-  const { data: user } = useCurrentUser()
+  const { data: user } = useCurrentUser();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -14,7 +14,9 @@ export default function ArtistDashboardPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Artist Dashboard</h1>
-            <p className="text-gray-400">Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!</p>
+            <p className="text-gray-400">
+              Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+            </p>
           </div>
 
           {/* Stats */}
@@ -97,5 +99,5 @@ export default function ArtistDashboardPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

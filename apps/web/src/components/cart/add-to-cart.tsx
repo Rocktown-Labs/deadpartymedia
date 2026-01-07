@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useFormStatus } from "react-dom"
-import { addItem } from "@/app/cart/actions"
-import { useCart } from "./cart-context"
-import type { Product, ProductVariant } from "@/lib/types"
-import { ShoppingCart } from "lucide-react"
-import { useProduct } from "../product/product-context"
+import { useFormStatus } from "react-dom";
+import { addItem } from "@/app/cart/actions";
+import { useCart } from "./cart-context";
+import type { Product, ProductVariant } from "@/lib/types";
+import { ShoppingCart } from "lucide-react";
+import { useProduct } from "../product/product-context";
 
 function SubmitButton({ availableForSale }: { availableForSale: boolean }) {
-  const { pending } = useFormStatus()
+  const { pending } = useFormStatus();
 
   return (
     <button
@@ -27,32 +27,32 @@ function SubmitButton({ availableForSale }: { availableForSale: boolean }) {
         "Out of Stock"
       )}
     </button>
-  )
+  );
 }
 
 export function AddToCart({ product }: { product: Product }) {
-  const { addCartItem } = useCart()
-  const { state } = useProduct()
+  const { addCartItem } = useCart();
+  const { state } = useProduct();
 
-  const variants = product.variants
+  const variants = product.variants;
 
   const selectedVariant: ProductVariant | undefined = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every((option) => option.value === state[option.name.toLowerCase()]),
-  )
+  );
 
-  const defaultVariant = variants.length === 1 ? variants[0] : undefined
-  const variant = selectedVariant || defaultVariant
-  const availableForSale = variant ? variant.availableForSale : false
+  const defaultVariant = variants.length === 1 ? variants[0] : undefined;
+  const variant = selectedVariant || defaultVariant;
+  const availableForSale = variant ? variant.availableForSale : false;
 
   return (
     <form
       action={async () => {
-        if (!variant) return
-        addCartItem(variant, product)
-        await addItem(null, variant.id)
+        if (!variant) return;
+        addCartItem(variant, product);
+        await addItem(null, variant.id);
       }}
     >
       <SubmitButton availableForSale={availableForSale} />
     </form>
-  )
+  );
 }

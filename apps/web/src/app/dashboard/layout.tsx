@@ -1,22 +1,18 @@
-"use client"
+"use client";
 
-import { useCurrentUser } from "@/lib/api/auth"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useCurrentUser } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { data: user, isLoading } = useCurrentUser()
-  const router = useRouter()
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { data: user, isLoading } = useCurrentUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/sign-in")
+      router.push("/sign-in");
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -26,13 +22,12 @@ export default function DashboardLayout({
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return null
+    return null;
   }
 
-  return <div className="min-h-screen bg-[#0A0A0A] text-white">{children}</div>
+  return <div className="min-h-screen bg-[#0A0A0A] text-white">{children}</div>;
 }
-

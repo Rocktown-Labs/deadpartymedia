@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ArrowLeft, MapPin, Clock } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useEvents } from "@/lib/api/events"
+import { useState } from "react";
+import { ArrowLeft, MapPin, Clock } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEvents } from "@/lib/api/events";
 
 export default function EventsPage() {
-  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming")
-  const { data: events, isLoading } = useEvents()
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
+  const { data: events, isLoading } = useEvents();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
-  const now = new Date()
-  const upcomingEvents = (events || []).filter((event) => new Date(event.date) >= now)
-  const pastEvents = (events || []).filter((event) => new Date(event.date) < now)
+  const now = new Date();
+  const upcomingEvents = (events || []).filter((event) => new Date(event.date) >= now);
+  const pastEvents = (events || []).filter((event) => new Date(event.date) < now);
 
-  const displayEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents
+  const displayEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -118,5 +118,5 @@ export default function EventsPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

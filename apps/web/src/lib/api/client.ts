@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 export class ApiClient {
   private baseUrl: string;
@@ -21,16 +20,13 @@ export class ApiClient {
     return null;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // Get CSRF token for POST/PUT/DELETE requests
     const csrfToken = this.getCsrfToken();
     const isModifyingMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(options.method || "");
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -44,9 +40,7 @@ export class ApiClient {
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ error: response.statusText }));
+      const error = await response.json().catch(() => ({ error: response.statusText }));
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 

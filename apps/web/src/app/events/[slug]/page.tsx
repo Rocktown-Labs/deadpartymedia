@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { use } from "react"
-import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useEvent } from "@/lib/api/events"
+import { use } from "react";
+import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEvent } from "@/lib/api/events";
 
 export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
-  const { data: event, isLoading } = useEvent(slug)
+  const { slug } = use(params);
+  const { data: event, isLoading } = useEvent(slug);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   if (!event) {
@@ -28,18 +28,21 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
-  const eventDate = new Date(event.date)
-  const isPastEvent = eventDate < new Date()
+  const eventDate = new Date(event.date);
+  const isPastEvent = eventDate < new Date();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-6xl">
           {/* Back Button */}
-          <Link href="/events" className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8">
+          <Link
+            href="/events"
+            className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Events
           </Link>
@@ -62,12 +65,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
           {/* Event Image */}
           {event.image && (
             <div className="relative h-96 md:h-[500px] rounded-lg overflow-hidden mb-8">
-              <Image
-                src={event.image}
-                alt={event.title}
-                fill
-                className="object-cover"
-              />
+              <Image src={event.image} alt={event.title} fill className="object-cover" />
             </div>
           )}
 
@@ -177,6 +175,5 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
         </div>
       </main>
     </div>
-  )
+  );
 }
-

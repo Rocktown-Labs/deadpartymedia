@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { use, useState, useEffect } from "react"
-import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import Link from "next/link"
-import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/articles"
-import { useCurrentUser } from "@/lib/api/auth"
-import { useMarkArticleRead } from "@/lib/api/user-activity"
+import { use, useState, useEffect } from "react";
+import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Link from "next/link";
+import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/articles";
+import { useCurrentUser } from "@/lib/api/auth";
+import { useMarkArticleRead } from "@/lib/api/user-activity";
 
 interface ArticlePageProps {
   params: Promise<{
-    slug: string
-  }>
+    slug: string;
+  }>;
 }
 
 export default function ArticlePage({ params }: ArticlePageProps) {
-  const { slug } = use(params)
-  const { data: article, isLoading } = useArticle(slug)
-  const { data: comments } = useArticleComments(slug)
-  const { data: currentUser } = useCurrentUser()
-  const createComment = useCreateComment()
-  const markArticleRead = useMarkArticleRead()
-  const [commentText, setCommentText] = useState("")
+  const { slug } = use(params);
+  const { data: article, isLoading } = useArticle(slug);
+  const { data: comments } = useArticleComments(slug);
+  const { data: currentUser } = useCurrentUser();
+  const createComment = useCreateComment();
+  const markArticleRead = useMarkArticleRead();
+  const [commentText, setCommentText] = useState("");
 
   // Track article read when article loads and user is logged in
   useEffect(() => {
@@ -31,33 +31,33 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       markArticleRead.mutate(article.id, {
         onError: (error) => {
           // Silently fail - don't interrupt user experience
-          console.error("Error tracking article read:", error)
+          console.error("Error tracking article read:", error);
         },
-      })
+      });
     }
-  }, [article, currentUser, markArticleRead])
+  }, [article, currentUser, markArticleRead]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!commentText.trim() || !currentUser) return
+    e.preventDefault();
+    if (!commentText.trim() || !currentUser) return;
 
     try {
       await createComment.mutateAsync({
         slug: slug,
         content: commentText,
-      })
-      setCommentText("")
+      });
+      setCommentText("");
     } catch (error) {
-      console.error("Error posting comment:", error)
+      console.error("Error posting comment:", error);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   if (!article) {
@@ -70,7 +70,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -79,7 +79,10 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
-          <Link href="/" className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Articles
           </Link>
@@ -97,7 +100,9 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 </div>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {article.published_at ? new Date(article.published_at).toLocaleDateString() : "Draft"}
+                  {article.published_at
+                    ? new Date(article.published_at).toLocaleDateString()
+                    : "Draft"}
                 </div>
               </div>
             </div>
@@ -180,7 +185,9 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                     <div className="flex items-start gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold text-white">{comment.user_name || comment.user_email}</span>
+                          <span className="font-bold text-white">
+                            {comment.user_name || comment.user_email}
+                          </span>
                           <span className="text-xs text-gray-500">
                             {new Date(comment.created_at).toLocaleDateString()}
                           </span>
@@ -215,5 +222,5 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         </div>
       </main>
     </div>
-  )
+  );
 }

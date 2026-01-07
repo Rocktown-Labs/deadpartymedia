@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { MapPin, Flame, ShoppingBag } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import Link from "next/link"
-import type { Product } from "@/lib/types"
+import { useState, useEffect } from "react";
+import { MapPin, Flame, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import Link from "next/link";
+import type { Product } from "@/lib/types";
 
 interface HomepageClientProps {
-  featuredArticles: any[]
-  articlesData: any[]
-  upcomingEvents: any[]
-  featuredProducts: Product[]
+  featuredArticles: any[];
+  articlesData: any[];
+  upcomingEvents: any[];
+  featuredProducts: Product[];
 }
 
 export default function HomepageClient({
@@ -20,29 +20,29 @@ export default function HomepageClient({
   upcomingEvents = [],
   featuredProducts = [],
 }: HomepageClientProps) {
-  const [visibleArticles, setVisibleArticles] = useState(9)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [visibleArticles, setVisibleArticles] = useState(9);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
 
-    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-    }
-  }, [])
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
 
   const loadMoreArticles = () => {
-    setIsLoadingMore(true)
+    setIsLoadingMore(true);
     setTimeout(() => {
-      setVisibleArticles((prev) => prev + 6)
-      setIsLoadingMore(false)
-    }, 1000)
-  }
+      setVisibleArticles((prev) => prev + 6);
+      setIsLoadingMore(false);
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">
@@ -65,74 +65,90 @@ export default function HomepageClient({
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Main Cover Story */}
             {featuredArticles.length > 0 && (
-            <div className="lg:col-span-8">
-              <Link href={`/article/${featuredArticles[0]?.slug}`}>
-                <div className="relative group cursor-pointer h-full">
-                  {/* Cover Image */}
-                  <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
-                    <Image
-                      src={featuredArticles[0]?.image || featuredArticles[0]?.cover_image || "/placeholder.svg"}
-                      alt={featuredArticles[0]?.title || "Featured Article"}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
+              <div className="lg:col-span-8">
+                <Link href={`/article/${featuredArticles[0]?.slug}`}>
+                  <div className="relative group cursor-pointer h-full">
+                    {/* Cover Image */}
+                    <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
+                      <Image
+                        src={
+                          featuredArticles[0]?.image ||
+                          featuredArticles[0]?.cover_image ||
+                          "/placeholder.svg"
+                        }
+                        alt={featuredArticles[0]?.title || "Featured Article"}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
 
-                    {/* Magazine-style text overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
-                      {/* Category Label */}
-                      <div className="mb-6">
-                        <span className="inline-block px-4 py-2 bg-[#7CFC00] text-black text-xs font-black tracking-[0.3em] uppercase">
-                          Cover Story
-                        </span>
+                      {/* Magazine-style text overlay */}
+                      <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
+                        {/* Category Label */}
+                        <div className="mb-6">
+                          <span className="inline-block px-4 py-2 bg-[#7CFC00] text-black text-xs font-black tracking-[0.3em] uppercase">
+                            Cover Story
+                          </span>
+                        </div>
+
+                        {/* Headline */}
+                        <h1 className="text-5xl lg:text-7xl font-black leading-[0.95] mb-6 tracking-tight">
+                          {featuredArticles[0]?.title}
+                        </h1>
+
+                        {/* Deck/Subheadline */}
+                        <p className="text-xl text-gray-300 mb-8 max-w-3xl leading-relaxed border-l-4 border-[#7CFC00] pl-6">
+                          {featuredArticles[0]?.excerpt}
+                        </p>
+
+                        {/* Byline */}
+                        <div className="flex items-center space-x-6 text-sm text-gray-400 uppercase tracking-wider">
+                          <span className="font-medium">
+                            By{" "}
+                            {typeof featuredArticles[0]?.author === "string"
+                              ? featuredArticles[0]?.author
+                              : featuredArticles[0]?.author?.name || "Unknown"}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            {featuredArticles[0]?.date ||
+                              (featuredArticles[0]?.published_at
+                                ? new Date(featuredArticles[0].published_at).toLocaleDateString(
+                                    "en-US",
+                                    { month: "short", day: "numeric", year: "numeric" },
+                                  )
+                                : "")}
+                          </span>
+                          <span>•</span>
+                          <span className="text-[#7CFC00]">Featured</span>
+                        </div>
                       </div>
 
-                      {/* Headline */}
-                      <h1 className="text-5xl lg:text-7xl font-black leading-[0.95] mb-6 tracking-tight">
-                        {featuredArticles[0]?.title}
-                      </h1>
-
-                      {/* Deck/Subheadline */}
-                      <p className="text-xl text-gray-300 mb-8 max-w-3xl leading-relaxed border-l-4 border-[#7CFC00] pl-6">
-                        {featuredArticles[0]?.excerpt}
-                      </p>
-
-                      {/* Byline */}
-                      <div className="flex items-center space-x-6 text-sm text-gray-400 uppercase tracking-wider">
-                        <span className="font-medium">
-                          By {typeof featuredArticles[0]?.author === "string" 
-                            ? featuredArticles[0]?.author 
-                            : featuredArticles[0]?.author?.name || "Unknown"}
+                      {/* Vertical Text Accent */}
+                      <div className="absolute right-8 top-1/2 -translate-y-1/2 -rotate-90 origin-right">
+                        <span className="text-xs tracking-[0.5em] text-gray-600 font-bold uppercase">
+                          Arkansas Music
                         </span>
-                        <span>•</span>
-                        <span>{featuredArticles[0]?.date || 
-                          (featuredArticles[0]?.published_at 
-                            ? new Date(featuredArticles[0].published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            : "")}
-                        </span>
-                        <span>•</span>
-                        <span className="text-[#7CFC00]">Featured</span>
                       </div>
-                    </div>
-
-                    {/* Vertical Text Accent */}
-                    <div className="absolute right-8 top-1/2 -translate-y-1/2 -rotate-90 origin-right">
-                      <span className="text-xs tracking-[0.5em] text-gray-600 font-bold uppercase">Arkansas Music</span>
                     </div>
                   </div>
-                </div>
-              </Link>
-            </div>
+                </Link>
+              </div>
             )}
 
             {/* Sidebar - In This Issue */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               {/* Artist CTA */}
               <div className="bg-linear-to-br from-[#7CFC00]/10 to-[#9400D3]/10 p-8 border border-[#7CFC00]/20">
-                <div className="text-sm tracking-[0.3em] text-gray-400 mb-4 uppercase font-bold">For Artists</div>
-                <h3 className="text-2xl font-black mb-4 leading-tight">Get Featured in Our Next Issue</h3>
+                <div className="text-sm tracking-[0.3em] text-gray-400 mb-4 uppercase font-bold">
+                  For Artists
+                </div>
+                <h3 className="text-2xl font-black mb-4 leading-tight">
+                  Get Featured in Our Next Issue
+                </h3>
                 <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-                  Join our community of Arkansas artists. Create your profile and connect with our editorial team.
+                  Join our community of Arkansas artists. Create your profile and connect with our
+                  editorial team.
                 </p>
                 <div className="space-y-3">
                   <Button className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-sm">
@@ -171,7 +187,10 @@ export default function HomepageClient({
                             {article.title}
                           </h4>
                           <div className="text-xs text-gray-500 uppercase tracking-wider">
-                            By {typeof article.author === "string" ? article.author : article.author?.name || "Unknown"}
+                            By{" "}
+                            {typeof article.author === "string"
+                              ? article.author
+                              : article.author?.name || "Unknown"}
                           </div>
                         </div>
                       </Link>
@@ -184,7 +203,9 @@ export default function HomepageClient({
 
               {/* Quick Stats */}
               <div className="border border-gray-800 p-6">
-                <h3 className="text-sm tracking-[0.3em] text-gray-400 mb-4 uppercase font-bold">This Month</h3>
+                <h3 className="text-sm tracking-[0.3em] text-gray-400 mb-4 uppercase font-bold">
+                  This Month
+                </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">Featured Artists</span>
@@ -210,7 +231,9 @@ export default function HomepageClient({
         <div className="container mx-auto">
           {/* Section Header */}
           <div className="mb-16 text-center">
-            <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">Latest Features</div>
+            <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">
+              Latest Features
+            </div>
             <h2 className="text-5xl lg:text-6xl font-black tracking-tight">The Stories</h2>
             <div className="w-24 h-1 bg-[#7CFC00] mx-auto mt-6" />
           </div>
@@ -241,19 +264,29 @@ export default function HomepageClient({
                       <h3 className="text-2xl font-black leading-tight group-hover:text-[#7CFC00] transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">{article.excerpt}</p>
+                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
+                        {article.excerpt}
+                      </p>
                       <div className="flex items-center text-xs text-gray-500 uppercase tracking-wider pt-4 border-t border-gray-800">
                         <span className="font-medium">
-                          {typeof article.author === "string" 
-                            ? article.author 
+                          {typeof article.author === "string"
+                            ? article.author
                             : article.author?.name || "Unknown"}
                         </span>
                         <span className="mx-2">•</span>
                         <span>
-                          {article.date || 
-                            (article.published_at 
-                              ? new Date(article.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                              : new Date(article.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }))}
+                          {article.date ||
+                            (article.published_at
+                              ? new Date(article.published_at).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
+                              : new Date(article.created_at).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }))}
                         </span>
                       </div>
                     </div>
@@ -286,7 +319,9 @@ export default function HomepageClient({
         <div className="container mx-auto">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">What's On</div>
+              <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">
+                What's On
+              </div>
               <h2 className="text-5xl lg:text-6xl font-black tracking-tight">Live Events</h2>
             </div>
             <Link
@@ -338,7 +373,9 @@ export default function HomepageClient({
         <div className="container mx-auto">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">Official Store</div>
+              <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">
+                Official Store
+              </div>
               <h2 className="text-5xl lg:text-6xl font-black tracking-tight">Merch</h2>
             </div>
             <Link
@@ -355,35 +392,43 @@ export default function HomepageClient({
               {featuredProducts
                 .filter((product) => product.handle) // Only show products with valid handles
                 .map((product) => (
-                <Link key={product.id} href={`/merch/${product.handle}`} className="shrink-0 min-w-[300px] max-w-[300px]">
-                  <div className="group cursor-pointer">
-                    <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
-                      <Image
-                        src={product.featuredImage.url || "/placeholder.svg"}
-                        alt={product.title}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
-                      <div className="absolute top-4 left-4">
-                        <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">MERCH</div>
+                  <Link
+                    key={product.id}
+                    href={`/merch/${product.handle}`}
+                    className="shrink-0 min-w-[300px] max-w-[300px]"
+                  >
+                    <div className="group cursor-pointer">
+                      <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
+                        <Image
+                          src={product.featuredImage.url || "/placeholder.svg"}
+                          alt={product.title}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
+                        <div className="absolute top-4 left-4">
+                          <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">
+                            MERCH
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
+                        {product.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 uppercase tracking-wider flex items-center mb-4">
+                        <ShoppingBag className="w-3 h-3 mr-2" />$
+                        {product.priceRange.minVariantPrice.amount}
+                        {product.priceRange.minVariantPrice.amount !==
+                          product.priceRange.maxVariantPrice.amount &&
+                          ` - $${product.priceRange.maxVariantPrice.amount}`}
+                      </p>
+                      <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
+                        <span>Shop Now</span>
+                        <span className="ml-2">→</span>
                       </div>
                     </div>
-                    <h3 className="text-2xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
-                      {product.title}
-                    </h3>
-                    <p className="text-sm text-gray-400 uppercase tracking-wider flex items-center mb-4">
-                      <ShoppingBag className="w-3 h-3 mr-2" />${product.priceRange.minVariantPrice.amount}
-                      {product.priceRange.minVariantPrice.amount !== product.priceRange.maxVariantPrice.amount &&
-                        ` - $${product.priceRange.maxVariantPrice.amount}`}
-                    </p>
-                    <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
-                      <span>Shop Now</span>
-                      <span className="ml-2">→</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
             </div>
           ) : (
             <div className="text-center py-16">
@@ -393,5 +438,5 @@ export default function HomepageClient({
         </div>
       </section>
     </div>
-  )
+  );
 }

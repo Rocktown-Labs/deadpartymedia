@@ -1,54 +1,62 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists"
-import { artistUpdateSchema, type ArtistUpdateInput } from "@/lib/validations/artist"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
-import { Edit, User, MapPin, Music, Link as LinkIcon, Save } from "lucide-react"
-import { toast } from "sonner"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists";
+import { artistUpdateSchema, type ArtistUpdateInput } from "@/lib/validations/artist";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { Edit, User, MapPin, Music, Link as LinkIcon, Save } from "lucide-react";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function ArtistProfilePage() {
-  const { data: artist, isLoading } = useCurrentUserArtist()
-  const updateArtist = useUpdateArtist()
-  const [isEditing, setIsEditing] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  
+  const { data: artist, isLoading } = useCurrentUserArtist();
+  const updateArtist = useUpdateArtist();
+  const [isEditing, setIsEditing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   // Form state
-  const [name, setName] = useState("")
-  const [bio, setBio] = useState("")
-  const [location, setLocation] = useState("")
-  const [genre, setGenre] = useState<"Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other">("Other")
-  const [spotifyUrl, setSpotifyUrl] = useState("")
-  const [instagram, setInstagram] = useState("")
-  const [twitter, setTwitter] = useState("")
-  const [tiktok, setTiktok] = useState("")
-  const [website, setWebsite] = useState("")
-  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [location, setLocation] = useState("");
+  const [genre, setGenre] = useState<
+    "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other"
+  >("Other");
+  const [spotifyUrl, setSpotifyUrl] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [tiktok, setTiktok] = useState("");
+  const [website, setWebsite] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Initialize form with artist data
   useEffect(() => {
     if (artist) {
-      setName(artist.name || "")
-      setBio(artist.bio || "")
-      setLocation(artist.location || "")
-      setGenre(artist.genre || "Other")
-      setSpotifyUrl(artist.spotify_url || "")
-      setInstagram(artist.instagram || "")
-      setTwitter(artist.twitter || "")
-      setTiktok(artist.tiktok || "")
-      setWebsite(artist.website || "")
+      setName(artist.name || "");
+      setBio(artist.bio || "");
+      setLocation(artist.location || "");
+      setGenre(artist.genre || "Other");
+      setSpotifyUrl(artist.spotify_url || "");
+      setInstagram(artist.instagram || "");
+      setTwitter(artist.twitter || "");
+      setTiktok(artist.tiktok || "");
+      setWebsite(artist.website || "");
     }
-  }, [artist])
+  }, [artist]);
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors({})
+    e.preventDefault();
+    setErrors({});
 
     try {
       const data: ArtistUpdateInput = {
@@ -62,9 +70,9 @@ export default function ArtistProfilePage() {
         tiktok: tiktok || undefined,
         website: website || undefined,
         image: imageFile || undefined,
-      }
+      };
 
-      const validated = artistUpdateSchema.parse(data)
+      const validated = artistUpdateSchema.parse(data);
       // Map validated data to API format (send empty strings to clear URL fields)
       await updateArtist.mutateAsync({
         name: validated.name,
@@ -77,34 +85,34 @@ export default function ArtistProfilePage() {
         tiktok: validated.tiktok || "",
         website: validated.website || "",
         image: validated.image ?? undefined,
-      })
-      toast.success("Profile updated successfully!")
-      setIsEditing(false)
-      setImageFile(null)
+      });
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+      setImageFile(null);
     } catch (error: any) {
       if (error.errors) {
         // Zod validation errors
-        const fieldErrors: Record<string, string> = {}
+        const fieldErrors: Record<string, string> = {};
         error.errors.forEach((err: any) => {
           if (err.path) {
-            fieldErrors[err.path[0]] = err.message
+            fieldErrors[err.path[0]] = err.message;
           }
-        })
-        setErrors(fieldErrors)
+        });
+        setErrors(fieldErrors);
       } else if (error.response?.data) {
         // API validation errors
-        const apiErrors = error.response.data
-        const fieldErrors: Record<string, string> = {}
+        const apiErrors = error.response.data;
+        const fieldErrors: Record<string, string> = {};
         Object.keys(apiErrors).forEach((key) => {
-          fieldErrors[key] = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key]
-        })
-        setErrors(fieldErrors)
-        toast.error("Failed to update profile. Please check the errors.")
+          fieldErrors[key] = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key];
+        });
+        setErrors(fieldErrors);
+        toast.error("Failed to update profile. Please check the errors.");
       } else {
-        toast.error(error.message || "Failed to update profile")
+        toast.error(error.message || "Failed to update profile");
       }
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -119,7 +127,7 @@ export default function ArtistProfilePage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   if (!artist) {
@@ -145,7 +153,7 @@ export default function ArtistProfilePage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -251,13 +259,15 @@ export default function ArtistProfilePage() {
                           type="url"
                           value={spotifyUrl}
                           onChange={(e) => {
-                            setSpotifyUrl(e.target.value)
-                            if (errors.spotify_url) setErrors({ ...errors, spotify_url: "" })
+                            setSpotifyUrl(e.target.value);
+                            if (errors.spotify_url) setErrors({ ...errors, spotify_url: "" });
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.spotify_url ? "border-red-500" : ""}`}
                           placeholder="https://open.spotify.com/artist/..."
                         />
-                        {errors.spotify_url && <p className="mt-1 text-sm text-red-500">{errors.spotify_url}</p>}
+                        {errors.spotify_url && (
+                          <p className="mt-1 text-sm text-red-500">{errors.spotify_url}</p>
+                        )}
                       </div>
 
                       <div>
@@ -269,13 +279,15 @@ export default function ArtistProfilePage() {
                           type="url"
                           value={instagram}
                           onChange={(e) => {
-                            setInstagram(e.target.value)
-                            if (errors.instagram) setErrors({ ...errors, instagram: "" })
+                            setInstagram(e.target.value);
+                            if (errors.instagram) setErrors({ ...errors, instagram: "" });
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.instagram ? "border-red-500" : ""}`}
                           placeholder="https://instagram.com/..."
                         />
-                        {errors.instagram && <p className="mt-1 text-sm text-red-500">{errors.instagram}</p>}
+                        {errors.instagram && (
+                          <p className="mt-1 text-sm text-red-500">{errors.instagram}</p>
+                        )}
                       </div>
 
                       <div>
@@ -287,13 +299,15 @@ export default function ArtistProfilePage() {
                           type="url"
                           value={twitter}
                           onChange={(e) => {
-                            setTwitter(e.target.value)
-                            if (errors.twitter) setErrors({ ...errors, twitter: "" })
+                            setTwitter(e.target.value);
+                            if (errors.twitter) setErrors({ ...errors, twitter: "" });
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.twitter ? "border-red-500" : ""}`}
                           placeholder="https://twitter.com/..."
                         />
-                        {errors.twitter && <p className="mt-1 text-sm text-red-500">{errors.twitter}</p>}
+                        {errors.twitter && (
+                          <p className="mt-1 text-sm text-red-500">{errors.twitter}</p>
+                        )}
                       </div>
 
                       <div>
@@ -305,13 +319,15 @@ export default function ArtistProfilePage() {
                           type="url"
                           value={tiktok}
                           onChange={(e) => {
-                            setTiktok(e.target.value)
-                            if (errors.tiktok) setErrors({ ...errors, tiktok: "" })
+                            setTiktok(e.target.value);
+                            if (errors.tiktok) setErrors({ ...errors, tiktok: "" });
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.tiktok ? "border-red-500" : ""}`}
                           placeholder="https://tiktok.com/@..."
                         />
-                        {errors.tiktok && <p className="mt-1 text-sm text-red-500">{errors.tiktok}</p>}
+                        {errors.tiktok && (
+                          <p className="mt-1 text-sm text-red-500">{errors.tiktok}</p>
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
@@ -323,13 +339,15 @@ export default function ArtistProfilePage() {
                           type="url"
                           value={website}
                           onChange={(e) => {
-                            setWebsite(e.target.value)
-                            if (errors.website) setErrors({ ...errors, website: "" })
+                            setWebsite(e.target.value);
+                            if (errors.website) setErrors({ ...errors, website: "" });
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.website ? "border-red-500" : ""}`}
                           placeholder="https://..."
                         />
-                        {errors.website && <p className="mt-1 text-sm text-red-500">{errors.website}</p>}
+                        {errors.website && (
+                          <p className="mt-1 text-sm text-red-500">{errors.website}</p>
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
@@ -341,15 +359,17 @@ export default function ArtistProfilePage() {
                           type="file"
                           accept="image/*"
                           onChange={(e) => {
-                            const file = e.target.files?.[0]
+                            const file = e.target.files?.[0];
                             if (file) {
-                              setImageFile(file)
-                              if (errors.image) setErrors({ ...errors, image: "" })
+                              setImageFile(file);
+                              if (errors.image) setErrors({ ...errors, image: "" });
                             }
                           }}
                           className="mt-1 bg-[#0A0A0A] border-gray-700 text-white"
                         />
-                        {errors.image && <p className="mt-1 text-sm text-red-500">{errors.image}</p>}
+                        {errors.image && (
+                          <p className="mt-1 text-sm text-red-500">{errors.image}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -368,20 +388,20 @@ export default function ArtistProfilePage() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      setIsEditing(false)
-                      setErrors({})
-                      setImageFile(null)
+                      setIsEditing(false);
+                      setErrors({});
+                      setImageFile(null);
                       // Reset form to original values
                       if (artist) {
-                        setName(artist.name || "")
-                        setBio(artist.bio || "")
-                        setLocation(artist.location || "")
-                        setGenre(artist.genre || "Other")
-                        setSpotifyUrl(artist.spotify_url || "")
-                        setInstagram(artist.instagram || "")
-                        setTwitter(artist.twitter || "")
-                        setTiktok(artist.tiktok || "")
-                        setWebsite(artist.website || "")
+                        setName(artist.name || "");
+                        setBio(artist.bio || "");
+                        setLocation(artist.location || "");
+                        setGenre(artist.genre || "Other");
+                        setSpotifyUrl(artist.spotify_url || "");
+                        setInstagram(artist.instagram || "");
+                        setTwitter(artist.twitter || "");
+                        setTiktok(artist.tiktok || "");
+                        setWebsite(artist.website || "");
                       }
                     }}
                     className="border-gray-700 text-white"
@@ -418,7 +438,11 @@ export default function ArtistProfilePage() {
                   </div>
                 </div>
 
-                {(artist.spotify_url || artist.instagram || artist.twitter || artist.tiktok || artist.website) && (
+                {(artist.spotify_url ||
+                  artist.instagram ||
+                  artist.twitter ||
+                  artist.tiktok ||
+                  artist.website) && (
                   <div className="pt-6 border-t border-gray-800">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                       <LinkIcon className="w-5 h-5 text-[#7CFC00]" />
@@ -492,6 +516,5 @@ export default function ArtistProfilePage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
-

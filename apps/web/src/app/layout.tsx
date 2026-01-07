@@ -1,38 +1,38 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter, JetBrains_Mono } from "next/font/google"
-import "./globals.css"
-import { CartProvider } from "@/components/cart/cart-context"
-import { getCart } from "@/lib/fourthwall"
-import { getCartId } from "./cart/actions"
-import Providers from "@/components/providers"
-import Navbar from "@/components/navbar"
-import Footer from "@/components/footer"
-import MobileBottomNav from "@/components/mobile-bottom-nav"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import "./globals.css";
+import { CartProvider } from "@/components/cart/cart-context";
+import { getCart } from "@/lib/fourthwall";
+import { getCartId } from "./cart/actions";
+import Providers from "@/components/providers";
+import Navbar from "@/components/navbar";
+import Footer from "@/components/footer";
+import MobileBottomNav from "@/components/mobile-bottom-nav";
 
 const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-})
+});
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-})
+});
 
 export const metadata: Metadata = {
   title: "Dead Party Media - Arkansas Music",
   description: "Your #1 outlet for Arkansas music",
-    generator: 'v0.app'
-}
+  generator: "v0.app",
+};
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
-  const cartId = await getCartId()
-  const cart = getCart(cartId, "USD")
+  const cartId = await getCartId();
+  const cart = getCart(cartId, "USD");
 
   return (
     <html lang="en" className="dark">
@@ -47,5 +47,5 @@ export default async function RootLayout({
         </Providers>
       </body>
     </html>
-  )
+  );
 }

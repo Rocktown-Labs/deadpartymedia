@@ -1,21 +1,21 @@
-import { notFound } from "next/navigation"
-import { getProduct } from "@/lib/fourthwall"
-import { Gallery } from "@/components/product/gallery"
-import { ProductProvider } from "@/components/product/product-context"
-import { ProductDescription } from "@/components/product/product-description"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { notFound } from "next/navigation";
+import { getProduct } from "@/lib/fourthwall";
+import { Gallery } from "@/components/product/gallery";
+import { ProductProvider } from "@/components/product/product-context";
+import { ProductDescription } from "@/components/product/product-description";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
-  const { handle } = await params
-  
-  if (!handle) {
-    return notFound()
-  }
-  
-  const product = await getProduct(handle, "USD")
+  const { handle } = await params;
 
-  if (!product) return notFound()
+  if (!handle) {
+    return notFound();
+  }
+
+  const product = await getProduct(handle, "USD");
+
+  if (!product) return notFound();
 
   return (
     <ProductProvider>
@@ -43,5 +43,5 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
         </main>
       </div>
     </ProductProvider>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function WritersPage() {
   const writers = [
@@ -19,7 +19,7 @@ export default function WritersPage() {
       cashTag: "$GretchenBullinger",
       instagram: "Find me on Instagram →",
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -27,18 +27,23 @@ export default function WritersPage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
-          <Link href="/" className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
 
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">Meet Our Writers!</h1>
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">
+              Meet Our Writers!
+            </h1>
             <div className="w-24 h-1 bg-[#7CFC00] mx-auto mb-8"></div>
             <p className="text-xl text-gray-300 mb-4 font-medium">Dead Party Media</p>
             <p className="text-lg text-gray-400">
-              From all around Arkansas, meet our team of writers that want to keep YOU up-to-date with all things local
-              music.
+              From all around Arkansas, meet our team of writers that want to keep YOU up-to-date
+              with all things local music.
             </p>
           </div>
 
@@ -69,5 +74,5 @@ export default function WritersPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

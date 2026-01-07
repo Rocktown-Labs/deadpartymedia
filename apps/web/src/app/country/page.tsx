@@ -1,17 +1,17 @@
-"use client"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { useArticles } from "@/lib/api/articles"
+"use client";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { useArticles } from "@/lib/api/articles";
 
 export default function CountryPage() {
-  const { data: articles, isLoading } = useArticles("COUNTRY")
+  const { data: articles, isLoading } = useArticles("COUNTRY");
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-xl">Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -62,5 +62,5 @@ export default function CountryPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }
