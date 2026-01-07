@@ -1,12 +1,13 @@
 "use client"
 
-import { ShoppingBag, X, Plus, Minus, Trash2 } from "lucide-react"
+import { ShoppingBag, Plus, Minus, Trash2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { useFormStatus } from "react-dom"
 import { redirectToCheckout, removeItem, updateItemQuantity } from "@/app/cart/actions"
 import { useCart } from "./cart-context"
 import Image from "next/image"
 import { DEFAULT_OPTION } from "@/lib/constants"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 function CheckoutButton() {
   const { pending } = useFormStatus()
@@ -36,40 +37,25 @@ export default function CartModal() {
     }
   }, [isOpen, cart?.totalQuantity, quantityRef])
 
-  const openCart = () => setIsOpen(true)
-  const closeCart = () => setIsOpen(false)
-
   return (
-    <>
-      {/* Cart Button */}
-      <button
-        onClick={openCart}
-        className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors"
-        aria-label="Open cart"
-      >
-        <ShoppingBag className="h-5 w-5" />
-        {cart?.totalQuantity ? (
-          <div className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
-            {cart.totalQuantity}
-          </div>
-        ) : null}
-      </button>
-
-      {/* Cart Modal */}
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" onClick={closeCart} />
-
-          {/* Slide-in Panel */}
-          <div className="fixed right-0 top-0 h-full w-full md:w-[420px] bg-[#0A0A0A] border-l border-gray-800 z-[300] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-800">
-              <h2 className="text-xl font-bold">Cart</h2>
-              <button onClick={closeCart} className="p-2 hover:bg-gray-900 rounded-lg transition-colors">
-                <X className="h-5 w-5" />
-              </button>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <button
+          className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors"
+          aria-label="Open cart"
+        >
+          <ShoppingBag className="h-5 w-5" />
+          {cart?.totalQuantity ? (
+            <div className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
+              {cart.totalQuantity}
             </div>
+          ) : null}
+        </button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full md:w-[420px] bg-[#0A0A0A] border-l border-gray-800 flex flex-col p-0">
+        <SheetHeader className="p-6 border-b border-gray-800">
+          <SheetTitle className="text-xl font-bold">Cart</SheetTitle>
+        </SheetHeader>
 
             {/* Content */}
             {!cart || cart.lines.length === 0 ? (
@@ -182,9 +168,7 @@ export default function CartModal() {
                 </div>
               </>
             )}
-          </div>
-        </>
-      )}
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }

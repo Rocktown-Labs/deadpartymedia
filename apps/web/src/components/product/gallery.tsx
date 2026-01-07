@@ -25,7 +25,7 @@ export function Gallery({ product }: { product: Product }) {
     "h-full px-4 transition-all ease-in-out hover:scale-110 hover:text-[#7CFC00] flex items-center justify-center"
 
   return (
-    <form>
+    <>
       <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-lg bg-black">
         {images[imageIndex] && (
           <Image
@@ -42,7 +42,8 @@ export function Gallery({ product }: { product: Product }) {
           <div className="absolute bottom-[15%] flex w-full justify-center">
             <div className="mx-auto flex h-11 items-center rounded-full border border-gray-800 bg-[#0A0A0A]/80 text-white backdrop-blur">
               <button
-                formAction={() => {
+                type="button"
+                onClick={() => {
                   const newState = updateImage(previousImageIndex.toString())
                   updateURL(newState)
                 }}
@@ -53,7 +54,8 @@ export function Gallery({ product }: { product: Product }) {
               </button>
               <div className="mx-1 h-6 w-px bg-gray-800"></div>
               <button
-                formAction={() => {
+                type="button"
+                onClick={() => {
                   const newState = updateImage(nextImageIndex.toString())
                   updateURL(newState)
                 }}
@@ -75,7 +77,8 @@ export function Gallery({ product }: { product: Product }) {
             return (
               <li key={image.url} className="h-20 w-20">
                 <button
-                  formAction={() => {
+                  type="button"
+                  onClick={() => {
                     const newState = updateImage(index.toString())
                     updateURL(newState)
                   }}
@@ -98,6 +101,6 @@ export function Gallery({ product }: { product: Product }) {
           })}
         </ul>
       ) : null}
-    </form>
+    </>
   )
 }

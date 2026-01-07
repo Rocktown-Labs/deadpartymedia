@@ -19,10 +19,11 @@ export function ProductDescription({ product }: { product: Product }) {
 
       <VariantSelector options={product.options} variants={product.variants} />
 
-      {product.description ? (
-        <div className="mb-6 text-sm leading-relaxed text-gray-300">
-          <p>{product.description}</p>
-        </div>
+      {product.descriptionHtml || product.description ? (
+        <div 
+          className="mb-6 text-sm leading-relaxed text-gray-300 prose prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: product.descriptionHtml || product.description || "" }}
+        />
       ) : null}
 
       <AddToCart product={product} />

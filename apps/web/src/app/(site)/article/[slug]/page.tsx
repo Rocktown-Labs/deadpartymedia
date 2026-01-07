@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { use, useState, useEffect } from "react"
 import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
@@ -9,15 +9,16 @@ import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/arti
 import { useCurrentUser } from "@/lib/api/auth"
 
 interface ArticlePageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default function ArticlePage({ params }: ArticlePageProps) {
+  const { slug } = use(params)
   const [isScrolled, setIsScrolled] = useState(false)
-  const { data: article, isLoading } = useArticle(params.slug)
-  const { data: comments } = useArticleComments(params.slug)
+  const { data: article, isLoading } = useArticle(slug)
+  const { data: comments } = useArticleComments(slug)
   const { data: currentUser } = useCurrentUser()
   const createComment = useCreateComment()
   const [commentText, setCommentText] = useState("")
@@ -36,7 +37,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
     try {
       await createComment.mutateAsync({
-        slug: params.slug,
+        slug: slug,
         content: commentText,
       })
       setCommentText("")

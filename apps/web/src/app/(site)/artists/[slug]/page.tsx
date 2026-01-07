@@ -1,13 +1,15 @@
 "use client"
+import { use } from "react"
 import { Instagram, Youtube, Twitter, ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists"
 
-export default function ArtistDetailPage({ params }: { params: { slug: string } }) {
-  const { data: artist, isLoading: artistLoading } = useArtist(params.slug)
-  const { data: articles } = useArtistArticles(params.slug)
-  const { data: events } = useArtistEvents(params.slug)
+export default function ArtistDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
+  const { data: artist, isLoading: artistLoading } = useArtist(slug)
+  const { data: articles } = useArtistArticles(slug)
+  const { data: events } = useArtistEvents(slug)
   
   // Ensure articles and events are arrays
   const articlesArray = Array.isArray(articles) ? articles : []

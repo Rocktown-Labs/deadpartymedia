@@ -29,7 +29,7 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
   }))
 
   return options.map((option) => (
-    <form key={option.id}>
+    <div key={option.id}>
       <dl className="mb-8">
         <dt className="mb-4 text-sm uppercase tracking-wide font-bold">{option.name}</dt>
         <dd className="flex flex-wrap gap-3">
@@ -49,7 +49,8 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
 
             return (
               <button
-                formAction={() => {
+                type="button"
+                onClick={() => {
                   const newState = updateOption(optionNameLowerCase, value)
                   updateURL(newState)
                 }}
@@ -74,6 +75,6 @@ export function VariantSelector({ options, variants }: { options: ProductOption[
           })}
         </dd>
       </dl>
-    </form>
+    </div>
   ))
 }

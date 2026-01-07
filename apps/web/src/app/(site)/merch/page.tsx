@@ -107,7 +107,14 @@ export default function MerchPage() {
                     <h3 className="text-xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
                       {product.title}
                     </h3>
-                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">{product.description}</p>
+                    {product.descriptionHtml || product.description ? (
+                      <div 
+                        className="text-sm text-gray-400 mb-4 line-clamp-2"
+                        dangerouslySetInnerHTML={{ 
+                          __html: (product.descriptionHtml || product.description || "").replace(/<[^>]*>/g, '')
+                        }}
+                      />
+                    ) : null}
                     {product.variants.length > 1 && (
                       <div className="mb-4">
                         <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">

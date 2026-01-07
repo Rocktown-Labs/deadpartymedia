@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { use } from "react"
 import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEvent } from "@/lib/api/events"
 
-export default function EventDetailPage({ params }: { params: { slug: string } }) {
-  const { data: event, isLoading } = useEvent(params.slug)
+export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
+  const { data: event, isLoading } = useEvent(slug)
 
   if (isLoading) {
     return (
