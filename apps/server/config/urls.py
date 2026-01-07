@@ -15,9 +15,18 @@ def trigger_error(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Custom admin URL
+    path("deadpartyrocks/", admin.site.urls),
+    
+    # API versioning: /v1/ for current version
+    path("v1/", include("content.api.urls")),
+    path("v1/auth/", include("users.urls")),
+    
+    # Legacy API paths (for backward compatibility during transition)
     path("api/", include("content.api.urls")),
     path("api/auth/", include("users.urls")),
+    
+    # Other endpoints
     path("ckeditor/", include("ckeditor_uploader.urls")),
     path("accounts/", include("allauth.urls")),
     path("sentry-debug/", trigger_error),  # Sentry test route

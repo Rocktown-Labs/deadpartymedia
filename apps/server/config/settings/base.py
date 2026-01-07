@@ -233,14 +233,17 @@ if USE_S3:
     AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
     AWS_S3_OBJECT_PARAMETERS = {
         "CacheControl": "max-age=86400",
     }
-    AWS_DEFAULT_ACL = "public-read"
+    # Note: AWS_DEFAULT_ACL is deprecated for buckets with Block Public Access enabled
+    # Files will be accessible via signed URLs or CloudFront if needed
+    AWS_DEFAULT_ACL = None
     
     # Static files
     STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
     
     # Media files
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -263,10 +266,19 @@ JAZZMIN_SETTINGS = {
     "site_title": "Dead Party Media Admin",
     "site_header": "Dead Party Media",
     "site_brand": "Dead Party Media",
-    "site_logo": None,
-    "login_logo": None,
-    "login_logo_dark": None,
-    "site_logo_classes": "img-circle",
+    # Logo configuration
+    # If using S3, logo is served from S3 (already uploaded to deadpartymedia-bucket/static/images/)
+    # If not using S3, logo is served from Django static files via nginx
+    "site_logo": (
+        f"{STATIC_URL}images/dead-party-logo.png" if USE_S3 else "/static/images/dead-party-logo.png"
+    ),
+    "login_logo": (
+        f"{STATIC_URL}images/dead-party-logo.png" if USE_S3 else "/static/images/dead-party-logo.png"
+    ),
+    "login_logo_dark": (
+        f"{STATIC_URL}images/dead-party-logo.png" if USE_S3 else "/static/images/dead-party-logo.png"
+    ),
+    "site_logo_classes": "img-fluid",
     "site_icon": None,
     "welcome_sign": "Welcome to Dead Party Media Admin",
     "copyright": "Dead Party Media",
