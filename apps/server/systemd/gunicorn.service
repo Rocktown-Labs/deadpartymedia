@@ -1,0 +1,51 @@
+[Unit]
+Description=Dead Party Media Gunicorn daemon
+After=network.target postgresql.service
+Requires=network.target
+
+[Service]
+Type=notify
+User=bitnami
+Group=bitnami
+WorkingDirectory=/home/bitnami/deadpartymedia/apps/server
+Environment="PATH=/home/bitnami/.cargo/bin:/home/bitnami/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
+
+# Gunicorn executable path (will use uv run)
+ExecStart=/home/bitnami/.cargo/bin/uv run gunicorn \
+    --config /home/bitnami/deadpartymedia/apps/server/gunicorn.conf.py \
+    config.wsgi:application
+
+# If uv is not in cargo bin, try local bin or system python
+# Alternative: ExecStart=/usr/bin/python3 -m gunicorn \
+#     --config /home/bitnami/deadpartymedia/apps/server/gunicorn.conf.py \
+#     config.wsgi:application
+
+# Restart settings
+Restart=always
+RestartSec=3
+StartLimitInterval=0
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/bitnami/deadpartymedia
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=deadpartymedia-gunicorn
+
+# Graceful shutdown
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Notify systemd when ready
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+
