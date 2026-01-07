@@ -23,6 +23,9 @@ importers:
       '@dpmedia/env':
         specifier: workspace:*
         version: link:packages/env
+      '@t3-oss/env-core':
+        specifier: ^0.13.10
+        version: 0.13.10(typescript@5.9.3)(zod@4.3.5)
       dotenv:
         specifier: 'catalog:'
         version: 17.2.3

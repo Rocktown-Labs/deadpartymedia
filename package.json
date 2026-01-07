@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",
+    "@t3-oss/env-core": "^0.13.10",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
