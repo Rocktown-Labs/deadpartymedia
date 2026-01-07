@@ -352,11 +352,11 @@ export default function HomepageClient({
           </div>
 
           {featuredProducts.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex overflow-x-auto gap-8 pb-4 scrollbar-hide -mx-6 px-6">
               {featuredProducts
                 .filter((product) => product.handle) // Only show products with valid handles
                 .map((product) => (
-                <Link key={product.id} href={`/merch/${product.handle}`}>
+                <Link key={product.id} href={`/merch/${product.handle}`} className="shrink-0 min-w-[300px] max-w-[300px]">
                   <div className="group cursor-pointer">
                     <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
                       <Image

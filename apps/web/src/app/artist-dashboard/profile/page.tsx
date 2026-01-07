@@ -78,7 +78,7 @@ export default function ArtistProfilePage() {
         twitter: validated.twitter || "",
         tiktok: validated.tiktok || "",
         website: validated.website || "",
-        image: validated.image,
+        image: validated.image ?? undefined,
       })
       toast.success("Profile updated successfully!")
       setIsEditing(false)

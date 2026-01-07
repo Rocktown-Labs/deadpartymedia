@@ -1,36 +1,13 @@
 "use client"
-import { useState, useEffect } from "react"
 import HomepageClient from "@/components/homepage-client"
 import { useArticles } from "@/lib/api/articles"
 import { useEvents } from "@/lib/api/events"
-import { getProducts } from "@/lib/fourthwall"
-import type { Product } from "@/lib/types"
+import { useProducts } from "@/lib/api/products"
 
 export default function DeadPartyMedia() {
   const { data: articles, isLoading: articlesLoading, error: articlesError } = useArticles()
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents()
-  const [products, setProducts] = useState<Product[]>([])
-  const [productsLoading, setProductsLoading] = useState(true)
-  const [productsError, setProductsError] = useState<Error | null>(null)
-
-  // Fetch products from Fourthwall
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setProductsLoading(true)
-        setProductsError(null)
-        const fetchedProducts = await getProducts()
-        setProducts(fetchedProducts)
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        setProductsError(error instanceof Error ? error : new Error("Failed to fetch products"))
-        setProducts([])
-      } finally {
-        setProductsLoading(false)
-      }
-    }
-    fetchProducts()
-  }, [])
+  const { data: products, isLoading: productsLoading, error: productsError } = useProducts()
 
   // Handle loading state
   if (articlesLoading || eventsLoading || productsLoading) {
@@ -103,8 +80,11 @@ export default function DeadPartyMedia() {
       image: event.image,
     }))
 
-  // Get featured products (first 3)
-  const featuredProducts = products.slice(0, 3)
+  // Ensure products is an array
+  const productsArray = Array.isArray(products) ? products : []
+  
+  // Get featured products (first 5)
+  const featuredProducts = productsArray.slice(0, 5)
 
   return (
     <HomepageClient
