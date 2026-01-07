@@ -20,7 +20,7 @@ export default function SavedPage() {
     try {
       await unsaveArticle.mutateAsync(savedId)
       toast.success("Article unsaved")
-    } catch (error) {
+    } catch {
       toast.error("Failed to unsave article")
     }
   }

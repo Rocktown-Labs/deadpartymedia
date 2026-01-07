@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import type React from "react"
-import { createContext, useContext, useMemo, useOptimistic, use } from "react"
+import { createContext, useContext, useMemo, useOptimistic } from "react"
 
 type ProductState = {
   [key: string]: string

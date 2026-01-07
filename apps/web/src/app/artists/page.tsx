@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, Music, MapPin } from "lucide-react"
+import { ArrowLeft, MapPin } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useArtists } from "@/lib/api/artists"

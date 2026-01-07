@@ -1,6 +1,6 @@
 "use client"
 
-import { useDashboardStats, useReadArticles, useSavedArticles, useUserComments } from "@/lib/api/user-activity"
+import { useDashboardStats } from "@/lib/api/user-activity"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/components/ui/empty"
 import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react"

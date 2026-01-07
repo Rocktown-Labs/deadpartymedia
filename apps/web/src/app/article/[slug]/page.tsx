@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect } from "react"
+import { use, useState } from "react"
 import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
@@ -17,21 +17,12 @@ interface ArticlePageProps {
 
 export default function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = use(params)
-  const [isScrolled, setIsScrolled] = useState(false)
   const { data: article, isLoading } = useArticle(slug)
   const { data: comments } = useArticleComments(slug)
   const { data: currentUser } = useCurrentUser()
   const createComment = useCreateComment()
   const markArticleRead = useMarkArticleRead()
   const [commentText, setCommentText] = useState("")
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
 
   // Track article read when article loads and user is logged in
   useEffect(() => {

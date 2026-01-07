@@ -16,11 +16,10 @@ interface Article {
 
 interface ArticleCardProps {
   article: Article
-  index: number
   categoryColor?: string
 }
 
-export default function ArticleCard({ article, index, categoryColor = "#7CFC00" }: ArticleCardProps) {
+export default function ArticleCard({ article, categoryColor = "#7CFC00" }: ArticleCardProps) {
   return (
     <Link key={article.id} href={`/article/${article.slug}`}>
       <article className="group cursor-pointer">

@@ -1,6 +1,5 @@
 "use server"
 
-import { TAGS } from "@/lib/constants"
 import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/lib/fourthwall"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
@@ -35,7 +34,7 @@ export async function addItem(prevState: any, selectedVariantId: string | undefi
 
     await addToCart(cartId, [{ merchandiseId: selectedVariantId, quantity: 1 }])
     revalidatePath("/")
-  } catch (e) {
+  } catch {
     return "Error adding item to cart"
   }
 }
@@ -57,7 +56,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
     } else {
       return "Item not found in cart"
     }
-  } catch (e) {
+  } catch {
     return "Error removing item from cart"
   }
 }
@@ -104,7 +103,7 @@ export async function updateItemQuantity(
   }
 }
 
-export async function redirectToCheckout(currency: string): Promise<void> {
+export async function redirectToCheckout(_currency: string): Promise<void> {
   const CHECKOUT_URL = process.env.NEXT_PUBLIC_FW_CHECKOUT
   const cartId = await getCartId()
 

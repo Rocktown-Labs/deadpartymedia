@@ -1,6 +1,6 @@
 "use client"
 import { use } from "react"
-import { Instagram, Youtube, Twitter, ArrowLeft, MapPin } from "lucide-react"
+import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists"

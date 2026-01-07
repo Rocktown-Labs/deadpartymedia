@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "./ui/sonner"
-import { useState } from "react"
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useCurrentUser } from "@/lib/api/auth"
 import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists"
 import { artistUpdateSchema, type ArtistUpdateInput } from "@/lib/validations/artist"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,7 +14,6 @@ import { toast } from "sonner"
 import Link from "next/link"
 
 export default function ArtistProfilePage() {
-  const { data: user } = useCurrentUser()
   const { data: artist, isLoading } = useCurrentUserArtist()
   const updateArtist = useUpdateArtist()
   const [isEditing, setIsEditing] = useState(false)

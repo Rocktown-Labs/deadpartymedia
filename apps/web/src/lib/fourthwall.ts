@@ -323,7 +323,7 @@ export async function getCart(cartId: string | undefined, currency = "USD"): Pro
     })
 
     return transformCart(data, currency)
-  } catch (e) {
+  } catch {
     return undefined
   }
 }

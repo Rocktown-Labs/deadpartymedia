@@ -1,6 +1,5 @@
 "use client"
 
-import { Instagram, Youtube, Twitter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 

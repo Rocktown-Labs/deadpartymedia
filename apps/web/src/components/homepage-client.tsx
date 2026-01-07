@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
 import type { Product } from "@/lib/types"
-import { getProducts } from "@/lib/fourthwall"
 
 interface HomepageClientProps {
   featuredArticles: any[]
@@ -219,7 +218,7 @@ export default function HomepageClient({
           {/* Magazine Grid Layout */}
           {articlesData.length > 3 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-              {articlesData.slice(3, visibleArticles).map((article, index) => (
+              {articlesData.slice(3, visibleArticles).map((article) => (
                 <Link key={article.id} href={`/article/${article.slug}`}>
                   <article className="group cursor-pointer">
                     {/* Image */}
