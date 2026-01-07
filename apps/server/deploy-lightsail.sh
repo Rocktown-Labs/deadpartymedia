@@ -90,6 +90,50 @@ export SECRET_KEY="${SECRET_KEY:-django-insecure-change-me-in-production}"
 
 export ALLOWED_HOSTS="${ALLOWED_HOSTS:-18.224.61.135,localhost,127.0.0.1}"
 
+# Create .env.production file for systemd service
+log "Creating .env.production file for systemd service..."
+cat > .env.production << EOF
+# Production environment variables for Dead Party Media
+# This file is created automatically during deployment
+# DO NOT commit this file to version control
+
+# Database Configuration
+DB_HOST=${DB_HOST:-}
+DB_PORT=${DB_PORT:-5432}
+DB_NAME=${DB_NAME:-deadpartymedia}
+DB_USER=${DB_USER:-}
+DB_PASSWORD=${DB_PASSWORD:-}
+
+# Django Configuration
+SECRET_KEY=${SECRET_KEY:-django-insecure-change-me-in-production}
+ALLOWED_HOSTS=${ALLOWED_HOSTS:-18.224.61.135,localhost,127.0.0.1}
+DJANGO_SETTINGS_MODULE=config.settings.production
+
+# AWS S3 Configuration (if using S3 for media/static files)
+USE_S3=${USE_S3:-True}
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME:-}
+AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME:-us-east-1}
+
+# Email Configuration (Resend)
+RESEND_API_KEY=${RESEND_API_KEY:-}
+
+# Sentry Configuration
+SENTRY_DSN=${SENTRY_DSN:-}
+SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}
+SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+SENTRY_PROFILE_SESSION_SAMPLE_RATE=${SENTRY_PROFILE_SESSION_SAMPLE_RATE:-0.1}
+
+# Spotify API Configuration
+SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:-}
+SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET:-}
+EOF
+
+# Secure the file (readable only by bitnami user)
+chmod 600 .env.production
+log ".env.production file created and secured"
+
 # Run migrations
 if [ -n "${DB_HOST:-}" ]; then
     log "Running database migrations..."

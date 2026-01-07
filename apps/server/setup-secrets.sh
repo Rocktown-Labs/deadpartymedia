@@ -202,6 +202,70 @@ else
     log "Skipping AWS credentials (can be added to GitHub Secrets directly)"
 fi
 
+# 11. Optional: AWS S3 Configuration
+prompt "Do you want to configure AWS S3 for media/static files? (y/n, default: n):"
+read -r configure_s3
+configure_s3="${configure_s3:-n}"
+if [ "$configure_s3" = "y" ] || [ "$configure_s3" = "Y" ]; then
+    prompt "Enter AWS S3 Storage Bucket Name:"
+    read -r s3_bucket
+    if [ -n "$s3_bucket" ]; then
+        create_secret \
+            "${SECRET_PREFIX}/aws/storage-bucket-name" \
+            "$s3_bucket" \
+            "AWS S3 bucket name for media/static files"
+        
+        prompt "Enter AWS S3 Region (default: us-east-1):"
+        read -r s3_region
+        s3_region="${s3_region:-us-east-1}"
+        create_secret \
+            "${SECRET_PREFIX}/aws/s3-region" \
+            "$s3_region" \
+            "AWS S3 region"
+    fi
+fi
+
+# 12. Optional: Resend API Key
+prompt "Enter Resend API Key for email (optional, press Enter to skip):"
+read -rs resend_key
+echo ""
+if [ -n "$resend_key" ]; then
+    create_secret \
+        "${SECRET_PREFIX}/email/resend-api-key" \
+        "$resend_key" \
+        "Resend API key for email sending"
+fi
+
+# 13. Optional: Sentry DSN
+prompt "Enter Sentry DSN for error tracking (optional, press Enter to skip):"
+read -r sentry_dsn
+if [ -n "$sentry_dsn" ]; then
+    create_secret \
+        "${SECRET_PREFIX}/sentry/dsn" \
+        "$sentry_dsn" \
+        "Sentry DSN for error tracking"
+fi
+
+# 14. Optional: Spotify API Credentials
+prompt "Enter Spotify Client ID (optional, press Enter to skip):"
+read -r spotify_id
+if [ -n "$spotify_id" ]; then
+    create_secret \
+        "${SECRET_PREFIX}/spotify/client-id" \
+        "$spotify_id" \
+        "Spotify API Client ID"
+    
+    prompt "Enter Spotify Client Secret:"
+    read -rs spotify_secret
+    echo ""
+    if [ -n "$spotify_secret" ]; then
+        create_secret \
+            "${SECRET_PREFIX}/spotify/client-secret" \
+            "$spotify_secret" \
+            "Spotify API Client Secret"
+    fi
+fi
+
 echo ""
 log "Secret setup completed!"
 echo ""

@@ -29,6 +29,7 @@ dist/
 .env.test.local
 .env.production.local
 apps/server/.env
+apps/server/.env.production
 apps/web/.env.local
 
 # Python

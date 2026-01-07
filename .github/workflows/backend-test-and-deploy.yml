@@ -102,6 +102,15 @@ jobs:
               'deadpartymedia/database/name',
               'deadpartymedia/django/secret-key',
               'deadpartymedia/django/allowed-hosts',
+              # Optional secrets (will be None if not found)
+              'deadpartymedia/aws/access-key-id',
+              'deadpartymedia/aws/secret-access-key',
+              'deadpartymedia/aws/storage-bucket-name',
+              'deadpartymedia/aws/s3-region',
+              'deadpartymedia/email/resend-api-key',
+              'deadpartymedia/sentry/dsn',
+              'deadpartymedia/spotify/client-id',
+              'deadpartymedia/spotify/client-secret',
           ]
           
           env_file = os.environ.get('GITHUB_ENV')
@@ -133,8 +142,13 @@ jobs:
                   secrets[secret_name] = secret_value
                   print(f"Fetched secret: {secret_name}")
               except Exception as e:
-                  print(f"Error fetching {secret_name}: {e}")
-                  exit(1)
+                  # Optional secrets - don't fail if they don't exist
+                  if 'aws' in secret_name or 'email' in secret_name or 'sentry' in secret_name or 'spotify' in secret_name:
+                      print(f"Optional secret not found (skipping): {secret_name}")
+                      secrets[secret_name] = None
+                  else:
+                      print(f"Error fetching required secret {secret_name}: {e}")
+                      exit(1)
           
           # Export as JSON for easier access
           with open('/tmp/secrets.json', 'w') as f:
@@ -197,6 +211,16 @@ jobs:
                DB_PASSWORD='$DEADPARTYMEDIA_DATABASE_PASSWORD' \
                SECRET_KEY='$DEADPARTYMEDIA_DJANGO_SECRET_KEY' \
                ALLOWED_HOSTS='$DEADPARTYMEDIA_DJANGO_ALLOWED_HOSTS' \
+               AWS_ACCESS_KEY_ID='${DEADPARTYMEDIA_AWS_ACCESS_KEY_ID:-}' \
+               AWS_SECRET_ACCESS_KEY='${DEADPARTYMEDIA_AWS_SECRET_ACCESS_KEY:-}' \
+               AWS_STORAGE_BUCKET_NAME='${DEADPARTYMEDIA_AWS_STORAGE_BUCKET_NAME:-}' \
+               AWS_S3_REGION_NAME='${DEADPARTYMEDIA_AWS_S3_REGION:-us-east-1}' \
+               RESEND_API_KEY='${DEADPARTYMEDIA_EMAIL_RESEND_API_KEY:-}' \
+               SENTRY_DSN='${DEADPARTYMEDIA_SENTRY_DSN:-}' \
+               SENTRY_ENVIRONMENT='production' \
+               SPOTIFY_CLIENT_ID='${DEADPARTYMEDIA_SPOTIFY_CLIENT_ID:-}' \
+               SPOTIFY_CLIENT_SECRET='${DEADPARTYMEDIA_SPOTIFY_CLIENT_SECRET:-}' \
+               USE_S3='True' \
                /tmp/deploy-lightsail.sh"
 
       - name: Cleanup
