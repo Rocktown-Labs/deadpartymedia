@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
-
-import { ModeToggle } from "./mode-toggle";
+import type { Route } from "next";
 
 export default function Header() {
   const links = [
-    { to: "/", label: "Home" },
-    { to: "/dashboard", label: "Dashboard" },
+    { to: "/" as Route, label: "Home" },
+    { to: "/dashboard" as Route, label: "Dashboard" },
   ] as const;
 
   return (
@@ -15,15 +14,12 @@ export default function Header() {
         <nav className="flex gap-4 text-lg">
           {links.map(({ to, label }) => {
             return (
-              <Link key={to} href={to as any}>
+              <Link key={to} href={to}>
                 {label}
               </Link>
             );
           })}
         </nav>
-        <div className="flex items-center gap-2">
-          <ModeToggle />
-        </div>
       </div>
       <hr />
     </div>

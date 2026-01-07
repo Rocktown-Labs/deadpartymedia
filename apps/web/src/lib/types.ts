@@ -27,6 +27,7 @@ export type ProductVariant = {
   availableForSale: boolean
   selectedOptions: SelectedOption[]
   price: Money
+  images?: Image[]
 }
 
 export type Product = {

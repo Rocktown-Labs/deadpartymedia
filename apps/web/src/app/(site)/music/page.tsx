@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import type { Route } from "next"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import { useArticles, type ArticleList } from "@/lib/api/articles"
 
@@ -82,7 +83,7 @@ export default function MusicPage() {
               if (articles.length === 0) return null
 
               const categorySlug = getCategorySlug(category)
-              const categoryHref: string = `/${categorySlug}`
+              const categoryHref = `/${categorySlug}` as Route
 
               return (
                 <section key={category} className="animate-fadeInUp">
@@ -93,7 +94,7 @@ export default function MusicPage() {
                       <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }}></div>
                     </div>
                     <Link
-                      href={categoryHref as any}
+                      href={categoryHref}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all

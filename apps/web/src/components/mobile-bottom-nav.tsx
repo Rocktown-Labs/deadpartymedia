@@ -2,6 +2,7 @@
 
 import { Home, Music, Calendar, User, ShoppingBag } from "lucide-react"
 import Link from "next/link"
+import type { Route } from "next"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
@@ -9,11 +10,11 @@ export default function MobileBottomNav() {
   const pathname = usePathname()
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/" },
-    { icon: Music, label: "Music", href: "/music" },
-    { icon: Calendar, label: "Events", href: "/events" },
-    { icon: ShoppingBag, label: "Merch", href: "/merch" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Home, label: "Home", href: "/" as Route },
+    { icon: Music, label: "Music", href: "/music" as Route },
+    { icon: Calendar, label: "Events", href: "/events" as Route },
+    { icon: ShoppingBag, label: "Merch", href: "/merch" as Route },
+    { icon: User, label: "Profile", href: "/profile" as Route },
   ]
 
   return (
@@ -24,7 +25,7 @@ export default function MobileBottomNav() {
           return (
             <Link
               key={item.href}
-              href={item.href as any}
+              href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors",
                 isActive ? "text-[#7CFC00]" : "text-gray-400",

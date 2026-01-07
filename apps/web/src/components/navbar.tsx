@@ -2,17 +2,18 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import type { Route } from "next"
 import CartModal from "./cart/cart-modal"
 import { ChevronDown } from "lucide-react"
 import { Button } from "./ui/button"
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
-  { name: "Country", href: "/country" },
-  { name: "EDM", href: "/edm" },
-  { name: "Hardcore & Rock", href: "/hardcore" },
-  { name: "Hip-Hop & R&B", href: "/hip-hop-r-b" },
-  { name: "Other", href: "/other" },
+  { name: "Country", href: "/country" as Route },
+  { name: "EDM", href: "/edm" as Route },
+  { name: "Hardcore & Rock", href: "/hardcore" as Route },
+  { name: "Hip-Hop & R&B", href: "/hip-hop-r-b" as Route },
+  { name: "Other", href: "/other" as Route },
 ]
 
 // Compute dates outside render for performance

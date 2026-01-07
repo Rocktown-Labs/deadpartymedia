@@ -32,7 +32,7 @@ export default async function RootLayout({
   const cart = getCart(cartId, "USD")
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <Providers>
           <CartProvider cartPromise={cart}>{children}</CartProvider>
