@@ -5,34 +5,15 @@ import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import type { Metadata } from "next";
 import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/articles";
 import { useCurrentUser } from "@/lib/api/auth";
 import { useMarkArticleRead } from "@/lib/api/user-activity";
-import { getArticle } from "@/lib/api/server";
-import { generateArticleMetadata } from "@/lib/seo";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
 
 interface ArticlePageProps {
   params: Promise<{
     slug: string;
   }>;
-}
-
-export async function generateMetadata({
-  params,
-}: ArticlePageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const article = await getArticle(slug);
-
-  if (!article) {
-    return {
-      title: "Article Not Found | Dead Party Media",
-      description: "The article you're looking for doesn't exist.",
-    };
-  }
-
-  return generateArticleMetadata(article);
 }
 
 export default function ArticlePage({ params }: ArticlePageProps) {

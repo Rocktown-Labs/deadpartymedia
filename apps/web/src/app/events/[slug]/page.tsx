@@ -4,28 +4,11 @@ import { use } from "react";
 import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Metadata } from "next";
 import { useEvent } from "@/lib/api/events";
-import { getEvent } from "@/lib/api/server";
-import { generateEventMetadata } from "@/lib/seo";
 import { EventStructuredData } from "@/components/seo/structured-data";
 
 interface EventPageProps {
   params: Promise<{ slug: string }>;
-}
-
-export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const event = await getEvent(slug);
-
-  if (!event) {
-    return {
-      title: "Event Not Found | Dead Party Media",
-      description: "The event you're looking for doesn't exist.",
-    };
-  }
-
-  return generateEventMetadata(event);
 }
 
 export default function EventDetailPage({ params }: EventPageProps) {
