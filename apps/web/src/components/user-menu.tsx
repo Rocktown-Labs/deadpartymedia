@@ -42,9 +42,8 @@ export default function UserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuItem>{user.email}</DropdownMenuItem>
           <DropdownMenuItem
-            variant="destructive"
             onClick={handleSignOut}
-            className="cursor-pointer"
+            className="cursor-pointer text-red-500 hover:text-red-400"
           >
             Sign Out
           </DropdownMenuItem>
