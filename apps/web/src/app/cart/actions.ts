@@ -104,19 +104,27 @@ export async function updateItemQuantity(
   }
 }
 
-export async function redirectToCheckout(currency: string) {
+export async function redirectToCheckout(currency: string): Promise<void> {
   const CHECKOUT_URL = process.env.NEXT_PUBLIC_FW_CHECKOUT
   const cartId = await getCartId()
 
   if (!cartId) {
-    return "Missing cart ID"
+    console.error("Missing cart ID")
+    return
+  }
+
+  if (!CHECKOUT_URL) {
+    console.error("Missing checkout URL configuration")
+    return
   }
 
   const cart = await getCart(cartId, "USD")
 
   if (!cart) {
-    return "Error fetching cart"
+    console.error("Error fetching cart")
+    return
   }
 
-  redirect(`${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`)
+  const checkoutUrl: string = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`
+  redirect(checkoutUrl as any)
 }

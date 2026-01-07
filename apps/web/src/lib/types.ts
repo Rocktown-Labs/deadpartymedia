@@ -16,11 +16,16 @@ export type ProductOption = {
   values: string[]
 }
 
+export type SelectedOption = {
+  name: string
+  value: string
+}
+
 export type ProductVariant = {
   id: string
   title: string
   availableForSale: boolean
-  selectedOptions: ProductOption[]
+  selectedOptions: SelectedOption[]
   price: Money
 }
 
@@ -51,7 +56,7 @@ export type CartItem = {
   merchandise: {
     id: string
     title: string
-    selectedOptions: ProductOption[]
+    selectedOptions: SelectedOption[]
     product: {
       id: string
       handle: string
