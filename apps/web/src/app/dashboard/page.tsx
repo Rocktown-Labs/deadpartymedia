@@ -7,6 +7,7 @@ import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useCurrentUser } from "@/lib/api/auth"
+import type { Route } from "next"
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats()
@@ -54,48 +55,59 @@ export default function DashboardPage() {
     )
   }
 
-  const statsCards = [
+  const statsCards: Array<{
+    title: string
+    value: number
+    icon: typeof BookOpen
+    href: Route
+    color: string
+  }> = [
     {
       title: "Articles Read",
       value: stats.articles_read_count,
       icon: BookOpen,
-      href: "/dashboard/history",
+      href: "/dashboard/history" as Route,
       color: "text-[#7CFC00]",
     },
     {
       title: "Articles Saved",
       value: stats.articles_saved_count,
       icon: Bookmark,
-      href: "/dashboard/saved",
+      href: "/dashboard/saved" as Route,
       color: "text-[#9400D3]",
     },
     {
       title: "Comments Made",
       value: stats.comments_count,
       icon: MessageSquare,
-      href: "/dashboard/comments",
+      href: "/dashboard/comments" as Route,
       color: "text-[#7CFC00]",
     },
   ]
 
-  const actionButtons = [
+  const actionButtons: Array<{
+    title: string
+    description: string
+    icon: typeof History
+    href: Route
+  }> = [
     {
       title: "Reading History",
       description: "View articles you've read",
       icon: History,
-      href: "/dashboard/history",
+      href: "/dashboard/history" as Route,
     },
     {
       title: "Saved Articles",
       description: "Access your saved articles",
       icon: Bookmark,
-      href: "/dashboard/saved",
+      href: "/dashboard/saved" as Route,
     },
     {
       title: "My Comments",
       description: "View your comments and replies",
       icon: MessageSquare,
-      href: "/dashboard/comments",
+      href: "/dashboard/comments" as Route,
     },
   ]
 

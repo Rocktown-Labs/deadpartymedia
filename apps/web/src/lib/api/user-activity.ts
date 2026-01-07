@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "./client";
-import { ArticleList } from "./articles";
+import type { ArticleList } from "./articles";
 
 export interface ArticleRead {
   id: number;
