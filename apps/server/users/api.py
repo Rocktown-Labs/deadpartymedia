@@ -64,7 +64,10 @@ def register(request):
             role=role,
         )
 
-        login(request, user)
+        # Authenticate to get the backend, then login
+        authenticated_user = authenticate(request, username=email, password=password)
+        if authenticated_user:
+            login(request, authenticated_user)
         
         logger.info(f"User registered successfully: {user.id} ({email}) with role {role}")
         sentry_sdk.set_user({"id": user.id, "email": user.email, "role": role})
@@ -107,6 +110,7 @@ def login_view(request):
             logger.warning(f"Failed login attempt for email: {email}")
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        # login() works with authenticated user from authenticate()
         login(request, user)
         
         logger.info(f"User logged in successfully: {user.id} ({email}), role: {user.role}")

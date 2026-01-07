@@ -20,10 +20,42 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo.png`;
+
 export const metadata: Metadata = {
-  title: "Dead Party Media - Arkansas Music",
+  title: {
+    default: "Dead Party Media - Arkansas Music",
+    template: "%s | Dead Party Media",
+  },
   description: "Your #1 outlet for Arkansas music",
   generator: "v0.app",
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: "Dead Party Media",
+    title: "Dead Party Media - Arkansas Music",
+    description: "Your #1 outlet for Arkansas music",
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: "Dead Party Media Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Dead Party Media - Arkansas Music",
+    description: "Your #1 outlet for Arkansas music",
+    images: [DEFAULT_OG_IMAGE],
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export default async function RootLayout({

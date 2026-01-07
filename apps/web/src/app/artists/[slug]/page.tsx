@@ -3,9 +3,31 @@ import { use } from "react";
 import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
+import { getArtist } from "@/lib/api/server";
+import { generateArtistMetadata } from "@/lib/seo";
+import { ArtistStructuredData } from "@/components/seo/structured-data";
 
-export default function ArtistDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+interface ArtistPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const artist = await getArtist(slug);
+
+  if (!artist) {
+    return {
+      title: "Artist Not Found | Dead Party Media",
+      description: "The artist you're looking for doesn't exist.",
+    };
+  }
+
+  return generateArtistMetadata(artist);
+}
+
+export default function ArtistDetailPage({ params }: ArtistPageProps) {
   const { slug } = use(params);
   const { data: artist, isLoading: artistLoading } = useArtist(slug);
   const { data: articles } = useArtistArticles(slug);
@@ -37,9 +59,11 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      {/* Main Content */}
-      <main className="pt-40 pb-20">
+    <>
+      <ArtistStructuredData artist={artist} />
+      <div className="min-h-screen bg-[#0A0A0A] text-white">
+        {/* Main Content */}
+        <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-6xl">
           {/* Back Button */}
           <Link
@@ -215,6 +239,7 @@ export default function ArtistDetailPage({ params }: { params: Promise<{ slug: s
           )}
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }

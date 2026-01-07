@@ -4,9 +4,31 @@ import { use } from "react";
 import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { useEvent } from "@/lib/api/events";
+import { getEvent } from "@/lib/api/server";
+import { generateEventMetadata } from "@/lib/seo";
+import { EventStructuredData } from "@/components/seo/structured-data";
 
-export default function EventDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+interface EventPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await getEvent(slug);
+
+  if (!event) {
+    return {
+      title: "Event Not Found | Dead Party Media",
+      description: "The event you're looking for doesn't exist.",
+    };
+  }
+
+  return generateEventMetadata(event);
+}
+
+export default function EventDetailPage({ params }: EventPageProps) {
   const { slug } = use(params);
   const { data: event, isLoading } = useEvent(slug);
 
@@ -35,8 +57,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
   const isPastEvent = eventDate < new Date();
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20">
+    <>
+      <EventStructuredData event={event} />
+      <div className="min-h-screen bg-[#0A0A0A] text-white">
+        <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-6xl">
           {/* Back Button */}
           <Link
@@ -174,6 +198,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }

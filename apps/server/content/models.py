@@ -83,11 +83,17 @@ class Artist(models.Model):
         try:
             if not self.slug:
                 self.slug = slugify(self.name)
+                # Truncate to max_length (255) before ensuring uniqueness
+                if len(self.slug) > 255:
+                    self.slug = self.slug[:255]
                 # Ensure uniqueness
                 original_slug = self.slug
                 counter = 1
                 while Artist.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-                    self.slug = f"{original_slug}-{counter}"
+                    suffix = f"-{counter}"
+                    # Ensure total length doesn't exceed max_length
+                    max_base_length = 255 - len(suffix)
+                    self.slug = f"{original_slug[:max_base_length]}{suffix}"
                     counter += 1
             super().save(*args, **kwargs)
         except Exception as e:
@@ -165,11 +171,17 @@ class Article(models.Model):
         try:
             if not self.slug:
                 self.slug = slugify(self.title)
+                # Truncate to max_length (255) before ensuring uniqueness
+                if len(self.slug) > 255:
+                    self.slug = self.slug[:255]
                 # Ensure uniqueness
                 original_slug = self.slug
                 counter = 1
                 while Article.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-                    self.slug = f"{original_slug}-{counter}"
+                    suffix = f"-{counter}"
+                    # Ensure total length doesn't exceed max_length
+                    max_base_length = 255 - len(suffix)
+                    self.slug = f"{original_slug[:max_base_length]}{suffix}"
                     counter += 1
             super().save(*args, **kwargs)
         except Exception as e:
@@ -251,12 +263,22 @@ class Event(models.Model):
         try:
             if not self.slug:
                 self.slug = slugify(self.title)
+                # Truncate to max_length (255) before ensuring uniqueness
+                # Reserve space for potential counter suffix (e.g., "-9999")
+                max_slug_length = 250  # Reserve 5 chars for "-9999"
+                if len(self.slug) > max_slug_length:
+                    self.slug = self.slug[:max_slug_length]
                 # Ensure uniqueness
                 original_slug = self.slug
                 counter = 1
                 while Event.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
-                    self.slug = f"{original_slug}-{counter}"
+                    suffix = f"-{counter}"
+                    # Ensure total length doesn't exceed max_length
+                    max_base_length = 255 - len(suffix)
+                    self.slug = f"{original_slug[:max_base_length]}{suffix}"
                     counter += 1
+                    if counter > 9999:  # Safety limit
+                        break
             super().save(*args, **kwargs)
         except Exception as e:
             logger.error(f"Error saving event {self.title}: {e}", exc_info=True)

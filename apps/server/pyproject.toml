@@ -18,6 +18,11 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "sentry-sdk[django]>=2.48.0",
     "spotipy>=2.4.0",
+    "pytest-django>=4.8.0",
+    "factory-boy>=3.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "responses>=0.24.0",
 ]
 
 [build-system]

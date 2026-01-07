@@ -13,7 +13,7 @@ class WriterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Writer
-        fields = ["id", "name", "bio", "image", "role", "twitter", "instagram", "article_count"]
+        fields = ["id", "name", "bio", "image", "role", "instagram", "cashtag", "article_count"]
         read_only_fields = ["article_count"]
 
 
