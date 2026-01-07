@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import type React from "react"
-import { createContext, useContext, useMemo, useOptimistic } from "react"
+import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react"
 
 type ProductState = {
   [key: string]: string
@@ -39,13 +39,17 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
 
   const updateOption = (name: string, value: string) => {
     const newState = { [name]: value }
-    setOptimisticState(newState)
+    startTransition(() => {
+      setOptimisticState(newState)
+    })
     return { ...state, ...newState }
   }
 
   const updateImage = (index: string) => {
     const newState = { image: index }
-    setOptimisticState(newState)
+    startTransition(() => {
+      setOptimisticState(newState)
+    })
     return { ...state, ...newState }
   }
 
