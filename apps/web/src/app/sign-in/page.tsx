@@ -6,26 +6,31 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Mail, Lock } from "lucide-react"
+import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useLogin } from "@/lib/api/auth"
+import { getDashboardRoute } from "@/lib/utils/dashboard"
 import { toast } from "sonner"
 
 export default function SignInPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const login = useLogin()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null) // Clear previous errors
     try {
-      await login.mutateAsync({ email, password })
+      const user = await login.mutateAsync({ email, password })
       toast.success("Signed in successfully!")
-      router.push("/")
+      // Redirect to appropriate dashboard based on role
+      const dashboardRoute = getDashboardRoute(user.role)
+      router.push(dashboardRoute)
     } catch (error: any) {
       console.error("Error signing in:", error)
-      toast.error(error.message || "Failed to sign in. Please check your credentials.")
+      setError(error.message || "Failed to sign in. Please check your credentials.")
     }
   }
 
@@ -50,6 +55,14 @@ export default function SignInPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-500 text-sm flex-1">{error}</p>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Email</label>
             <div className="relative">
@@ -57,8 +70,15 @@ export default function SignInPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-[#111111] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setError(null) // Clear error when user types
+                }}
+                className={`w-full pl-11 pr-4 py-3 bg-[#111111] border rounded-lg text-white placeholder-gray-500 focus:outline-none ${
+                  error 
+                    ? "border-red-500 focus:border-red-500" 
+                    : "border-gray-800 focus:border-[#7CFC00]"
+                }`}
                 placeholder="you@example.com"
                 required
               />
@@ -72,8 +92,15 @@ export default function SignInPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-[#111111] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setError(null) // Clear error when user types
+                }}
+                className={`w-full pl-11 pr-4 py-3 bg-[#111111] border rounded-lg text-white placeholder-gray-500 focus:outline-none ${
+                  error 
+                    ? "border-red-500 focus:border-red-500" 
+                    : "border-gray-800 focus:border-[#7CFC00]"
+                }`}
                 placeholder="••••••••"
                 required
               />

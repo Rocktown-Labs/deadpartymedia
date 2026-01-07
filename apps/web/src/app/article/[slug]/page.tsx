@@ -7,6 +7,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/articles"
 import { useCurrentUser } from "@/lib/api/auth"
+import { useMarkArticleRead } from "@/lib/api/user-activity"
 
 interface ArticlePageProps {
   params: Promise<{
@@ -21,6 +22,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   const { data: comments } = useArticleComments(slug)
   const { data: currentUser } = useCurrentUser()
   const createComment = useCreateComment()
+  const markArticleRead = useMarkArticleRead()
   const [commentText, setCommentText] = useState("")
 
   useEffect(() => {
@@ -30,6 +32,19 @@ export default function ArticlePage({ params }: ArticlePageProps) {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Track article read when article loads and user is logged in
+  useEffect(() => {
+    if (article && currentUser && article.id) {
+      // Mark article as read (handles duplicates gracefully on backend)
+      markArticleRead.mutate(article.id, {
+        onError: (error) => {
+          // Silently fail - don't interrupt user experience
+          console.error("Error tracking article read:", error)
+        },
+      })
+    }
+  }, [article, currentUser, markArticleRead])
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

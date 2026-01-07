@@ -8,15 +8,34 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  private getCsrfToken(): string | null {
+    // Get CSRF token from cookie
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      const [key, value] = cookie.trim().split("=");
+      if (key === name) {
+        return decodeURIComponent(value);
+      }
+    }
+    return null;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    
+    // Get CSRF token for POST/PUT/DELETE requests
+    const csrfToken = this.getCsrfToken();
+    const isModifyingMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(options.method || "");
+    
     const config: RequestInit = {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...(isModifyingMethod && csrfToken && { "X-CSRFToken": csrfToken }),
         ...options.headers,
       },
       credentials: "include", // Include cookies for session auth

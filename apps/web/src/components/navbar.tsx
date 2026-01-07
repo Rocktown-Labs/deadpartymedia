@@ -6,6 +6,8 @@ import type { Route } from "next"
 import CartModal from "./cart/cart-modal"
 import { ChevronDown } from "lucide-react"
 import { Button } from "./ui/button"
+import { useCurrentUser } from "@/lib/api/auth"
+import { UserAvatarMenu } from "./user-avatar-menu"
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
@@ -22,6 +24,7 @@ const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year:
 
 export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false)
+  const { data: user } = useCurrentUser()
 
   // Mount-only for global scroll listener (keep if adding scroll effects later)
   useEffect(() => {
@@ -120,36 +123,48 @@ export default function Navbar() {
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <CartModal />
-            <Link href="/sign-in">
-              <Button
-                variant="outline"
-                className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4" // Compact padding
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
-                Get Started
-              </Button>
-            </Link>
+            {user ? (
+              <div className="hidden lg:block">
+                <UserAvatarMenu />
+              </div>
+            ) : (
+              <>
+                <Link href="/sign-in">
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4" // Compact padding
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
           {/* Mobile Layout - Logo, Cart, Auth */}
           <div className="flex items-center gap-2 lg:hidden">
             <CartModal />
-            <Link href="/sign-in">
-              <Button
-                variant="outline"
-                className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
-                Sign Up
-              </Button>
-            </Link>
+            {user ? null : (
+              <>
+                <Link href="/sign-in">
+                  <Button
+                    variant="outline"
+                    className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </div>

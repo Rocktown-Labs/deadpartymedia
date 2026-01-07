@@ -1,12 +1,14 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Count
+from django.conf import settings
 import logging
 import sentry_sdk
-from sentry_sdk import metrics
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 from content.models import Article, Event, Artist, Writer, Comment
 from .serializers import (
     ArticleSerializer,
@@ -17,6 +19,7 @@ from .serializers import (
     WriterSerializer,
     CommentSerializer,
     ArtistOnboardSerializer,
+    ArtistUpdateSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,7 +66,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
             response = super().list(request, *args, **kwargs)
             # Track article list views
             category = request.query_params.get("category")
-            metrics.increment("api.articles.list", tags={"category": category or "all"})
+            logger.info(f"Article list viewed: category={category or 'all'}")
             return response
         except Exception as e:
             logger.error(f"Error listing articles: {e}", exc_info=True)
@@ -76,8 +79,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
             instance = self.get_object()
             instance.views += 1
             instance.save(update_fields=["views"])
-            logger.info(f"Article viewed: {instance.slug} (views: {instance.views})")
-            metrics.increment("api.articles.viewed", tags={"article_slug": instance.slug, "category": instance.category})
+            logger.info(f"Article viewed: {instance.slug} (views: {instance.views}, category: {instance.category})")
             return super().retrieve(request, *args, **kwargs)
         except Exception as e:
             logger.error(f"Error retrieving article: {e}", exc_info=True)
@@ -93,24 +95,21 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
             if request.method == "GET":
                 comments = article.comments.filter(parent=None).select_related("user").prefetch_related("replies")
                 serializer = CommentSerializer(comments, many=True)
-                metrics.increment("api.article.comments.viewed", tags={"article_slug": slug})
+                logger.info(f"Article comments viewed: article_slug={slug}")
                 return Response(serializer.data)
 
             elif request.method == "POST":
                 if not request.user.is_authenticated:
                     logger.warning(f"Unauthenticated comment attempt on article {slug}")
-                    metrics.increment("api.article.comments.unauthorized")
                     return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
 
                 serializer = CommentSerializer(data=request.data)
                 if serializer.is_valid():
                     comment = serializer.save(article=article, user=request.user)
                     logger.info(f"Comment created by user {request.user.id} on article {slug}")
-                    metrics.increment("api.article.comments.created", tags={"article_slug": slug, "user_id": request.user.id})
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 
                 logger.warning(f"Invalid comment data from user {request.user.id} on article {slug}: {serializer.errors}")
-                metrics.increment("api.article.comments.validation_failed", tags={"article_slug": slug})
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error in article comments endpoint for article {slug}: {e}", exc_info=True)
@@ -179,7 +178,7 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
             artist = self.get_object()
             articles = artist.get_articles().filter(status="published").select_related("author")
             serializer = ArticleListSerializer(articles, many=True)
-            metrics.increment("api.artist.articles.viewed", tags={"artist_slug": slug})
+            logger.info(f"Artist articles viewed: artist_slug={slug}")
             return Response(serializer.data)
         except Exception as e:
             logger.error(f"Error getting articles for artist {slug}: {e}", exc_info=True)
@@ -193,7 +192,7 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
             artist = self.get_object()
             events = artist.get_events().filter(status="published")
             serializer = EventListSerializer(events, many=True)
-            metrics.increment("api.artist.events.viewed", tags={"artist_slug": slug})
+            logger.info(f"Artist events viewed: artist_slug={slug}")
             return Response(serializer.data)
         except Exception as e:
             logger.error(f"Error getting events for artist {slug}: {e}", exc_info=True)
@@ -209,13 +208,11 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
             serializer = ArtistOnboardSerializer(data=data, context={"request": request})
             if serializer.is_valid():
                 artist = serializer.save()
-                logger.info(f"Artist profile created via onboarding by user {request.user.id}: {artist.slug}")
-                metrics.increment("api.artist.onboarded", tags={"user_id": request.user.id, "genre": artist.genre})
+                logger.info(f"Artist profile created via onboarding by user {request.user.id}: {artist.slug}, genre: {artist.genre}")
                 sentry_sdk.set_user({"id": request.user.id, "email": request.user.email})
                 return Response(ArtistSerializer(artist).data, status=status.HTTP_201_CREATED)
             
             logger.warning(f"Invalid artist onboarding data from user {request.user.id}: {serializer.errors}")
-            metrics.increment("api.artist.onboard.validation_failed", tags={"user_id": request.user.id})
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error in artist onboarding for user {request.user.id}: {e}", exc_info=True)
@@ -225,6 +222,95 @@ class ArtistViewSet(viewsets.ReadOnlyModelViewSet):
                 "user_email": request.user.email,
             })
             raise
+
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """Get current user's claimed artist profile."""
+        try:
+            artist = Artist.objects.filter(claimed_by=request.user, claimed=True).first()
+            if not artist:
+                return Response({"detail": "No claimed artist profile found."}, status=status.HTTP_404_NOT_FOUND)
+            serializer = ArtistSerializer(artist)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error getting current user's artist: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
+
+    @action(detail=False, methods=["put", "patch"], permission_classes=[IsAuthenticated])
+    def update_me(self, request):
+        """Update current user's claimed artist profile."""
+        try:
+            artist = Artist.objects.filter(claimed_by=request.user, claimed=True).first()
+            if not artist:
+                return Response({"detail": "No claimed artist profile found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Handle FormData for file uploads
+            data = request.data.dict() if hasattr(request.data, "dict") else request.data
+            serializer = ArtistUpdateSerializer(artist, data=data, partial=request.method == "PATCH", context={"request": request})
+            if serializer.is_valid():
+                updated_artist = serializer.save()
+                logger.info(f"Artist profile updated: {updated_artist.slug} by user {request.user.id}")
+                return Response(ArtistSerializer(updated_artist).data, status=status.HTTP_200_OK)
+            
+            logger.warning(f"Invalid artist update data from user {request.user.id}: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error updating artist profile for user {request.user.id}: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            raise
+
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny])
+    def search_spotify(self, request):
+        """Search for artists on Spotify."""
+        try:
+            query = request.query_params.get("q", "").strip()
+            
+            if not query or len(query) < 2:
+                return Response([], status=status.HTTP_200_OK)
+            
+            # Check if Spotify credentials are configured
+            if not settings.SPOTIFY_CLIENT_ID or not settings.SPOTIFY_CLIENT_SECRET:
+                logger.warning("Spotify API credentials not configured")
+                return Response(
+                    {"error": "Spotify API not configured"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            
+            # Initialize Spotify client with Client Credentials flow
+            client_credentials_manager = SpotifyClientCredentials(
+                client_id=settings.SPOTIFY_CLIENT_ID,
+                client_secret=settings.SPOTIFY_CLIENT_SECRET
+            )
+            sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+            
+            # Search for artists
+            results = sp.search(q=query, type="artist", limit=10)
+            
+            # Extract and format artist data
+            artists = []
+            for artist in results.get("artists", {}).get("items", []):
+                artists.append({
+                    "id": artist.get("id"),
+                    "name": artist.get("name"),
+                    "images": artist.get("images", []),
+                    "external_urls": artist.get("external_urls", {}),
+                    "genres": artist.get("genres", []),
+                })
+            
+            logger.info(f"Spotify search completed: query={query}, results={len(artists)}")
+            return Response(artists, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error searching Spotify: {e}", exc_info=True)
+            sentry_sdk.capture_exception(e)
+            sentry_sdk.set_context("spotify_search", {
+                "query": request.query_params.get("q", ""),
+            })
+            return Response(
+                {"error": "Failed to search Spotify. Please try again later."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class WriterViewSet(viewsets.ReadOnlyModelViewSet):
@@ -246,7 +332,7 @@ class CategoryViewSet(viewsets.ViewSet):
                 .annotate(count=Count("id"))
                 .order_by("category")
             )
-            metrics.increment("api.categories.list")
+            logger.info("Categories list viewed")
             return Response(categories)
         except Exception as e:
             logger.error(f"Error listing categories: {e}", exc_info=True)

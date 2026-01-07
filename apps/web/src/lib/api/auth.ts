@@ -75,5 +75,39 @@ export function useCurrentUser() {
       }
     },
     retry: false,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export interface UserUpdateData {
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+export interface PasswordChangeData {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UserUpdateData) => {
+      return apiClient.put<User>("/auth/user/", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (data: Omit<PasswordChangeData, "confirm_password">) => {
+      return apiClient.post<{ message: string }>("/auth/user/password/", data);
+    },
   });
 }

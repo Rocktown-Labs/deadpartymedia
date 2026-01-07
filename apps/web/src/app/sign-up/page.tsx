@@ -6,7 +6,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Mail, Lock, UserIcon } from "lucide-react"
+import { ArrowLeft, Mail, Lock, UserIcon, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRegister } from "@/lib/api/auth"
 import { toast } from "sonner"
@@ -20,13 +20,15 @@ export default function SignUpPage() {
     confirmPassword: "",
     userType: "fan" as "fan" | "artist",
   })
+  const [error, setError] = useState<string | null>(null)
   const register = useRegister()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null) // Clear previous errors
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match")
+      setError("Passwords do not match")
       return
     }
 
@@ -47,7 +49,7 @@ export default function SignUpPage() {
       }
     } catch (error: any) {
       console.error("Error signing up:", error)
-      toast.error(error.message || "Failed to create account. Please try again.")
+      setError(error.message || "Failed to create account. Please try again.")
     }
   }
 
@@ -72,6 +74,14 @@ export default function SignUpPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-red-500 text-sm flex-1">{error}</p>
+            </div>
+          )}
+
           {/* User Type Selection */}
           <div>
             <label className="block text-sm font-bold mb-3 uppercase tracking-wider">I am a...</label>
@@ -125,8 +135,15 @@ export default function SignUpPage() {
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full pl-11 pr-4 py-3 bg-[#111111] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value })
+                  setError(null) // Clear error when user types
+                }}
+                className={`w-full pl-11 pr-4 py-3 bg-[#111111] border rounded-lg text-white placeholder-gray-500 focus:outline-none ${
+                  error && error.toLowerCase().includes("email") 
+                    ? "border-red-500 focus:border-red-500" 
+                    : "border-gray-800 focus:border-[#7CFC00]"
+                }`}
                 placeholder="you@example.com"
                 required
               />

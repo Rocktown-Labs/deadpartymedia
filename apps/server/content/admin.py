@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import logging
 import sentry_sdk
-from sentry_sdk import metrics
 from .models import Article, Event, Artist, Writer, ArticleArtist, EventArtist, Comment
 
 logger = logging.getLogger(__name__)
@@ -244,8 +243,7 @@ class ArtistAdmin(admin.ModelAdmin):
                     html_message=html_message,
                     fail_silently=False,
                 )
-                logger.info(f"Artist claim email sent successfully to {obj.email} for artist {obj.name}")
-                metrics.increment("email.artist_claim.sent", tags={"artist_slug": obj.slug})
+                logger.info(f"Artist claim email sent successfully to {obj.email} for artist {obj.name} (slug: {obj.slug})")
             except Exception as e:
                 # Log error and send to Sentry
                 logger.error(f"Failed to send artist claim email to {obj.email} for artist {obj.name}: {e}", exc_info=True)
@@ -256,7 +254,6 @@ class ArtistAdmin(admin.ModelAdmin):
                     "artist_name": obj.name,
                     "recipient_email": obj.email,
                 })
-                metrics.increment("email.artist_claim.failed", tags={"artist_slug": obj.slug})
 
 
 @admin.register(Writer)
@@ -324,8 +321,7 @@ class WriterAdmin(admin.ModelAdmin):
                     html_message=html_message,
                     fail_silently=False,
                 )
-                logger.info(f"Writer invitation email sent successfully to {obj.user.email} for writer {obj.name}")
-                metrics.increment("email.writer_invitation.sent", tags={"writer_id": obj.id})
+                logger.info(f"Writer invitation email sent successfully to {obj.user.email} for writer {obj.name} (writer_id: {obj.id})")
             except Exception as e:
                 # Log error and send to Sentry
                 logger.error(f"Failed to send writer invitation email to {obj.user.email} for writer {obj.name}: {e}", exc_info=True)
@@ -336,7 +332,6 @@ class WriterAdmin(admin.ModelAdmin):
                     "user_id": obj.user.id,
                     "recipient_email": obj.user.email,
                 })
-                metrics.increment("email.writer_invitation.failed", tags={"writer_id": obj.id})
 
 
 @admin.register(Comment)

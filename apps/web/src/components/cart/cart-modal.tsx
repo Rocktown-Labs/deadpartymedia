@@ -39,18 +39,16 @@ export default function CartModal() {
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <button
-          className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors"
-          aria-label="Open cart"
-        >
-          <ShoppingBag className="h-5 w-5" />
-          {cart?.totalQuantity ? (
-            <div className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
-              {cart.totalQuantity}
-            </div>
-          ) : null}
-        </button>
+      <SheetTrigger
+        className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent p-0"
+        aria-label="Open cart"
+      >
+        <ShoppingBag className="h-5 w-5" />
+        {cart?.totalQuantity ? (
+          <div className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
+            {cart.totalQuantity}
+          </div>
+        ) : null}
       </SheetTrigger>
       <SheetContent side="right" className="w-full md:w-[420px] bg-[#0A0A0A] border-l border-gray-800 flex flex-col p-0">
         <SheetHeader className="p-6 border-b border-gray-800">
@@ -72,7 +70,7 @@ export default function CartModal() {
                     {cart.lines.map((item) => (
                       <div key={item.id} className="flex gap-4 border-b border-gray-800 pb-4">
                         {/* Product Image */}
-                        <div className="relative w-20 h-20 flex-shrink-0 bg-gray-900 rounded-lg overflow-hidden">
+                        <div className="relative w-20 h-20 shrink-0 bg-gray-900 rounded-lg overflow-hidden">
                           <Image
                             src={item.merchandise.product.featuredImage.url || "/placeholder.svg"}
                             alt={item.merchandise.product.title}
@@ -131,7 +129,7 @@ export default function CartModal() {
                         </div>
 
                         {/* Price */}
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right shrink-0">
                           <p className="font-bold">${item.cost.totalAmount.amount}</p>
                         </div>
                       </div>

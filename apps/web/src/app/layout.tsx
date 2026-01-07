@@ -6,6 +6,9 @@ import { CartProvider } from "@/components/cart/cart-context"
 import { getCart } from "@/lib/fourthwall"
 import { getCartId } from "./cart/actions"
 import Providers from "@/components/providers"
+import Navbar from "@/components/navbar"
+import Footer from "@/components/footer"
+import MobileBottomNav from "@/components/mobile-bottom-nav"
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -35,7 +38,12 @@ export default async function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <Providers>
-          <CartProvider cartPromise={cart}>{children}</CartProvider>
+          <CartProvider cartPromise={cart}>
+            <Navbar />
+            <div className="pb-16 lg:pb-0">{children}</div>
+            <Footer />
+            <MobileBottomNav />
+          </CartProvider>
         </Providers>
       </body>
     </html>

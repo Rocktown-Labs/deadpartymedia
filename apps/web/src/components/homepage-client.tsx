@@ -70,14 +70,14 @@ export default function HomepageClient({
               <Link href={`/article/${featuredArticles[0]?.slug}`}>
                 <div className="relative group cursor-pointer h-full">
                   {/* Cover Image */}
-                  <div className="relative h-full min-h-[600px] overflow-hidden bg-gradient-to-br from-gray-900 to-black">
+                  <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
                     <Image
                       src={featuredArticles[0]?.image || featuredArticles[0]?.cover_image || "/placeholder.svg"}
                       alt={featuredArticles[0]?.title || "Featured Article"}
                       fill
                       className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
 
                     {/* Magazine-style text overlay */}
                     <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
@@ -129,7 +129,7 @@ export default function HomepageClient({
             {/* Sidebar - In This Issue */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               {/* Artist CTA */}
-              <div className="bg-gradient-to-br from-[#7CFC00]/10 to-[#9400D3]/10 p-8 border border-[#7CFC00]/20">
+              <div className="bg-linear-to-br from-[#7CFC00]/10 to-[#9400D3]/10 p-8 border border-[#7CFC00]/20">
                 <div className="text-sm tracking-[0.3em] text-gray-400 mb-4 uppercase font-bold">For Artists</div>
                 <h3 className="text-2xl font-black mb-4 leading-tight">Get Featured in Our Next Issue</h3>
                 <p className="text-sm text-gray-400 mb-6 leading-relaxed">
@@ -163,7 +163,7 @@ export default function HomepageClient({
                               fill
                               className="object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                            <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
                           </div>
                           <div className="text-xs tracking-wider text-[#7CFC00] mb-2 uppercase font-bold">
                             {article.category}
@@ -283,7 +283,7 @@ export default function HomepageClient({
       </section>
 
       {/* Events Section - Editorial Style */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent to-[#0A0A0A] border-t border-gray-800">
+      <section className="py-20 px-6 bg-linear-to-b from-transparent to-[#0A0A0A] border-t border-gray-800">
         <div className="container mx-auto">
           <div className="flex items-end justify-between mb-16">
             <div>
@@ -309,7 +309,7 @@ export default function HomepageClient({
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
                   <div className="absolute top-4 left-4">
                     <div className="bg-[#7CFC00] text-black px-4 py-3 font-black">
                       <div className="text-xs tracking-wider">{event.date.month}</div>
@@ -365,7 +365,7 @@ export default function HomepageClient({
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
                       <div className="absolute top-4 left-4">
                         <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">MERCH</div>
                       </div>

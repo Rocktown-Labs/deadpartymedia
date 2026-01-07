@@ -1,17 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { ArrowRight, Music, MapPin, Instagram, Youtube, Twitter } from "lucide-react"
+import { ArrowRight, MapPin, Instagram, Youtube, Twitter } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useOnboardArtist } from "@/lib/api/artists"
+import { useOnboardArtist, useCurrentUserArtist, type SpotifyArtist } from "@/lib/api/artists"
+import { useCurrentUser } from "@/lib/api/auth"
+import { SpotifySearch } from "@/components/spotify-search"
 import { toast } from "sonner"
 
 type OnboardingStep = 1 | 2 | 3 | 4
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { data: user, isLoading: userLoading } = useCurrentUser()
+  const { data: existingArtist, isLoading: artistLoading } = useCurrentUserArtist()
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1)
   const onboardArtist = useOnboardArtist()
   const [artistData, setArtistData] = useState({
@@ -28,6 +32,37 @@ export default function OnboardingPage() {
     },
     profileImage: "",
   })
+
+  // Authentication check - redirect if not logged in
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push("/sign-in")
+    }
+  }, [user, userLoading, router])
+
+  // Check if user already has an artist profile - redirect to dashboard
+  useEffect(() => {
+    if (!artistLoading && existingArtist) {
+      router.push("/artist-dashboard")
+    }
+  }, [existingArtist, artistLoading, router])
+
+  // Show loading state while checking auth/artist
+  if (userLoading || artistLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7CFC00] mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated or already has artist
+  if (!user || existingArtist) {
+    return null
+  }
 
   const genres = ["Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"]
 
@@ -202,22 +237,12 @@ export default function OnboardingPage() {
                   <p className="text-gray-400 text-sm">Link your music platforms</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold mb-2 uppercase tracking-wider">Spotify Artist ID</label>
-                  <div className="relative">
-                    <Music className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={artistData.spotifyId}
-                      onChange={(e) => setArtistData({ ...artistData, spotifyId: e.target.value })}
-                      className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                      placeholder="Your Spotify Artist ID"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Find this in your Spotify for Artists dashboard or from your artist URL
-                  </p>
-                </div>
+                <SpotifySearch
+                  value={artistData.spotifyId}
+                  onSelect={(artist: SpotifyArtist) => {
+                    setArtistData({ ...artistData, spotifyId: artist.id })
+                  }}
+                />
               </div>
             )}
 
