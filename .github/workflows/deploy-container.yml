@@ -71,6 +71,7 @@ jobs:
           DB_NAME: test_db
           DB_USER: postgres
           DB_PASSWORD: postgres
+          DB_SSLMODE: disable
           USE_S3: "False"
         run: uv run pytest
 
