@@ -96,13 +96,42 @@ jobs:
       - name: Validate AWS credentials
         run: |
           set -euo pipefail
+          
+          # Debug: Log secret availability (without exposing values)
+          echo "::debug::[HYPOTHESIS_A/E] Checking secret availability..."
+          HAS_ACCESS_KEY_ID=false
+          HAS_SECRET_ACCESS_KEY=false
+          
+          ACCESS_KEY_ID_VALUE="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          SECRET_ACCESS_KEY_VALUE="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          
+          if [ -n "$ACCESS_KEY_ID_VALUE" ]; then
+            HAS_ACCESS_KEY_ID=true
+            ACCESS_KEY_LEN=${#ACCESS_KEY_ID_VALUE}
+            echo "::debug::[HYPOTHESIS_A/E] AWS_ACCESS_KEY_ID is present (length: $ACCESS_KEY_LEN)"
+          else
+            echo "::debug::[HYPOTHESIS_A/E] AWS_ACCESS_KEY_ID is empty or missing"
+          fi
+          
+          if [ -n "$SECRET_ACCESS_KEY_VALUE" ]; then
+            HAS_SECRET_ACCESS_KEY=true
+            SECRET_KEY_LEN=${#SECRET_ACCESS_KEY_VALUE}
+            echo "::debug::[HYPOTHESIS_A/E] AWS_SECRET_ACCESS_KEY is present (length: $SECRET_KEY_LEN)"
+          else
+            echo "::debug::[HYPOTHESIS_A/E] AWS_SECRET_ACCESS_KEY is empty or missing"
+          fi
+          
+          echo "::debug::[HYPOTHESIS_A/E] Environment context: ${{ github.environment || 'none' }}"
+          echo "::debug::[HYPOTHESIS_A/E] Job environment: production"
+          echo "::debug::[HYPOTHESIS_A/E] Note: When environment is set, GitHub checks environment secrets first, then repository secrets"
+          
           MISSING_SECRETS=()
           
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+          if [ "$HAS_ACCESS_KEY_ID" = false ]; then
             MISSING_SECRETS+=("AWS_ACCESS_KEY_ID")
           fi
           
-          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+          if [ "$HAS_SECRET_ACCESS_KEY" = false ]; then
             MISSING_SECRETS+=("AWS_SECRET_ACCESS_KEY")
           fi
           
@@ -114,9 +143,10 @@ jobs:
             echo ""
             echo "To fix this:"
             echo "1. Go to your repository: Settings → Secrets and variables → Actions"
-            echo "2. Add the missing secrets listed above"
-            echo "3. Ensure the IAM user has required permissions (see apps/server/IAM_POLICIES.md)"
-            echo "4. Re-run this workflow"
+            echo "2. For environment 'production': Settings → Environments → production → Secrets"
+            echo "3. Add the missing secrets listed above (can be set at repository OR environment level)"
+            echo "4. Ensure the IAM user has required permissions (see apps/server/IAM_POLICIES.md)"
+            echo "5. Re-run this workflow"
             exit 1
           fi
           
@@ -128,6 +158,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+        env:
+          # Debug: Check if ECR credentials are being auto-configured
+          AWS_ECR_REGISTRY: ""
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -135,20 +168,40 @@ jobs:
       - name: Get Lightsail container registry login
         id: registry-login
         run: |
-          REGISTRY_LOGIN=$(aws lightsail create-container-service-registry-login --region ${{ env.AWS_REGION }})
+          echo "::debug::[HYPOTHESIS_B/D] Requesting Lightsail container registry login..."
+          REGISTRY_LOGIN=$(aws lightsail create-container-service-registry-login --region ${{ env.AWS_REGION }} 2>&1)
           REGISTRY_URL=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.registry')
           USERNAME=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.username')
           PASSWORD=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.password')
+          
+          echo "::debug::[HYPOTHESIS_B/D] Registry URL: $REGISTRY_URL"
+          echo "::debug::[HYPOTHESIS_B/D] Registry URL contains 'ecr': $(echo "$REGISTRY_URL" | grep -i ecr || echo 'no')"
+          echo "::debug::[HYPOTHESIS_B/D] Registry URL contains 'lightsail': $(echo "$REGISTRY_URL" | grep -i lightsail || echo 'no')"
+          echo "::debug::[HYPOTHESIS_B/D] Full registry login response (sanitized): $(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin | {registry, username, password: "***"}')"
+          
           echo "registry_url=$REGISTRY_URL" >> $GITHUB_OUTPUT
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
       - name: Log in to Lightsail container registry
         run: |
-          echo "${{ steps.registry-login.outputs.password }}" | \
-          docker login ${{ steps.registry-login.outputs.registry_url }} \
-            -u ${{ steps.registry-login.outputs.username }} \
-            --password-stdin
+          echo "::debug::[HYPOTHESIS_C/D] Attempting Docker login to: ${{ steps.registry-login.outputs.registry_url }}"
+          echo "::debug::[HYPOTHESIS_C/D] Checking Docker config before login..."
+          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No existing Docker config"
+          
+          LOGIN_OUTPUT=$(echo "${{ steps.registry-login.outputs.password }}" | \
+            docker login ${{ steps.registry-login.outputs.registry_url }} \
+              -u ${{ steps.registry-login.outputs.username }} \
+              --password-stdin 2>&1) || {
+            echo "::error::[HYPOTHESIS_C/D] Docker login failed"
+            echo "$LOGIN_OUTPUT"
+            exit 1
+          }
+          
+          echo "$LOGIN_OUTPUT"
+          echo "::debug::[HYPOTHESIS_C/D] Docker login successful"
+          echo "::debug::[HYPOTHESIS_C/D] Docker config after login:"
+          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No Docker config found"
 
       - name: Build Docker image
         working-directory: apps/server
@@ -170,8 +223,31 @@ jobs:
           IMAGE_NAME="${{ env.image_name }}"
           LATEST_IMAGE="${REGISTRY_URL}/${SERVICE_NAME}:latest"
           
-          docker push "${IMAGE_NAME}"
-          docker push "${LATEST_IMAGE}"
+          echo "::debug::[HYPOTHESIS_B/C/D] Pushing image: ${IMAGE_NAME}"
+          echo "::debug::[HYPOTHESIS_B/C/D] Registry URL format: ${REGISTRY_URL}"
+          echo "::debug::[HYPOTHESIS_B/C/D] Checking if registry URL is ECR format..."
+          if echo "${REGISTRY_URL}" | grep -qE '\.dkr\.ecr\.|ecr\.amazonaws\.com'; then
+            echo "::warning::[HYPOTHESIS_B] Registry URL appears to be ECR format - ECR permissions may be required"
+          fi
+          
+          echo "::debug::[HYPOTHESIS_C/D] Docker config before push:"
+          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No Docker config"
+          
+          docker push "${IMAGE_NAME}" 2>&1 | tee /tmp/docker-push.log || {
+            echo "::error::[HYPOTHESIS_B/C/D] Docker push failed"
+            echo "::debug::[HYPOTHESIS_B/C/D] Push error details:"
+            cat /tmp/docker-push.log
+            exit 1
+          }
+          
+          docker push "${LATEST_IMAGE}" 2>&1 | tee /tmp/docker-push-latest.log || {
+            echo "::error::[HYPOTHESIS_B/C/D] Docker push (latest) failed"
+            echo "::debug::[HYPOTHESIS_B/C/D] Push error details:"
+            cat /tmp/docker-push-latest.log
+            exit 1
+          }
+          
+          echo "::debug::[HYPOTHESIS_B/C/D] Both images pushed successfully"
 
       - name: Get secrets from AWS Secrets Manager
         id: secrets
