@@ -1,25 +1,15 @@
-terraform {
-  required_version = ">= 1.0"
-  
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
   region = var.aws_region
 }
 
 # Lightsail Instance
 resource "aws_lightsail_instance" "deadpartymedia" {
-  name              = "deadpartymedia-server"
+  name              = "deadpartymedia-api"  # Match existing instance name
   availability_zone = "${var.aws_region}a"
   blueprint_id      = "bitnami_django_6_10_0"
   bundle_id         = var.instance_bundle_id
-  key_pair_name     = aws_lightsail_key_pair.deadparty.key_pair_name
+  # key_pair_name is optional - instance may already have one configured
+  # key_pair_name     = aws_lightsail_key_pair.deadparty.name
 
   tags = {
     Name        = "DeadPartyMedia"
@@ -28,11 +18,12 @@ resource "aws_lightsail_instance" "deadpartymedia" {
   }
 }
 
-# SSH Key Pair
-resource "aws_lightsail_key_pair" "deadparty" {
-  name       = "deadparty-server"
-  public_key = file(var.ssh_public_key_path)
-}
+# SSH Key Pair (optional - only create if it doesn't exist)
+# Uncomment if you need to create a new key pair
+# resource "aws_lightsail_key_pair" "deadparty" {
+#   name       = "deadparty-server"
+#   public_key = file(var.ssh_public_key_path)
+# }
 
 # Static IP
 resource "aws_lightsail_static_ip" "deadpartymedia" {
@@ -46,13 +37,13 @@ resource "aws_lightsail_static_ip_attachment" "deadpartymedia" {
 
 # Managed Database
 resource "aws_lightsail_database" "deadpartymedia" {
-  name              = "deadpartymedia-db"
-  availability_zone = "${var.aws_region}a"
-  blueprint_id      = "postgres_17_7"
-  bundle_id         = var.database_bundle_id
-  master_database_name = "deadpartymedia"
-  master_username   = "dbmasteruser"
-  master_password   = var.database_password
+  relational_database_name = "deadpartymediaDB"  # Match existing database name
+  availability_zone        = "${var.aws_region}a"
+  blueprint_id             = "postgres_17_7"
+  bundle_id                = var.database_bundle_id
+  master_database_name     = "deadpartymedia"
+  master_username          = "dbmasteruser"
+  master_password          = var.database_password
 
   tags = {
     Name        = "DeadPartyMedia-DB"

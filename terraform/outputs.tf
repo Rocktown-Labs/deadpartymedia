@@ -20,7 +20,7 @@ output "database_port" {
 }
 
 output "database_name" {
-  value       = aws_lightsail_database.deadpartymedia.master_database_name
+  value       = aws_lightsail_database.deadpartymedia.relational_database_name
   description = "Database name"
 }
 
