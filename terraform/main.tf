@@ -31,27 +31,32 @@ resource "aws_lightsail_certificate" "deadpartymedia" {
 }
 
 # ECR Repository Policy to allow Lightsail to pull images
-data "aws_iam_policy_document" "ecr_pull" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = [aws_lightsail_container_service.deadpartymedia.private_registry_access[0].ecr_image_puller_role[0].principal_arn]
-    }
-
-    actions = [
-      "ecr:BatchGetImage",
-      "ecr:GetDownloadUrlForLayer",
-    ]
-  }
-}
-
-resource "aws_ecr_repository_policy" "deadpartymedia" {
-  repository = aws_ecr_repository.deadpartymedia.name
-  policy     = data.aws_iam_policy_document.ecr_pull.json
-
+# Note: This must be created AFTER the container service exists (principal_arn is computed)
+# Use a null_resource to create the policy after the container service is created
+resource "null_resource" "ecr_policy" {
   depends_on = [aws_lightsail_container_service.deadpartymedia]
+
+  triggers = {
+    service_name = aws_lightsail_container_service.deadpartymedia.name
+    repository   = aws_ecr_repository.deadpartymedia.name
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      PRINCIPAL_ARN=$(aws lightsail get-container-services \
+        --service-names ${aws_lightsail_container_service.deadpartymedia.name} \
+        --region ${var.aws_region} \
+        --query 'containerServices[0].privateRegistryAccess.ecrImagePullerRole.principalArn' \
+        --output text)
+      
+      if [ -n "$PRINCIPAL_ARN" ] && [ "$PRINCIPAL_ARN" != "None" ]; then
+        aws ecr set-repository-policy \
+          --repository-name ${aws_ecr_repository.deadpartymedia.name} \
+          --region ${var.aws_region} \
+          --policy-text "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"$PRINCIPAL_ARN\"},\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\"]}]}"
+      fi
+    EOT
+  }
 }
 
 # Lightsail Container Service
@@ -107,7 +112,7 @@ resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
       # DB_PASSWORD will be set via AWS Secrets Manager or environment variables
       # ALLOWED_HOSTS should include container service URL and custom domains
       # Format: "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,<container-service-url>"
-      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${replace(replace(aws_lightsail_container_service.deadpartymedia.url, "https://", ""), "/", "")}"
+      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${trimprefix(trimprefix(aws_lightsail_container_service.deadpartymedia.url, "https://"), "/")}"
       GUNICORN_BIND          = "0.0.0.0:8000"
     }
     ports = {

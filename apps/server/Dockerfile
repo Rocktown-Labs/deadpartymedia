@@ -17,9 +17,12 @@ WORKDIR /app
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv
-# uv pip install automatically respects uv.lock if present
-RUN uv pip install --system --no-cache .
+# Install dependencies using uv with lock file enforcement
+# First sync to validate lock file, then install to system Python
+# uv pip install respects uv.lock when present in the same directory
+RUN uv sync --frozen --no-dev --no-install-project && \
+    uv pip install --system --no-cache . && \
+    rm -rf .venv
 
 # Production stage
 FROM python:3.11-slim
