@@ -227,60 +227,6 @@ resource "aws_lightsail_container_service" "deadpartymedia" {
   }
 }
 
-# Container Service Deployment
-# Note: This creates an initial deployment only if container_image is provided.
-# If container_image is empty, skip this and let GitHub Actions create the first deployment.
-# Ongoing deployments are handled by GitHub Actions.
-# To manage deployments via Terraform, update container_image and apply.
-resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
-  count       = var.container_image != "" ? 1 : 0
-  service_name = aws_lightsail_container_service.deadpartymedia.name
-  
-  # Ensure ECR policy is set before deployment
-  depends_on = [null_resource.ecr_policy]
-
-  container {
-    container_name = "api"
-    image          = var.container_image
-    command        = []
-    environment = {
-      DJANGO_SETTINGS_MODULE = "config.settings.production"
-      DB_HOST                = aws_lightsail_database.deadpartymedia.master_endpoint_address
-      DB_PORT                = tostring(aws_lightsail_database.deadpartymedia.master_endpoint_port)
-      DB_NAME                = aws_lightsail_database.deadpartymedia.master_database_name
-      DB_USER                = aws_lightsail_database.deadpartymedia.master_username
-      DB_PASSWORD            = data.external.db_password.result.value
-      SECRET_KEY             = data.external.secret_key.result.value
-      AWS_ACCESS_KEY_ID      = data.external.aws_access_key_id.result.value
-      AWS_SECRET_ACCESS_KEY  = data.external.aws_secret_access_key.result.value
-      AWS_STORAGE_BUCKET_NAME = data.external.aws_storage_bucket_name.result.value
-      AWS_S3_REGION_NAME     = "us-east-1"
-      USE_S3                = "True"
-      # ALLOWED_HOSTS should include container service URL and custom domains
-      # Format: "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,<container-service-url>"
-      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${trimsuffix(trimprefix(aws_lightsail_container_service.deadpartymedia.url, "https://"), "/")}"
-      GUNICORN_BIND          = "0.0.0.0:8000"
-    }
-    ports = {
-      "8000" = "HTTP"
-    }
-  }
-
-  public_endpoint {
-    container_name = "api"
-    container_port = 8000
-
-    health_check {
-      healthy_threshold   = 2
-      unhealthy_threshold = 2
-      timeout_seconds     = 5
-      interval_seconds    = 30
-      path                = "/v1/"
-      success_codes       = "200"
-    }
-  }
-}
-
 # Managed Database
 resource "aws_lightsail_database" "deadpartymedia" {
   relational_database_name = "deadpartymediaDB"  # Match existing database name
