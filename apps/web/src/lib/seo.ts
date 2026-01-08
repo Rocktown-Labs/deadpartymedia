@@ -4,7 +4,7 @@ import type { Event } from "./api/events";
 import type { Artist } from "./api/artists";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo.png`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
 
 /**
  * Convert a relative path to an absolute URL

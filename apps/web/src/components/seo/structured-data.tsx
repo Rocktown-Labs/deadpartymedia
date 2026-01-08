@@ -55,7 +55,6 @@ interface EventStructuredDataProps {
 }
 
 export function EventStructuredData({ event }: EventStructuredDataProps) {
-  const eventDate = new Date(event.date);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Event",

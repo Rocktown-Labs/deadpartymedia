@@ -21,23 +21,23 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
-const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo.png`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
 
 export const metadata: Metadata = {
   title: {
-    default: "Dead Party Media - Arkansas Music",
+    default: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
     template: "%s | Dead Party Media",
   },
-  description: "Your #1 outlet for Arkansas music",
-  generator: "v0.app",
+  description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
+  
   metadataBase: new URL(SITE_URL),
   openGraph: {
     type: "website",
     locale: "en_US",
     url: SITE_URL,
     siteName: "Dead Party Media",
-    title: "Dead Party Media - Arkansas Music",
-    description: "Your #1 outlet for Arkansas music",
+    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
+    description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [
       {
         url: DEFAULT_OG_IMAGE,
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dead Party Media - Arkansas Music",
-    description: "Your #1 outlet for Arkansas music",
+    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
+    description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [DEFAULT_OG_IMAGE],
   },
   alternates: {
