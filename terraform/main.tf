@@ -62,6 +62,11 @@ resource "aws_lightsail_database" "deadpartymedia" {
     Environment = "production"
     ManagedBy   = "terraform"
   }
+
+  # Prevent Terraform from changing the password after initial setup
+  lifecycle {
+    ignore_changes = [master_password]
+  }
 }
 
 # Outputs are in outputs.tf
