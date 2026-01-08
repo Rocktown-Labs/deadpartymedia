@@ -1,0 +1,6 @@
+aws_region         = "us-east-2"
+instance_bundle_id = "nano_2_0"
+database_bundle_id = "micro_2_0"
+database_password  = "your-secure-password-here"
+ssh_public_key_path = "~/.ssh/deadparty-server.pub"
+

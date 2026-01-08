@@ -72,3 +72,11 @@ docker-compose.override.yml
 .uv/
 uv.lock
 .vercel
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/.terraformrc
+terraform/terraform.rc
