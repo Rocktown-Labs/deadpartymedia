@@ -54,7 +54,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 mt-4">
       <div className="w-full max-w-md">
         <Link
           href="/"
