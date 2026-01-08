@@ -17,9 +17,9 @@ WORKDIR /app
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv
-# uv pip install . installs the project and all dependencies from pyproject.toml
-RUN uv pip install --system --no-cache .
+# Install dependencies using uv with lock file enforcement
+# uv pip install --locked ensures exact versions from uv.lock are used
+RUN uv pip install --system --no-cache --locked .
 
 # Production stage
 FROM python:3.11-slim

@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: apps/server
-        run: uv pip install .
+        run: uv sync
 
       - name: Run tests
         working-directory: apps/server
@@ -121,20 +121,43 @@ jobs:
             fi
           }
           
-          # Get database password
-          get_secret "deadpartymedia/db-password" "db_password"
+          # Get database password (try new name first, fallback to old name)
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/db-password --region ${{ env.AWS_REGION }} &>/dev/null; then
+            get_secret "deadpartymedia/db-password" "db_password"
+          else
+            get_secret "deadpartymedia/database/password" "db_password"
+          fi
           
-          # Get Django SECRET_KEY (critical for security)
-          get_secret "deadpartymedia/secret-key" "secret_key"
+          # Get Django SECRET_KEY (try new name first, fallback to old name)
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/secret-key --region ${{ env.AWS_REGION }} &>/dev/null; then
+            get_secret "deadpartymedia/secret-key" "secret_key"
+          else
+            get_secret "deadpartymedia/django/secret-key" "secret_key"
+          fi
           
-          # Get AWS S3 credentials (required when USE_S3=True)
-          get_secret "deadpartymedia/aws-access-key-id" "aws_access_key_id"
-          get_secret "deadpartymedia/aws-secret-access-key" "aws_secret_access_key"
+          # Get AWS S3 credentials (try new names first, fallback to old names)
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-access-key-id --region ${{ env.AWS_REGION }} &>/dev/null; then
+            get_secret "deadpartymedia/aws-access-key-id" "aws_access_key_id"
+          else
+            get_secret "deadpartymedia/aws/access-key-id" "aws_access_key_id"
+          fi
           
-          # Get S3 bucket name (can also be in secrets or use default)
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-secret-access-key --region ${{ env.AWS_REGION }} &>/dev/null; then
+            get_secret "deadpartymedia/aws-secret-access-key" "aws_secret_access_key"
+          else
+            get_secret "deadpartymedia/aws/secret-access-key" "aws_secret_access_key"
+          fi
+          
+          # Get S3 bucket name (try multiple possible names)
           if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-storage-bucket-name --region ${{ env.AWS_REGION }} &>/dev/null; then
             AWS_BUCKET=$(aws secretsmanager get-secret-value \
               --secret-id deadpartymedia/aws-storage-bucket-name \
+              --region ${{ env.AWS_REGION }} \
+              --query SecretString --output text)
+            echo "aws_storage_bucket_name=$AWS_BUCKET" >> $GITHUB_OUTPUT
+          elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/storage-bucket-name --region ${{ env.AWS_REGION }} &>/dev/null; then
+            AWS_BUCKET=$(aws secretsmanager get-secret-value \
+              --secret-id deadpartymedia/aws/storage-bucket-name \
               --region ${{ env.AWS_REGION }} \
               --query SecretString --output text)
             echo "aws_storage_bucket_name=$AWS_BUCKET" >> $GITHUB_OUTPUT

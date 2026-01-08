@@ -54,16 +54,23 @@ This will create:
 
 ### 3. Configure AWS Secrets Manager
 
-The deployment workflow requires the following secrets in AWS Secrets Manager:
+The deployment workflow requires the following secrets in AWS Secrets Manager. **The workflow supports both old and new naming conventions**, so if you already have secrets from the previous setup, they will work automatically.
 
-**Required Secrets:**
-- `deadpartymedia/db-password`: Database password (from Lightsail database)
-- `deadpartymedia/secret-key`: Django SECRET_KEY (critical for security)
+**Required Secrets (either naming convention works):**
+- Database password: `deadpartymedia/db-password` OR `deadpartymedia/database/password`
+- Django SECRET_KEY: `deadpartymedia/secret-key` OR `deadpartymedia/django/secret-key`
 
-**Required for S3 Storage:**
-- `deadpartymedia/aws-access-key-id`: AWS access key ID for S3
-- `deadpartymedia/aws-secret-access-key`: AWS secret access key for S3
-- `deadpartymedia/aws-storage-bucket-name`: S3 bucket name (optional, defaults to `deadpartymedia-bucket`)
+**Required for S3 Storage (either naming convention works):**
+- AWS Access Key ID: `deadpartymedia/aws-access-key-id` OR `deadpartymedia/aws/access-key-id`
+- AWS Secret Access Key: `deadpartymedia/aws-secret-access-key` OR `deadpartymedia/aws/secret-access-key`
+- S3 Bucket Name: `deadpartymedia/aws-storage-bucket-name` OR `deadpartymedia/aws/storage-bucket-name` (optional, defaults to `deadpartymedia-bucket`)
+
+**Check what secrets you already have:**
+```bash
+aws secretsmanager list-secrets --region us-east-2 \
+  --query "SecretList[?contains(Name, 'deadpartymedia')].{Name:Name, LastChangedDate:LastChangedDate}" \
+  --output table
+```
 
 **Create secrets via AWS CLI:**
 ```bash

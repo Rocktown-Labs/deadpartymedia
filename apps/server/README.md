@@ -40,8 +40,8 @@ cd apps/server
 # Install uv if not already installed
 pip install uv
 
-# Install dependencies
-uv pip install -r pyproject.toml
+# Install dependencies (respects uv.lock)
+uv sync
 
 # Run tests
 uv run pytest
