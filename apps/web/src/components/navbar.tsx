@@ -130,12 +130,12 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/sign-in">
-                  <Button
-                    variant="outline"
-                    className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4" // Compact padding
+                  <button
+                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-4"
+                    aria-label="Sign in"
                   >
-                    Sign In
-                  </Button>
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
+                  </button>
                 </Link>
                 <Link href="/sign-up">
                   <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
@@ -145,26 +145,9 @@ export default function Navbar() {
               </>
             )}
           </div>
-          {/* Mobile Layout - Logo, Cart, Auth */}
+          {/* Mobile Layout - Logo and Cart */}
           <div className="flex items-center gap-2 lg:hidden">
             <CartModal />
-            {user ? null : (
-              <>
-                <Link href="/sign-in">
-                  <Button
-                    variant="outline"
-                    className="border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-xs bg-transparent px-2 sm:px-4"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-xs px-2 sm:px-4">
-                    Sign Up
-                  </Button>
-                </Link>
-              </>
-            )}
           </div>
         </nav>
       </div>

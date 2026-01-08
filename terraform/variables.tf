@@ -38,3 +38,9 @@ variable "container_image" {
   # Format: <account-id>.dkr.ecr.<region>.amazonaws.com/<repo>:<tag>
 }
 
+variable "enable_custom_domain" {
+  description = "Enable custom domain (api.deadpartymedia.com). Set to true only after certificate is validated (status: ISSUED)"
+  type        = bool
+  default     = false
+}
+

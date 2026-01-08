@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Music, Calendar, ShoppingBag } from "lucide-react";
+import { Home, Music, Calendar, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
@@ -49,6 +49,7 @@ export default function MobileBottomNav() {
                 pathname === "/sign-in" ? "text-[#7CFC00]" : "text-gray-400",
               )}
             >
+              <User className="w-5 h-5" />
               <span className="text-xs font-medium">Sign In</span>
             </Link>
           )}

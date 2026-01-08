@@ -30,6 +30,49 @@ resource "aws_lightsail_certificate" "deadpartymedia" {
   }
 }
 
+# Fetch secrets from AWS Secrets Manager
+# Note: These secrets will be stored in Terraform state. Consider using external data source
+# or null_resource with local-exec for production if state encryption is a concern.
+data "aws_secretsmanager_secret" "db_password" {
+  name = "deadpartymedia/db-password"
+}
+
+data "aws_secretsmanager_secret_version" "db_password" {
+  secret_id = data.aws_secretsmanager_secret.db_password.id
+}
+
+data "aws_secretsmanager_secret" "secret_key" {
+  name = "deadpartymedia/secret-key"
+}
+
+data "aws_secretsmanager_secret_version" "secret_key" {
+  secret_id = data.aws_secretsmanager_secret.secret_key.id
+}
+
+data "aws_secretsmanager_secret" "aws_access_key_id" {
+  name = "deadpartymedia/aws-access-key-id"
+}
+
+data "aws_secretsmanager_secret_version" "aws_access_key_id" {
+  secret_id = data.aws_secretsmanager_secret.aws_access_key_id.id
+}
+
+data "aws_secretsmanager_secret" "aws_secret_access_key" {
+  name = "deadpartymedia/aws-secret-access-key"
+}
+
+data "aws_secretsmanager_secret_version" "aws_secret_access_key" {
+  secret_id = data.aws_secretsmanager_secret.aws_secret_access_key.id
+}
+
+data "aws_secretsmanager_secret" "aws_storage_bucket_name" {
+  name = "deadpartymedia/aws-storage-bucket-name"
+}
+
+data "aws_secretsmanager_secret_version" "aws_storage_bucket_name" {
+  secret_id = data.aws_secretsmanager_secret.aws_storage_bucket_name.id
+}
+
 # ECR Repository Policy to allow Lightsail to pull images
 # Note: This must be created AFTER the container service exists (principal_arn is computed)
 # Use a null_resource to create the policy after the container service is created
@@ -44,16 +87,18 @@ resource "null_resource" "ecr_policy" {
   provisioner "local-exec" {
     command = <<-EOT
       PRINCIPAL_ARN=$(aws lightsail get-container-services \
-        --service-names ${aws_lightsail_container_service.deadpartymedia.name} \
+        --service-name ${aws_lightsail_container_service.deadpartymedia.name} \
         --region ${var.aws_region} \
         --query 'containerServices[0].privateRegistryAccess.ecrImagePullerRole.principalArn' \
         --output text)
       
-      if [ -n "$PRINCIPAL_ARN" ] && [ "$PRINCIPAL_ARN" != "None" ]; then
+      if [ -n "$PRINCIPAL_ARN" ] && [ "$PRINCIPAL_ARN" != "None" ] && [ "$PRINCIPAL_ARN" != "null" ]; then
         aws ecr set-repository-policy \
           --repository-name ${aws_ecr_repository.deadpartymedia.name} \
           --region ${var.aws_region} \
           --policy-text "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"$PRINCIPAL_ARN\"},\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\"]}]}"
+      else
+        echo "Warning: Could not retrieve principal ARN. ECR policy not set."
       fi
     EOT
   }
@@ -74,12 +119,16 @@ resource "aws_lightsail_container_service" "deadpartymedia" {
   }
 
   # Custom domain configuration
-  public_domain_names {
-    certificate {
-      certificate_name = aws_lightsail_certificate.deadpartymedia.name
-      domain_names = [
-        "api.deadpartymedia.com",
-      ]
+  # Only attach certificate if enable_custom_domain is true AND certificate is validated
+  dynamic "public_domain_names" {
+    for_each = var.enable_custom_domain ? [1] : []
+    content {
+      certificate {
+        certificate_name = aws_lightsail_certificate.deadpartymedia.name
+        domain_names = [
+          "api.deadpartymedia.com",
+        ]
+      }
     }
   }
 
@@ -109,10 +158,16 @@ resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
       DB_PORT                = tostring(aws_lightsail_database.deadpartymedia.master_endpoint_port)
       DB_NAME                = aws_lightsail_database.deadpartymedia.master_database_name
       DB_USER                = aws_lightsail_database.deadpartymedia.master_username
-      # DB_PASSWORD will be set via AWS Secrets Manager or environment variables
+      DB_PASSWORD            = data.aws_secretsmanager_secret_version.db_password.secret_string
+      SECRET_KEY             = data.aws_secretsmanager_secret_version.secret_key.secret_string
+      AWS_ACCESS_KEY_ID      = data.aws_secretsmanager_secret_version.aws_access_key_id.secret_string
+      AWS_SECRET_ACCESS_KEY  = data.aws_secretsmanager_secret_version.aws_secret_access_key.secret_string
+      AWS_STORAGE_BUCKET_NAME = data.aws_secretsmanager_secret_version.aws_storage_bucket_name.secret_string
+      AWS_S3_REGION_NAME     = "us-east-1"
+      USE_S3                = "True"
       # ALLOWED_HOSTS should include container service URL and custom domains
       # Format: "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,<container-service-url>"
-      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${trimprefix(trimprefix(aws_lightsail_container_service.deadpartymedia.url, "https://"), "/")}"
+      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${trimsuffix(trimprefix(aws_lightsail_container_service.deadpartymedia.url, "https://"), "/")}"
       GUNICORN_BIND          = "0.0.0.0:8000"
     }
     ports = {
