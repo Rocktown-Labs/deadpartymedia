@@ -6,10 +6,9 @@ provider "aws" {
 resource "aws_lightsail_instance" "deadpartymedia" {
   name              = "deadpartymedia-api"  # Match existing instance name
   availability_zone = "${var.aws_region}a"
-  blueprint_id      = "bitnami_django_6_10_0"
-  bundle_id         = var.instance_bundle_id
-  # key_pair_name is optional - instance may already have one configured
-  # key_pair_name     = aws_lightsail_key_pair.deadparty.name
+  blueprint_id      = "django_bitnami"  # Match existing blueprint
+  bundle_id         = "micro_3_0"  # Match existing bundle (micro_3_0 = 1 GB RAM, 2 vCPU)
+  key_pair_name     = "deadparty-server"  # Match existing key pair
 
   tags = {
     Name        = "DeadPartyMedia"
@@ -39,11 +38,12 @@ resource "aws_lightsail_static_ip_attachment" "deadpartymedia" {
 resource "aws_lightsail_database" "deadpartymedia" {
   relational_database_name = "deadpartymediaDB"  # Match existing database name
   availability_zone        = "${var.aws_region}a"
-  blueprint_id             = "postgres_17_7"
+  blueprint_id             = "postgres_17"  # Match existing blueprint (not postgres_17_7)
   bundle_id                = var.database_bundle_id
-  master_database_name     = "deadpartymedia"
+  master_database_name     = "dbmaster"  # Match existing master database name
   master_username          = "dbmasteruser"
   master_password          = var.database_password
+  skip_final_snapshot      = true  # Match existing setting
 
   tags = {
     Name        = "DeadPartyMedia-DB"

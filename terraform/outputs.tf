@@ -24,6 +24,11 @@ output "database_name" {
   description = "Database name"
 }
 
+output "master_database_name" {
+  value       = aws_lightsail_database.deadpartymedia.master_database_name
+  description = "Master database name (for connection string)"
+}
+
 output "database_username" {
   value       = aws_lightsail_database.deadpartymedia.master_username
   description = "Database master username"
