@@ -1,6 +1,7 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/cart-context";
 import { getCart } from "@/lib/fourthwall";
@@ -77,6 +78,7 @@ export default async function RootLayout({
             <MobileBottomNav />
           </CartProvider>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

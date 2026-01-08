@@ -127,19 +127,66 @@ resource "null_resource" "ecr_policy" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      set -euo pipefail
+      
+      echo "Retrieving principal ARN for Lightsail container service..."
       PRINCIPAL_ARN=$(aws lightsail get-container-services \
         --service-name ${aws_lightsail_container_service.deadpartymedia.name} \
         --region ${var.aws_region} \
         --query 'containerServices[0].privateRegistryAccess.ecrImagePullerRole.principalArn' \
         --output text)
       
-      if [ -n "$PRINCIPAL_ARN" ] && [ "$PRINCIPAL_ARN" != "None" ] && [ "$PRINCIPAL_ARN" != "null" ]; then
-        aws ecr set-repository-policy \
+      if [ -z "$PRINCIPAL_ARN" ] || [ "$PRINCIPAL_ARN" = "None" ] || [ "$PRINCIPAL_ARN" = "null" ]; then
+        echo "Error: Could not retrieve principal ARN. ECR policy cannot be set." >&2
+        exit 1
+      fi
+      
+      echo "Principal ARN: $PRINCIPAL_ARN"
+      echo "Setting ECR repository policy..."
+      
+      POLICY_JSON=$(cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "$PRINCIPAL_ARN"
+      },
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ]
+    }
+  ]
+}
+EOF
+)
+      
+      aws ecr set-repository-policy \
+        --repository-name ${aws_ecr_repository.deadpartymedia.name} \
+        --region ${var.aws_region} \
+        --policy-text "$POLICY_JSON"
+      
+      if [ $? -eq 0 ]; then
+        echo "✅ ECR repository policy set successfully"
+        
+        # Verify the policy was set
+        echo "Verifying ECR repository policy..."
+        CURRENT_POLICY=$(aws ecr get-repository-policy \
           --repository-name ${aws_ecr_repository.deadpartymedia.name} \
           --region ${var.aws_region} \
-          --policy-text "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"$PRINCIPAL_ARN\"},\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\"]}]}"
+          --query 'policyText' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ -n "$CURRENT_POLICY" ]; then
+          echo "✅ ECR repository policy verified"
+        else
+          echo "⚠️  Warning: Could not verify ECR repository policy"
+        fi
       else
-        echo "Warning: Could not retrieve principal ARN. ECR policy not set."
+        echo "Error: Failed to set ECR repository policy" >&2
+        exit 1
       fi
     EOT
   }
@@ -188,6 +235,9 @@ resource "aws_lightsail_container_service" "deadpartymedia" {
 resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
   count       = var.container_image != "" ? 1 : 0
   service_name = aws_lightsail_container_service.deadpartymedia.name
+  
+  # Ensure ECR policy is set before deployment
+  depends_on = [null_resource.ecr_policy]
 
   container {
     container_name = "api"
