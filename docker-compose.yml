@@ -16,6 +16,43 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: deadpartymedia-api
+    command: >
+      sh -c "uv run python manage.py migrate &&
+             uv run gunicorn --config gunicorn.conf.py config.wsgi:application"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=deadpartymedia
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - USE_S3=False
+      - GUNICORN_BIND=0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/server:/app
+      - api_static:/app/staticfiles
+      - api_media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/v1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 volumes:
   postgres_data:
+  api_static:
+  api_media:
 

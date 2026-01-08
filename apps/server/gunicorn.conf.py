@@ -7,7 +7,8 @@ import multiprocessing
 import os
 
 # Server socket
-bind = "127.0.0.1:8000"
+# Bind to 0.0.0.0 for container deployment (127.0.0.1 for local dev)
+bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:8000")
 backlog = 2048
 
 # Worker processes

@@ -1,13 +1,3 @@
-output "instance_ip" {
-  value       = aws_lightsail_static_ip.deadpartymedia.ip_address
-  description = "Public IP address of the Lightsail instance"
-}
-
-output "instance_name" {
-  value       = aws_lightsail_instance.deadpartymedia.name
-  description = "Name of the Lightsail instance"
-}
-
 output "database_endpoint" {
   value       = aws_lightsail_database.deadpartymedia.master_endpoint_address
   description = "Database endpoint"
@@ -34,8 +24,24 @@ output "database_username" {
   description = "Database master username"
 }
 
-output "ssh_command" {
-  value       = "ssh -i ~/Downloads/deadparty-server.pem bitnami@${aws_lightsail_static_ip.deadpartymedia.ip_address}"
-  description = "SSH command to connect to the instance"
+# Container Service Outputs
+output "container_service_url" {
+  value       = "https://${aws_lightsail_container_service.deadpartymedia.url}"
+  description = "Public URL of the container service"
+}
+
+output "container_service_name" {
+  value       = aws_lightsail_container_service.deadpartymedia.name
+  description = "Name of the container service"
+}
+
+output "container_service_power" {
+  value       = aws_lightsail_container_service.deadpartymedia.power
+  description = "Power level of the container service"
+}
+
+output "container_service_scale" {
+  value       = aws_lightsail_container_service.deadpartymedia.scale
+  description = "Scale (number of nodes) of the container service"
 }
 

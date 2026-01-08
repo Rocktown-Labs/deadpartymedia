@@ -1,6 +1,6 @@
 # Dead Party Media - Terraform Infrastructure
 
-This Terraform configuration manages the AWS Lightsail infrastructure for Dead Party Media.
+This Terraform configuration manages the AWS Lightsail infrastructure for Dead Party Media using container services.
 
 ## Prerequisites
 
@@ -17,8 +17,6 @@ This Terraform configuration manages the AWS Lightsail infrastructure for Dead P
    aws sso login --sso-session newrgm-dev
    ```
 
-3. **SSH key pair** - You'll need your public key
-
 ## Setup
 
 1. **Copy the example variables file:**
@@ -29,10 +27,11 @@ This Terraform configuration manages the AWS Lightsail infrastructure for Dead P
 2. **Edit `terraform.tfvars`** with your values:
    ```hcl
    aws_region         = "us-east-2"
-   instance_bundle_id = "nano_2_0"      # Adjust based on needs
    database_bundle_id = "micro_2_0"     # Adjust based on needs
    database_password  = "your-secure-password"
-   ssh_public_key_path = "~/.ssh/deadparty-server.pub"
+   container_power    = "micro"          # nano, micro, small, medium, large, xlarge
+   container_scale    = 1                # Number of nodes (1-20)
+   container_image    = ""               # Set after first image push
    ```
 
 3. **Initialize Terraform:**
@@ -52,35 +51,58 @@ This Terraform configuration manages the AWS Lightsail infrastructure for Dead P
 
 ## What This Creates
 
-- **Lightsail Instance**: Bitnami Django instance
-- **Static IP**: Persistent IP address
-- **Managed Database**: PostgreSQL database
-- **SSH Key Pair**: For instance access
+- **Lightsail Container Service**: Managed container service for the Django API
+- **Container Service Deployment**: Initial deployment configuration
+- **Managed Database**: PostgreSQL database (existing, managed by Terraform)
 
 ## Outputs
 
 After applying, Terraform will output:
-- `instance_ip`: The public IP address
+- `container_service_url`: The public URL of the container service
+- `container_service_name`: Name of the container service
+- `container_service_power`: Power level of the service
+- `container_service_scale`: Number of nodes
 - `database_endpoint`: Database connection endpoint
 - `database_port`: Database port (usually 5432)
+- `database_name`: Database name
+- `master_database_name`: Master database name for connection strings
+- `database_username`: Database username
 
 ## Using the Outputs
 
 After `terraform apply`, you can:
 
-1. **Get the instance IP:**
+1. **Get the container service URL:**
    ```bash
-   terraform output instance_ip
+   terraform output container_service_url
    ```
 
-2. **SSH into the instance:**
-   ```bash
-   ssh -i ~/.ssh/deadparty-server bitnami@$(terraform output -raw instance_ip)
-   ```
-
-3. **Update your secrets** with the new database endpoint:
+2. **Get database connection details:**
    ```bash
    terraform output database_endpoint
+   terraform output database_port
+   terraform output database_username
+   ```
+
+## First Deployment
+
+After creating the container service with Terraform:
+
+1. **Get Lightsail registry login:**
+   ```bash
+   aws lightsail get-container-service-registry-login --region us-east-2
+   ```
+
+2. **Build and push your Docker image** (see `apps/server/DEPLOYMENT.md` for details)
+
+3. **Update `terraform.tfvars`** with the image name:
+   ```hcl
+   container_image = "<registry-url>/deadpartymedia-api:latest"
+   ```
+
+4. **Apply Terraform again** to deploy the image:
+   ```bash
+   terraform apply
    ```
 
 ## Destroying Resources
@@ -91,26 +113,30 @@ After `terraform apply`, you can:
 terraform destroy
 ```
 
-## Next Steps After Infrastructure
-
-Once the infrastructure is created:
-
-1. **Set up AWS Secrets Manager** (use the existing `setup-secrets.sh` script)
-2. **Deploy the application** (use the existing deployment scripts)
-3. **Configure DNS** (Route53 A record pointing to the static IP)
-4. **Set up nginx** (use the existing `setup-nginx.sh` script)
-
 ## Cost Estimation
 
-- **Instance** (nano_2_0): ~$3.50/month
+- **Container Service** (micro, scale 1): ~$7/month
 - **Database** (micro_2_0): ~$15/month
-- **Static IP**: Free (when attached to instance)
-- **Total**: ~$18.50/month
+- **Total**: ~$22/month
 
 ## Notes
 
-- The instance uses Bitnami's Django blueprint
+- The container service uses Lightsail's managed container platform
 - The database is automatically configured with PostgreSQL
-- Static IP ensures the IP doesn't change on instance restart
+- Container service provides automatic scaling and health checks
 - All resources are tagged for easy identification
+- Deployments are automated via GitHub Actions (see `.github/workflows/deploy-container.yml`)
 
+## Scaling
+
+To scale the container service, update `terraform.tfvars`:
+
+```hcl
+container_power = "small"  # Increase power
+container_scale = 2         # Increase number of nodes
+```
+
+Then apply:
+```bash
+terraform apply
+```

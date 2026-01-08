@@ -2,48 +2,55 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Lightsail Instance
-resource "aws_lightsail_instance" "deadpartymedia" {
-  name              = "deadpartymedia-api"  # Match existing instance name
-  availability_zone = "${var.aws_region}a"
-  blueprint_id      = "django_bitnami"  # Match existing blueprint
-  bundle_id         = "micro_3_0"  # Match existing bundle (micro_3_0 = 1 GB RAM, 2 vCPU)
-  key_pair_name     = "deadparty-server"  # Match existing key pair
+# Lightsail Container Service
+resource "aws_lightsail_container_service" "deadpartymedia" {
+  name        = "deadpartymedia-api"
+  power       = var.container_power
+  scale       = var.container_scale
+  is_disabled = false
 
-  # Auto Snapshot add-on (preserve existing setting)
-  add_on {
-    type          = "AutoSnapshot"
-    snapshot_time = "00:00"  # Daily at midnight UTC
-    status        = "Enabled"
+  public_endpoint_config {
+    container_name = "api"
+    container_port = 8000
+
+    health_check {
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+      timeout_seconds     = 5
+      interval_seconds    = 30
+      path                = "/v1/"
+      success_codes       = "200"
+    }
   }
 
   tags = {
-    Name        = "DeadPartyMedia"
+    Name        = "DeadPartyMedia-API"
     Environment = "production"
     ManagedBy   = "terraform"
   }
+}
 
-  # Ignore key_pair_name changes since it can't be modified on existing instances
-  lifecycle {
-    ignore_changes = [key_pair_name]
+# Container Service Deployment
+resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
+  container_service_name = aws_lightsail_container_service.deadpartymedia.name
+
+  container {
+    container_name = "api"
+    image          = var.container_image
+    command        = []
+    environment = {
+      DJANGO_SETTINGS_MODULE = "config.settings.production"
+      DB_HOST                = aws_lightsail_database.deadpartymedia.master_endpoint_address
+      DB_PORT                = tostring(aws_lightsail_database.deadpartymedia.master_endpoint_port)
+      DB_NAME                = aws_lightsail_database.deadpartymedia.master_database_name
+      DB_USER                = aws_lightsail_database.deadpartymedia.master_username
+      # DB_PASSWORD will be set via AWS Secrets Manager or environment variables
+      GUNICORN_BIND = "0.0.0.0:8000"
+    }
+    ports = {
+      "8000" = "HTTP"
+    }
   }
-}
-
-# SSH Key Pair (optional - only create if it doesn't exist)
-# Uncomment if you need to create a new key pair
-# resource "aws_lightsail_key_pair" "deadparty" {
-#   name       = "deadparty-server-2"
-#   public_key = file(var.ssh_public_key_path)
-# }
-
-# Static IP
-resource "aws_lightsail_static_ip" "deadpartymedia" {
-  name = "deadpartymedia-static-ip"
-}
-
-resource "aws_lightsail_static_ip_attachment" "deadpartymedia" {
-  static_ip_name = aws_lightsail_static_ip.deadpartymedia.id
-  instance_name  = aws_lightsail_instance.deadpartymedia.id
 }
 
 # Managed Database

@@ -64,13 +64,15 @@ staticfiles/
 
 # Docker
 docker-compose.override.yml
+*.dockerignore
+.docker/
 
 # Turbo
 .turbo/
 
 # UV
 .uv/
-uv.lock
+# Note: uv.lock is needed for Docker builds, so it's committed
 .vercel
 
 # Terraform
