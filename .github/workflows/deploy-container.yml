@@ -129,10 +129,10 @@ jobs:
       - name: Get Lightsail container registry login
         id: registry-login
         run: |
-          REGISTRY_LOGIN=$(aws lightsail get-container-service-registry-login --region ${{ env.AWS_REGION }})
-          REGISTRY_URL=$(echo $REGISTRY_LOGIN | jq -r '.registryLogin.username' | cut -d'@' -f2)
-          USERNAME=$(echo $REGISTRY_LOGIN | jq -r '.registryLogin.username' | cut -d'@' -f1)
-          PASSWORD=$(echo $REGISTRY_LOGIN | jq -r '.registryLogin.password')
+          REGISTRY_LOGIN=$(aws lightsail create-container-service-registry-login --region ${{ env.AWS_REGION }})
+          REGISTRY_URL=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.registry')
+          USERNAME=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.username')
+          PASSWORD=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.password')
           echo "registry_url=$REGISTRY_URL" >> $GITHUB_OUTPUT
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
