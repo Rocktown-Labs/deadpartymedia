@@ -22,7 +22,9 @@ uv --version
 
 echo ""
 log "Testing Gunicorn manually..."
-cd ~/deadpartymedia/apps/server || error "Failed to change to server directory"
+# Use $HOME instead of ~ to ensure correct expansion
+SERVER_DIR="${HOME}/deadpartymedia/apps/server"
+cd "$SERVER_DIR" || error "Failed to change to server directory: $SERVER_DIR"
 export DJANGO_SETTINGS_MODULE='config.settings.production'
 
 # Test if Gunicorn can start (will timeout after 5 seconds)
@@ -32,7 +34,7 @@ timeout 5 uv run gunicorn --config gunicorn.conf.py config.wsgi:application || {
 
 echo ""
 log "Updating systemd service file..."
-sudo cp ~/deadpartymedia/apps/server/systemd/gunicorn.service /etc/systemd/system/gunicorn.service
+sudo cp "$SERVER_DIR/systemd/gunicorn.service" /etc/systemd/system/gunicorn.service
 
 log "Reloading systemd daemon..."
 sudo systemctl daemon-reload

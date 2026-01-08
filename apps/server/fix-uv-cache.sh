@@ -31,4 +31,3 @@ log "Checking Gunicorn service status..."
 sudo systemctl status gunicorn --no-pager -l
 
 log "Done! Check the status above to see if Gunicorn started successfully."
-
