@@ -23,6 +23,7 @@ dependencies = [
     "pytest-cov>=5.0.0",
     "pytest-mock>=3.14.0",
     "responses>=0.24.0",
+    "gunicorn>=23.0.0",
 ]
 
 [build-system]
