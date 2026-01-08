@@ -35,8 +35,8 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white px-6 py-20 pt-28 lg:pt-20">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-28 lg:pt-20 pb-28 lg:pb-20">
+      <div className="w-full max-w-md">
         <Link
           href="/"
           className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
