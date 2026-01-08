@@ -43,16 +43,20 @@ fi
 
 cd "$SERVER_DIR" || error "Failed to change to $SERVER_DIR"
 
-# Check if git repository exists
-if [ ! -d ".git" ]; then
-    error "Git repository not found in $SERVER_DIR"
+# Check if git repository exists (it's in the parent directory)
+if [ ! -d "../.git" ] && [ ! -d ".git" ]; then
+    error "Git repository not found. Expected in $SERVER_DIR or $APP_DIR"
 fi
 
-# Pull latest code
+# Pull latest code from parent directory (where .git is)
 log "Pulling latest code from repository..."
+cd "$APP_DIR" || error "Failed to change to $APP_DIR"
 git fetch origin || error "Failed to fetch from origin"
-git reset --hard origin/main || error "Failed to reset to origin/main"
+git reset --hard origin/master || git reset --hard origin/main || error "Failed to reset to origin/master or origin/main"
 log "Code updated successfully"
+
+# Return to server directory
+cd "$SERVER_DIR" || error "Failed to change back to $SERVER_DIR"
 
 # Install uv if not present
 if ! command -v uv &> /dev/null; then
