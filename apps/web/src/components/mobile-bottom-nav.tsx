@@ -1,16 +1,14 @@
 "use client";
 
-import { Home, Music, Calendar, ShoppingBag, User } from "lucide-react";
+import { Home, Music, Calendar, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { UserAvatarMenu } from "./user-avatar-menu";
-import { useCurrentUser } from "@/lib/api/auth";
+import { MobileAuthMenu } from "./mobile-auth-menu";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { data: user } = useCurrentUser();
 
   const navItems = [
     { icon: Home, label: "Home", href: "/" as Route },
@@ -39,20 +37,7 @@ export default function MobileBottomNav() {
           );
         })}
         <div className="flex flex-col items-center justify-center">
-          {user ? (
-            <UserAvatarMenu />
-          ) : (
-            <Link
-              href="/sign-in"
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors",
-                pathname === "/sign-in" ? "text-[#7CFC00]" : "text-gray-400",
-              )}
-            >
-              <User className="w-5 h-5" />
-              <span className="text-xs font-medium">Sign In</span>
-            </Link>
-          )}
+          <MobileAuthMenu />
         </div>
       </div>
     </nav>

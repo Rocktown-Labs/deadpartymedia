@@ -31,46 +31,87 @@ resource "aws_lightsail_certificate" "deadpartymedia" {
 }
 
 # Fetch secrets from AWS Secrets Manager
-# Note: These secrets will be stored in Terraform state. Consider using external data source
-# or null_resource with local-exec for production if state encryption is a concern.
-data "aws_secretsmanager_secret" "db_password" {
-  name = "deadpartymedia/db-password"
+# Uses external data source to try both new and old naming conventions
+# This matches the fallback logic in GitHub Actions workflow
+data "external" "db_password" {
+  program = ["sh", "-c", <<-EOT
+    if aws secretsmanager describe-secret --secret-id deadpartymedia/db-password --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/db-password"
+    elif aws secretsmanager describe-secret --secret-id deadpartymedia/database/password --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/database/password"
+    else
+      echo '{"error":"Secret not found"}' >&2
+      exit 1
+    fi
+    VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    echo "$VALUE" | jq -R -s '{value: .}'
+  EOT
+  ]
 }
 
-data "aws_secretsmanager_secret_version" "db_password" {
-  secret_id = data.aws_secretsmanager_secret.db_password.id
+data "external" "secret_key" {
+  program = ["sh", "-c", <<-EOT
+    if aws secretsmanager describe-secret --secret-id deadpartymedia/secret-key --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/secret-key"
+    elif aws secretsmanager describe-secret --secret-id deadpartymedia/django/secret-key --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/django/secret-key"
+    else
+      echo '{"error":"Secret not found"}' >&2
+      exit 1
+    fi
+    VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    echo "$VALUE" | jq -R -s '{value: .}'
+  EOT
+  ]
 }
 
-data "aws_secretsmanager_secret" "secret_key" {
-  name = "deadpartymedia/secret-key"
+data "external" "aws_access_key_id" {
+  program = ["sh", "-c", <<-EOT
+    if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-access-key-id --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws-access-key-id"
+    elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/access-key-id --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws/access-key-id"
+    else
+      echo '{"error":"Secret not found"}' >&2
+      exit 1
+    fi
+    VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    echo "$VALUE" | jq -R -s '{value: .}'
+  EOT
+  ]
 }
 
-data "aws_secretsmanager_secret_version" "secret_key" {
-  secret_id = data.aws_secretsmanager_secret.secret_key.id
+data "external" "aws_secret_access_key" {
+  program = ["sh", "-c", <<-EOT
+    if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-secret-access-key --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws-secret-access-key"
+    elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/secret-access-key --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws/secret-access-key"
+    else
+      echo '{"error":"Secret not found"}' >&2
+      exit 1
+    fi
+    VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    echo "$VALUE" | jq -R -s '{value: .}'
+  EOT
+  ]
 }
 
-data "aws_secretsmanager_secret" "aws_access_key_id" {
-  name = "deadpartymedia/aws-access-key-id"
-}
-
-data "aws_secretsmanager_secret_version" "aws_access_key_id" {
-  secret_id = data.aws_secretsmanager_secret.aws_access_key_id.id
-}
-
-data "aws_secretsmanager_secret" "aws_secret_access_key" {
-  name = "deadpartymedia/aws-secret-access-key"
-}
-
-data "aws_secretsmanager_secret_version" "aws_secret_access_key" {
-  secret_id = data.aws_secretsmanager_secret.aws_secret_access_key.id
-}
-
-data "aws_secretsmanager_secret" "aws_storage_bucket_name" {
-  name = "deadpartymedia/aws-storage-bucket-name"
-}
-
-data "aws_secretsmanager_secret_version" "aws_storage_bucket_name" {
-  secret_id = data.aws_secretsmanager_secret.aws_storage_bucket_name.id
+data "external" "aws_storage_bucket_name" {
+  program = ["sh", "-c", <<-EOT
+    if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-storage-bucket-name --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws-storage-bucket-name"
+      VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/storage-bucket-name --region ${var.aws_region} &>/dev/null; then
+      SECRET_NAME="deadpartymedia/aws/storage-bucket-name"
+      VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
+    else
+      # Use default if secret doesn't exist
+      VALUE="deadpartymedia-bucket"
+    fi
+    echo "$VALUE" | jq -R -s '{value: .}'
+  EOT
+  ]
 }
 
 # ECR Repository Policy to allow Lightsail to pull images
@@ -158,11 +199,11 @@ resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
       DB_PORT                = tostring(aws_lightsail_database.deadpartymedia.master_endpoint_port)
       DB_NAME                = aws_lightsail_database.deadpartymedia.master_database_name
       DB_USER                = aws_lightsail_database.deadpartymedia.master_username
-      DB_PASSWORD            = data.aws_secretsmanager_secret_version.db_password.secret_string
-      SECRET_KEY             = data.aws_secretsmanager_secret_version.secret_key.secret_string
-      AWS_ACCESS_KEY_ID      = data.aws_secretsmanager_secret_version.aws_access_key_id.secret_string
-      AWS_SECRET_ACCESS_KEY  = data.aws_secretsmanager_secret_version.aws_secret_access_key.secret_string
-      AWS_STORAGE_BUCKET_NAME = data.aws_secretsmanager_secret_version.aws_storage_bucket_name.secret_string
+      DB_PASSWORD            = data.external.db_password.result.value
+      SECRET_KEY             = data.external.secret_key.result.value
+      AWS_ACCESS_KEY_ID      = data.external.aws_access_key_id.result.value
+      AWS_SECRET_ACCESS_KEY  = data.external.aws_secret_access_key.result.value
+      AWS_STORAGE_BUCKET_NAME = data.external.aws_storage_bucket_name.result.value
       AWS_S3_REGION_NAME     = "us-east-1"
       USE_S3                = "True"
       # ALLOWED_HOSTS should include container service URL and custom domains
