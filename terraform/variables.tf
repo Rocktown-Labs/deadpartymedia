@@ -32,9 +32,9 @@ variable "container_scale" {
 }
 
 variable "container_image" {
-  description = "Container image to deploy (e.g., from Lightsail registry or ECR)"
+  description = "Container image to deploy (ECR image URI)"
   type        = string
-  default     = ""  # Will be set after first image push to Lightsail registry
-  # Format: <service-name>.<timestamp> or <account-id>.dkr.ecr.<region>.amazonaws.com/<repo>:<tag>
+  default     = ""  # Will be set after first image push to ECR
+  # Format: <account-id>.dkr.ecr.<region>.amazonaws.com/<repo>:<tag>
 }
 
