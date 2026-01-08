@@ -18,6 +18,20 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     
     steps:
       - name: Checkout code
@@ -27,6 +41,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in {1..10}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "Postgres is ready"
+              exit 0
+            fi
+            echo "Waiting for Postgres..."
+            sleep 3
+          done
+          echo "Postgres did not become ready in time"
+          exit 1
 
       - name: Install uv
         run: pip install uv
@@ -39,6 +66,12 @@ jobs:
         working-directory: apps/server
         env:
           DJANGO_SETTINGS_MODULE: config.settings.development
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: test_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          USE_S3: "False"
         run: uv run pytest
 
   build-and-deploy:
