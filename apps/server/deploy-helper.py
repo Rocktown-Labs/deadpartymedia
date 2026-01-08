@@ -98,7 +98,7 @@ def deploy_via_ssh(
         "DB_USER": secrets.get("db_username", ""),
         "DB_PASSWORD": secrets.get("db_password", ""),
         "SECRET_KEY": secrets.get("django_secret_key", ""),
-        "ALLOWED_HOSTS": secrets.get("django_allowed_hosts", "18.224.61.135,localhost"),
+        "ALLOWED_HOSTS": secrets.get("django_allowed_hosts", "18.189.190.211,localhost"),
     }
 
     # Build environment variable string for SSH command

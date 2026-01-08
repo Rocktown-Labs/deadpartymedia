@@ -1,8 +1,8 @@
 #!/bin/bash
 # Test SSH connection to Lightsail instance
 
-SSH_KEY="${HOME}/Downloads/deadparty-server-2.pem"
-INSTANCE_IP="18.224.61.135"
+SSH_KEY="${HOME}/Downloads/deadparty-server.pem"
+INSTANCE_IP="18.189.190.211"
 SSH_USER="bitnami"
 
 echo "Testing SSH connection..."

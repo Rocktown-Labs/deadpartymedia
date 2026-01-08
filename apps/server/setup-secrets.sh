@@ -78,9 +78,9 @@ create_secret() {
 }
 
 # 1. Lightsail Instance IP
-prompt "Enter Lightsail instance IP address (default: 18.224.61.135):"
+prompt "Enter Lightsail instance IP address (default: 18.189.190.211):"
 read -r instance_ip
-instance_ip="${instance_ip:-18.224.61.135}"
+instance_ip="${instance_ip:-18.189.190.211}"
 create_secret \
     "${SECRET_PREFIX}/lightsail/instance-ip" \
     "$instance_ip" \
@@ -172,9 +172,9 @@ else
 fi
 
 # 9. Django Allowed Hosts
-prompt "Enter ALLOWED_HOSTS (comma-separated, default: 18.224.61.135,localhost,127.0.0.1):"
+prompt "Enter ALLOWED_HOSTS (comma-separated, default: 18.189.190.211,localhost,127.0.0.1):"
 read -r allowed_hosts
-allowed_hosts="${allowed_hosts:-18.224.61.135,localhost,127.0.0.1}"
+allowed_hosts="${allowed_hosts:-18.189.190.211,localhost,127.0.0.1}"
 create_secret \
     "${SECRET_PREFIX}/django/allowed-hosts" \
     "$allowed_hosts" \

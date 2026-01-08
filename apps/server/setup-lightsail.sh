@@ -26,7 +26,7 @@ prompt() { echo -e "${BLUE}[?]${NC} $1"; }
 
 # Configuration
 AWS_REGION="${AWS_REGION:-us-east-2}"
-INSTANCE_IP="${INSTANCE_IP:-18.224.61.135}"
+INSTANCE_IP="${INSTANCE_IP:-18.189.190.211}"
 SSH_USER="${SSH_USER:-bitnami}"
 APP_DIR="/home/bitnami/deadpartymedia"
 SECRET_PREFIX="deadpartymedia"

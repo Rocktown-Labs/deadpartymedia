@@ -90,7 +90,7 @@ Create an IAM user with these permissions:
 ### SSH Connection Issues
 ```bash
 # Test connection
-ssh -i /path/to/key.pem bitnami@18.224.61.135
+ssh -i /path/to/key.pem bitnami@18.189.190.211
 
 # Check security groups in Lightsail console
 ```
@@ -98,7 +98,7 @@ ssh -i /path/to/key.pem bitnami@18.224.61.135
 ### Service Not Starting
 ```bash
 # SSH into instance
-ssh -i /path/to/key.pem bitnami@18.224.61.135
+ssh -i /path/to/key.pem bitnami@18.189.190.211
 
 # Check service status
 sudo systemctl status gunicorn
@@ -122,7 +122,7 @@ If you need to deploy manually:
 
 ```bash
 # SSH into instance
-ssh -i /path/to/key.pem bitnami@18.224.61.135
+ssh -i /path/to/key.pem bitnami@18.189.190.211
 
 # Navigate to app directory
 cd /home/bitnami/deadpartymedia/apps/server
@@ -150,7 +150,7 @@ See `.env.example` for a list of all required variables.
 
 1. **Create Route53 A Record**:
    - Go to Route53 → Hosted Zones → deadpartymedia.com
-   - Create A record: `api` → Your Lightsail IP (18.224.61.135 or new IP)
+   - Create A record: `api` → Your Lightsail IP (18.189.190.211 - get current IP with `terraform output instance_ip`)
    - TTL: 300 seconds
 
 2. **Wait for DNS Propagation** (usually 5-15 minutes)

@@ -15,9 +15,9 @@ warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 # Configuration
-INSTANCE_IP="18.224.61.135"
+INSTANCE_IP="18.189.190.211"
 SSH_USER="bitnami"
-SSH_KEY="${HOME}/Downloads/deadparty-server-2.pem"
+SSH_KEY="${HOME}/Downloads/deadparty-server.pem"
 APP_DIR="/home/bitnami/deadpartymedia"
 GIT_REPO="https://github.com/cgRGM/deadpartymedia.git"
 
@@ -116,7 +116,7 @@ DB_PASSWORD=
 
 # Django Configuration
 SECRET_KEY=
-ALLOWED_HOSTS=api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.224.61.135,localhost,127.0.0.1
+ALLOWED_HOSTS=api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.189.190.211,localhost,127.0.0.1
 DJANGO_SETTINGS_MODULE=config.settings.production
 
 # AWS S3 Configuration

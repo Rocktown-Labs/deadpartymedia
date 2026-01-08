@@ -93,7 +93,7 @@ if [ -z "${SECRET_KEY:-}" ]; then
 fi
 export SECRET_KEY="${SECRET_KEY:-django-insecure-change-me-in-production}"
 
-export ALLOWED_HOSTS="${ALLOWED_HOSTS:-api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.224.61.135,localhost,127.0.0.1}"
+export ALLOWED_HOSTS="${ALLOWED_HOSTS:-api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.189.190.211,localhost,127.0.0.1}"
 
 # Create .env.production file for systemd service
 log "Creating .env.production file for systemd service..."
@@ -111,7 +111,7 @@ DB_PASSWORD=${DB_PASSWORD:-}
 
 # Django Configuration
 SECRET_KEY=${SECRET_KEY:-django-insecure-change-me-in-production}
-ALLOWED_HOSTS=${ALLOWED_HOSTS:-api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.224.61.135,localhost,127.0.0.1}
+ALLOWED_HOSTS=${ALLOWED_HOSTS:-api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,18.189.190.211,localhost,127.0.0.1}
 DJANGO_SETTINGS_MODULE=config.settings.production
 
 # AWS S3 Configuration (if using S3 for media/static files)

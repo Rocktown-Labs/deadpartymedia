@@ -10,17 +10,29 @@ resource "aws_lightsail_instance" "deadpartymedia" {
   bundle_id         = "micro_3_0"  # Match existing bundle (micro_3_0 = 1 GB RAM, 2 vCPU)
   key_pair_name     = "deadparty-server"  # Match existing key pair
 
+  # Auto Snapshot add-on (preserve existing setting)
+  add_on {
+    type          = "AutoSnapshot"
+    snapshot_time = "00:00"  # Daily at midnight UTC
+    status        = "Enabled"
+  }
+
   tags = {
     Name        = "DeadPartyMedia"
     Environment = "production"
     ManagedBy   = "terraform"
+  }
+
+  # Ignore key_pair_name changes since it can't be modified on existing instances
+  lifecycle {
+    ignore_changes = [key_pair_name]
   }
 }
 
 # SSH Key Pair (optional - only create if it doesn't exist)
 # Uncomment if you need to create a new key pair
 # resource "aws_lightsail_key_pair" "deadparty" {
-#   name       = "deadparty-server"
+#   name       = "deadparty-server-2"
 #   public_key = file(var.ssh_public_key_path)
 # }
 

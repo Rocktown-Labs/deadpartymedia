@@ -35,7 +35,7 @@ output "database_username" {
 }
 
 output "ssh_command" {
-  value       = "ssh -i ~/.ssh/deadparty-server bitnami@${aws_lightsail_static_ip.deadpartymedia.ip_address}"
+  value       = "ssh -i ~/Downloads/deadparty-server.pem bitnami@${aws_lightsail_static_ip.deadpartymedia.ip_address}"
   description = "SSH command to connect to the instance"
 }
 
