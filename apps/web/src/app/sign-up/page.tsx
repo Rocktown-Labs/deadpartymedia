@@ -54,7 +54,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 mt-4">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-28 lg:pt-20">
       <div className="w-full max-w-md">
         <Link
           href="/"
@@ -80,7 +80,7 @@ export default function SignUpPage() {
           {/* Error Message */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
               <p className="text-red-500 text-sm flex-1">{error}</p>
             </div>
           )}

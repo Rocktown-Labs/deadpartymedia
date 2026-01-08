@@ -35,7 +35,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-28 lg:pt-20">
       <div className="w-full max-w-md">
         <Link
           href="/"
