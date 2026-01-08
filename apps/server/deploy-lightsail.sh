@@ -43,10 +43,11 @@ fi
 
 cd "$SERVER_DIR" || error "Failed to change to $SERVER_DIR"
 
-# Check if git repository exists (it's in the parent directory)
-if [ ! -d "../.git" ] && [ ! -d ".git" ]; then
-    error "Git repository not found. Expected in $SERVER_DIR or $APP_DIR"
+# Check if git repository exists (it's in the parent directory at $APP_DIR)
+if [ ! -d "$APP_DIR/.git" ]; then
+    error "Git repository not found in $APP_DIR/.git. Run 'git clone' first or check directory structure."
 fi
+log "Found git repository in $APP_DIR"
 
 # Pull latest code from parent directory (where .git is)
 log "Pulling latest code from repository..."
