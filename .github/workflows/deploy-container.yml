@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: apps/server
-        run: uv pip install -r pyproject.toml
+        run: uv pip install .
 
       - name: Run tests
         working-directory: apps/server
@@ -57,6 +57,9 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Get Lightsail container registry login
         id: registry-login
@@ -90,20 +93,70 @@ jobs:
           docker push ${{ env.image_name }}
           docker push ${{ steps.registry-login.outputs.registry_url }}/${{ env.CONTAINER_SERVICE_NAME }}:latest
 
+      - name: Get secrets from AWS Secrets Manager
+        id: secrets
+        run: |
+          # Get database password from Secrets Manager (if secret exists)
+          # Secret name format: deadpartymedia/db-password
+          # You can create this secret manually or via Terraform
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/db-password --region ${{ env.AWS_REGION }} &>/dev/null; then
+            DB_PASSWORD=$(aws secretsmanager get-secret-value \
+              --secret-id deadpartymedia/db-password \
+              --region ${{ env.AWS_REGION }} \
+              --query SecretString --output text)
+            echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+          else
+            echo "db_password=" >> $GITHUB_OUTPUT
+            echo "Warning: Secret deadpartymedia/db-password not found. DB_PASSWORD must be set manually."
+          fi
+          
+          # Get other secrets if needed (SECRET_KEY, AWS credentials, etc.)
+          # Add similar blocks for other secrets
+
+      - name: Get database connection details
+        id: database
+        run: |
+          # Get database details from Lightsail
+          DB_INFO=$(aws lightsail get-relational-database \
+            --relational-database-name deadpartymediaDB \
+            --region ${{ env.AWS_REGION }} \
+            --query 'relationalDatabase.{endpoint:masterEndpoint.address,port:masterEndpoint.port,name:masterDatabaseName,user:masterUsername}' \
+            --output json)
+          
+          DB_HOST=$(echo $DB_INFO | jq -r '.endpoint')
+          DB_PORT=$(echo $DB_INFO | jq -r '.port')
+          DB_NAME=$(echo $DB_INFO | jq -r '.name')
+          DB_USER=$(echo $DB_INFO | jq -r '.user')
+          
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
+          echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
+
       - name: Deploy to Lightsail Container Service
         run: |
-          # Get environment variables from AWS Secrets Manager
-          # Note: You'll need to set up secrets in AWS Secrets Manager
-          # and retrieve them here, or pass them as GitHub secrets
+          # Get container service URL for ALLOWED_HOSTS
+          CONTAINER_URL=$(aws lightsail get-container-services \
+            --service-names ${{ env.CONTAINER_SERVICE_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'containerServices[0].url' \
+            --output text | sed 's|https://||')
           
-          # Create deployment JSON
+          # Create deployment JSON with environment variables
           cat > deployment.json <<EOF
           {
             "containers": {
               "api": {
                 "image": "${{ env.image_name }}",
                 "environment": {
-                  "DJANGO_SETTINGS_MODULE": "config.settings.production"
+                  "DJANGO_SETTINGS_MODULE": "config.settings.production",
+                  "DB_HOST": "${{ steps.database.outputs.db_host }}",
+                  "DB_PORT": "${{ steps.database.outputs.db_port }}",
+                  "DB_NAME": "${{ steps.database.outputs.db_name }}",
+                  "DB_USER": "${{ steps.database.outputs.db_user }}",
+                  "ALLOWED_HOSTS": "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${CONTAINER_URL}",
+                  "USE_S3": "True",
+                  "GUNICORN_BIND": "0.0.0.0:8000"
                 },
                 "ports": {
                   "8000": "HTTP"
@@ -124,6 +177,14 @@ jobs:
             }
           }
           EOF
+          
+          # Add DB_PASSWORD to environment if secret was retrieved
+          DB_PASSWORD="${{ steps.secrets.outputs.db_password }}"
+          if [ -n "$DB_PASSWORD" ]; then
+            # Use jq to add DB_PASSWORD to the deployment JSON
+            cat deployment.json | jq --arg pwd "$DB_PASSWORD" '.containers.api.environment.DB_PASSWORD = $pwd' > deployment.json.tmp
+            mv deployment.json.tmp deployment.json
+          fi
           
           # Create new deployment
           aws lightsail create-container-service-deployment \

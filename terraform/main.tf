@@ -31,6 +31,9 @@ resource "aws_lightsail_container_service" "deadpartymedia" {
 }
 
 # Container Service Deployment
+# Note: This creates an initial deployment. Ongoing deployments are handled by GitHub Actions.
+# To manage deployments via Terraform, update container_image and apply.
+# To manage deployments via CI/CD, leave this as-is and use GitHub Actions workflow.
 resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
   container_service_name = aws_lightsail_container_service.deadpartymedia.name
 
@@ -45,7 +48,10 @@ resource "aws_lightsail_container_service_deployment_version" "deadpartymedia" {
       DB_NAME                = aws_lightsail_database.deadpartymedia.master_database_name
       DB_USER                = aws_lightsail_database.deadpartymedia.master_username
       # DB_PASSWORD will be set via AWS Secrets Manager or environment variables
-      GUNICORN_BIND = "0.0.0.0:8000"
+      # ALLOWED_HOSTS should include container service URL and custom domains
+      # Format: "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,<container-service-url>"
+      ALLOWED_HOSTS          = "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${replace(aws_lightsail_container_service.deadpartymedia.url, "https://", "")}"
+      GUNICORN_BIND          = "0.0.0.0:8000"
     }
     ports = {
       "8000" = "HTTP"

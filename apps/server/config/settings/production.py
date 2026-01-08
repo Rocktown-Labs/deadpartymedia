@@ -3,7 +3,14 @@ import os
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else []
+# ALLOWED_HOSTS from environment variable (comma-separated)
+# Should include: api.deadpartymedia.com, deadpartymedia.com, www.deadpartymedia.com
+# and the container service URL (e.g., deadpartymedia-api.xxxxx.us-east-2.cs.amazonlightsail.com)
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+] if os.environ.get("ALLOWED_HOSTS") else []
 
 # Use S3 for production (should be True)
 USE_S3 = os.environ.get("USE_S3", "True") == "True"
