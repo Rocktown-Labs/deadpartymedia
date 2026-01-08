@@ -88,6 +88,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Validate AWS credentials
+      # Required GitHub Secrets:
+      # - AWS_ACCESS_KEY_ID: IAM user access key with Lightsail, Secrets Manager permissions
+      # - AWS_SECRET_ACCESS_KEY: IAM user secret key
+      # See apps/server/IAM_POLICIES.md for required IAM permissions
       - name: Validate AWS credentials
         run: |
           set -euo pipefail
@@ -110,7 +115,8 @@ jobs:
             echo "To fix this:"
             echo "1. Go to your repository: Settings → Secrets and variables → Actions"
             echo "2. Add the missing secrets listed above"
-            echo "3. Re-run this workflow"
+            echo "3. Ensure the IAM user has required permissions (see apps/server/IAM_POLICIES.md)"
+            echo "4. Re-run this workflow"
             exit 1
           fi
           

@@ -107,15 +107,36 @@ Add these secrets:
 - `AWS_ACCESS_KEY_ID`: AWS access key with Lightsail and Secrets Manager permissions
 - `AWS_SECRET_ACCESS_KEY`: AWS secret access key
 
-Required IAM permissions:
+**⚠️ Important**: Both secrets are required. The workflow will fail early if either is missing.
+
+#### Required IAM Permissions
+
+The IAM user/role needs the following permissions:
+
+**Lightsail Container Service:**
 - `lightsail:GetContainerServices`
 - `lightsail:CreateContainerServiceDeployment`
 - `lightsail:GetContainerServiceRegistryLogin`
-- `lightsail:RegisterContainerImage`
-- `lightsail:PushContainerImage`
+- `lightsail:WaitContainerServiceDeploymentReady`
+
+**Lightsail Database:**
 - `lightsail:GetRelationalDatabase`
+
+**Secrets Manager:**
 - `secretsmanager:GetSecretValue`
 - `secretsmanager:DescribeSecret`
+
+**If using ECR (optional):**
+- `ecr:GetAuthorizationToken`
+- `ecr:InitiateLayerUpload`
+- `ecr:UploadLayerPart`
+- `ecr:CompleteLayerUpload`
+- `ecr:PutImage`
+- `ecr:BatchCheckLayerAvailability`
+- `ecr:GetDownloadUrlForLayer`
+- `ecr:BatchGetImage`
+
+For complete IAM policy examples, see [IAM_POLICIES.md](./IAM_POLICIES.md).
 
 ### 4. First Deployment
 
@@ -288,6 +309,45 @@ resource "aws_lightsail_container_service_public_domain_names" "deadpartymedia" 
 3. Ensure container service exists: `terraform output container_service_name`
 4. Check image was pushed successfully
 
+### Missing GitHub Secrets Error
+
+**Error**: `❌ Error: Missing required GitHub Secrets: AWS_SECRET_ACCESS_KEY`
+
+**Solution**:
+1. Go to GitHub repository → Settings → Secrets and variables → Actions
+2. Click "New repository secret"
+3. Add `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+4. Re-run the workflow
+
+### AWS Permission Errors
+
+**Error**: `denied: User: arn:aws:sts::... is not authorized to perform: ecr:InitiateLayerUpload`
+
+**Cause**: The IAM user/role is missing required permissions.
+
+**Solutions**:
+1. **If using Lightsail registry** (current workflow): Ensure IAM policy includes Lightsail permissions (see [IAM_POLICIES.md](./IAM_POLICIES.md))
+2. **If using ECR**: Add ECR permissions to IAM policy:
+   ```json
+   {
+     "Effect": "Allow",
+     "Action": [
+       "ecr:GetAuthorizationToken",
+       "ecr:InitiateLayerUpload",
+       "ecr:UploadLayerPart",
+       "ecr:CompleteLayerUpload",
+       "ecr:PutImage"
+     ],
+     "Resource": "arn:aws:ecr:us-east-2:615763501337:repository/deadpartymedia-api"
+   }
+   ```
+3. Verify the IAM user has the correct policy attached:
+   ```bash
+   aws iam list-attached-user-policies --user-name <your-iam-user>
+   ```
+
+**Note**: The current workflow uses Lightsail Container Registry, not ECR. If you see ECR errors, check if the workflow was modified or if there's a configuration issue.
+
 ### Container won't start
 
 1. Check container logs via AWS Console or CLI
@@ -301,6 +361,12 @@ resource "aws_lightsail_container_service_public_domain_names" "deadpartymedia" 
 2. Check database security groups allow container service
 3. Verify database credentials in environment variables
 4. Test connection manually: `psql -h <endpoint> -U <user> -d <db>`
+
+### Registry Authentication Errors
+
+**Error**: `denied: User is not authorized to perform: lightsail:GetContainerServiceRegistryLogin`
+
+**Solution**: Ensure the IAM policy includes `lightsail:GetContainerServiceRegistryLogin` permission. See [IAM_POLICIES.md](./IAM_POLICIES.md) for complete policy examples.
 
 ## Cost Optimization
 

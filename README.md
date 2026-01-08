@@ -142,3 +142,15 @@ docker-compose logs     # View logs
    - Run migrations on production database
 
 See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) and [SETUP.md](./SETUP.md) for detailed production setup.
+
+## Deployment
+
+For production deployment to AWS Lightsail:
+
+- **Deployment Guide**: [apps/server/DEPLOYMENT.md](./apps/server/DEPLOYMENT.md)
+- **IAM Policies**: [apps/server/IAM_POLICIES.md](./apps/server/IAM_POLICIES.md)
+
+The deployment uses GitHub Actions for CI/CD. Ensure you have:
+1. GitHub Secrets configured (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
+2. IAM user with required permissions (see IAM_POLICIES.md)
+3. AWS Secrets Manager configured with application secrets
