@@ -82,10 +82,39 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Validate AWS credentials
+        run: |
+          set -euo pipefail
+          MISSING_SECRETS=()
+          
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            MISSING_SECRETS+=("AWS_ACCESS_KEY_ID")
+          fi
+          
+          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+            MISSING_SECRETS+=("AWS_SECRET_ACCESS_KEY")
+          fi
+          
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "❌ Error: Missing required GitHub Secrets:"
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "   - $secret"
+            done
+            echo ""
+            echo "To fix this:"
+            echo "1. Go to your repository: Settings → Secrets and variables → Actions"
+            echo "2. Add the missing secrets listed above"
+            echo "3. Re-run this workflow"
+            exit 1
+          fi
+          
+          echo "✅ All required AWS credentials are configured"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
