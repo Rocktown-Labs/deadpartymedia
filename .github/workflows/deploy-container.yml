@@ -96,22 +96,43 @@ jobs:
       - name: Get secrets from AWS Secrets Manager
         id: secrets
         run: |
-          # Get database password from Secrets Manager (if secret exists)
-          # Secret name format: deadpartymedia/db-password
-          # You can create this secret manually or via Terraform
-          if aws secretsmanager describe-secret --secret-id deadpartymedia/db-password --region ${{ env.AWS_REGION }} &>/dev/null; then
-            DB_PASSWORD=$(aws secretsmanager get-secret-value \
-              --secret-id deadpartymedia/db-password \
+          # Function to get secret value or set empty
+          get_secret() {
+            local secret_id=$1
+            local output_var=$2
+            if aws secretsmanager describe-secret --secret-id "$secret_id" --region ${{ env.AWS_REGION }} &>/dev/null; then
+              local value=$(aws secretsmanager get-secret-value \
+                --secret-id "$secret_id" \
+                --region ${{ env.AWS_REGION }} \
+                --query SecretString --output text)
+              echo "${output_var}=$value" >> $GITHUB_OUTPUT
+            else
+              echo "${output_var}=" >> $GITHUB_OUTPUT
+              echo "Warning: Secret $secret_id not found. $output_var must be set manually." >&2
+            fi
+          }
+          
+          # Get database password
+          get_secret "deadpartymedia/db-password" "db_password"
+          
+          # Get Django SECRET_KEY (critical for security)
+          get_secret "deadpartymedia/secret-key" "secret_key"
+          
+          # Get AWS S3 credentials (required when USE_S3=True)
+          get_secret "deadpartymedia/aws-access-key-id" "aws_access_key_id"
+          get_secret "deadpartymedia/aws-secret-access-key" "aws_secret_access_key"
+          
+          # Get S3 bucket name (can also be in secrets or use default)
+          if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-storage-bucket-name --region ${{ env.AWS_REGION }} &>/dev/null; then
+            AWS_BUCKET=$(aws secretsmanager get-secret-value \
+              --secret-id deadpartymedia/aws-storage-bucket-name \
               --region ${{ env.AWS_REGION }} \
               --query SecretString --output text)
-            echo "db_password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+            echo "aws_storage_bucket_name=$AWS_BUCKET" >> $GITHUB_OUTPUT
           else
-            echo "db_password=" >> $GITHUB_OUTPUT
-            echo "Warning: Secret deadpartymedia/db-password not found. DB_PASSWORD must be set manually."
+            # Use default bucket name if secret doesn't exist
+            echo "aws_storage_bucket_name=deadpartymedia-bucket" >> $GITHUB_OUTPUT
           fi
-          
-          # Get other secrets if needed (SECRET_KEY, AWS credentials, etc.)
-          # Add similar blocks for other secrets
 
       - name: Get database connection details
         id: database
@@ -142,7 +163,7 @@ jobs:
             --query 'containerServices[0].url' \
             --output text | sed 's|https://||')
           
-          # Create deployment JSON with environment variables
+          # Create base deployment JSON with required environment variables
           cat > deployment.json <<EOF
           {
             "containers": {
@@ -156,6 +177,8 @@ jobs:
                   "DB_USER": "${{ steps.database.outputs.db_user }}",
                   "ALLOWED_HOSTS": "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${CONTAINER_URL}",
                   "USE_S3": "True",
+                  "AWS_STORAGE_BUCKET_NAME": "${{ steps.secrets.outputs.aws_storage_bucket_name }}",
+                  "AWS_S3_REGION_NAME": "us-east-1",
                   "GUNICORN_BIND": "0.0.0.0:8000"
                 },
                 "ports": {
@@ -178,11 +201,46 @@ jobs:
           }
           EOF
           
-          # Add DB_PASSWORD to environment if secret was retrieved
+          # Add sensitive secrets to environment variables using jq
+          # This ensures secrets are properly escaped and added to the JSON
           DB_PASSWORD="${{ steps.secrets.outputs.db_password }}"
-          if [ -n "$DB_PASSWORD" ]; then
-            # Use jq to add DB_PASSWORD to the deployment JSON
-            cat deployment.json | jq --arg pwd "$DB_PASSWORD" '.containers.api.environment.DB_PASSWORD = $pwd' > deployment.json.tmp
+          SECRET_KEY="${{ steps.secrets.outputs.secret_key }}"
+          AWS_ACCESS_KEY_ID="${{ steps.secrets.outputs.aws_access_key_id }}"
+          AWS_SECRET_ACCESS_KEY="${{ steps.secrets.outputs.aws_secret_access_key }}"
+          
+          # Validate required secrets
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "Error: DB_PASSWORD secret not found. Deployment cannot proceed." >&2
+            exit 1
+          fi
+          
+          if [ -z "$SECRET_KEY" ]; then
+            echo "Error: SECRET_KEY secret not found. Deployment cannot proceed." >&2
+            exit 1
+          fi
+          
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "Warning: AWS S3 credentials not found. S3 storage will not work." >&2
+            echo "Warning: Consider setting deadpartymedia/aws-access-key-id and deadpartymedia/aws-secret-access-key in Secrets Manager." >&2
+          fi
+          
+          # Apply jq transformations to add required secrets
+          # Always add DB_PASSWORD and SECRET_KEY (validated above)
+          cat deployment.json | jq \
+            --arg db_pwd "$DB_PASSWORD" \
+            --arg secret_key "$SECRET_KEY" \
+            '.containers.api.environment.DB_PASSWORD = $db_pwd |
+             .containers.api.environment.SECRET_KEY = $secret_key' > deployment.json.tmp
+          
+          # Add AWS credentials only if they exist
+          if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+            cat deployment.json.tmp | jq \
+              --arg aws_key "$AWS_ACCESS_KEY_ID" \
+              --arg aws_secret "$AWS_SECRET_ACCESS_KEY" \
+              '.containers.api.environment.AWS_ACCESS_KEY_ID = $aws_key |
+               .containers.api.environment.AWS_SECRET_ACCESS_KEY = $aws_secret' > deployment.json
+            rm deployment.json.tmp
+          else
             mv deployment.json.tmp deployment.json
           fi
           

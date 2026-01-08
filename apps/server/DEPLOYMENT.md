@@ -52,13 +52,52 @@ This will create:
 - Lightsail Container Service
 - Initial deployment (you'll need to push an image first)
 
-### 3. Configure GitHub Secrets
+### 3. Configure AWS Secrets Manager
+
+The deployment workflow requires the following secrets in AWS Secrets Manager:
+
+**Required Secrets:**
+- `deadpartymedia/db-password`: Database password (from Lightsail database)
+- `deadpartymedia/secret-key`: Django SECRET_KEY (critical for security)
+
+**Required for S3 Storage:**
+- `deadpartymedia/aws-access-key-id`: AWS access key ID for S3
+- `deadpartymedia/aws-secret-access-key`: AWS secret access key for S3
+- `deadpartymedia/aws-storage-bucket-name`: S3 bucket name (optional, defaults to `deadpartymedia-bucket`)
+
+**Create secrets via AWS CLI:**
+```bash
+# Database password
+aws secretsmanager create-secret \
+  --name deadpartymedia/db-password \
+  --secret-string "your-database-password" \
+  --region us-east-2
+
+# Django SECRET_KEY
+aws secretsmanager create-secret \
+  --name deadpartymedia/secret-key \
+  --secret-string "your-django-secret-key" \
+  --region us-east-2
+
+# AWS S3 credentials
+aws secretsmanager create-secret \
+  --name deadpartymedia/aws-access-key-id \
+  --secret-string "your-aws-access-key-id" \
+  --region us-east-2
+
+aws secretsmanager create-secret \
+  --name deadpartymedia/aws-secret-access-key \
+  --secret-string "your-aws-secret-access-key" \
+  --region us-east-2
+```
+
+### 4. Configure GitHub Secrets
 
 Go to your GitHub repository → Settings → Secrets and variables → Actions
 
 Add these secrets:
 
-- `AWS_ACCESS_KEY_ID`: AWS access key with Lightsail permissions
+- `AWS_ACCESS_KEY_ID`: AWS access key with Lightsail and Secrets Manager permissions
 - `AWS_SECRET_ACCESS_KEY`: AWS secret access key
 
 Required IAM permissions:
@@ -67,6 +106,9 @@ Required IAM permissions:
 - `lightsail:GetContainerServiceRegistryLogin`
 - `lightsail:RegisterContainerImage`
 - `lightsail:PushContainerImage`
+- `lightsail:GetRelationalDatabase`
+- `secretsmanager:GetSecretValue`
+- `secretsmanager:DescribeSecret`
 
 ### 4. First Deployment
 
