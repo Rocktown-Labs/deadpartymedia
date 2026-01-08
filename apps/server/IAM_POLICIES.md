@@ -7,10 +7,11 @@ This document provides the exact IAM policies needed for GitHub Actions to deplo
 The deployment workflow requires AWS credentials with permissions for:
 
 - **Lightsail Container Service** (for deployment)
-- **Lightsail Container Registry** (for pushing images - currently used)
-- **ECR** (Elastic Container Registry - available but not currently used in workflow)
+- **ECR** (Elastic Container Registry - **REQUIRED** - Lightsail registry login returns ECR credentials)
 - **Secrets Manager** (for retrieving application secrets)
 - **Lightsail Database** (for retrieving database connection details)
+
+**Important**: Even though the workflow uses `aws lightsail create-container-service-registry-login`, this command returns ECR registry credentials. Therefore, **ECR permissions are required** for the workflow to push Docker images.
 
 ## Required GitHub Secrets
 
@@ -23,14 +24,34 @@ Before setting up IAM policies, ensure these secrets are configured in GitHub:
 
 ## IAM Policy Options
 
-### Option 1: Minimal Policy (Recommended)
+### Option 1: Minimal Policy (Required)
 
-This policy grants only the permissions needed for the current workflow:
+This policy grants the minimum permissions needed for the workflow. **ECR permissions are required** because Lightsail's registry login returns ECR credentials:
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
+    {
+      "Sid": "ECRGetAuthorizationToken",
+      "Effect": "Allow",
+      "Action": ["ecr:GetAuthorizationToken"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRRepositoryAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "arn:aws:ecr:us-east-2:615763501337:repository/deadpartymedia-api"
+    },
     {
       "Sid": "LightsailContainerService",
       "Effect": "Allow",
@@ -63,9 +84,9 @@ This policy grants only the permissions needed for the current workflow:
 }
 ```
 
-### Option 2: Complete Policy (If Using ECR)
+### Option 2: Complete Policy (Same as Option 1)
 
-If you plan to use ECR instead of Lightsail registry, add these permissions:
+This is the same as Option 1. ECR permissions are always required because Lightsail registry login returns ECR credentials.
 
 ```json
 {
@@ -184,13 +205,9 @@ Save the `AccessKeyId` and `SecretAccessKey` - these are what you'll add to GitH
 
 ### Error: "User is not authorized to perform: ecr:InitiateLayerUpload"
 
-**Cause**: The workflow is trying to use ECR, but the IAM user doesn't have ECR permissions.
+**Cause**: The IAM user doesn't have ECR permissions. **Even though the workflow uses Lightsail's registry login command, it returns ECR credentials**, so ECR permissions are required.
 
-**Solutions**:
-
-1. **If using Lightsail registry** (current workflow): Ensure you're using `lightsail:GetContainerServiceRegistryLogin` instead of ECR login
-2. **If using ECR**: Add the ECR permissions from Option 2 above
-3. **Check which registry is being used**: Review the workflow file at `.github/workflows/deploy-container.yml`
+**Solution**: Add ECR permissions to your IAM policy (see Option 1 above). The workflow uses `lightsail:GetContainerServiceRegistryLogin`, but this command returns ECR registry credentials, which require ECR permissions to push images.
 
 ### Error: "Missing required GitHub Secrets"
 
@@ -210,20 +227,16 @@ Save the `AccessKeyId` and `SecretAccessKey` - these are what you'll add to GitH
 
 ## Current Workflow Registry
 
-The current workflow (`.github/workflows/deploy-container.yml`) uses **Lightsail Container Registry**, not ECR. If you see ECR errors, it might be because:
+The current workflow (`.github/workflows/deploy-container.yml`) uses `aws lightsail create-container-service-registry-login` to get registry credentials. **However, this command returns ECR registry credentials** (`*.dkr.ecr.*.amazonaws.com`), not a separate Lightsail registry.
 
-1. The workflow was modified to use ECR
-2. There's a configuration mismatch
-3. Docker is trying to authenticate with ECR instead of Lightsail registry
+**This means ECR permissions are always required**, even though the workflow uses Lightsail's registry login command. The workflow pushes images to ECR, which requires ECR permissions.
 
-To verify which registry is being used, check the workflow step "Get Lightsail container registry login" - this confirms Lightsail registry is being used.
+## Note About Registry
 
-## Switching to ECR
-
-If you want to switch from Lightsail registry to ECR:
+The workflow already uses ECR (via Lightsail's registry login command). If you want to switch to using ECR login directly:
 
 1. Update the workflow to use ECR login instead of Lightsail registry login
-2. Ensure the IAM policy includes ECR permissions (Option 2)
+2. Ensure the IAM policy includes ECR permissions (already required - see Option 1)
 3. Update the image name format to use ECR repository URL
 
 Example ECR login step:
@@ -232,6 +245,8 @@ Example ECR login step:
 - name: Login to Amazon ECR
   uses: aws-actions/amazon-ecr-login@v2
 ```
+
+However, the current approach (using Lightsail's registry login) works fine as long as ECR permissions are included in the IAM policy.
 
 ## Security Best Practices
 

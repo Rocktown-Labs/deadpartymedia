@@ -126,7 +126,7 @@ The IAM user/role needs the following permissions:
 - `secretsmanager:GetSecretValue`
 - `secretsmanager:DescribeSecret`
 
-**If using ECR (optional):**
+**ECR (REQUIRED - Lightsail registry login returns ECR credentials):**
 - `ecr:GetAuthorizationToken`
 - `ecr:InitiateLayerUpload`
 - `ecr:UploadLayerPart`
@@ -326,8 +326,7 @@ resource "aws_lightsail_container_service_public_domain_names" "deadpartymedia" 
 **Cause**: The IAM user/role is missing required permissions.
 
 **Solutions**:
-1. **If using Lightsail registry** (current workflow): Ensure IAM policy includes Lightsail permissions (see [IAM_POLICIES.md](./IAM_POLICIES.md))
-2. **If using ECR**: Add ECR permissions to IAM policy:
+1. **Add ECR permissions to IAM policy** (required - Lightsail registry login returns ECR credentials):
    ```json
    {
      "Effect": "Allow",
@@ -346,7 +345,7 @@ resource "aws_lightsail_container_service_public_domain_names" "deadpartymedia" 
    aws iam list-attached-user-policies --user-name <your-iam-user>
    ```
 
-**Note**: The current workflow uses Lightsail Container Registry, not ECR. If you see ECR errors, check if the workflow was modified or if there's a configuration issue.
+**Note**: The workflow uses `aws lightsail create-container-service-registry-login`, but this command returns ECR registry credentials. Therefore, ECR permissions are required even though the workflow uses Lightsail's registry login command.
 
 ### Container won't start
 
