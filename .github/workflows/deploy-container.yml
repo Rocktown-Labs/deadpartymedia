@@ -1,5 +1,10 @@
 name: Build and Deploy Container
 
+# Required permissions for OIDC authentication with AWS
+permissions:
+  id-token: write   # Required for OIDC authentication
+  contents: read    # Required to checkout code
+
 on:
   push:
     branches:

@@ -52,9 +52,11 @@ COPY . .
 # Set DJANGO_SETTINGS_MODULE to ensure Django can load settings
 # Override USE_S3=False during build since AWS credentials aren't available at build time
 # Static files will be served via WhiteNoise in Lambda
+# Note: Use system Python directly since packages are installed to /var/lang/lib/python3.11/site-packages
+# uv run expects a .venv directory, but we've copied packages to system Python
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
 ENV USE_S3=False
-RUN uv run python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
 # Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)
 # Lambda Web Adapter expects the app to listen on port 8080
