@@ -364,12 +364,22 @@ jobs:
           echo "✅ Lambda Function URL: ${FUNCTION_URL}"
 
       - name: Update Lambda environment variables
+        # Only run if previous step succeeded (GitHub Actions default behavior)
+        # Additional validation ensures FUNCTION_URL is non-empty
         run: |
           set -euo pipefail
           
           FUNCTION_NAME="deadpartymedia-api"
           AWS_REGION="${{ env.AWS_REGION }}"
           FUNCTION_URL="${{ steps.lambda_url.outputs.function_url }}"
+          
+          # Validate Function URL is present and non-empty
+          if [ -z "$FUNCTION_URL" ] || [ "$FUNCTION_URL" = "null" ]; then
+            echo "Error: Lambda Function URL is missing or invalid. Cannot update environment variables." >&2
+            echo "This step depends on the 'Get Lambda Function URL' step completing successfully." >&2
+            exit 1
+          fi
+          
           FUNCTION_URL_HOST=$(echo "${FUNCTION_URL}" | sed 's|https://||' | sed 's|/.*||')
           
           # Validate required secrets before proceeding
