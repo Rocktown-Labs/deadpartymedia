@@ -393,20 +393,30 @@ jobs:
             --query 'Environment.Variables' \
             --output json)
           
-          # Update environment variables with secrets and Function URL
+          # Update environment variables with secrets, database details, and Function URL
           # SECURITY: Pass secrets directly from GitHub outputs to jq to avoid logging
           # Use validated variables to ensure they're not empty
+          # Database connection details are retrieved from Lightsail (not Secrets Manager)
           UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
             --arg hosts "api.deadpartymedia.com,${FUNCTION_URL_HOST}" \
             --arg db_pwd "$DB_PASSWORD" \
             --arg secret_key "$SECRET_KEY" \
             --arg aws_bucket "${{ steps.secrets.outputs.aws_storage_bucket_name }}" \
+            --arg db_host "${{ steps.database.outputs.db_host }}" \
+            --arg db_port "${{ steps.database.outputs.db_port }}" \
+            --arg db_name "${{ steps.database.outputs.db_name }}" \
+            --arg db_user "${{ steps.database.outputs.db_user }}" \
             '. + {
               ALLOWED_HOSTS: $hosts,
               DB_PASSWORD: $db_pwd,
               SECRET_KEY: $secret_key,
               AWS_STORAGE_BUCKET_NAME: $aws_bucket,
-              AWS_S3_REGION_NAME: "us-east-1"
+              AWS_S3_REGION_NAME: "us-east-1",
+              DB_HOST: $db_host,
+              DB_PORT: $db_port,
+              DB_NAME: $db_name,
+              DB_USER: $db_user,
+              DB_SSLMODE: "require"
             }')
           
           # Add AWS credentials if they exist
