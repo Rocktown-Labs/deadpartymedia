@@ -387,6 +387,7 @@ jobs:
           fi
           
           # Get current environment variables
+          # Handle null case: if Lambda has no environment variables, query returns null
           CURRENT_ENV=$(aws lambda get-function-configuration \
             --function-name "${FUNCTION_NAME}" \
             --region "${AWS_REGION}" \
@@ -397,6 +398,7 @@ jobs:
           # SECURITY: Pass secrets directly from GitHub outputs to jq to avoid logging
           # Use validated variables to ensure they're not empty
           # Database connection details are retrieved from Lightsail (not Secrets Manager)
+          # Use `. // {}` to handle null CURRENT_ENV (when Lambda has no existing env vars)
           UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
             --arg hosts "api.deadpartymedia.com,${FUNCTION_URL_HOST}" \
             --arg db_pwd "$DB_PASSWORD" \
@@ -406,7 +408,9 @@ jobs:
             --arg db_port "${{ steps.database.outputs.db_port }}" \
             --arg db_name "${{ steps.database.outputs.db_name }}" \
             --arg db_user "${{ steps.database.outputs.db_user }}" \
-            '. + {
+            '. // {} | . + {
+              DJANGO_SETTINGS_MODULE: "config.settings.production",
+              USE_S3: "True",
               ALLOWED_HOSTS: $hosts,
               DB_PASSWORD: $db_pwd,
               SECRET_KEY: $secret_key,
