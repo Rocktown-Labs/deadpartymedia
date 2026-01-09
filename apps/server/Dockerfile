@@ -1,12 +1,10 @@
-# Multi-stage Dockerfile for Dead Party Media Django API
-FROM python:3.11-slim as builder
+# Multi-stage Dockerfile for Dead Party Media Django API (Lambda-compatible)
+FROM public.ecr.aws/lambda/python:3.11 as builder
 
 # Install system dependencies for building Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Lambda Python 3.11 base image uses Amazon Linux 2 (yum)
+RUN yum install -y gcc postgresql-devel && \
+    yum clean all
 
 # Install uv
 RUN pip install --no-cache-dir uv
@@ -19,48 +17,38 @@ COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv with lock file enforcement
 # First sync to validate lock file, then install to system Python
-# uv pip install respects uv.lock when present in the same directory
 RUN uv sync --frozen --no-dev --no-install-project && \
     uv pip install --system --no-cache . && \
     rm -rf .venv
 
-# Production stage
-FROM python:3.11-slim
+# Production stage - use Lambda base image
+FROM public.ecr.aws/lambda/python:3.11
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Lambda Python 3.11 base image uses Amazon Linux 2 (yum)
+RUN yum install -y postgresql-libs && \
+    yum clean all
 
 # Install uv in production image
 RUN pip install --no-cache-dir uv
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app /app/static /app/media && \
-    chown -R appuser:appuser /app
+# Copy Lambda Web Adapter extension
+COPY --from=public.ecr.aws/aws-lambda-adapter:latest /opt/extensions/ /opt/extensions/
 
 # Set working directory
-WORKDIR /app
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /var/lang/lib/python3.11/site-packages /var/lang/lib/python3.11/site-packages
+COPY --from=builder /var/lang/bin /var/lang/bin
 
 # Copy application code
-COPY --chown=appuser:appuser . .
+COPY . .
 
-# Switch to non-root user
-USER appuser
+# Collect static files (for WhiteNoise)
+RUN uv run python manage.py collectstatic --noinput || true
 
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/v1/ || exit 1
-
-# Run Gunicorn
-CMD ["uv", "run", "gunicorn", "--config", "gunicorn.conf.py", "config.wsgi:application"]
+# Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)
+# Lambda Web Adapter expects the app to listen on port 8080
+CMD ["gunicorn", "config.wsgi:application", "-w=1", "-b=0.0.0.0:8080", "--timeout=30", "--access-logfile=-", "--error-logfile=-"]
 

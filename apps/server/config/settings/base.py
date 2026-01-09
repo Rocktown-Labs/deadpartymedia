@@ -72,6 +72,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in Lambda
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -252,6 +253,11 @@ if USE_S3:
     # Media files
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+else:
+    # WhiteNoise configuration for serving static files in Lambda (when not using S3)
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_AUTOREFRESH = False  # Disable in production for performance
 
 # CKEditor Configuration
 CKEDITOR_UPLOAD_PATH = "uploads/"

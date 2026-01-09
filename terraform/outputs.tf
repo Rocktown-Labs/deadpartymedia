@@ -30,26 +30,27 @@ output "ecr_repository_url" {
   description = "ECR repository URL for pushing images"
 }
 
-# Container Service Outputs
-output "container_service_url" {
-  value       = "https://${aws_lightsail_container_service.deadpartymedia.url}"
-  description = "Public URL of the container service"
+# Lambda Function Outputs
+output "lambda_function_name" {
+  value       = aws_lambda_function.deadpartymedia_api.function_name
+  description = "Name of the Lambda function"
 }
 
-output "container_service_name" {
-  value       = aws_lightsail_container_service.deadpartymedia.name
-  description = "Name of the container service"
+output "lambda_function_arn" {
+  value       = aws_lambda_function.deadpartymedia_api.arn
+  description = "ARN of the Lambda function"
 }
 
-output "container_service_power" {
-  value       = aws_lightsail_container_service.deadpartymedia.power
-  description = "Power level of the container service"
+output "lambda_function_url" {
+  value       = aws_lambda_function_url.deadpartymedia_api.function_url
+  description = "Public Function URL for the Lambda function"
 }
 
-output "container_service_scale" {
-  value       = aws_lightsail_container_service.deadpartymedia.scale
-  description = "Scale (number of nodes) of the container service"
-}
+# Container Service Outputs (deprecated - replaced by Lambda)
+# output "container_service_url" {
+#   value       = "https://${aws_lightsail_container_service.deadpartymedia.url}"
+#   description = "Public URL of the container service"
+# }
 
 # Certificate Outputs
 output "certificate_arn" {

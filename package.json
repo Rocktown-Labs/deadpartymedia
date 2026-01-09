@@ -7,9 +7,8 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"pnpm dev:web\" \"pnpm dev:server\"",
+    "dev": "turbo run dev --parallel -F web -F server",
     "dev:web": "turbo -F web dev",
-    "dev:server": "cd apps/server && uv run python manage.py runserver",
     "dev:all": "turbo run dev --parallel",
     "build": "turbo build",
     "check-types": "turbo check-types",

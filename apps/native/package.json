@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",

@@ -1,0 +1,17 @@
+{
+  "name": "server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run python manage.py runserver",
+    "build": "uv run python manage.py check",
+    "test": "uv run pytest",
+    "lint": "uv run ruff check . && uv run ruff format --check .",
+    "db:migrate": "uv run python manage.py migrate",
+    "db:makemigrations": "uv run python manage.py makemigrations",
+    "db:showmigrations": "uv run python manage.py showmigrations",
+    "db:createsuperuser": "uv run python manage.py createsuperuser",
+    "db:shell": "uv run python manage.py shell",
+    "db:dbshell": "uv run python manage.py dbshell"
+  }
+}

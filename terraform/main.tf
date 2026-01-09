@@ -114,110 +114,161 @@ data "external" "aws_storage_bucket_name" {
   ]
 }
 
-# ECR Repository Policy to allow Lightsail to pull images
-# Note: This must be created AFTER the container service exists (principal_arn is computed)
-# Use a null_resource to create the policy after the container service is created
-resource "null_resource" "ecr_policy" {
-  depends_on = [aws_lightsail_container_service.deadpartymedia]
-
-  triggers = {
-    service_name = aws_lightsail_container_service.deadpartymedia.name
-    repository   = aws_ecr_repository.deadpartymedia.name
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      set -euo pipefail
-      
-      echo "Retrieving principal ARN for Lightsail container service..."
-      PRINCIPAL_ARN=$(aws lightsail get-container-services \
-        --service-name ${aws_lightsail_container_service.deadpartymedia.name} \
-        --region ${var.aws_region} \
-        --query 'containerServices[0].privateRegistryAccess.ecrImagePullerRole.principalArn' \
-        --output text)
-      
-      if [ -z "$PRINCIPAL_ARN" ] || [ "$PRINCIPAL_ARN" = "None" ] || [ "$PRINCIPAL_ARN" = "null" ]; then
-        echo "Error: Could not retrieve principal ARN. ECR policy cannot be set." >&2
-        exit 1
-      fi
-      
-      echo "Principal ARN: $PRINCIPAL_ARN"
-      echo "Setting ECR repository policy..."
-      
-      POLICY_JSON=$(cat <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "$PRINCIPAL_ARN"
-      },
-      "Action": [
-        "ecr:BatchGetImage",
-        "ecr:GetDownloadUrlForLayer"
-      ]
-    }
-  ]
+# Get default VPC for Lambda to access Lightsail database
+data "aws_vpc" "default" {
+  default = true
 }
-EOF
-)
-      
-      aws ecr set-repository-policy \
-        --repository-name ${aws_ecr_repository.deadpartymedia.name} \
-        --region ${var.aws_region} \
-        --policy-text "$POLICY_JSON"
-      
-      if [ $? -eq 0 ]; then
-        echo "✅ ECR repository policy set successfully"
-        
-        # Verify the policy was set
-        echo "Verifying ECR repository policy..."
-        CURRENT_POLICY=$(aws ecr get-repository-policy \
-          --repository-name ${aws_ecr_repository.deadpartymedia.name} \
-          --region ${var.aws_region} \
-          --query 'policyText' \
-          --output text 2>/dev/null || echo "")
-        
-        if [ -n "$CURRENT_POLICY" ]; then
-          echo "✅ ECR repository policy verified"
-        else
-          echo "⚠️  Warning: Could not verify ECR repository policy"
-        fi
-      else
-        echo "Error: Failed to set ECR repository policy" >&2
-        exit 1
-      fi
-    EOT
+
+# Get default subnets for Lambda VPC configuration
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
   }
 }
 
-# Lightsail Container Service
-resource "aws_lightsail_container_service" "deadpartymedia" {
-  name        = "deadpartymedia-api"
-  power       = var.container_power
-  scale       = var.container_scale
-  is_disabled = false
+# Security group for Lambda function
+resource "aws_security_group" "lambda" {
+  name        = "deadpartymedia-lambda-sg"
+  description = "Security group for Lambda function to access Lightsail database"
+  vpc_id      = data.aws_vpc.default.id
 
-  # Enable ECR private registry access
-  private_registry_access {
-    ecr_image_puller_role {
-      is_active = true
-    }
+  # Outbound to Lightsail database (PostgreSQL)
+  egress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Lightsail database is in a different network
+    description = "Allow outbound to Lightsail PostgreSQL database"
   }
 
-  # Custom domain configuration
-  # Only attach certificate if enable_custom_domain is true AND certificate is validated
-  dynamic "public_domain_names" {
-    for_each = var.enable_custom_domain ? [1] : []
-    content {
-      certificate {
-        certificate_name = aws_lightsail_certificate.deadpartymedia.name
-        domain_names = [
-          "api.deadpartymedia.com",
+  # Outbound HTTPS for Secrets Manager and other AWS services
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow outbound HTTPS for AWS services"
+  }
+
+  tags = {
+    Name        = "DeadPartyMedia-Lambda-SG"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# IAM role for Lambda function
+resource "aws_iam_role" "lambda_exec" {
+  name = "deadpartymedia-lambda-exec-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "DeadPartyMedia-Lambda-Exec-Role"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# IAM policy for Lambda VPC access
+resource "aws_iam_role_policy_attachment" "lambda_vpc" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+# IAM policy for Lambda to access Secrets Manager
+resource "aws_iam_role_policy" "lambda_secrets" {
+  name = "deadpartymedia-lambda-secrets-policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:*:secret:deadpartymedia/*"
         ]
       }
+    ]
+  })
+}
+
+# IAM policy for Lambda to access S3 (if using S3 for static files)
+resource "aws_iam_role_policy" "lambda_s3" {
+  name = "deadpartymedia-lambda-s3-policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${data.external.aws_storage_bucket_name.result.value}",
+          "arn:aws:s3:::${data.external.aws_storage_bucket_name.result.value}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Lambda function
+# Note: image_uri will be updated by GitHub Actions on each deployment
+# Initial image_uri is a placeholder - first deployment must push an image first
+resource "aws_lambda_function" "deadpartymedia_api" {
+  function_name = "deadpartymedia-api"
+  package_type  = "Image"
+  # Use latest tag - GitHub Actions will push :latest on each deployment
+  image_uri     = "${aws_ecr_repository.deadpartymedia.repository_url}:latest"
+  role          = aws_iam_role.lambda_exec.arn
+  timeout       = 30
+  memory_size   = 512
+
+  # VPC configuration to access Lightsail database
+  vpc_config {
+    subnet_ids         = data.aws_subnets.default.ids
+    security_group_ids = [aws_security_group.lambda.id]
+  }
+
+  environment {
+    variables = {
+      DJANGO_SETTINGS_MODULE = "config.settings.production"
+      DB_NAME                 = aws_lightsail_database.deadpartymedia.master_database_name
+      DB_USER                 = aws_lightsail_database.deadpartymedia.master_username
+      DB_HOST                 = aws_lightsail_database.deadpartymedia.master_endpoint_address
+      DB_PORT                 = tostring(aws_lightsail_database.deadpartymedia.master_endpoint_port)
+      DB_SSLMODE              = "require"
+      USE_S3                  = "True"
+      # ALLOWED_HOSTS will be set dynamically after Function URL is created
     }
+  }
+
+  # Get account ID for image URI
+  image_config {
+    command = []
   }
 
   tags = {
@@ -225,7 +276,76 @@ resource "aws_lightsail_container_service" "deadpartymedia" {
     Environment = "production"
     ManagedBy   = "terraform"
   }
+
+  # Note: First deployment requires an image to be pushed to ECR first
+  # GitHub Actions will handle image updates via update-function-code
+  depends_on = [aws_ecr_repository.deadpartymedia]
+  
+  lifecycle {
+    # Don't update image_uri on every terraform apply - GitHub Actions handles this
+    ignore_changes = [image_uri]
+  }
 }
+
+# Lambda Function URL
+resource "aws_lambda_function_url" "deadpartymedia_api" {
+  function_name      = aws_lambda_function.deadpartymedia_api.function_name
+  authorization_type = "NONE"  # Public access - can change to AWS_IAM later
+
+  cors {
+    allow_credentials = true
+    allow_origins      = ["*"]  # Configure based on your frontend domains
+    allow_methods      = ["*"]
+    allow_headers      = ["*"]
+    expose_headers     = ["*"]
+    max_age            = 86400
+  }
+}
+
+# Update Lambda environment to include Function URL in ALLOWED_HOSTS after Function URL is created
+locals {
+  function_url_host = replace(replace(aws_lambda_function_url.deadpartymedia_api.function_url, "https://", ""), "/", "")
+}
+
+resource "null_resource" "update_lambda_allowed_hosts" {
+  depends_on = [aws_lambda_function_url.deadpartymedia_api]
+
+  triggers = {
+    function_url = aws_lambda_function_url.deadpartymedia_api.function_url
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Extract current environment variables
+      CURRENT_ENV=$(aws lambda get-function-configuration \
+        --function-name ${aws_lambda_function.deadpartymedia_api.function_name} \
+        --region ${var.aws_region} \
+        --query 'Environment.Variables' \
+        --output json)
+      
+      # Update ALLOWED_HOSTS to include Function URL
+      UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg hosts "api.deadpartymedia.com,${local.function_url_host}" '. + {ALLOWED_HOSTS: $hosts}')
+      
+      # Update Lambda function environment
+      aws lambda update-function-configuration \
+        --function-name ${aws_lambda_function.deadpartymedia_api.function_name} \
+        --region ${var.aws_region} \
+        --environment "Variables=$UPDATED_ENV" \
+        --output json > /dev/null
+      
+      echo "✅ Updated Lambda ALLOWED_HOSTS to include Function URL"
+    EOT
+  }
+}
+
+# Lightsail Container Service - COMMENTED OUT (replaced by Lambda)
+# resource "aws_lightsail_container_service" "deadpartymedia" {
+#   name        = "deadpartymedia-api"
+#   power       = var.container_power
+#   scale       = var.container_scale
+#   is_disabled = false
+#   ...
+# }
 
 # Managed Database
 resource "aws_lightsail_database" "deadpartymedia" {

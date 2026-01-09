@@ -165,7 +165,7 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get Lightsail container registry login
+      - name: Get ECR registry login (via Lightsail)
         id: registry-login
         run: |
           echo "::debug::[HYPOTHESIS_B/D] Requesting Lightsail container registry login..."
@@ -183,7 +183,7 @@ jobs:
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
           echo "password=$PASSWORD" >> $GITHUB_OUTPUT
 
-      - name: Log in to Lightsail container registry
+      - name: Log in to ECR registry
         run: |
           echo "::debug::[HYPOTHESIS_C/D] Attempting Docker login to: ${{ steps.registry-login.outputs.registry_url }}"
           echo "::debug::[HYPOTHESIS_C/D] Checking Docker config before login..."
@@ -370,122 +370,106 @@ jobs:
           echo "   Name: $DB_NAME"
           echo "   User: $DB_USER"
 
-      - name: Deploy to Lightsail Container Service
+      - name: Update Lambda function code
         run: |
           set -euo pipefail
           
-          # Get container service URL for ALLOWED_HOSTS
-          SERVICE_NAME="${{ env.CONTAINER_SERVICE_NAME }}"
+          FUNCTION_NAME="deadpartymedia-api"
+          AWS_REGION="${{ env.AWS_REGION }}"
+          IMAGE_URI="${{ env.image_name }}"
+          
+          echo "Updating Lambda function: ${FUNCTION_NAME}"
+          echo "Image URI: ${IMAGE_URI}"
+          
+          # Update Lambda function with new image
+          aws lambda update-function-code \
+            --function-name "${FUNCTION_NAME}" \
+            --image-uri "${IMAGE_URI}" \
+            --region "${AWS_REGION}" \
+            --output json
+          
+          echo "✅ Lambda function code updated successfully"
+          
+          # Wait for function update to complete
+          echo "Waiting for Lambda function update to complete..."
+          aws lambda wait function-updated \
+            --function-name "${FUNCTION_NAME}" \
+            --region "${AWS_REGION}"
+          
+          echo "✅ Lambda function update completed"
+
+      - name: Get Lambda Function URL
+        id: lambda_url
+        run: |
+          FUNCTION_NAME="deadpartymedia-api"
           AWS_REGION="${{ env.AWS_REGION }}"
           
-          CONTAINER_URL=$(aws lightsail get-container-services \
-            --service-names "${SERVICE_NAME}" \
+          FUNCTION_URL=$(aws lambda get-function-url-config \
+            --function-name "${FUNCTION_NAME}" \
             --region "${AWS_REGION}" \
-            --query 'containerServices[0].url' \
-            --output text | sed 's|https://||' || echo "")
+            --query 'FunctionUrl' \
+            --output text)
           
-          # Validate container service URL was retrieved
-          if [ -z "$CONTAINER_URL" ] || [ "$CONTAINER_URL" = "null" ] || [ "$CONTAINER_URL" = "None" ]; then
-            echo "Error: Failed to retrieve container service URL" >&2
+          if [ -z "$FUNCTION_URL" ] || [ "$FUNCTION_URL" = "null" ]; then
+            echo "Error: Failed to retrieve Lambda Function URL" >&2
             exit 1
           fi
           
-          # Create base deployment JSON with required environment variables
-          cat > deployment.json <<EOF
-          {
-            "containers": {
-              "api": {
-                "image": "${{ env.image_name }}",
-                "environment": {
-                  "DJANGO_SETTINGS_MODULE": "config.settings.production",
-                  "DB_HOST": "${{ steps.database.outputs.db_host }}",
-                  "DB_PORT": "${{ steps.database.outputs.db_port }}",
-                  "DB_NAME": "${{ steps.database.outputs.db_name }}",
-                  "DB_USER": "${{ steps.database.outputs.db_user }}",
-                  "ALLOWED_HOSTS": "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${CONTAINER_URL}",
-                  "USE_S3": "True",
-                  "AWS_STORAGE_BUCKET_NAME": "${{ steps.secrets.outputs.aws_storage_bucket_name }}",
-                  "AWS_S3_REGION_NAME": "us-east-1",
-                  "GUNICORN_BIND": "0.0.0.0:8000"
-                },
-                "ports": {
-                  "8000": "HTTP"
-                }
-              }
-            },
-            "publicEndpoint": {
-              "containerName": "api",
-              "containerPort": 8000,
-              "healthCheck": {
-                "healthyThreshold": 2,
-                "unhealthyThreshold": 2,
-                "timeoutSeconds": 5,
-                "intervalSeconds": 30,
-                "path": "/v1/",
-                "successCodes": "200"
-              }
-            }
-          }
-          EOF
+          echo "function_url=${FUNCTION_URL}" >> $GITHUB_OUTPUT
+          echo "✅ Lambda Function URL: ${FUNCTION_URL}"
+
+      - name: Update Lambda environment variables
+        run: |
+          set -euo pipefail
           
-          # Add sensitive secrets to environment variables using jq
-          # SECURITY: Pass secrets directly from GitHub outputs to jq (using ${{ }}) 
-          # to prevent them from being logged in workflow output. Never assign secrets
-          # to shell variables as they will be visible in logs.
-          # Validate required secrets exist before proceeding
-          if [ -z "${{ steps.secrets.outputs.db_password }}" ]; then
-            echo "Error: DB_PASSWORD secret not found. Deployment cannot proceed." >&2
-            exit 1
-          fi
+          FUNCTION_NAME="deadpartymedia-api"
+          AWS_REGION="${{ env.AWS_REGION }}"
+          FUNCTION_URL="${{ steps.lambda_url.outputs.function_url }}"
+          FUNCTION_URL_HOST=$(echo "${FUNCTION_URL}" | sed 's|https://||' | sed 's|/.*||')
           
-          if [ -z "${{ steps.secrets.outputs.secret_key }}" ]; then
-            echo "Error: SECRET_KEY secret not found. Deployment cannot proceed." >&2
-            exit 1
-          fi
+          # Get current environment variables
+          CURRENT_ENV=$(aws lambda get-function-configuration \
+            --function-name "${FUNCTION_NAME}" \
+            --region "${AWS_REGION}" \
+            --query 'Environment.Variables' \
+            --output json)
           
-          # Apply jq transformations to add required secrets
-          # Pass secrets directly from GitHub outputs to jq to avoid logging
-          cat deployment.json | jq \
+          # Update environment variables with secrets and Function URL
+          # SECURITY: Pass secrets directly from GitHub outputs to jq to avoid logging
+          UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
+            --arg hosts "api.deadpartymedia.com,${FUNCTION_URL_HOST}" \
             --arg db_pwd "${{ steps.secrets.outputs.db_password }}" \
             --arg secret_key "${{ steps.secrets.outputs.secret_key }}" \
-            '.containers.api.environment.DB_PASSWORD = $db_pwd |
-             .containers.api.environment.SECRET_KEY = $secret_key' > deployment.json.tmp
+            --arg aws_bucket "${{ steps.secrets.outputs.aws_storage_bucket_name }}" \
+            '. + {
+              ALLOWED_HOSTS: $hosts,
+              DB_PASSWORD: $db_pwd,
+              SECRET_KEY: $secret_key,
+              AWS_STORAGE_BUCKET_NAME: $aws_bucket,
+              AWS_S3_REGION_NAME: "us-east-1"
+            }')
           
-          # Add AWS credentials only if they exist
+          # Add AWS credentials if they exist
           if [ -n "${{ steps.secrets.outputs.aws_access_key_id }}" ] && [ -n "${{ steps.secrets.outputs.aws_secret_access_key }}" ]; then
-            cat deployment.json.tmp | jq \
+            UPDATED_ENV=$(echo "$UPDATED_ENV" | jq \
               --arg aws_key "${{ steps.secrets.outputs.aws_access_key_id }}" \
               --arg aws_secret "${{ steps.secrets.outputs.aws_secret_access_key }}" \
-              '.containers.api.environment.AWS_ACCESS_KEY_ID = $aws_key |
-               .containers.api.environment.AWS_SECRET_ACCESS_KEY = $aws_secret' > deployment.json
-            rm deployment.json.tmp
+              '. + {
+                AWS_ACCESS_KEY_ID: $aws_key,
+                AWS_SECRET_ACCESS_KEY: $aws_secret
+              }')
           else
             echo "Warning: AWS S3 credentials not found. S3 storage will not work." >&2
-            echo "Warning: Consider setting deadpartymedia/aws-access-key-id and deadpartymedia/aws-secret-access-key in Secrets Manager." >&2
-            mv deployment.json.tmp deployment.json
           fi
           
-          # Create new deployment
-          aws lightsail create-container-service-deployment \
-            --service-name ${{ env.CONTAINER_SERVICE_NAME }} \
-            --cli-input-json file://deployment.json \
-            --region ${{ env.AWS_REGION }}
-
-      - name: Wait for deployment to complete
-        run: |
-          echo "Waiting for deployment to be active..."
-          aws lightsail wait container-service-deployment-ready \
-            --service-name ${{ env.CONTAINER_SERVICE_NAME }} \
-            --region ${{ env.AWS_REGION }} \
-            --max-attempts 30 \
-            --delay 10
-
-      - name: Get service URL
-        run: |
-          SERVICE_URL=$(aws lightsail get-container-services \
-            --service-names ${{ env.CONTAINER_SERVICE_NAME }} \
-            --region ${{ env.AWS_REGION }} \
-            --query 'containerServices[0].url' \
-            --output text)
-          echo "Service deployed at: $SERVICE_URL"
+          # Update Lambda function environment
+          aws lambda update-function-configuration \
+            --function-name "${FUNCTION_NAME}" \
+            --region "${AWS_REGION}" \
+            --environment "Variables=${UPDATED_ENV}" \
+            --output json
+          
+          echo "✅ Lambda environment variables updated"
+          echo "   Function URL: ${FUNCTION_URL}"
+          echo "   ALLOWED_HOSTS includes: api.deadpartymedia.com,${FUNCTION_URL_HOST}"
 
