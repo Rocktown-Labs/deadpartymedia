@@ -367,11 +367,18 @@ resource "null_resource" "update_lambda_allowed_hosts" {
       UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg hosts "api.deadpartymedia.com,${local.function_url_host}" '. + {ALLOWED_HOSTS: $hosts}')
       
       # Update Lambda function environment
+      # Use --cli-input-json to properly handle JSON with special characters
+      # This prevents shell word splitting on spaces, quotes, commas, etc.
+      echo "$UPDATED_ENV" | jq '{Environment: {Variables: .}}' > /tmp/lambda_env.json
+      
       aws lambda update-function-configuration \
         --function-name ${aws_lambda_function.deadpartymedia_api.function_name} \
         --region ${var.aws_region} \
-        --environment "Variables=$UPDATED_ENV" \
+        --cli-input-json file:///tmp/lambda_env.json \
         --output json > /dev/null
+      
+      # Clean up temporary file
+      rm -f /tmp/lambda_env.json
       
       echo "✅ Updated Lambda ALLOWED_HOSTS to include Function URL"
     EOT

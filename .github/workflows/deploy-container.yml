@@ -88,79 +88,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Validate AWS credentials
-      # Required GitHub Secrets:
-      # - AWS_ACCESS_KEY_ID: IAM user access key with Lightsail, Secrets Manager permissions
-      # - AWS_SECRET_ACCESS_KEY: IAM user secret key
+      # Configure AWS credentials using OIDC (OpenID Connect)
+      # This uses GitHub's OIDC provider to authenticate with AWS without storing static credentials
+      # The IAM role must have a trust policy allowing GitHub Actions to assume it
       # See apps/server/IAM_POLICIES.md for required IAM permissions
-      - name: Validate AWS credentials
-        run: |
-          set -euo pipefail
-          
-          # Debug: Log secret availability (without exposing values)
-          echo "::debug::[HYPOTHESIS_A/E] Checking secret availability..."
-          HAS_ACCESS_KEY_ID=false
-          HAS_SECRET_ACCESS_KEY=false
-          
-          ACCESS_KEY_ID_VALUE="${{ secrets.AWS_ACCESS_KEY_ID }}"
-          SECRET_ACCESS_KEY_VALUE="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          
-          if [ -n "$ACCESS_KEY_ID_VALUE" ]; then
-            HAS_ACCESS_KEY_ID=true
-            ACCESS_KEY_LEN=${#ACCESS_KEY_ID_VALUE}
-            echo "::debug::[HYPOTHESIS_A/E] AWS_ACCESS_KEY_ID is present (length: $ACCESS_KEY_LEN)"
-          else
-            echo "::debug::[HYPOTHESIS_A/E] AWS_ACCESS_KEY_ID is empty or missing"
-          fi
-          
-          if [ -n "$SECRET_ACCESS_KEY_VALUE" ]; then
-            HAS_SECRET_ACCESS_KEY=true
-            SECRET_KEY_LEN=${#SECRET_ACCESS_KEY_VALUE}
-            echo "::debug::[HYPOTHESIS_A/E] AWS_SECRET_ACCESS_KEY is present (length: $SECRET_KEY_LEN)"
-          else
-            echo "::debug::[HYPOTHESIS_A/E] AWS_SECRET_ACCESS_KEY is empty or missing"
-          fi
-          
-          echo "::debug::[HYPOTHESIS_A/E] Environment context: ${{ github.environment || 'none' }}"
-          echo "::debug::[HYPOTHESIS_A/E] Job environment: production"
-          echo "::debug::[HYPOTHESIS_A/E] Note: When environment is set, GitHub checks environment secrets first, then repository secrets"
-          
-          MISSING_SECRETS=()
-          
-          if [ "$HAS_ACCESS_KEY_ID" = false ]; then
-            MISSING_SECRETS+=("AWS_ACCESS_KEY_ID")
-          fi
-          
-          if [ "$HAS_SECRET_ACCESS_KEY" = false ]; then
-            MISSING_SECRETS+=("AWS_SECRET_ACCESS_KEY")
-          fi
-          
-          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
-            echo "❌ Error: Missing required GitHub Secrets:"
-            for secret in "${MISSING_SECRETS[@]}"; do
-              echo "   - $secret"
-            done
-            echo ""
-            echo "To fix this:"
-            echo "1. Go to your repository: Settings → Secrets and variables → Actions"
-            echo "2. For environment 'production': Settings → Environments → production → Secrets"
-            echo "3. Add the missing secrets listed above (can be set at repository OR environment level)"
-            echo "4. Ensure the IAM user has required permissions (see apps/server/IAM_POLICIES.md)"
-            echo "5. Re-run this workflow"
-            exit 1
-          fi
-          
-          echo "✅ All required AWS credentials are configured"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::992382618631:role/github-actions
           aws-region: ${{ env.AWS_REGION }}
-        env:
-          # Debug: Check if ECR credentials are being auto-configured
-          AWS_ECR_REGISTRY: ""
+          role-session-name: GitHubActions-DeadPartyMedia-${{ github.run_id }}
+      
+      - name: Verify AWS authentication
+        run: |
+          echo "Verifying AWS authentication..."
+          aws sts get-caller-identity
+          echo "✅ Successfully authenticated with AWS"
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -282,7 +225,9 @@ jobs:
             get_secret "deadpartymedia/django/secret-key" "secret_key"
           fi
           
-          # Get AWS S3 credentials (try new names first, fallback to old names)
+          # Get AWS S3 credentials (optional - only needed if Lambda function requires explicit credentials)
+          # Note: If Lambda execution role has S3 permissions, these credentials may not be needed
+          # These are stored in Secrets Manager (not GitHub Secrets) and are passed to Lambda as environment variables
           if aws secretsmanager describe-secret --secret-id deadpartymedia/aws-access-key-id --region ${{ env.AWS_REGION }} &>/dev/null; then
             get_secret "deadpartymedia/aws-access-key-id" "aws_access_key_id"
           else
@@ -427,6 +372,20 @@ jobs:
           FUNCTION_URL="${{ steps.lambda_url.outputs.function_url }}"
           FUNCTION_URL_HOST=$(echo "${FUNCTION_URL}" | sed 's|https://||' | sed 's|/.*||')
           
+          # Validate required secrets before proceeding
+          DB_PASSWORD="${{ steps.secrets.outputs.db_password }}"
+          SECRET_KEY="${{ steps.secrets.outputs.secret_key }}"
+          
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "Error: DB_PASSWORD secret not found. Deployment cannot proceed." >&2
+            exit 1
+          fi
+          
+          if [ -z "$SECRET_KEY" ]; then
+            echo "Error: SECRET_KEY secret not found. Deployment cannot proceed." >&2
+            exit 1
+          fi
+          
           # Get current environment variables
           CURRENT_ENV=$(aws lambda get-function-configuration \
             --function-name "${FUNCTION_NAME}" \
@@ -436,10 +395,11 @@ jobs:
           
           # Update environment variables with secrets and Function URL
           # SECURITY: Pass secrets directly from GitHub outputs to jq to avoid logging
+          # Use validated variables to ensure they're not empty
           UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
             --arg hosts "api.deadpartymedia.com,${FUNCTION_URL_HOST}" \
-            --arg db_pwd "${{ steps.secrets.outputs.db_password }}" \
-            --arg secret_key "${{ steps.secrets.outputs.secret_key }}" \
+            --arg db_pwd "$DB_PASSWORD" \
+            --arg secret_key "$SECRET_KEY" \
             --arg aws_bucket "${{ steps.secrets.outputs.aws_storage_bucket_name }}" \
             '. + {
               ALLOWED_HOSTS: $hosts,
@@ -463,11 +423,18 @@ jobs:
           fi
           
           # Update Lambda function environment
+          # Use --cli-input-json to properly handle JSON with special characters
+          # This prevents shell word splitting on spaces, quotes, commas, etc.
+          echo "$UPDATED_ENV" | jq '{Environment: {Variables: .}}' > /tmp/lambda_env.json
+          
           aws lambda update-function-configuration \
             --function-name "${FUNCTION_NAME}" \
             --region "${AWS_REGION}" \
-            --environment "Variables=${UPDATED_ENV}" \
+            --cli-input-json file:///tmp/lambda_env.json \
             --output json
+          
+          # Clean up temporary file
+          rm -f /tmp/lambda_env.json
           
           echo "✅ Lambda environment variables updated"
           echo "   Function URL: ${FUNCTION_URL}"
