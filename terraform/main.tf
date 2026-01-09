@@ -169,36 +169,43 @@ resource "aws_security_group" "lambda" {
 }
 
 # IAM role for GitHub Actions OIDC authentication
-resource "aws_iam_role" "github_actions" {
+# Use data source to reference existing IAM role (created manually or via OIDC setup)
+# If the role doesn't exist, uncomment the resource below and comment out this data source
+data "aws_iam_role" "github_actions" {
   name = "github-actions"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          }
-          StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:cgRGM/deadpartymedia:ref:refs/heads/master"
-          }
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name        = "GitHub-Actions-Role"
-    Environment = "production"
-    ManagedBy   = "terraform"
-  }
 }
+
+# Uncomment this if you need Terraform to create the role instead of using existing one
+# resource "aws_iam_role" "github_actions" {
+#   name = "github-actions"
+#
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Principal = {
+#           Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+#         }
+#         Action = "sts:AssumeRoleWithWebIdentity"
+#         Condition = {
+#           StringEquals = {
+#             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+#           }
+#           StringLike = {
+#             "token.actions.githubusercontent.com:sub" = "repo:cgRGM/deadpartymedia:ref:refs/heads/master"
+#           }
+#         }
+#       }
+#     ]
+#   })
+#
+#   tags = {
+#     Name        = "GitHub-Actions-Role"
+#     Environment = "production"
+#     ManagedBy   = "terraform"
+#   }
+# }
 
 # Get current AWS account ID
 data "aws_caller_identity" "current" {}
@@ -206,7 +213,7 @@ data "aws_caller_identity" "current" {}
 # IAM policy for GitHub Actions to push to ECR
 resource "aws_iam_role_policy" "github_actions_ecr" {
   name = "github-actions-ecr-policy"
-  role = aws_iam_role.github_actions.id
+  role = data.aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -240,7 +247,7 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
 # IAM policy for GitHub Actions to update Lambda
 resource "aws_iam_role_policy" "github_actions_lambda" {
   name = "github-actions-lambda-policy"
-  role = aws_iam_role.github_actions.id
+  role = data.aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -268,7 +275,7 @@ resource "aws_iam_role_policy" "github_actions_lambda" {
 # IAM policy for GitHub Actions to read Secrets Manager
 resource "aws_iam_role_policy" "github_actions_secrets" {
   name = "github-actions-secrets-policy"
-  role = aws_iam_role.github_actions.id
+  role = data.aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -290,7 +297,7 @@ resource "aws_iam_role_policy" "github_actions_secrets" {
 # IAM policy for GitHub Actions to read Lightsail database info
 resource "aws_iam_role_policy" "github_actions_lightsail" {
   name = "github-actions-lightsail-policy"
-  role = aws_iam_role.github_actions.id
+  role = data.aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -576,13 +583,17 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 # API Gateway HTTP API
+# Must be in us-east-1 to match the custom domain region
 resource "aws_apigatewayv2_api" "deadpartymedia_api" {
+  provider      = aws.us_east_1  # Must match domain_name region
   name          = "deadpartymedia-api"
   protocol_type = "HTTP"
   description   = "API Gateway for Dead Party Media API"
 
   cors_configuration {
-    allow_credentials = true
+    # Note: allow_credentials cannot be true when allow_origins is ["*"]
+    # Set to false for public API access, or specify specific origins if credentials are needed
+    allow_credentials = false
     allow_origins     = ["*"]
     allow_methods     = ["*"]
     allow_headers     = ["*"]
@@ -598,8 +609,10 @@ resource "aws_apigatewayv2_api" "deadpartymedia_api" {
 }
 
 # API Gateway Lambda integration
+# Note: API Gateway in us-east-1 can integrate with Lambda in us-east-2
 resource "aws_apigatewayv2_integration" "lambda" {
-  api_id = aws_apigatewayv2_api.deadpartymedia_api.id
+  provider = aws.us_east_1  # Must match API Gateway region
+  api_id   = aws_apigatewayv2_api.deadpartymedia_api.id
 
   integration_type   = "AWS_PROXY"
   integration_method = "POST"
@@ -609,22 +622,25 @@ resource "aws_apigatewayv2_integration" "lambda" {
 
 # API Gateway default route (catches all paths)
 resource "aws_apigatewayv2_route" "default" {
-  api_id    = aws_apigatewayv2_api.deadpartymedia_api.id
+  provider = aws.us_east_1  # Must match API Gateway region
+  api_id   = aws_apigatewayv2_api.deadpartymedia_api.id
   route_key = "$default"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 # API Gateway catch-all route for /v1/* and all other paths
 resource "aws_apigatewayv2_route" "v1_catchall" {
-  api_id    = aws_apigatewayv2_api.deadpartymedia_api.id
+  provider = aws.us_east_1  # Must match API Gateway region
+  api_id   = aws_apigatewayv2_api.deadpartymedia_api.id
   route_key = "ANY /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 # API Gateway stage
 resource "aws_apigatewayv2_stage" "default" {
-  api_id      = aws_apigatewayv2_api.deadpartymedia_api.id
-  name        = "$default"
+  provider = aws.us_east_1  # Must match API Gateway region
+  api_id   = aws_apigatewayv2_api.deadpartymedia_api.id
+  name     = "$default"
   auto_deploy = true
 
   default_route_settings {
@@ -667,9 +683,12 @@ resource "aws_apigatewayv2_domain_name" "api_deadpartymedia" {
 }
 
 # API Gateway domain mapping
+# Note: api_mapping must use the same provider as the domain_name (us-east-1)
+# The domain_name attribute should be the actual domain name string, not the resource ID
 resource "aws_apigatewayv2_api_mapping" "api_deadpartymedia" {
+  provider    = aws.us_east_1  # Must match domain_name provider
   api_id      = aws_apigatewayv2_api.deadpartymedia_api.id
-  domain_name = aws_apigatewayv2_domain_name.api_deadpartymedia.id
+  domain_name = aws_apigatewayv2_domain_name.api_deadpartymedia.domain_name
   stage       = aws_apigatewayv2_stage.default.id
 }
 

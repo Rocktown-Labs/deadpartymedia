@@ -1,5 +1,6 @@
 from .base import *
 import os
+import copy
 
 DEBUG = True
 
@@ -11,4 +12,6 @@ USE_S3 = os.environ.get("USE_S3", "False") == "True"
 
 # Override database SSL settings for local development
 # Local PostgreSQL typically doesn't have SSL configured
+# Create a deep copy to avoid mutating the shared DATABASES dict from base.py
+DATABASES = copy.deepcopy(DATABASES)
 DATABASES["default"]["OPTIONS"]["sslmode"] = os.environ.get("DB_SSLMODE", "disable")
