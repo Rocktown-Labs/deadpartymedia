@@ -58,5 +58,6 @@ RUN uv run python manage.py collectstatic --noinput
 
 # Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)
 # Lambda Web Adapter expects the app to listen on port 8080
-CMD ["gunicorn", "config.wsgi:application", "-w=1", "-b=0.0.0.0:8080", "--timeout=30", "--access-logfile=-", "--error-logfile=-"]
+# Use full path to gunicorn from .venv since it's not in system PATH
+CMD ["/var/task/.venv/bin/gunicorn", "config.wsgi:application", "-w=1", "-b=0.0.0.0:8080", "--timeout=30", "--access-logfile=-", "--error-logfile=-"]
 

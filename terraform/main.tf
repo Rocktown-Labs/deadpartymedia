@@ -193,7 +193,8 @@ data "aws_iam_role" "github_actions" {
 #             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
 #           }
 #           StringLike = {
-#             "token.actions.githubusercontent.com:sub" = "repo:cgRGM/deadpartymedia:ref:refs/heads/master"
+#             # Allow both main and master branches
+#             "token.actions.githubusercontent.com:sub" = "repo:cgRGM/deadpartymedia:ref:refs/heads/*"
 #           }
 #         }
 #       }
