@@ -63,3 +63,18 @@ output "certificate_validation_records" {
   description = "DNS validation records for the certificate"
 }
 
+# API Gateway Outputs
+output "api_gateway_url" {
+  value       = "https://${aws_apigatewayv2_domain_name.api_deadpartymedia.domain_name}"
+  description = "API Gateway custom domain URL (api.deadpartymedia.com)"
+}
+
+output "api_gateway_id" {
+  value       = aws_apigatewayv2_api.deadpartymedia_api.id
+  description = "API Gateway HTTP API ID"
+}
+
+output "api_gateway_execution_arn" {
+  value       = aws_apigatewayv2_api.deadpartymedia_api.execution_arn
+  description = "API Gateway execution ARN"
+}

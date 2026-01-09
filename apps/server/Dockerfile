@@ -48,8 +48,10 @@ COPY . .
 
 # Collect static files (for WhiteNoise)
 # Set DJANGO_SETTINGS_MODULE to ensure Django can load settings
-# Remove || true to ensure build fails if collectstatic fails
+# Override USE_S3=False during build since AWS credentials aren't available at build time
+# Static files will be served via WhiteNoise in Lambda
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
+ENV USE_S3=False
 RUN uv run python manage.py collectstatic --noinput
 
 # Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)

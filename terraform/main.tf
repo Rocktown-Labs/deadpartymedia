@@ -2,6 +2,12 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Provider for us-east-1 (required for API Gateway custom domains and ACM certificates)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 # ECR Repository for container images
 resource "aws_ecr_repository" "deadpartymedia" {
   name                 = "deadpartymedia-api"
@@ -357,7 +363,7 @@ resource "null_resource" "update_lambda_allowed_hosts" {
         --query 'Environment.Variables' \
         --output json)
       
-      # Update ALLOWED_HOSTS to include Function URL
+      # Update ALLOWED_HOSTS to include Function URL and API Gateway domain
       UPDATED_ENV=$(echo "$CURRENT_ENV" | jq --arg hosts "api.deadpartymedia.com,${local.function_url_host}" '. + {ALLOWED_HOSTS: $hosts}')
       
       # Update Lambda function environment
@@ -369,6 +375,167 @@ resource "null_resource" "update_lambda_allowed_hosts" {
       
       echo "✅ Updated Lambda ALLOWED_HOSTS to include Function URL"
     EOT
+  }
+}
+
+# Get Route53 hosted zone for deadpartymedia.com
+data "aws_route53_zone" "deadpartymedia" {
+  name         = "deadpartymedia.com"
+  private_zone = false
+}
+
+# ACM Certificate for api.deadpartymedia.com (must be in us-east-1 for API Gateway)
+resource "aws_acm_certificate" "api_deadpartymedia" {
+  provider          = aws.us_east_1  # API Gateway requires cert in us-east-1
+  domain_name       = "api.deadpartymedia.com"
+  validation_method = "DNS"
+
+  tags = {
+    Name        = "DeadPartyMedia-API-Cert"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Certificate validation
+resource "aws_acm_certificate_validation" "api_deadpartymedia" {
+  provider        = aws.us_east_1
+  certificate_arn = aws_acm_certificate.api_deadpartymedia.arn
+  validation_record_fqdns = [
+    for record in aws_route53_record.cert_validation : record.fqdn
+  ]
+}
+
+# Route53 record for certificate validation
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.api_deadpartymedia.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.deadpartymedia.zone_id
+}
+
+# API Gateway HTTP API
+resource "aws_apigatewayv2_api" "deadpartymedia_api" {
+  name          = "deadpartymedia-api"
+  protocol_type = "HTTP"
+  description   = "API Gateway for Dead Party Media API"
+
+  cors_configuration {
+    allow_credentials = true
+    allow_origins     = ["*"]
+    allow_methods     = ["*"]
+    allow_headers     = ["*"]
+    expose_headers    = ["*"]
+    max_age           = 86400
+  }
+
+  tags = {
+    Name        = "DeadPartyMedia-API"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# API Gateway Lambda integration
+resource "aws_apigatewayv2_integration" "lambda" {
+  api_id = aws_apigatewayv2_api.deadpartymedia_api.id
+
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+  integration_uri    = aws_lambda_function.deadpartymedia_api.invoke_arn
+  payload_format_version = "2.0"
+}
+
+# API Gateway default route (catches all paths)
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.deadpartymedia_api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# API Gateway catch-all route for /v1/* and all other paths
+resource "aws_apigatewayv2_route" "v1_catchall" {
+  api_id    = aws_apigatewayv2_api.deadpartymedia_api.id
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# API Gateway stage
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.deadpartymedia_api.id
+  name        = "$default"
+  auto_deploy = true
+
+  default_route_settings {
+    throttling_rate_limit  = 100
+    throttling_burst_limit = 200
+  }
+
+  tags = {
+    Name        = "DeadPartyMedia-API-Stage"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# Lambda permission for API Gateway
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.deadpartymedia_api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.deadpartymedia_api.execution_arn}/*/*"
+}
+
+# API Gateway custom domain
+resource "aws_apigatewayv2_domain_name" "api_deadpartymedia" {
+  provider    = aws.us_east_1  # Custom domains must be in us-east-1
+  domain_name = "api.deadpartymedia.com"
+
+  domain_name_configuration {
+    certificate_arn = aws_acm_certificate_validation.api_deadpartymedia.certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy  = "TLS_1_2"
+  }
+
+  tags = {
+    Name        = "DeadPartyMedia-API-Domain"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
+# API Gateway domain mapping
+resource "aws_apigatewayv2_api_mapping" "api_deadpartymedia" {
+  api_id      = aws_apigatewayv2_api.deadpartymedia_api.id
+  domain_name = aws_apigatewayv2_domain_name.api_deadpartymedia.id
+  stage       = aws_apigatewayv2_stage.default.id
+}
+
+# Route53 A record pointing to API Gateway custom domain
+resource "aws_route53_record" "api_deadpartymedia" {
+  name    = "api.deadpartymedia.com"
+  type    = "A"
+  zone_id = data.aws_route53_zone.deadpartymedia.zone_id
+
+  alias {
+    name                   = aws_apigatewayv2_domain_name.api_deadpartymedia.domain_name_configuration[0].target_domain_name
+    zone_id                = aws_apigatewayv2_domain_name.api_deadpartymedia.domain_name_configuration[0].hosted_zone_id
+    evaluate_target_health = false
   }
 }
 
