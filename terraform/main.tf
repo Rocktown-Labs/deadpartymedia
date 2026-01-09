@@ -40,8 +40,9 @@ data "external" "db_password" {
     elif aws secretsmanager describe-secret --secret-id deadpartymedia/database/password --region ${var.aws_region} &>/dev/null; then
       SECRET_NAME="deadpartymedia/database/password"
     else
-      echo '{"error":"Secret not found"}' >&2
-      exit 1
+      # Return empty value if secret doesn't exist (will be set via GitHub Actions)
+      echo '{"value":""}'
+      exit 0
     fi
     VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
     echo "$VALUE" | jq -R -s '{value: .}'
@@ -56,8 +57,9 @@ data "external" "secret_key" {
     elif aws secretsmanager describe-secret --secret-id deadpartymedia/django/secret-key --region ${var.aws_region} &>/dev/null; then
       SECRET_NAME="deadpartymedia/django/secret-key"
     else
-      echo '{"error":"Secret not found"}' >&2
-      exit 1
+      # Return empty value if secret doesn't exist (will be set via GitHub Actions)
+      echo '{"value":""}'
+      exit 0
     fi
     VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
     echo "$VALUE" | jq -R -s '{value: .}'
@@ -72,8 +74,9 @@ data "external" "aws_access_key_id" {
     elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/access-key-id --region ${var.aws_region} &>/dev/null; then
       SECRET_NAME="deadpartymedia/aws/access-key-id"
     else
-      echo '{"error":"Secret not found"}' >&2
-      exit 1
+      # Return empty value if secret doesn't exist (will be set via GitHub Actions)
+      echo '{"value":""}'
+      exit 0
     fi
     VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
     echo "$VALUE" | jq -R -s '{value: .}'
@@ -88,8 +91,9 @@ data "external" "aws_secret_access_key" {
     elif aws secretsmanager describe-secret --secret-id deadpartymedia/aws/secret-access-key --region ${var.aws_region} &>/dev/null; then
       SECRET_NAME="deadpartymedia/aws/secret-access-key"
     else
-      echo '{"error":"Secret not found"}' >&2
-      exit 1
+      # Return empty value if secret doesn't exist (will be set via GitHub Actions)
+      echo '{"value":""}'
+      exit 0
     fi
     VALUE=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --region ${var.aws_region} --query SecretString --output text)
     echo "$VALUE" | jq -R -s '{value: .}'

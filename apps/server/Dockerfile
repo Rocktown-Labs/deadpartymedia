@@ -16,9 +16,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv with lock file enforcement
-# First sync to validate lock file, then install to system Python
+# Note: We don't install the project package here since source code isn't copied yet
+# The project will be available via copied source code in the production stage
 RUN uv sync --frozen --no-dev --no-install-project && \
-    uv pip install --system --no-cache . && \
     rm -rf .venv
 
 # Production stage - use Lambda base image
@@ -36,7 +36,8 @@ RUN pip install --no-cache-dir uv
 COPY --from=public.ecr.aws/aws-lambda-adapter:latest /opt/extensions/ /opt/extensions/
 
 # Set working directory
-WORKDIR ${LAMBDA_TASK_ROOT}
+# Use literal path since LAMBDA_TASK_ROOT is a runtime variable, not available during build
+WORKDIR /var/task
 
 # Copy installed packages from builder
 COPY --from=builder /var/lang/lib/python3.11/site-packages /var/lang/lib/python3.11/site-packages
