@@ -388,19 +388,21 @@ jobs:
           
           # Get current environment variables
           # Handle null case: if Lambda has no environment variables, query returns null
+          # Also handle case where Environment.Variables doesn't exist (returns empty string)
           CURRENT_ENV=$(aws lambda get-function-configuration \
             --function-name "${FUNCTION_NAME}" \
             --region "${AWS_REGION}" \
             --query 'Environment.Variables' \
-            --output json)
+            --output json 2>/dev/null || echo "null")
           
           # Update environment variables with secrets, database details, and Function URL
           # SECURITY: Pass secrets directly from GitHub outputs to jq to avoid logging
           # Use validated variables to ensure they're not empty
           # Database connection details are retrieved from Lightsail (not Secrets Manager)
           # Use `. // {}` to handle null CURRENT_ENV (when Lambda has no existing env vars)
+          # Include base domains in ALLOWED_HOSTS for production
           UPDATED_ENV=$(echo "$CURRENT_ENV" | jq \
-            --arg hosts "api.deadpartymedia.com,${FUNCTION_URL_HOST}" \
+            --arg hosts "api.deadpartymedia.com,deadpartymedia.com,www.deadpartymedia.com,${FUNCTION_URL_HOST}" \
             --arg db_pwd "$DB_PASSWORD" \
             --arg secret_key "$SECRET_KEY" \
             --arg aws_bucket "${{ steps.secrets.outputs.aws_storage_bucket_name }}" \

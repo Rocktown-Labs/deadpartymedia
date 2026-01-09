@@ -16,10 +16,11 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv with lock file enforcement
+# uv sync creates a .venv directory with all dependencies
+# We'll copy packages from .venv to system Python in the production stage
 # Note: We don't install the project package here since source code isn't copied yet
 # The project will be available via copied source code in the production stage
-RUN uv sync --frozen --no-dev --no-install-project && \
-    rm -rf .venv
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Production stage - use Lambda base image
 FROM public.ecr.aws/lambda/python:3.11
@@ -39,9 +40,10 @@ COPY --from=public.ecr.aws/aws-lambda-adapter:latest /opt/extensions/ /opt/exten
 # Use literal path since LAMBDA_TASK_ROOT is a runtime variable, not available during build
 WORKDIR /var/task
 
-# Copy installed packages from builder
-COPY --from=builder /var/lang/lib/python3.11/site-packages /var/lang/lib/python3.11/site-packages
-COPY --from=builder /var/lang/bin /var/lang/bin
+# Copy installed packages from builder's .venv to system Python
+# Lambda base image uses /var/lang/lib/python3.11/site-packages for system Python
+COPY --from=builder /app/.venv/lib/python3.11/site-packages /var/lang/lib/python3.11/site-packages
+COPY --from=builder /app/.venv/bin /var/lang/bin
 
 # Copy application code
 COPY . .
