@@ -235,6 +235,36 @@ resource "aws_iam_role_policy" "lambda_s3" {
   })
 }
 
+# IAM policy for Lambda to pull container images from ECR
+resource "aws_iam_role_policy" "lambda_ecr" {
+  name = "deadpartymedia-lambda-ecr-policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:DescribeImages"
+        ]
+        Resource = [
+          "${aws_ecr_repository.deadpartymedia.arn}"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Lambda function
 # Note: image_uri will be updated by GitHub Actions on each deployment
 # Initial image_uri is a placeholder - first deployment must push an image first

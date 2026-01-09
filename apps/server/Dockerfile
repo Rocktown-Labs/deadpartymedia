@@ -46,7 +46,10 @@ COPY --from=builder /var/lang/bin /var/lang/bin
 COPY . .
 
 # Collect static files (for WhiteNoise)
-RUN uv run python manage.py collectstatic --noinput || true
+# Set DJANGO_SETTINGS_MODULE to ensure Django can load settings
+# Remove || true to ensure build fails if collectstatic fails
+ENV DJANGO_SETTINGS_MODULE=config.settings.production
+RUN uv run python manage.py collectstatic --noinput
 
 # Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)
 # Lambda Web Adapter expects the app to listen on port 8080
