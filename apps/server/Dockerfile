@@ -40,10 +40,9 @@ COPY --from=public.ecr.aws/aws-lambda-adapter:latest /opt/extensions/ /opt/exten
 # Use literal path since LAMBDA_TASK_ROOT is a runtime variable, not available during build
 WORKDIR /var/task
 
-# Copy installed packages from builder's .venv to system Python
-# Lambda base image uses /var/lang/lib/python3.11/site-packages for system Python
-COPY --from=builder /app/.venv/lib/python3.11/site-packages /var/lang/lib/python3.11/site-packages
-COPY --from=builder /app/.venv/bin /var/lang/bin
+# Copy the entire .venv directory structure so uv run can work properly
+# This preserves the virtual environment structure that uv expects
+COPY --from=builder /app/.venv /var/task/.venv
 
 # Copy application code
 COPY . .
@@ -52,11 +51,10 @@ COPY . .
 # Set DJANGO_SETTINGS_MODULE to ensure Django can load settings
 # Override USE_S3=False during build since AWS credentials aren't available at build time
 # Static files will be served via WhiteNoise in Lambda
-# Note: Use system Python directly since packages are installed to /var/lang/lib/python3.11/site-packages
-# uv run expects a .venv directory, but we've copied packages to system Python
+# Use uv run to execute commands with the copied .venv
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
 ENV USE_S3=False
-RUN python manage.py collectstatic --noinput
+RUN uv run python manage.py collectstatic --noinput
 
 # Configure Gunicorn for Lambda (single worker, port 8080 for Lambda Web Adapter)
 # Lambda Web Adapter expects the app to listen on port 8080
