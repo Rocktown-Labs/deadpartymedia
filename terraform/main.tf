@@ -194,7 +194,11 @@ data "aws_iam_role" "github_actions" {
 #           }
 #           StringLike = {
 #             # Allow both main and master branches
-#             "token.actions.githubusercontent.com:sub" = "repo:cgRGM/deadpartymedia:ref:refs/heads/*"
+#             # Note: Actual policy uses array format (see github-actions-trust-policy.json)
+#             "token.actions.githubusercontent.com:sub" = [
+#               "repo:cgRGM/deadpartymedia:ref:refs/heads/main",
+#               "repo:cgRGM/deadpartymedia:ref:refs/heads/master"
+#             ]
 #           }
 #         }
 #       }
@@ -229,6 +233,7 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
       {
         Effect = "Allow"
         Action = [
+          "ecr:DescribeRepositories",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
           "ecr:CompleteLayerUpload",
