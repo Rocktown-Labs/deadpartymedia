@@ -168,6 +168,27 @@ resource "aws_security_group" "lambda" {
   }
 }
 
+# OIDC Provider for GitHub Actions
+# This must exist before the IAM role trust policy can reference it
+resource "aws_iam_openid_connect_provider" "github_actions" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = [
+    "sts.amazonaws.com"
+  ]
+
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1", # GitHub's OIDC thumbprint
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"  # GitHub's OIDC thumbprint (backup)
+  ]
+
+  tags = {
+    Name        = "GitHub-Actions-OIDC-Provider"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
 # IAM role for GitHub Actions OIDC authentication
 # IAM role trust policy for GitHub Actions OIDC
 # This allows GitHub Actions to assume the role when:
@@ -180,7 +201,7 @@ data "aws_iam_policy_document" "github_actions_trust" {
     principals {
       type        = "Federated"
       identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+        aws_iam_openid_connect_provider.github_actions.arn
       ]
     }
 
