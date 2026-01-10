@@ -1,9 +1,35 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "uv run python manage.py collectstatic --noinput",
+  "functions": {
+    "api/**/*.py": {
+      "excludeFiles": "{tests/**,__tests__/**,**/*.test.py,**/test_*.py,fixtures/**,__fixtures__/**,testdata/**,sample-data/**,staticfiles/**,media/**,docker-compose.yml,Dockerfile,.dockerignore}"
+    }
+  },
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/v1/:path*",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/deadpartyrocks/:path*",
-      "destination": "https://api.deadpartymedia.com/deadpartyrocks/:path*"
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/ckeditor/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/accounts/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/sentry-debug/:path*",
+      "destination": "/api/index.py"
     }
   ]
 }

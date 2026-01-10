@@ -1,0 +1,87 @@
+# Test files
+tests/
+**/tests/
+**/test_*.py
+**/*_test.py
+**/*.test.py
+__tests__/
+**/__tests__/
+testdata/
+**/testdata/
+fixtures/
+**/fixtures/
+__fixtures__/
+**/__fixtures__/
+sample-data/
+**/sample-data/
+
+# Development files
+.env
+.env.*
+!.env.example
+*.log
+*.pyc
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Terraform files
+terraform/
+*.tf
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+
+# Node modules (keep only what's needed for build)
+node_modules/
+**/node_modules/
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Build artifacts (will be generated during build)
+apps/server/.venv/
+apps/server/staticfiles/
+apps/server/media/
+
+# Native app files (not needed for API)
+apps/native/
+
+# Web app files (not needed for API, but might be deployed separately)
+apps/web/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

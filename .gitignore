@@ -75,10 +75,4 @@ docker-compose.override.yml
 # Note: uv.lock is needed for Docker builds, so it's committed
 .vercel
 
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.*
-terraform/*.tfvars
-terraform/.terraformrc
-terraform/terraform.rc
+# Terraform (removed - using Vercel now)

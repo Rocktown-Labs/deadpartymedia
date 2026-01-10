@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "uv run python manage.py runserver",
     "build": "uv run python manage.py check",
+    "vercel-build": "uv run python manage.py collectstatic --noinput",
     "test": "uv run pytest",
     "lint": "uv run ruff check . && uv run ruff format --check .",
     "db:migrate": "uv run python manage.py migrate",

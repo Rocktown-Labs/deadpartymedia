@@ -1,9 +1,0 @@
-aws_region         = "us-east-2"
-database_bundle_id = "micro_2_0"
-database_password  = "your-secure-password-here"
-
-# Container Service Configuration
-container_power = "micro"  # Options: nano, micro, small, medium, large, xlarge
-container_scale  = 1       # Number of nodes (1-20)
-container_image  = ""      # Set after first image push to Lightsail registry
-                          # Format: <registry-url>/deadpartymedia-api:latest
