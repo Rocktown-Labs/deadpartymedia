@@ -170,6 +170,8 @@ resource "aws_security_group" "lambda" {
 
 # OIDC Provider for GitHub Actions
 # This must exist before the IAM role trust policy can reference it
+# Note: Since July 2023, AWS validates GitHub's OIDC provider using trusted root CAs,
+# so we use a placeholder thumbprint instead of hardcoded values to avoid maintenance burden
 resource "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"
 
@@ -178,8 +180,7 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
   ]
 
   thumbprint_list = [
-    "6938fd4d98bab03faadb97b34396831e3780aea1", # GitHub's OIDC thumbprint
-    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"  # GitHub's OIDC thumbprint (backup)
+    "ffffffffffffffffffffffffffffffffffffffff"  # Placeholder - AWS validates using trusted root CAs since July 2023
   ]
 
   tags = {
