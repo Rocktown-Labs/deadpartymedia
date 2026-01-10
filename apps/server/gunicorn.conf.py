@@ -31,8 +31,8 @@ proc_name = "deadpartymedia"
 daemon = False
 pidfile = "/tmp/gunicorn-deadpartymedia.pid"
 umask = 0
-user = None  # Will be set by systemd
-group = None  # Will be set by systemd
+user = None  # Not used in Lambda (runs as Lambda execution role)
+group = None  # Not used in Lambda (runs as Lambda execution role)
 tmp_upload_dir = None
 
 # SSL (if needed in future)

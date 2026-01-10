@@ -278,7 +278,7 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Dead Party Media",
     # Logo configuration
     # If using S3, logo is served from S3 (already uploaded to deadpartymedia-bucket/static/images/)
-    # If not using S3, logo is served from Django static files via nginx
+    # If not using S3, logo is served from Django static files via WhiteNoise (Lambda) or web server
     "site_logo": (
         f"{STATIC_URL}images/dead-party-logo.png" if USE_S3 else "/static/images/dead-party-logo.png"
     ),
