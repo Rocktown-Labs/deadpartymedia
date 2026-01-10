@@ -17,7 +17,7 @@ on:
 
 env:
   AWS_REGION: us-east-2
-  CONTAINER_SERVICE_NAME: deadpartymedia-api
+  ECR_REPOSITORY: deadpartymedia-api
 
 jobs:
   test:
@@ -83,7 +83,7 @@ jobs:
         run: uv run pytest
 
   build-and-deploy:
-    name: Build and Deploy to Lightsail
+    name: Build and Deploy to Lambda
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -113,89 +113,71 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get ECR registry login (via Lightsail)
-        id: registry-login
+      - name: Get ECR repository URL
+        id: ecr-repo
         run: |
-          echo "::debug::[HYPOTHESIS_B/D] Requesting Lightsail container registry login..."
-          REGISTRY_LOGIN=$(aws lightsail create-container-service-registry-login --region ${{ env.AWS_REGION }} 2>&1)
-          REGISTRY_URL=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.registry')
-          USERNAME=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.username')
-          PASSWORD=$(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin.password')
+          REPO_URI=$(aws ecr describe-repositories \
+            --repository-names ${{ env.ECR_REPOSITORY }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'repositories[0].repositoryUri' \
+            --output text)
           
-          echo "::debug::[HYPOTHESIS_B/D] Registry URL: $REGISTRY_URL"
-          echo "::debug::[HYPOTHESIS_B/D] Registry URL contains 'ecr': $(echo "$REGISTRY_URL" | grep -i ecr || echo 'no')"
-          echo "::debug::[HYPOTHESIS_B/D] Registry URL contains 'lightsail': $(echo "$REGISTRY_URL" | grep -i lightsail || echo 'no')"
-          echo "::debug::[HYPOTHESIS_B/D] Full registry login response (sanitized): $(echo "$REGISTRY_LOGIN" | jq -r '.registryLogin | {registry, username, password: "***"}')"
-          
-          echo "registry_url=$REGISTRY_URL" >> $GITHUB_OUTPUT
-          echo "username=$USERNAME" >> $GITHUB_OUTPUT
-          echo "password=$PASSWORD" >> $GITHUB_OUTPUT
-
-      - name: Log in to ECR registry
-        run: |
-          echo "::debug::[HYPOTHESIS_C/D] Attempting Docker login to: ${{ steps.registry-login.outputs.registry_url }}"
-          echo "::debug::[HYPOTHESIS_C/D] Checking Docker config before login..."
-          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No existing Docker config"
-          
-          LOGIN_OUTPUT=$(echo "${{ steps.registry-login.outputs.password }}" | \
-            docker login ${{ steps.registry-login.outputs.registry_url }} \
-              -u ${{ steps.registry-login.outputs.username }} \
-              --password-stdin 2>&1) || {
-            echo "::error::[HYPOTHESIS_C/D] Docker login failed"
-            echo "$LOGIN_OUTPUT"
+          if [ -z "$REPO_URI" ] || [ "$REPO_URI" = "None" ]; then
+            echo "Error: ECR repository '${{ env.ECR_REPOSITORY }}' not found" >&2
             exit 1
-          }
+          fi
           
-          echo "$LOGIN_OUTPUT"
-          echo "::debug::[HYPOTHESIS_C/D] Docker login successful"
-          echo "::debug::[HYPOTHESIS_C/D] Docker config after login:"
-          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No Docker config found"
+          # Extract registry URL (remove repository name from URI)
+          # REPO_URI format: account.dkr.ecr.region.amazonaws.com/repo-name
+          # Registry URL: account.dkr.ecr.region.amazonaws.com
+          REGISTRY_URL=$(echo "$REPO_URI" | sed 's|/.*||')
+          
+          echo "repository_uri=$REPO_URI" >> $GITHUB_OUTPUT
+          echo "registry_url=$REGISTRY_URL" >> $GITHUB_OUTPUT
+          echo "✅ ECR repository URL: $REPO_URI"
+          echo "✅ ECR registry URL: $REGISTRY_URL"
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login \
+              --username AWS \
+              --password-stdin ${{ steps.ecr-repo.outputs.registry_url }}
+          echo "✅ Successfully logged in to ECR"
 
       - name: Build Docker image
         working-directory: apps/server
         run: |
           IMAGE_TAG=$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::8}
-          REGISTRY_URL="${{ steps.registry-login.outputs.registry_url }}"
-          SERVICE_NAME="${{ env.CONTAINER_SERVICE_NAME }}"
-          IMAGE_NAME="${REGISTRY_URL}/${SERVICE_NAME}:${IMAGE_TAG}"
-          LATEST_IMAGE="${REGISTRY_URL}/${SERVICE_NAME}:latest"
+          REPO_URI="${{ steps.ecr-repo.outputs.repository_uri }}"
+          IMAGE_NAME="${REPO_URI}:${IMAGE_TAG}"
+          LATEST_IMAGE="${REPO_URI}:latest"
           
           docker build -t "${IMAGE_NAME}" -t "${LATEST_IMAGE}" .
           echo "image_name=${IMAGE_NAME}" >> $GITHUB_ENV
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "✅ Built Docker image: ${IMAGE_NAME}"
 
       - name: Push Docker image
         run: |
-          REGISTRY_URL="${{ steps.registry-login.outputs.registry_url }}"
-          SERVICE_NAME="${{ env.CONTAINER_SERVICE_NAME }}"
+          REPO_URI="${{ steps.ecr-repo.outputs.repository_uri }}"
           IMAGE_NAME="${{ env.image_name }}"
-          LATEST_IMAGE="${REGISTRY_URL}/${SERVICE_NAME}:latest"
+          IMAGE_TAG="${{ env.image_tag }}"
+          LATEST_IMAGE="${REPO_URI}:latest"
           
-          echo "::debug::[HYPOTHESIS_B/C/D] Pushing image: ${IMAGE_NAME}"
-          echo "::debug::[HYPOTHESIS_B/C/D] Registry URL format: ${REGISTRY_URL}"
-          echo "::debug::[HYPOTHESIS_B/C/D] Checking if registry URL is ECR format..."
-          if echo "${REGISTRY_URL}" | grep -qE '\.dkr\.ecr\.|ecr\.amazonaws\.com'; then
-            echo "::warning::[HYPOTHESIS_B] Registry URL appears to be ECR format - ECR permissions may be required"
-          fi
-          
-          echo "::debug::[HYPOTHESIS_C/D] Docker config before push:"
-          cat ~/.docker/config.json 2>/dev/null | jq -r '.auths | keys[]' || echo "::debug::[HYPOTHESIS_C/D] No Docker config"
-          
-          docker push "${IMAGE_NAME}" 2>&1 | tee /tmp/docker-push.log || {
-            echo "::error::[HYPOTHESIS_B/C/D] Docker push failed"
-            echo "::debug::[HYPOTHESIS_B/C/D] Push error details:"
-            cat /tmp/docker-push.log
+          echo "Pushing image: ${IMAGE_NAME}"
+          docker push "${IMAGE_NAME}" || {
+            echo "Error: Failed to push image ${IMAGE_NAME}" >&2
             exit 1
           }
           
-          docker push "${LATEST_IMAGE}" 2>&1 | tee /tmp/docker-push-latest.log || {
-            echo "::error::[HYPOTHESIS_B/C/D] Docker push (latest) failed"
-            echo "::debug::[HYPOTHESIS_B/C/D] Push error details:"
-            cat /tmp/docker-push-latest.log
+          echo "Pushing latest tag: ${LATEST_IMAGE}"
+          docker push "${LATEST_IMAGE}" || {
+            echo "Error: Failed to push latest image" >&2
             exit 1
           }
           
-          echo "::debug::[HYPOTHESIS_B/C/D] Both images pushed successfully"
+          echo "✅ Successfully pushed both images to ECR"
 
       - name: Get secrets from AWS Secrets Manager
         id: secrets
