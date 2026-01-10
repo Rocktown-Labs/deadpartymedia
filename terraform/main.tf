@@ -242,6 +242,19 @@ resource "aws_iam_role" "github_actions" {
   }
 }
 
+# New IAM role for GitHub Actions OIDC authentication (fresh start)
+# This role will replace the existing github-actions role after verification
+resource "aws_iam_role" "deadpartymedia_github_actions" {
+  name               = "deadpartymedia-github-actions"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_trust.json
+
+  tags = {
+    Name        = "DeadPartyMedia-GitHub-Actions-Role"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
 # Get current AWS account ID
 data "aws_caller_identity" "current" {}
 
@@ -340,6 +353,120 @@ resource "aws_iam_role_policy" "github_actions_secrets" {
 resource "aws_iam_role_policy" "github_actions_lightsail" {
   name = "github-actions-lightsail-policy"
   role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lightsail:GetRelationalDatabase"
+        ]
+        Resource = [
+          "${aws_lightsail_database.deadpartymedia.arn}"
+        ]
+      }
+    ]
+  })
+}
+
+# New IAM policies for deadpartymedia-github-actions role
+
+# IAM policy for new GitHub Actions role to push to ECR
+resource "aws_iam_role_policy" "deadpartymedia_github_actions_ecr" {
+  name = "deadpartymedia-github-actions-ecr-policy"
+  role = aws_iam_role.deadpartymedia_github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:DescribeRepositories"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ]
+        Resource = [
+          "${aws_ecr_repository.deadpartymedia.arn}"
+        ]
+      }
+    ]
+  })
+}
+
+# IAM policy for new GitHub Actions role to update Lambda
+resource "aws_iam_role_policy" "deadpartymedia_github_actions_lambda" {
+  name = "deadpartymedia-github-actions-lambda-policy"
+  role = aws_iam_role.deadpartymedia_github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionUrlConfig",
+          "lambda:CreateFunctionUrlConfig",
+          "lambda:UpdateFunctionUrlConfig"
+        ]
+        Resource = [
+          "${aws_lambda_function.deadpartymedia_api.arn}",
+          "${aws_lambda_function.deadpartymedia_api.arn}:*"
+        ]
+      }
+    ]
+  })
+}
+
+# IAM policy for new GitHub Actions role to read Secrets Manager
+resource "aws_iam_role_policy" "deadpartymedia_github_actions_secrets" {
+  name = "deadpartymedia-github-actions-secrets-policy"
+  role = aws_iam_role.deadpartymedia_github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:*:secret:deadpartymedia/*"
+        ]
+      }
+    ]
+  })
+}
+
+# IAM policy for new GitHub Actions role to read Lightsail database info
+resource "aws_iam_role_policy" "deadpartymedia_github_actions_lightsail" {
+  name = "deadpartymedia-github-actions-lightsail-policy"
+  role = aws_iam_role.deadpartymedia_github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
