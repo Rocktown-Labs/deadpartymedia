@@ -169,48 +169,56 @@ resource "aws_security_group" "lambda" {
 }
 
 # IAM role for GitHub Actions OIDC authentication
-# Use data source to reference existing IAM role (created manually or via OIDC setup)
-# If the role doesn't exist, uncomment the resource below and comment out this data source
-data "aws_iam_role" "github_actions" {
-  name = "github-actions"
+# IAM role trust policy for GitHub Actions OIDC
+# This allows GitHub Actions to assume the role when:
+# - Running in the "production" environment
+# - From any branch/ref in the cgRGM/deadpartymedia repository
+data "aws_iam_policy_document" "github_actions_trust" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+      ]
+    }
+
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:environment"
+      values   = ["production"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:cgRGM/deadpartymedia:*"]
+    }
+  }
 }
 
-# Uncomment this if you need Terraform to create the role instead of using existing one
-# resource "aws_iam_role" "github_actions" {
-#   name = "github-actions"
-#
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Principal = {
-#           Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
-#         }
-#         Action = "sts:AssumeRoleWithWebIdentity"
-#         Condition = {
-#           StringEquals = {
-#             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-#           }
-#           StringLike = {
-#             # Allow both main and master branches
-#             # Note: Actual policy uses array format (see github-actions-trust-policy.json)
-#             "token.actions.githubusercontent.com:sub" = [
-#               "repo:cgRGM/deadpartymedia:ref:refs/heads/main",
-#               "repo:cgRGM/deadpartymedia:ref:refs/heads/master"
-#             ]
-#           }
-#         }
-#       }
-#     ]
-#   })
-#
-#   tags = {
-#     Name        = "GitHub-Actions-Role"
-#     Environment = "production"
-#     ManagedBy   = "terraform"
-#   }
-# }
+# IAM role for GitHub Actions OIDC authentication
+# Note: If this role already exists, you may need to import it:
+# terraform import aws_iam_role.github_actions github-actions
+resource "aws_iam_role" "github_actions" {
+  name               = "github-actions"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_trust.json
+
+  tags = {
+    Name        = "GitHub-Actions-Role"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
 
 # Get current AWS account ID
 data "aws_caller_identity" "current" {}
@@ -218,7 +226,7 @@ data "aws_caller_identity" "current" {}
 # IAM policy for GitHub Actions to push to ECR
 resource "aws_iam_role_policy" "github_actions_ecr" {
   name = "github-actions-ecr-policy"
-  role = data.aws_iam_role.github_actions.id
+  role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -259,7 +267,7 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
 # IAM policy for GitHub Actions to update Lambda
 resource "aws_iam_role_policy" "github_actions_lambda" {
   name = "github-actions-lambda-policy"
-  role = data.aws_iam_role.github_actions.id
+  role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -287,7 +295,7 @@ resource "aws_iam_role_policy" "github_actions_lambda" {
 # IAM policy for GitHub Actions to read Secrets Manager
 resource "aws_iam_role_policy" "github_actions_secrets" {
   name = "github-actions-secrets-policy"
-  role = data.aws_iam_role.github_actions.id
+  role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -309,7 +317,7 @@ resource "aws_iam_role_policy" "github_actions_secrets" {
 # IAM policy for GitHub Actions to read Lightsail database info
 resource "aws_iam_role_policy" "github_actions_lightsail" {
   name = "github-actions-lightsail-policy"
-  role = data.aws_iam_role.github_actions.id
+  role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
     Version = "2012-10-17"
