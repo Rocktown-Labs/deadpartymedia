@@ -3,31 +3,12 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { userUpdateSchema, passwordChangeSchema } from "@/lib/validations/user";
-import type { UserUpdateInput, PasswordChangeInput } from "@/lib/validations/user";
+import type {
+  UserUpdateInput,
+  PasswordChangeInput,
+} from "@/lib/validations/user";
 
 export async function updateUserProfile(data: UserUpdateInput) {
-  // #region agent log
-  const logData = {
-    location: "settings/actions.ts:8",
-    message: "updateUserProfile called",
-    data: {
-      hasEmail: !!data.email,
-      emailLength: data.email?.length || 0,
-      emailIsEmpty: data.email === "",
-      first_name: data.first_name,
-      last_name: data.last_name,
-    },
-    timestamp: Date.now(),
-    sessionId: "debug-session",
-    runId: "run1",
-    hypothesisId: "B",
-  };
-  await fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(logData),
-  }).catch(() => {});
-  // #endregion
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
@@ -35,26 +16,6 @@ export async function updateUserProfile(data: UserUpdateInput) {
 
   // Validate input
   const validationResult = userUpdateSchema.safeParse(data);
-  // #region agent log
-  await fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "settings/actions.ts:16",
-      message: "Validation result",
-      data: {
-        success: validationResult.success,
-        errors: validationResult.success
-          ? null
-          : validationResult.error.issues.map((e: any) => ({ path: e.path, message: e.message })),
-      },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "run1",
-      hypothesisId: "B",
-    }),
-  }).catch(() => {});
-  // #endregion
   if (!validationResult.success) {
     return {
       success: false,
@@ -66,24 +27,6 @@ export async function updateUserProfile(data: UserUpdateInput) {
   const client = await clerkClient();
 
   try {
-    // #region agent log
-    await fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "settings/actions.ts:27",
-        message: "Updating user - email not used",
-        data: {
-          validatedDataEmail: validatedData.email,
-          updatingFields: ["firstName", "lastName"],
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "B",
-      }),
-    }).catch(() => {});
-    // #endregion
     await client.users.updateUser(userId, {
       firstName: validatedData.first_name,
       lastName: validatedData.last_name,
@@ -103,7 +46,9 @@ export async function updateUserProfile(data: UserUpdateInput) {
   }
 }
 
-export async function changeUserPassword(data: Omit<PasswordChangeInput, "confirm_password">) {
+export async function changeUserPassword(
+  data: Omit<PasswordChangeInput, "confirm_password">
+) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");

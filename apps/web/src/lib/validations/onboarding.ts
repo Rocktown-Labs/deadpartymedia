@@ -39,9 +39,12 @@ export const artistOnboardingSchema = z.object({
     .string()
     .min(1, "Location is required")
     .max(100, "Location must be less than 100 characters"),
-  genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"], {
-    message: "Please select a valid genre",
-  }),
+  genre: z.enum(
+    ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"],
+    {
+      message: "Please select a valid genre",
+    }
+  ),
   bio: z
     .string()
     .min(10, "Bio must be at least 10 characters")
@@ -51,9 +54,16 @@ export const artistOnboardingSchema = z.object({
 
 // Fan onboarding schema - only requires name
 export const fanOnboardingSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters")
+    .transform((val) => val.trim())
+    .refine((val) => val.length > 0, "Name cannot be only whitespace"),
   location: z.string().optional(),
-  genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]).optional(),
+  genre: z
+    .enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"])
+    .optional(),
   bio: z.string().optional(),
   ...optionalFields,
 });
