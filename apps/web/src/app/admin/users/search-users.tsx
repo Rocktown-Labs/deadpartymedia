@@ -15,7 +15,14 @@ export function SearchUsers() {
         const form = e.currentTarget;
         const formData = new FormData(form);
         const queryTerm = formData.get("search") as string;
-        router.push(pathname + (queryTerm ? `?search=${encodeURIComponent(queryTerm)}` : ""));
+        const params = new URLSearchParams();
+        if (queryTerm) {
+          params.set("search", queryTerm);
+        }
+        const queryString = params.toString();
+        const url = queryString ? `${pathname}?${queryString}` : pathname;
+        // Use router.push with type assertion since we're dynamically constructing the URL
+        router.push(url as Parameters<typeof router.push>[0]);
       }}
       className="flex gap-4 items-end"
     >
