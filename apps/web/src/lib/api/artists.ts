@@ -271,12 +271,16 @@ export function useSearchSpotifyArtists(query: string) {
   return useQuery<SpotifyArtist[]>({
     queryKey: ["spotify-search", query],
     queryFn: async () => {
-      if (!query || query.length < 2) return [];
-      return apiClient.get<SpotifyArtist[]>(
-        `/artists/search_spotify/?q=${encodeURIComponent(query)}`
+      if (!query || query.length < 5) return [];
+      const response = await fetch(
+        `/api/spotify/search?q=${encodeURIComponent(query)}`
       );
+      if (!response.ok) {
+        throw new Error("Failed to search Spotify");
+      }
+      return response.json();
     },
-    enabled: query.length >= 2,
+    enabled: query.length >= 5,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

@@ -1,20 +1,22 @@
 "use client";
 
-import { useCurrentUser } from "@/lib/api/auth";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function ArtistDashboardLayout({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading } = useCurrentUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
+  const role = user?.publicMetadata?.role as string | undefined;
+
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== "artist")) {
+    if (isLoaded && (!isSignedIn || role !== "artist")) {
       router.push("/sign-in");
     }
-  }, [user, isLoading, router]);
+  }, [isLoaded, isSignedIn, role, router]);
 
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
@@ -25,7 +27,7 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
     );
   }
 
-  if (!user || user.role !== "artist") {
+  if (!isSignedIn || !user || role !== "artist") {
     return null;
   }
 

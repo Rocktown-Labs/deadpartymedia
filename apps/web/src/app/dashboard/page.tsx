@@ -12,12 +12,12 @@ import {
 import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useCurrentUser } from "@/lib/api/auth";
+import { useUser } from "@clerk/nextjs";
 import type { Route } from "next";
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useDashboardStats();
-  const { data: user } = useCurrentUser();
+  const { user } = useUser();
 
   if (isLoading) {
     return (
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Dashboard</h1>
             <p className="text-gray-400">
-              Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+              Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
             </p>
           </div>
 

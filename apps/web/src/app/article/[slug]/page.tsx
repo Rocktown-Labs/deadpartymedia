@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/articles";
-import { useCurrentUser } from "@/lib/api/auth";
+import { useUser } from "@clerk/nextjs";
 import { useMarkArticleRead } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
 
@@ -20,14 +20,14 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = use(params);
   const { data: article, isLoading } = useArticle(slug);
   const { data: comments } = useArticleComments(slug);
-  const { data: currentUser } = useCurrentUser();
+  const { isSignedIn, user: currentUser } = useUser();
   const createComment = useCreateComment();
   const markArticleRead = useMarkArticleRead();
   const [commentText, setCommentText] = useState("");
 
   // Track article read when article loads and user is logged in
   useEffect(() => {
-    if (article && currentUser && article.id) {
+    if (article && isSignedIn && currentUser && article.id) {
       // Mark article as read (handles duplicates gracefully on backend)
       markArticleRead.mutate(article.id, {
         onError: (error) => {
@@ -36,11 +36,11 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         },
       });
     }
-  }, [article, currentUser, markArticleRead]);
+  }, [article, isSignedIn, currentUser, markArticleRead]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim() || !currentUser) return;
+    if (!commentText.trim() || !isSignedIn || !currentUser) return;
 
     try {
       await createComment.mutateAsync({
@@ -154,7 +154,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
             <h2 className="text-2xl font-black mb-6">Comments ({article.comment_count})</h2>
 
             {/* Comment Form */}
-            {currentUser ? (
+            {isSignedIn && currentUser ? (
               <form onSubmit={handleCommentSubmit} className="mb-8">
                 <textarea
                   value={commentText}

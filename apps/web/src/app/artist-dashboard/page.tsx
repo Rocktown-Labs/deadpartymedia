@@ -3,10 +3,10 @@
 import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useCurrentUser } from "@/lib/api/auth";
+import { useUser } from "@clerk/nextjs";
 
 export default function ArtistDashboardPage() {
-  const { data: user } = useCurrentUser();
+  const { user } = useUser();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -15,7 +15,7 @@ export default function ArtistDashboardPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Artist Dashboard</h1>
             <p className="text-gray-400">
-              Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+              Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
             </p>
           </div>
 

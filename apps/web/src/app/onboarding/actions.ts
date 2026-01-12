@@ -18,8 +18,12 @@ export async function completeOnboarding(formData: FormData) {
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
 
-  // Get role and artistId from publicMetadata (set during invitation)
-  const role = (user.publicMetadata?.role as string) || "fan";
+  // Get role from form data or existing metadata
+  const roleFromForm = formData.get("role") as string | null;
+  const existingRole = user.publicMetadata?.role as string | undefined;
+  const role = roleFromForm || existingRole || "fan";
+  
+  // Get artistId from publicMetadata (set during invitation)
   const artistId = user.publicMetadata?.artistId
     ? Number.parseInt(user.publicMetadata.artistId as string, 10)
     : null;
@@ -112,10 +116,11 @@ export async function completeOnboarding(formData: FormData) {
       });
     }
 
-    // Update user's publicMetadata to mark onboarding as complete
+    // Update user's publicMetadata to set role and mark onboarding as complete
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         ...user.publicMetadata,
+        role: role,
         onboardingComplete: true,
       },
     });

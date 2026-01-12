@@ -125,7 +125,7 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
       </div>
 
       {/* Dropdown Results */}
-      {isOpen && searchQuery.length >= 2 && (
+      {isOpen && searchQuery.length >= 5 && (
         <div className="absolute z-50 w-full mt-2 bg-[#111111] border border-gray-800 rounded-lg shadow-lg max-h-80 overflow-y-auto">
           {error ? (
             <div className="p-4 text-sm text-red-400">
@@ -165,7 +165,7 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
                 </button>
               ))}
             </div>
-          ) : searchQuery.length >= 2 && !isLoading ? (
+          ) : searchQuery.length >= 5 && !isLoading ? (
             <div className="p-4 text-sm text-gray-400 text-center">
               No artists found. Try a different search term.
             </div>
@@ -174,7 +174,9 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
       )}
 
       <p className="text-xs text-gray-500 mt-2">
-        Search for your artist or paste a Spotify artist URL
+        {searchQuery.length > 0 && searchQuery.length < 5
+          ? `Type at least ${5 - searchQuery.length} more character${5 - searchQuery.length === 1 ? "" : "s"} to search`
+          : "Search for your artist or paste a Spotify artist URL"}
       </p>
     </div>
   );

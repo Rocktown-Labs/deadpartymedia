@@ -1,20 +1,20 @@
 "use client";
 
-import { useCurrentUser } from "@/lib/api/auth";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { data: user, isLoading } = useCurrentUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isLoaded && !isSignedIn) {
       router.push("/sign-in");
     }
-  }, [user, isLoading, router]);
+  }, [isLoaded, isSignedIn, router]);
 
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) {
+  if (!isSignedIn || !user) {
     return null;
   }
 
