@@ -43,7 +43,7 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
 
   if (!validationResult.success) {
     throw new Error(
-      validationResult.error.errors.map((e) => e.message).join(", ")
+      validationResult.error.issues.map((e) => e.message).join(", ")
     );
   }
 
@@ -141,7 +141,7 @@ export async function updateArtist(id: number, formData: FormData) {
 
   if (!validationResult.success) {
     throw new Error(
-      validationResult.error.errors.map((e) => e.message).join(", ")
+      validationResult.error.issues.map((e) => e.message).join(", ")
     );
   }
 

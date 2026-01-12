@@ -30,8 +30,8 @@ export default function ArtistProfilePage() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [genre, setGenre] = useState<
-    "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other"
-  >("Other");
+    "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER"
+  >("OTHER");
   const [spotifyUrl, setSpotifyUrl] = useState("");
   const [instagram, setInstagram] = useState("");
   const [twitter, setTwitter] = useState("");
@@ -45,7 +45,7 @@ export default function ArtistProfilePage() {
       setName(artist.name || "");
       setBio(artist.bio || "");
       setLocation(artist.location || "");
-      setGenre(artist.genre || "Other");
+      setGenre((artist.genre as typeof genre) || "OTHER");
       setSpotifyUrl(artist.spotify_url || "");
       setInstagram(artist.instagram || "");
       setTwitter(artist.twitter || "");
@@ -59,32 +59,32 @@ export default function ArtistProfilePage() {
     setErrors({});
 
     try {
-      const data: ArtistUpdateInput = {
+      // Prepare data for validation (exclude File objects)
+      const validationData: Omit<ArtistUpdateInput, "image"> = {
         name,
         bio,
         location,
         genre,
-        spotify_url: spotifyUrl || undefined,
+        spotifyUrl: spotifyUrl || undefined,
         instagram: instagram || undefined,
         twitter: twitter || undefined,
         tiktok: tiktok || undefined,
         website: website || undefined,
-        image: imageFile || undefined,
       };
 
-      const validated = artistUpdateSchema.parse(data);
+      const validated = artistUpdateSchema.parse(validationData);
       // Map validated data to API format (send empty strings to clear URL fields)
       await updateArtist.mutateAsync({
         name: validated.name,
         bio: validated.bio,
         location: validated.location,
         genre: validated.genre,
-        spotify_url: validated.spotify_url || "",
+        spotify_url: validated.spotifyUrl || "",
         instagram: validated.instagram || "",
         twitter: validated.twitter || "",
         tiktok: validated.tiktok || "",
         website: validated.website || "",
-        image: validated.image ?? undefined,
+        image: imageFile || validated.image,
       });
       toast.success("Profile updated successfully!");
       setIsEditing(false);
@@ -234,11 +234,11 @@ export default function ArtistProfilePage() {
                         className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-gray-700 rounded-md text-white focus:border-[#7CFC00] focus:outline-none"
                         required
                       >
-                        <option value="Country">Country</option>
+                        <option value="COUNTRY">Country</option>
                         <option value="EDM">EDM</option>
-                        <option value="Hardcore & Rock">Hardcore & Rock</option>
-                        <option value="Hip-Hop & R&B">Hip-Hop & R&B</option>
-                        <option value="Other">Other</option>
+                        <option value="HARDCORE & ROCK">Hardcore & Rock</option>
+                        <option value="HIP-HOP & R&B">Hip-Hop & R&B</option>
+                        <option value="OTHER">Other</option>
                       </select>
                     </div>
                   </div>
@@ -396,7 +396,7 @@ export default function ArtistProfilePage() {
                         setName(artist.name || "");
                         setBio(artist.bio || "");
                         setLocation(artist.location || "");
-                        setGenre(artist.genre || "Other");
+                        setGenre((artist.genre as typeof genre) || "OTHER");
                         setSpotifyUrl(artist.spotify_url || "");
                         setInstagram(artist.instagram || "");
                         setTwitter(artist.twitter || "");

@@ -11,7 +11,7 @@ export const artistSchema = z.object({
   bio: z.string().min(1, "Bio is required").max(2000, "Bio is too long"),
   location: z.string().min(1, "Location is required").max(255, "Location is too long"),
   genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"], {
-    errorMap: () => ({ message: "Please select a valid genre" }),
+    message: "Please select a valid genre",
   }),
   spotifyUrl: urlSchema,
   spotifyArtistId: z.string().max(255).optional().or(z.literal("")),

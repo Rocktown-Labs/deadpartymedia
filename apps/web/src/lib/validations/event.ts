@@ -17,10 +17,10 @@ export const eventSchema = z.object({
   ticketLink: urlSchema,
   price: z.string().max(50, "Price must be less than 50 characters").optional().or(z.literal("")),
   genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"], {
-    errorMap: () => ({ message: "Please select a valid genre" }),
+    message: "Please select a valid genre",
   }),
   status: z.enum(["draft", "published", "past"], {
-    errorMap: () => ({ message: "Please select a valid status" }),
+    message: "Please select a valid status",
   }),
 });
 

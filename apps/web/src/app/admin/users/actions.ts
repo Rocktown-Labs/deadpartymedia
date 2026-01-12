@@ -25,7 +25,7 @@ export async function inviteUser(
   const validationResult = inviteUserSchema.safeParse({ email, role });
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;

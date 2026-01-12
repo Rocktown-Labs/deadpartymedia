@@ -40,7 +40,7 @@ export async function createEvent(formData: FormData) {
 
   if (!validationResult.success) {
     throw new Error(
-      validationResult.error.errors.map((e) => e.message).join(", ")
+      validationResult.error.issues.map((e) => e.message).join(", ")
     );
   }
 
@@ -116,7 +116,7 @@ export async function updateEvent(id: number, formData: FormData) {
 
   if (!validationResult.success) {
     throw new Error(
-      validationResult.error.errors.map((e) => e.message).join(", ")
+      validationResult.error.issues.map((e) => e.message).join(", ")
     );
   }
 

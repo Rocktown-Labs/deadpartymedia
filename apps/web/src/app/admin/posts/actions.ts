@@ -35,7 +35,7 @@ export async function createPost(formData: FormData) {
   const validationResult = postSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
@@ -107,7 +107,7 @@ export async function updatePost(id: number, formData: FormData) {
   const validationResult = postSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;

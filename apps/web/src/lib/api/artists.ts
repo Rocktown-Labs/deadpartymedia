@@ -159,14 +159,14 @@ export interface ArtistUpdateData {
   name: string;
   bio: string;
   location: string;
-  genre: "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other";
+  genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
   spotify_url?: string;
   spotify_artist_id?: string;
   instagram?: string;
   twitter?: string;
   tiktok?: string;
   website?: string;
-  image?: File;
+  image?: File | string;
 }
 
 export function useUpdateArtist() {

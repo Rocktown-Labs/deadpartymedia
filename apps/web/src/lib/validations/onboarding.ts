@@ -4,7 +4,7 @@ export const onboardingSchema = z.object({
   name: z.string().min(1, "Artist name is required").max(100, "Artist name must be less than 100 characters"),
   location: z.string().min(1, "Location is required").max(100, "Location must be less than 100 characters"),
   genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"], {
-    errorMap: () => ({ message: "Please select a valid genre" }),
+    message: "Please select a valid genre",
   }),
   bio: z.string().min(10, "Bio must be at least 10 characters").max(500, "Bio must be less than 500 characters"),
   spotifyUrl: z

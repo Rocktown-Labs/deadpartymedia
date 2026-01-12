@@ -43,7 +43,7 @@ export async function completeOnboarding(formData: FormData) {
 
   if (!validationResult.success) {
     return {
-      error: validationResult.error.errors.map((e) => e.message).join(", "),
+      error: validationResult.error.issues.map((e) => e.message).join(", "),
     };
   }
 
