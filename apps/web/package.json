@@ -6,7 +6,11 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -52,7 +56,14 @@
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.4",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "drizzle-orm": "^0.36.4",
+    "drizzle-kit": "^0.30.0",
+    "@clerk/nextjs": "^6.7.0",
+    "@tiptap/react": "^2.9.2",
+    "@tiptap/starter-kit": "^2.9.2",
+    "@tiptap/extension-image": "^2.9.2",
+    "@neondatabase/serverless": "^0.10.2"
   },
   "devDependencies": {
     "@dpmedia/config": "workspace:*",

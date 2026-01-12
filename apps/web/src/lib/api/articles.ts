@@ -56,21 +56,19 @@ export function useArticles(category?: string) {
     queryKey: ["articles", category],
     queryFn: async () => {
       const params = category ? `?category=${category}` : "";
-      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(
-        `/articles/${params}`,
-      );
-      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
-      // Or direct array if pagination is disabled
-      if (Array.isArray(response)) {
-        return response;
+      const response = await fetch(`/api/posts${params}`);
+      const data = await response.json();
+      // Handle pagination format: {results: [], count: 0}
+      if (Array.isArray(data)) {
+        return data;
       }
       if (
-        response &&
-        typeof response === "object" &&
-        "results" in response &&
-        Array.isArray(response.results)
+        data &&
+        typeof data === "object" &&
+        "results" in data &&
+        Array.isArray(data.results)
       ) {
-        return response.results;
+        return data.results;
       }
       return [];
     },
@@ -81,7 +79,11 @@ export function useArticle(slug: string) {
   return useQuery<Article>({
     queryKey: ["article", slug],
     queryFn: async () => {
-      return apiClient.get<Article>(`/articles/${slug}/`);
+      const response = await fetch(`/api/posts/${slug}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch article");
+      }
+      return response.json();
     },
     enabled: !!slug,
   });
