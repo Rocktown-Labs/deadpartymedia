@@ -3,7 +3,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { canManageUsers } from "@/lib/auth/access";
-import { Roles } from "@/types/globals";
+import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 
 export async function inviteUser(

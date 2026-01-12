@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteUser } from "./actions";
-import { Roles } from "@/types/globals";
+import { type Roles } from "@/types/globals";
 import { useRouter } from "next/navigation";
 
 export function InviteUserDialog() {
