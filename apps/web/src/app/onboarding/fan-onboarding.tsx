@@ -59,7 +59,23 @@ export function FanOnboarding() {
           <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
             <form action={action as never} onSubmit={(e) => {
               e.preventDefault();
-              form.handleSubmit();
+              
+              // Get current form state
+              const formState = form.state;
+              
+              // Create FormData from form values
+              const formData = new FormData();
+              const values = formState.values;
+              
+              // Add all form fields to FormData
+              Object.entries(values).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== "") {
+                  formData.append(key, String(value));
+                }
+              });
+              
+              // Call the server action - server-side validation will handle errors
+              action(formData);
             }}>
               {/* Form Errors */}
               {formErrors.length > 0 && (
