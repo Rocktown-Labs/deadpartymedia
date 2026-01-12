@@ -73,9 +73,6 @@ apps/server/media/
 # Native app files (not needed for API)
 apps/native/
 
-# Web app files (not needed for API, but might be deployed separately)
-apps/web/
-
 # System files
 .DS_Store
 Thumbs.db
