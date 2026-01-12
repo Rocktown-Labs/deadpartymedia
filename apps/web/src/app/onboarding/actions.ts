@@ -121,92 +121,102 @@ export async function artistOnboardingAction(
       ? Number.parseInt(user.publicMetadata.artistId as string, 10)
       : null;
 
-    try {
-      // If user is an artist and has an artistId, claim the existing artist profile
-      if (artistId) {
-        const [artist] = await db
-          .select()
-          .from(artists)
-          .where(eq(artists.id, artistId))
-          .limit(1);
+    // If user is an artist and has an artistId, claim the existing artist profile
+    if (artistId) {
+      const [artist] = await db
+        .select()
+        .from(artists)
+        .where(eq(artists.id, artistId))
+        .limit(1);
 
-        if (!artist) {
-          throw new Error("Artist profile not found");
-        }
-
-        if (artist.claimed) {
-          throw new Error("This artist profile has already been claimed");
-        }
-
-        // Update artist profile with user's information
-        await db
-          .update(artists)
-          .set({
-            name: validatedData.name || artist.name,
-            bio: validatedData.bio || artist.bio,
-            location: validatedData.location || artist.location,
-            genre: (validatedData.genre as any) || artist.genre,
-            spotifyUrl: validatedData.spotifyUrl || artist.spotifyUrl,
-            spotifyArtistId:
-              validatedData.spotifyArtistId || artist.spotifyArtistId,
-            instagram: validatedData.instagram || artist.instagram,
-            twitter: validatedData.twitter || artist.twitter,
-            tiktok: validatedData.tiktok || artist.tiktok,
-            website: validatedData.website || artist.website,
-            image: validatedData.image || artist.image,
-            claimed: true,
-            claimedById: userId,
-            updatedAt: new Date(),
-          })
-          .where(eq(artists.id, artistId));
-      } else {
-        // If user is an artist but doesn't have an artistId, create a new artist profile
-        const slug = await ensureUniqueSlug(
-          generateSlug(validatedData.name),
-          undefined,
-          "artists"
-        );
-
-        await db.insert(artists).values({
-          name: validatedData.name,
-          slug,
-          bio: validatedData.bio,
-          location: validatedData.location,
-          genre: validatedData.genre as any,
-          spotifyUrl: validatedData.spotifyUrl || null,
-          spotifyArtistId: validatedData.spotifyArtistId || null,
-          instagram: validatedData.instagram || null,
-          twitter: validatedData.twitter || null,
-          tiktok: validatedData.tiktok || null,
-          website: validatedData.website || null,
-          image: validatedData.image || null,
-          claimed: true,
-          claimedById: userId,
-        });
+      if (!artist) {
+        return {
+          ...initialFormState,
+          errors: ["Artist profile not found"],
+        } as any;
       }
 
-      // Update user's publicMetadata to set role and mark onboarding as complete
-      await client.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          ...user.publicMetadata,
-          role: "artist",
-          onboardingComplete: true,
-        },
-      });
+      if (artist.claimed) {
+        return {
+          ...initialFormState,
+          errors: ["This artist profile has already been claimed"],
+        } as any;
+      }
 
-      // Return success in a way that TanStack Form can handle
-      return {
-        ...initialFormState,
-        success: true,
-      } as any;
-    } catch (err: any) {
-      console.error("Error completing onboarding:", err);
-      throw new Error(err.message || "Failed to complete onboarding");
+      // Update artist profile with user's information
+      await db
+        .update(artists)
+        .set({
+          name: validatedData.name || artist.name,
+          bio: validatedData.bio || artist.bio,
+          location: validatedData.location || artist.location,
+          genre: (validatedData.genre as any) || artist.genre,
+          spotifyUrl: validatedData.spotifyUrl || artist.spotifyUrl,
+          spotifyArtistId:
+            validatedData.spotifyArtistId || artist.spotifyArtistId,
+          instagram: validatedData.instagram || artist.instagram,
+          twitter: validatedData.twitter || artist.twitter,
+          tiktok: validatedData.tiktok || artist.tiktok,
+          website: validatedData.website || artist.website,
+          image: validatedData.image || artist.image,
+          claimed: true,
+          claimedById: userId,
+          updatedAt: new Date(),
+        })
+        .where(eq(artists.id, artistId));
+    } else {
+      // If user is an artist but doesn't have an artistId, create a new artist profile
+      const slug = await ensureUniqueSlug(
+        generateSlug(validatedData.name),
+        undefined,
+        "artists"
+      );
+
+      await db.insert(artists).values({
+        name: validatedData.name,
+        slug,
+        bio: validatedData.bio,
+        location: validatedData.location,
+        genre: validatedData.genre as any,
+        spotifyUrl: validatedData.spotifyUrl || null,
+        spotifyArtistId: validatedData.spotifyArtistId || null,
+        instagram: validatedData.instagram || null,
+        twitter: validatedData.twitter || null,
+        tiktok: validatedData.tiktok || null,
+        website: validatedData.website || null,
+        image: validatedData.image || null,
+        claimed: true,
+        claimedById: userId,
+      });
     }
+
+    // Update user's publicMetadata to set role and mark onboarding as complete
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        ...user.publicMetadata,
+        role: "artist",
+        onboardingComplete: true,
+      },
+    });
+
+    // Return success in a way that TanStack Form can handle
+    return {
+      ...initialFormState,
+      success: true,
+    } as any;
   } catch (e) {
     if (e instanceof ServerValidateError) {
       return e.formState;
     }
-    throw e;
+    // Handle operational errors (database, Clerk API) gracefully
+    console.error("Error completing onboarding:", e);
+    return {
+      ...initialFormState,
+      errors: [
+        e instanceof Error
+          ? e.message
+          : "Failed to complete onboarding. Please try again.",
+      ],
+    } as any;
   }
 }
