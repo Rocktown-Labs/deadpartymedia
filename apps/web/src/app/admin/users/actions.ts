@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { canManageUsers } from "@/lib/auth/access";
 import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
+import { inviteUserSchema } from "@/lib/validations/user";
 
 export async function inviteUser(
   email: string,
@@ -20,24 +21,32 @@ export async function inviteUser(
     throw new Error("Unauthorized: Only super admins can invite users");
   }
 
+  // Validate input
+  const validationResult = inviteUserSchema.safeParse({ email, role });
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
   const client = await clerkClient();
 
   // Determine redirect URL based on role
   let defaultRedirectUrl = "/sign-up";
-  if (role === "writer") {
+  if (validatedData.role === "writer") {
     defaultRedirectUrl = "/sign-up?role=writer";
-  } else if (role === "artist") {
+  } else if (validatedData.role === "artist") {
     defaultRedirectUrl = "/sign-up?role=artist";
-  } else if (role === "fan") {
+  } else if (validatedData.role === "fan") {
     defaultRedirectUrl = "/sign-up?role=fan";
   }
 
   try {
     const invitation = await client.invitations.createInvitation({
-      emailAddress: email,
+      emailAddress: validatedData.email,
       redirectUrl: redirectUrl || defaultRedirectUrl,
       publicMetadata: {
-        role,
+        role: validatedData.role,
       },
     });
 

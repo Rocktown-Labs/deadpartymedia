@@ -8,6 +8,7 @@ import { eq, and, ne } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
+import { postSchema } from "@/lib/validations/post";
 
 export async function createPost(formData: FormData) {
   const { userId } = await auth();
@@ -19,21 +20,35 @@ export async function createPost(formData: FormData) {
     throw new Error("Unauthorized: You don't have permission to create posts");
   }
 
-  const title = formData.get("title") as string;
-  const slugInput = formData.get("slug") as string;
-  const category = formData.get("category") as string;
-  const excerpt = formData.get("excerpt") as string;
-  const content = formData.get("content") as string;
-  const coverImage = formData.get("coverImage") as string;
-  const status = formData.get("status") as "draft" | "published" | "archived";
-  const isCoverStory = formData.get("isCoverStory") === "true";
+  // Validate form data
+  const rawData = {
+    title: formData.get("title") as string,
+    slug: formData.get("slug") as string,
+    category: formData.get("category") as string,
+    excerpt: formData.get("excerpt") as string,
+    content: formData.get("content") as string,
+    coverImage: formData.get("coverImage") as string | undefined,
+    status: formData.get("status") as string,
+    isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
+  };
+
+  const validationResult = postSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
 
   const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(title)
+    slugInput || generateSlug(validatedData.title),
+    undefined,
+    "posts"
   );
 
   // If setting as cover story, unset previous cover story
-  if (isCoverStory) {
+  if (validatedData.isCoverStory) {
     await db
       .update(posts)
       .set({ isCoverStory: false })
@@ -41,18 +56,18 @@ export async function createPost(formData: FormData) {
   }
 
   const publishedAt =
-    status === "published" ? new Date() : null;
+    validatedData.status === "published" ? new Date() : null;
 
   await db.insert(posts).values({
-    title,
+    title: validatedData.title,
     slug,
-    category: category as any,
-    excerpt,
-    content,
-    coverImage: coverImage || null,
+    category: validatedData.category as any,
+    excerpt: validatedData.excerpt,
+    content: validatedData.content,
+    coverImage: validatedData.coverImage || null,
     authorId: userId,
-    status: status as any,
-    isCoverStory,
+    status: validatedData.status as any,
+    isCoverStory: validatedData.isCoverStory,
     publishedAt,
   });
 
@@ -77,22 +92,35 @@ export async function updatePost(id: number, formData: FormData) {
     throw new Error("Unauthorized: You don't have permission to edit this post");
   }
 
-  const title = formData.get("title") as string;
-  const slugInput = formData.get("slug") as string;
-  const category = formData.get("category") as string;
-  const excerpt = formData.get("excerpt") as string;
-  const content = formData.get("content") as string;
-  const coverImage = formData.get("coverImage") as string;
-  const status = formData.get("status") as "draft" | "published" | "archived";
-  const isCoverStory = formData.get("isCoverStory") === "true";
+  // Validate form data
+  const rawData = {
+    title: formData.get("title") as string,
+    slug: formData.get("slug") as string,
+    category: formData.get("category") as string,
+    excerpt: formData.get("excerpt") as string,
+    content: formData.get("content") as string,
+    coverImage: formData.get("coverImage") as string | undefined,
+    status: formData.get("status") as string,
+    isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
+  };
+
+  const validationResult = postSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
 
   const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(title),
-    id
+    slugInput || generateSlug(validatedData.title),
+    id,
+    "posts"
   );
 
   // If setting as cover story, unset previous cover story
-  if (isCoverStory && !post.isCoverStory) {
+  if (validatedData.isCoverStory && !post.isCoverStory) {
     await db
       .update(posts)
       .set({ isCoverStory: false })
@@ -100,21 +128,21 @@ export async function updatePost(id: number, formData: FormData) {
   }
 
   const publishedAt =
-    status === "published" && !post.publishedAt
+    validatedData.status === "published" && !post.publishedAt
       ? new Date()
       : post.publishedAt;
 
   await db
     .update(posts)
     .set({
-      title,
+      title: validatedData.title,
       slug,
-      category: category as any,
-      excerpt,
-      content,
-      coverImage: coverImage || null,
-      status: status as any,
-      isCoverStory,
+      category: validatedData.category as any,
+      excerpt: validatedData.excerpt,
+      content: validatedData.content,
+      coverImage: validatedData.coverImage || null,
+      status: validatedData.status as any,
+      isCoverStory: validatedData.isCoverStory,
       publishedAt,
       updatedAt: new Date(),
     })

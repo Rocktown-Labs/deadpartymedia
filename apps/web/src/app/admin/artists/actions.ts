@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { canCreate, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
+import { artistSchema } from "@/lib/validations/artist";
 
 export async function createArtist(
   formData: FormData,
@@ -22,39 +23,55 @@ export async function createArtist(
     throw new Error("Unauthorized: You don't have permission to create artists");
   }
 
-  const name = formData.get("name") as string;
-  const slugInput = formData.get("slug") as string;
-  const bio = formData.get("bio") as string;
-  const image = formData.get("image") as string;
-  const location = formData.get("location") as string;
-  const genre = formData.get("genre") as string;
-  const spotifyUrl = formData.get("spotifyUrl") as string;
-  const spotifyArtistId = formData.get("spotifyArtistId") as string;
-  const instagram = formData.get("instagram") as string;
-  const twitter = formData.get("twitter") as string;
-  const tiktok = formData.get("tiktok") as string;
-  const website = formData.get("website") as string;
-  const email = formData.get("email") as string;
+  // Validate form data
+  const rawData = {
+    name: formData.get("name") as string,
+    slug: formData.get("slug") as string | undefined,
+    bio: formData.get("bio") as string,
+    image: formData.get("image") as string | undefined,
+    location: formData.get("location") as string,
+    genre: formData.get("genre") as string,
+    spotifyUrl: formData.get("spotifyUrl") as string | undefined,
+    spotifyArtistId: formData.get("spotifyArtistId") as string | undefined,
+    instagram: formData.get("instagram") as string | undefined,
+    twitter: formData.get("twitter") as string | undefined,
+    tiktok: formData.get("tiktok") as string | undefined,
+    website: formData.get("website") as string | undefined,
+    email: formData.get("email") as string | undefined,
+  };
 
-  const slug = await ensureUniqueSlug(slugInput || generateSlug(name));
+  const validationResult = artistSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
+
+  const slug = await ensureUniqueSlug(
+    slugInput || generateSlug(validatedData.name),
+    undefined,
+    "artists"
+  );
 
   // Insert artist into database
   const [artist] = await db
     .insert(artists)
     .values({
-      name,
+      name: validatedData.name,
       slug,
-      bio,
-      image: image || null,
-      location,
-      genre: genre as any,
-      spotifyUrl: spotifyUrl || null,
-      spotifyArtistId: spotifyArtistId || null,
-      instagram: instagram || null,
-      twitter: twitter || null,
-      tiktok: tiktok || null,
-      website: website || null,
-      email: email || null,
+      bio: validatedData.bio,
+      image: validatedData.image || null,
+      location: validatedData.location,
+      genre: validatedData.genre as any,
+      spotifyUrl: validatedData.spotifyUrl || null,
+      spotifyArtistId: validatedData.spotifyArtistId || null,
+      instagram: validatedData.instagram || null,
+      twitter: validatedData.twitter || null,
+      tiktok: validatedData.tiktok || null,
+      website: validatedData.website || null,
+      email: validatedData.email || null,
     })
     .returning();
 
@@ -63,7 +80,7 @@ export async function createArtist(
     const client = await clerkClient();
     try {
       await client.invitations.createInvitation({
-        emailAddress: email,
+        emailAddress: validatedData.email!,
         redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
         publicMetadata: {
           role: "artist",
@@ -102,38 +119,54 @@ export async function updateArtist(id: number, formData: FormData) {
     throw new Error("Unauthorized: You don't have permission to edit artists");
   }
 
-  const name = formData.get("name") as string;
-  const slugInput = formData.get("slug") as string;
-  const bio = formData.get("bio") as string;
-  const image = formData.get("image") as string;
-  const location = formData.get("location") as string;
-  const genre = formData.get("genre") as string;
-  const spotifyUrl = formData.get("spotifyUrl") as string;
-  const spotifyArtistId = formData.get("spotifyArtistId") as string;
-  const instagram = formData.get("instagram") as string;
-  const twitter = formData.get("twitter") as string;
-  const tiktok = formData.get("tiktok") as string;
-  const website = formData.get("website") as string;
-  const email = formData.get("email") as string;
+  // Validate form data
+  const rawData = {
+    name: formData.get("name") as string,
+    slug: formData.get("slug") as string | undefined,
+    bio: formData.get("bio") as string,
+    image: formData.get("image") as string | undefined,
+    location: formData.get("location") as string,
+    genre: formData.get("genre") as string,
+    spotifyUrl: formData.get("spotifyUrl") as string | undefined,
+    spotifyArtistId: formData.get("spotifyArtistId") as string | undefined,
+    instagram: formData.get("instagram") as string | undefined,
+    twitter: formData.get("twitter") as string | undefined,
+    tiktok: formData.get("tiktok") as string | undefined,
+    website: formData.get("website") as string | undefined,
+    email: formData.get("email") as string | undefined,
+  };
 
-  const slug = await ensureUniqueSlug(slugInput || generateSlug(name), id);
+  const validationResult = artistSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
+
+  const slug = await ensureUniqueSlug(
+    slugInput || generateSlug(validatedData.name),
+    id,
+    "artists"
+  );
 
   await db
     .update(artists)
     .set({
-      name,
+      name: validatedData.name,
       slug,
-      bio,
-      image: image || null,
-      location,
-      genre: genre as any,
-      spotifyUrl: spotifyUrl || null,
-      spotifyArtistId: spotifyArtistId || null,
-      instagram: instagram || null,
-      twitter: twitter || null,
-      tiktok: tiktok || null,
-      website: website || null,
-      email: email || null,
+      bio: validatedData.bio,
+      image: validatedData.image || null,
+      location: validatedData.location,
+      genre: validatedData.genre as any,
+      spotifyUrl: validatedData.spotifyUrl || null,
+      spotifyArtistId: validatedData.spotifyArtistId || null,
+      instagram: validatedData.instagram || null,
+      twitter: validatedData.twitter || null,
+      tiktok: validatedData.tiktok || null,
+      website: validatedData.website || null,
+      email: validatedData.email || null,
       updatedAt: new Date(),
     })
     .where(eq(artists.id, id));

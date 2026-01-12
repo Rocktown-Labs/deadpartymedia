@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
+import { onboardingSchema } from "@/lib/validations/onboarding";
 
 export async function completeOnboarding(formData: FormData) {
   const { userId } = await auth();
@@ -22,6 +23,31 @@ export async function completeOnboarding(formData: FormData) {
   const artistId = user.publicMetadata?.artistId
     ? Number.parseInt(user.publicMetadata.artistId as string, 10)
     : null;
+
+  // Validate form data
+  const rawData = {
+    name: formData.get("name") as string,
+    location: formData.get("location") as string,
+    genre: formData.get("genre") as string,
+    bio: formData.get("bio") as string,
+    spotifyUrl: formData.get("spotifyUrl") as string | undefined,
+    spotifyArtistId: formData.get("spotifyArtistId") as string | undefined,
+    instagram: formData.get("instagram") as string | undefined,
+    twitter: formData.get("twitter") as string | undefined,
+    tiktok: formData.get("tiktok") as string | undefined,
+    website: formData.get("website") as string | undefined,
+    image: formData.get("image") as string | undefined,
+  };
+
+  const validationResult = onboardingSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    return {
+      error: validationResult.error.errors.map((e) => e.message).join(", "),
+    };
+  }
+
+  const validatedData = validationResult.data;
 
   try {
     // If user is an artist and has an artistId, claim the existing artist profile
@@ -40,34 +66,21 @@ export async function completeOnboarding(formData: FormData) {
         return { error: "This artist profile has already been claimed" };
       }
 
-      // Get form data
-      const name = formData.get("name") as string;
-      const bio = formData.get("bio") as string;
-      const location = formData.get("location") as string;
-      const genre = formData.get("genre") as string;
-      const spotifyUrl = formData.get("spotifyUrl") as string;
-      const spotifyArtistId = formData.get("spotifyArtistId") as string;
-      const instagram = formData.get("instagram") as string;
-      const twitter = formData.get("twitter") as string;
-      const tiktok = formData.get("tiktok") as string;
-      const website = formData.get("website") as string;
-      const image = formData.get("image") as string;
-
       // Update artist profile with user's information
       await db
         .update(artists)
         .set({
-          name: name || artist.name,
-          bio: bio || artist.bio,
-          location: location || artist.location,
-          genre: (genre as any) || artist.genre,
-          spotifyUrl: spotifyUrl || artist.spotifyUrl,
-          spotifyArtistId: spotifyArtistId || artist.spotifyArtistId,
-          instagram: instagram || artist.instagram,
-          twitter: twitter || artist.twitter,
-          tiktok: tiktok || artist.tiktok,
-          website: website || artist.website,
-          image: image || artist.image,
+          name: validatedData.name || artist.name,
+          bio: validatedData.bio || artist.bio,
+          location: validatedData.location || artist.location,
+          genre: (validatedData.genre as any) || artist.genre,
+          spotifyUrl: validatedData.spotifyUrl || artist.spotifyUrl,
+          spotifyArtistId: validatedData.spotifyArtistId || artist.spotifyArtistId,
+          instagram: validatedData.instagram || artist.instagram,
+          twitter: validatedData.twitter || artist.twitter,
+          tiktok: validatedData.tiktok || artist.tiktok,
+          website: validatedData.website || artist.website,
+          image: validatedData.image || artist.image,
           claimed: true,
           claimedById: userId,
           updatedAt: new Date(),
@@ -75,33 +88,25 @@ export async function completeOnboarding(formData: FormData) {
         .where(eq(artists.id, artistId));
     } else if (role === "artist" && !artistId) {
       // If user is an artist but doesn't have an artistId, create a new artist profile
-      const name = formData.get("name") as string;
-      const bio = formData.get("bio") as string;
-      const location = formData.get("location") as string;
-      const genre = formData.get("genre") as string;
-      const spotifyUrl = formData.get("spotifyUrl") as string;
-      const spotifyArtistId = formData.get("spotifyArtistId") as string;
-      const instagram = formData.get("instagram") as string;
-      const twitter = formData.get("twitter") as string;
-      const tiktok = formData.get("tiktok") as string;
-      const website = formData.get("website") as string;
-      const image = formData.get("image") as string;
-
-      const slug = await ensureUniqueSlug(generateSlug(name), undefined, "artist");
+      const slug = await ensureUniqueSlug(
+        generateSlug(validatedData.name),
+        undefined,
+        "artists"
+      );
 
       await db.insert(artists).values({
-        name,
+        name: validatedData.name,
         slug,
-        bio,
-        location,
-        genre: genre as any,
-        spotifyUrl: spotifyUrl || null,
-        spotifyArtistId: spotifyArtistId || null,
-        instagram: instagram || null,
-        twitter: twitter || null,
-        tiktok: tiktok || null,
-        website: website || null,
-        image: image || null,
+        bio: validatedData.bio,
+        location: validatedData.location,
+        genre: validatedData.genre as any,
+        spotifyUrl: validatedData.spotifyUrl || null,
+        spotifyArtistId: validatedData.spotifyArtistId || null,
+        instagram: validatedData.instagram || null,
+        twitter: validatedData.twitter || null,
+        tiktok: validatedData.tiktok || null,
+        website: validatedData.website || null,
+        image: validatedData.image || null,
         claimed: true,
         claimedById: userId,
       });

@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
+import { eventSchema } from "@/lib/validations/event";
 
 export async function createEvent(formData: FormData) {
   const { userId } = await auth();
@@ -19,36 +20,50 @@ export async function createEvent(formData: FormData) {
     throw new Error("Unauthorized: You don't have permission to create events");
   }
 
-  const title = formData.get("title") as string;
-  const slugInput = formData.get("slug") as string;
-  const description = formData.get("description") as string;
-  const image = formData.get("image") as string;
-  const venue = formData.get("venue") as string;
-  const location = formData.get("location") as string;
-  const date = formData.get("date") as string;
-  const time = formData.get("time") as string;
-  const ticketLink = formData.get("ticketLink") as string;
-  const price = formData.get("price") as string;
-  const genre = formData.get("genre") as string;
-  const status = formData.get("status") as "draft" | "published" | "past";
+  // Validate form data
+  const rawData = {
+    title: formData.get("title") as string,
+    slug: formData.get("slug") as string,
+    description: formData.get("description") as string,
+    image: formData.get("image") as string | undefined,
+    venue: formData.get("venue") as string,
+    location: formData.get("location") as string,
+    date: formData.get("date") as string,
+    time: formData.get("time") as string | undefined,
+    ticketLink: formData.get("ticketLink") as string | undefined,
+    price: formData.get("price") as string | undefined,
+    genre: formData.get("genre") as string,
+    status: formData.get("status") as string,
+  };
+
+  const validationResult = eventSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
 
   const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(title)
+    slugInput || generateSlug(validatedData.title),
+    undefined,
+    "events"
   );
 
   await db.insert(events).values({
-    title,
+    title: validatedData.title,
     slug,
-    description,
-    image: image || null,
-    venue,
-    location,
-    date,
-    time: time || null,
-    ticketLink: ticketLink || null,
-    price: price || null,
-    genre: genre as any,
-    status: status as any,
+    description: validatedData.description,
+    image: validatedData.image || null,
+    venue: validatedData.venue,
+    location: validatedData.location,
+    date: new Date(validatedData.date),
+    time: validatedData.time || null,
+    ticketLink: validatedData.ticketLink || null,
+    price: validatedData.price || null,
+    genre: validatedData.genre as any,
+    status: validatedData.status as any,
     createdById: userId,
   });
 
@@ -77,39 +92,52 @@ export async function updateEvent(id: number, formData: FormData) {
     throw new Error("Unauthorized: You don't have permission to edit this event");
   }
 
-  const title = formData.get("title") as string;
-  const slugInput = formData.get("slug") as string;
-  const description = formData.get("description") as string;
-  const image = formData.get("image") as string;
-  const venue = formData.get("venue") as string;
-  const location = formData.get("location") as string;
-  const date = formData.get("date") as string;
-  const time = formData.get("time") as string;
-  const ticketLink = formData.get("ticketLink") as string;
-  const price = formData.get("price") as string;
-  const genre = formData.get("genre") as string;
-  const status = formData.get("status") as "draft" | "published" | "past";
+  // Validate form data
+  const rawData = {
+    title: formData.get("title") as string,
+    slug: formData.get("slug") as string,
+    description: formData.get("description") as string,
+    image: formData.get("image") as string | undefined,
+    venue: formData.get("venue") as string,
+    location: formData.get("location") as string,
+    date: formData.get("date") as string,
+    time: formData.get("time") as string | undefined,
+    ticketLink: formData.get("ticketLink") as string | undefined,
+    price: formData.get("price") as string | undefined,
+    genre: formData.get("genre") as string,
+    status: formData.get("status") as string,
+  };
+
+  const validationResult = eventSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+  }
+
+  const validatedData = validationResult.data;
+  const slugInput = validatedData.slug;
 
   const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(title),
-    id
+    slugInput || generateSlug(validatedData.title),
+    id,
+    "events"
   );
 
   await db
     .update(events)
     .set({
-      title,
+      title: validatedData.title,
       slug,
-      description,
-      image: image || null,
-      venue,
-      location,
-      date,
-      time: time || null,
-      ticketLink: ticketLink || null,
-      price: price || null,
-      genre: genre as any,
-      status: status as any,
+      description: validatedData.description,
+      image: validatedData.image || null,
+      venue: validatedData.venue,
+      location: validatedData.location,
+      date: new Date(validatedData.date),
+      time: validatedData.time || null,
+      ticketLink: validatedData.ticketLink || null,
+      price: validatedData.price || null,
+      genre: validatedData.genre as any,
+      status: validatedData.status as any,
       updatedAt: new Date(),
     })
     .where(eq(events.id, id));
