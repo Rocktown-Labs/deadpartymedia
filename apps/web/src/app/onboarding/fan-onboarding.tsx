@@ -57,7 +57,16 @@ export function FanOnboarding() {
 
           {/* Form */}
           <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
-            <form action={action as never} onSubmit={() => form.handleSubmit()}>
+            <form action={action as never} onSubmit={(e) => {
+              e.preventDefault();
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'fan-onboarding.tsx:60',message:'fan form onSubmit entry',data:{defaultPrevented:e.defaultPrevented,willCallPreventDefault:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+              form.handleSubmit();
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'fan-onboarding.tsx:60',message:'fan form onSubmit after handleSubmit',data:{defaultPrevented:e.defaultPrevented},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+            }}>
               {/* Form Errors */}
               {formErrors.length > 0 && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
