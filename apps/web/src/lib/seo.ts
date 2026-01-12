@@ -114,7 +114,8 @@ export function generateArticleMetadata(article: Article): Metadata {
 export function generateEventMetadata(event: Event): Metadata {
   const title = `${event.title} | Dead Party Media`;
   const description =
-    event.description || `${event.title} - ${event.venue}, ${event.location} on ${new Date(event.date).toLocaleDateString()}`;
+    event.description ||
+    `${event.title} - ${event.venue}, ${event.location} on ${new Date(event.date).toLocaleDateString()}`;
   const image = getImageUrl(event.image);
   const url = getAbsoluteUrl(`/events/${event.slug}`);
 
@@ -188,4 +189,3 @@ export function generateArtistMetadata(artist: Artist): Metadata {
     },
   };
 }
-

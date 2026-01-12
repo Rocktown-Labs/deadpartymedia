@@ -29,8 +29,9 @@ export const metadata: Metadata = {
     default: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
     template: "%s | Dead Party Media",
   },
-  description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
-  
+  description:
+    "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
+
   metadataBase: new URL(SITE_URL),
   openGraph: {
     type: "website",
@@ -38,7 +39,8 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "Dead Party Media",
     title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
-    description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
+    description:
+      "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [
       {
         url: DEFAULT_OG_IMAGE,
@@ -51,7 +53,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
-    description: "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
+    description:
+      "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [DEFAULT_OG_IMAGE],
   },
   alternates: {

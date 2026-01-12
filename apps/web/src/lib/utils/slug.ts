@@ -10,7 +10,7 @@ export function generateSlug(title: string): string {
 export async function ensureUniqueSlug(
   slug: string,
   excludeId?: number,
-  table?: "posts" | "events" | "artists"
+  table?: "posts" | "events" | "artists",
 ): Promise<string> {
   const { db } = await import("@/lib/db");
   const { posts, events, artists } = await import("@/lib/db/schema");
@@ -29,7 +29,7 @@ export async function ensureUniqueSlug(
         .where(
           excludeId
             ? and(eq(tableSchema.slug, uniqueSlug), ne(tableSchema.id, excludeId))
-            : eq(tableSchema.slug, uniqueSlug)
+            : eq(tableSchema.slug, uniqueSlug),
         )
         .limit(1);
 
@@ -49,7 +49,7 @@ export async function ensureUniqueSlug(
         .where(
           excludeId
             ? and(eq(posts.slug, uniqueSlug), ne(posts.id, excludeId))
-            : eq(posts.slug, uniqueSlug)
+            : eq(posts.slug, uniqueSlug),
         )
         .limit(1);
 

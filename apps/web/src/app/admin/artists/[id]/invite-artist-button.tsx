@@ -29,12 +29,7 @@ export function InviteArtistButton({ artistId, email }: InviteArtistButtonProps)
   };
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={handleInvite}
-      disabled={isPending}
-    >
+    <Button type="button" variant="outline" onClick={handleInvite} disabled={isPending}>
       {isPending ? "Sending..." : "Resend Invitation"}
     </Button>
   );

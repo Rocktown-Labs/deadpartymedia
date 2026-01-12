@@ -23,10 +23,7 @@ export default async function EventsPage() {
   }
 
   // Filter events based on role
-  const allEvents = await db
-    .select()
-    .from(events)
-    .orderBy(desc(events.createdAt));
+  const allEvents = await db.select().from(events).orderBy(desc(events.createdAt));
 
   const filteredEvents = isSuperAdmin
     ? allEvents
@@ -83,15 +80,11 @@ export default async function EventsPage() {
                       {event.title}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {event.venue}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{event.venue}</td>
                   <td className="px-6 py-4 text-sm text-gray-400">
                     {new Date(event.date).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {event.genre}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{event.genre}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 py-1 rounded text-xs font-bold ${

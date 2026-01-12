@@ -11,10 +11,7 @@ interface RevokeInvitationButtonProps {
   email: string;
 }
 
-export function RevokeInvitationButton({
-  invitationId,
-  email,
-}: RevokeInvitationButtonProps) {
+export function RevokeInvitationButton({ invitationId, email }: RevokeInvitationButtonProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 

@@ -27,17 +27,9 @@ export const genreEnum = pgEnum("genre", [
   "OTHER",
 ]);
 
-export const postStatusEnum = pgEnum("post_status", [
-  "draft",
-  "published",
-  "archived",
-]);
+export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
 
-export const eventStatusEnum = pgEnum("event_status", [
-  "draft",
-  "published",
-  "past",
-]);
+export const eventStatusEnum = pgEnum("event_status", ["draft", "published", "past"]);
 
 // Users Table (synced from Clerk)
 export const users = pgTable("users", {

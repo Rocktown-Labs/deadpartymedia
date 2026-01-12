@@ -13,15 +13,12 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
       const primaryEmail = email_addresses.find(
-        (email) => email.id === evt.data.primary_email_address_id
+        (email) => email.id === evt.data.primary_email_address_id,
       )?.email_address;
 
       if (!primaryEmail) {
         console.error("No primary email found for user:", id);
-        return NextResponse.json(
-          { error: "No primary email found" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
       // Insert user into database
@@ -41,15 +38,12 @@ export async function POST(req: NextRequest) {
       const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
       const primaryEmail = email_addresses.find(
-        (email) => email.id === evt.data.primary_email_address_id
+        (email) => email.id === evt.data.primary_email_address_id,
       )?.email_address;
 
       if (!primaryEmail) {
         console.error("No primary email found for user:", id);
-        return NextResponse.json(
-          { error: "No primary email found" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
       // Update user in database
@@ -80,9 +74,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err) {
     console.error("Error verifying webhook:", err);
-    return NextResponse.json(
-      { error: "Error verifying webhook" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Error verifying webhook" }, { status: 400 });
   }
 }

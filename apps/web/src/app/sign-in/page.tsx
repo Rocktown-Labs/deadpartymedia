@@ -40,7 +40,8 @@ export default function SignInPage() {
                 card: "bg-[#111111] border border-gray-800",
                 headerTitle: "text-white",
                 headerSubtitle: "text-gray-400",
-                socialButtonsBlockButton: "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
+                socialButtonsBlockButton:
+                  "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
                 formButtonPrimary: "bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black",
                 formFieldInput: "bg-[#0A0A0A] border-gray-800 text-white",
                 formFieldLabel: "text-gray-300",

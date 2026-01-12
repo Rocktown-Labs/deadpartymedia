@@ -41,9 +41,7 @@ export default function SignUpPage() {
           <h1 className="text-4xl font-black mb-2">Join the Scene</h1>
           <p className="text-gray-400">Create your Dead Party Media account</p>
           {role === "artist" && artistId && (
-            <p className="text-[#7CFC00] text-sm mt-2">
-              You're claiming an artist profile
-            </p>
+            <p className="text-[#7CFC00] text-sm mt-2">You're claiming an artist profile</p>
           )}
         </div>
 
@@ -59,7 +57,8 @@ export default function SignUpPage() {
                 card: "bg-[#111111] border border-gray-800",
                 headerTitle: "text-white",
                 headerSubtitle: "text-gray-400",
-                socialButtonsBlockButton: "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
+                socialButtonsBlockButton:
+                  "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
                 formButtonPrimary: "bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black",
                 formFieldInput: "bg-[#0A0A0A] border-gray-800 text-white",
                 formFieldLabel: "text-gray-300",

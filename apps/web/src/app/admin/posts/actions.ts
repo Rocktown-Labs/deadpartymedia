@@ -44,19 +44,15 @@ export async function createPost(formData: FormData) {
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.title),
     undefined,
-    "posts"
+    "posts",
   );
 
   // If setting as cover story, unset previous cover story
   if (validatedData.isCoverStory) {
-    await db
-      .update(posts)
-      .set({ isCoverStory: false })
-      .where(eq(posts.isCoverStory, true));
+    await db.update(posts).set({ isCoverStory: false }).where(eq(posts.isCoverStory, true));
   }
 
-  const publishedAt =
-    validatedData.status === "published" ? new Date() : null;
+  const publishedAt = validatedData.status === "published" ? new Date() : null;
 
   await db.insert(posts).values({
     title: validatedData.title,
@@ -113,11 +109,7 @@ export async function updatePost(id: number, formData: FormData) {
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
 
-  const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(validatedData.title),
-    id,
-    "posts"
-  );
+  const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.title), id, "posts");
 
   // If setting as cover story, unset previous cover story
   if (validatedData.isCoverStory && !post.isCoverStory) {
@@ -128,9 +120,7 @@ export async function updatePost(id: number, formData: FormData) {
   }
 
   const publishedAt =
-    validatedData.status === "published" && !post.publishedAt
-      ? new Date()
-      : post.publishedAt;
+    validatedData.status === "published" && !post.publishedAt ? new Date() : post.publishedAt;
 
   await db
     .update(posts)

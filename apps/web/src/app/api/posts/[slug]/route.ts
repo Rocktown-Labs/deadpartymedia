@@ -3,10 +3,7 @@ import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
 
@@ -51,9 +48,6 @@ export async function GET(
     return NextResponse.json(article);
   } catch (error) {
     console.error("Error fetching post:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 });
   }
 }

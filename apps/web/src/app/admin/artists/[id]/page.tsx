@@ -7,11 +7,7 @@ import { ArtistForm } from "@/components/admin/artist-form";
 import { updateArtist } from "../actions";
 import { InviteArtistButton } from "./invite-artist-button";
 
-export default async function EditArtistPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditArtistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const artistId = Number.parseInt(id, 10);
 
@@ -23,11 +19,7 @@ export default async function EditArtistPage({
     redirect("/admin/artists");
   }
 
-  const [artist] = await db
-    .select()
-    .from(artists)
-    .where(eq(artists.id, artistId))
-    .limit(1);
+  const [artist] = await db.select().from(artists).where(eq(artists.id, artistId)).limit(1);
 
   if (!artist) {
     redirect("/admin/artists");

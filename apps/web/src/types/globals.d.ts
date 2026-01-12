@@ -1,3 +1,5 @@
+// Empty export makes this a module, required for `declare global` to work
+// eslint-disable-next-line @typescript-eslint/no-useless-empty-export
 export {};
 
 // Create a type for the Roles

@@ -33,13 +33,7 @@ interface EventFormProps {
   isSubmitting?: boolean;
 }
 
-const genres = [
-  "COUNTRY",
-  "EDM",
-  "HARDCORE & ROCK",
-  "HIP-HOP & R&B",
-  "OTHER",
-] as const;
+const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
 export function EventForm({
   initialData,
@@ -58,9 +52,9 @@ export function EventForm({
   const [ticketLink, setTicketLink] = useState(initialData?.ticketLink || "");
   const [price, setPrice] = useState(initialData?.price || "");
   const [genre, setGenre] = useState(initialData?.genre || "");
-  const [status, setStatus] = useState<
-    "draft" | "published" | "past"
-  >(initialData?.status || "draft");
+  const [status, setStatus] = useState<"draft" | "published" | "past">(
+    initialData?.status || "draft",
+  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -220,9 +214,7 @@ export function EventForm({
         <Label htmlFor="status">Status</Label>
         <Select
           value={status}
-          onValueChange={(value: "draft" | "published" | "past") =>
-            setStatus(value)
-          }
+          onValueChange={(value: "draft" | "published" | "past") => setStatus(value)}
         >
           <SelectTrigger className="mt-1">
             <SelectValue />

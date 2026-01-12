@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Music, Search, Loader2 } from "lucide-react";
-import { useSearchSpotifyArtists, type SpotifyArtist } from "@/lib/api/artists";
+import {
+  useSearchSpotifyArtists,
+  useSpotifyArtistById,
+  type SpotifyArtist,
+} from "@/lib/api/artists";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 
@@ -34,14 +38,72 @@ function extractSpotifyId(input: string): string | null {
   return null;
 }
 
+/**
+ * Checks if the input string is a Spotify URL
+ */
+function isSpotifyUrl(input: string): boolean {
+  if (!input) return false;
+  return (
+    input.includes("spotify.com/artist/") ||
+    input.includes("spotify:artist:") ||
+    /^https?:\/\/.*spotify.*artist/.test(input)
+  );
+}
+
 export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<SpotifyArtist | null>(null);
+  const [pastedArtistId, setPastedArtistId] = useState<string | null>(null);
+
+  // Extract artist ID from value prop if it's a URL
+  const valueArtistId = value ? extractSpotifyId(value) : null;
+
+  // Only search if query is not a URL and has at least 5 characters
+  const isQueryUrl = isSpotifyUrl(searchQuery);
   const debouncedQuery = useDebounce(searchQuery, 500);
-  const { data: artists, isLoading, error } = useSearchSpotifyArtists(debouncedQuery);
+  const shouldSearch = !isQueryUrl && debouncedQuery.length >= 5 && !pastedArtistId;
+
+  // Only pass query to hook when we should search (prevents unnecessary hook calls)
+  const searchQueryForHook = shouldSearch ? debouncedQuery : "";
+  const {
+    data: artists,
+    isLoading: isSearchLoading,
+    error: searchError,
+  } = useSearchSpotifyArtists(searchQueryForHook);
+
+  // Track if we've initialized from value prop to prevent re-fetching
+  const [hasInitializedFromValue, setHasInitializedFromValue] = useState(false);
+
+  // Fetch artist by ID when pasting URL or when value prop contains URL (only once)
+  const artistIdToFetch =
+    pastedArtistId ||
+    (valueArtistId && !selectedArtist && !hasInitializedFromValue ? valueArtistId : null);
+  const {
+    data: fetchedArtist,
+    isLoading: isFetchingArtist,
+    error: fetchError,
+  } = useSpotifyArtistById(artistIdToFetch);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle fetched artist from URL (paste or value prop)
+  useEffect(() => {
+    if (fetchedArtist) {
+      // Only set if we don't already have this artist selected
+      if (!selectedArtist || selectedArtist.id !== fetchedArtist.id) {
+        setSelectedArtist(fetchedArtist);
+        setSearchQuery(fetchedArtist.name);
+        setIsOpen(false);
+        setPastedArtistId(null);
+        if (valueArtistId && !hasInitializedFromValue) {
+          setHasInitializedFromValue(true);
+        }
+        onSelect(fetchedArtist);
+      }
+    }
+  }, [fetchedArtist, selectedArtist, onSelect, valueArtistId, hasInitializedFromValue]);
 
   // Handle pasted URLs
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -49,35 +111,57 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
     const extractedId = extractSpotifyId(pastedText);
 
     if (extractedId) {
-      // If we extracted an ID from a URL, create a minimal artist object
-      // The user will need to search to get full details, but we can set the ID
-      const urlArtist: SpotifyArtist = {
-        id: extractedId,
-        name: pastedText, // Temporary, will be replaced when they search
-        images: [],
-        external_urls: { spotify: `https://open.spotify.com/artist/${extractedId}` },
-        genres: [],
-      };
-      setSelectedArtist(urlArtist);
+      // Prevent default paste behavior
+      e.preventDefault();
+      // Clear search query and fetch artist details
       setSearchQuery("");
+      setPastedArtistId(extractedId);
       setIsOpen(false);
-      onSelect(urlArtist);
+      setSelectedArtist(null);
     }
+    // If it's not a URL, let the normal paste/input change handle it
   };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    setSearchQuery(newValue);
-    setIsOpen(true);
-    setSelectedArtist(null);
+
+    // Check if the new value is a URL
+    const isUrl = isSpotifyUrl(newValue);
+    const extractedId = isUrl ? extractSpotifyId(newValue) : null;
+
+    if (extractedId) {
+      // User typed/pasted a URL, fetch artist
+      setSearchQuery("");
+      setPastedArtistId(extractedId);
+      setIsOpen(false);
+      setSelectedArtist(null);
+    } else {
+      // Normal text input - search
+      setSearchQuery(newValue);
+      setPastedArtistId(null); // Clear any pending paste
+      setHasInitializedFromValue(false); // Allow re-initialization if needed
+
+      // Show dropdown if query is long enough or if user is typing
+      if (newValue.length >= 5) {
+        setIsOpen(true);
+      } else if (newValue.length > 0) {
+        setIsOpen(true); // Show even if less than 5 chars (will show helper text)
+      }
+
+      // Clear selected artist if user starts typing different text
+      if (selectedArtist && newValue !== selectedArtist.name) {
+        setSelectedArtist(null);
+      }
+    }
   };
 
-  // Handle artist selection
+  // Handle artist selection from dropdown
   const handleSelectArtist = (artist: SpotifyArtist) => {
     setSelectedArtist(artist);
     setSearchQuery(artist.name);
     setIsOpen(false);
+    setPastedArtistId(null);
     onSelect(artist);
   };
 
@@ -95,12 +179,24 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
     };
   }, []);
 
-  // Show selected artist name if value is provided
+  // Initialize from value prop (only once on mount or when value changes)
   useEffect(() => {
-    if (value && !searchQuery && !selectedArtist) {
-      setSearchQuery(value);
+    if (value && !hasInitializedFromValue && !selectedArtist) {
+      const extractedId = extractSpotifyId(value);
+      if (extractedId) {
+        // Value is a URL, will be handled by useSpotifyArtistById
+        setPastedArtistId(extractedId);
+        setSearchQuery(""); // Clear search query when URL is detected
+      } else if (!searchQuery && value.trim().length > 0) {
+        // Value is artist name, set as search query
+        setSearchQuery(value);
+      }
+      setHasInitializedFromValue(true);
     }
-  }, [value, searchQuery, selectedArtist]);
+  }, [value, hasInitializedFromValue, searchQuery, selectedArtist]);
+
+  const isLoading = isSearchLoading || isFetchingArtist;
+  const error = searchError || fetchError;
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -115,7 +211,12 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
           value={searchQuery}
           onChange={handleInputChange}
           onPaste={handlePaste}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            // Open dropdown when focused (user can see helper text or results)
+            if (searchQuery.length > 0 || isFetchingArtist || pastedArtistId) {
+              setIsOpen(true);
+            }
+          }}
           className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
           placeholder="Search for your artist on Spotify..."
         />
@@ -125,11 +226,13 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
       </div>
 
       {/* Dropdown Results */}
-      {isOpen && searchQuery.length >= 5 && (
+      {isOpen && (shouldSearch || (searchQuery.length > 0 && searchQuery.length < 5)) && (
         <div className="absolute z-50 w-full mt-2 bg-[#111111] border border-gray-800 rounded-lg shadow-lg max-h-80 overflow-y-auto">
           {error ? (
             <div className="p-4 text-sm text-red-400">
-              Failed to search Spotify. Please try again.
+              {fetchError
+                ? `Failed to load artist: ${fetchError.message || "Unknown error"}. Please try searching instead.`
+                : `Failed to search Spotify: ${searchError?.message || "Unknown error"}. Please try again.`}
             </div>
           ) : artists && artists.length > 0 ? (
             <div className="py-2">
@@ -165,18 +268,46 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
                 </button>
               ))}
             </div>
-          ) : searchQuery.length >= 5 && !isLoading ? (
+          ) : shouldSearch && !isLoading ? (
             <div className="p-4 text-sm text-gray-400 text-center">
               No artists found. Try a different search term.
+            </div>
+          ) : searchQuery.length > 0 && searchQuery.length < 5 ? (
+            <div className="p-4 text-sm text-gray-400 text-center">
+              Type at least {5 - searchQuery.length} more character
+              {5 - searchQuery.length === 1 ? "" : "s"} to search
             </div>
           ) : null}
         </div>
       )}
 
+      {/* Loading state for URL paste */}
+      {isFetchingArtist && pastedArtistId && (
+        <div className="absolute z-50 w-full mt-2 bg-[#111111] border border-gray-800 rounded-lg shadow-lg p-4">
+          <div className="flex items-center gap-3 text-sm text-gray-400">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading artist details...
+          </div>
+        </div>
+      )}
+
+      {/* Error state for URL paste */}
+      {fetchError && pastedArtistId && !isFetchingArtist && (
+        <div className="mt-2 p-3 bg-red-900/20 border border-red-800 rounded-lg">
+          <p className="text-sm text-red-400">
+            {fetchError.message === "Artist not found"
+              ? "Artist not found. Please try searching by name instead."
+              : "Failed to load artist. Please try searching by name instead."}
+          </p>
+        </div>
+      )}
+
       <p className="text-xs text-gray-500 mt-2">
-        {searchQuery.length > 0 && searchQuery.length < 5
-          ? `Type at least ${5 - searchQuery.length} more character${5 - searchQuery.length === 1 ? "" : "s"} to search`
-          : "Search for your artist or paste a Spotify artist URL"}
+        {isQueryUrl
+          ? "Paste detected. Loading artist..."
+          : searchQuery.length > 0 && searchQuery.length < 5
+            ? `Type at least ${5 - searchQuery.length} more character${5 - searchQuery.length === 1 ? "" : "s"} to search`
+            : "Search for your artist or paste a Spotify artist URL"}
       </p>
     </div>
   );

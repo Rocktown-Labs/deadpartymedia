@@ -35,13 +35,7 @@ interface ArtistFormProps {
   isSubmitting?: boolean;
 }
 
-const genres = [
-  "COUNTRY",
-  "EDM",
-  "HARDCORE & ROCK",
-  "HIP-HOP & R&B",
-  "OTHER",
-] as const;
+const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
 export function ArtistForm({
   initialData,
@@ -56,9 +50,7 @@ export function ArtistForm({
   const [location, setLocation] = useState(initialData?.location || "");
   const [genre, setGenre] = useState(initialData?.genre || "");
   const [spotifyUrl, setSpotifyUrl] = useState(initialData?.spotifyUrl || "");
-  const [spotifyArtistId, setSpotifyArtistId] = useState(
-    initialData?.spotifyArtistId || ""
-  );
+  const [spotifyArtistId, setSpotifyArtistId] = useState(initialData?.spotifyArtistId || "");
   const [instagram, setInstagram] = useState(initialData?.instagram || "");
   const [twitter, setTwitter] = useState(initialData?.twitter || "");
   const [tiktok, setTiktok] = useState(initialData?.tiktok || "");

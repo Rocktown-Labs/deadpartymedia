@@ -5,9 +5,7 @@ export const canViewAll = async (): Promise<boolean> => {
   return checkRole("super_admin");
 };
 
-export const canEdit = async (
-  resourceAuthorId: string
-): Promise<boolean> => {
+export const canEdit = async (resourceAuthorId: string): Promise<boolean> => {
   const { userId } = await auth();
   if (!userId) return false;
 

@@ -39,9 +39,7 @@ export async function createEvent(formData: FormData) {
   const validationResult = eventSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
@@ -50,7 +48,7 @@ export async function createEvent(formData: FormData) {
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.title),
     undefined,
-    "events"
+    "events",
   );
 
   await db.insert(events).values({
@@ -80,20 +78,14 @@ export async function updateEvent(id: number, formData: FormData) {
   }
 
   // Get the event to check ownership
-  const [event] = await db
-    .select()
-    .from(events)
-    .where(eq(events.id, id))
-    .limit(1);
+  const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
 
   if (!event) {
     throw new Error("Event not found");
   }
 
   if (!(await canEdit(event.createdById))) {
-    throw new Error(
-      "Unauthorized: You don't have permission to edit this event"
-    );
+    throw new Error("Unauthorized: You don't have permission to edit this event");
   }
 
   // Validate form data
@@ -115,19 +107,13 @@ export async function updateEvent(id: number, formData: FormData) {
   const validationResult = eventSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
 
-  const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(validatedData.title),
-    id,
-    "events"
-  );
+  const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.title), id, "events");
 
   await db
     .update(events)

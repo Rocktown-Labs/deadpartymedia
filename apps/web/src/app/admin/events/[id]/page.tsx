@@ -6,11 +6,7 @@ import { canEdit } from "@/lib/auth/access";
 import { EventForm } from "@/components/admin/event-form";
 import { updateEvent } from "../actions";
 
-export default async function EditEventPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const eventId = Number.parseInt(id, 10);
 
@@ -18,11 +14,7 @@ export default async function EditEventPage({
     redirect("/admin/events");
   }
 
-  const [event] = await db
-    .select()
-    .from(events)
-    .where(eq(events.id, eventId))
-    .limit(1);
+  const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
 
   if (!event) {
     redirect("/admin/events");

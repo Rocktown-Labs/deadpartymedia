@@ -23,10 +23,7 @@ export default async function ArtistsPage() {
     redirect("/");
   }
 
-  const allArtists = await db
-    .select()
-    .from(artists)
-    .orderBy(desc(artists.createdAt));
+  const allArtists = await db.select().from(artists).orderBy(desc(artists.createdAt));
 
   return (
     <div>
@@ -79,12 +76,8 @@ export default async function ArtistsPage() {
                       {artist.name}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {artist.genre}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {artist.location}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{artist.genre}</td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{artist.location}</td>
                   <td className="px-6 py-4">
                     {artist.claimed ? (
                       <span className="text-green-400 font-bold">✓ Claimed</span>
@@ -92,9 +85,7 @@ export default async function ArtistsPage() {
                       <span className="text-gray-500">Not claimed</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {artist.email || "—"}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{artist.email || "—"}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <Link href={`/admin/artists/${artist.id}`}>
@@ -103,10 +94,7 @@ export default async function ArtistsPage() {
                         </Button>
                       </Link>
                       {!artist.claimed && artist.email && (
-                        <InviteArtistForm
-                          artistId={artist.id}
-                          email={artist.email}
-                        />
+                        <InviteArtistForm artistId={artist.id} email={artist.email} />
                       )}
                       {isSuperAdmin && (
                         <DeleteConfirm

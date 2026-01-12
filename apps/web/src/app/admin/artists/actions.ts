@@ -17,9 +17,7 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
   }
 
   if (!(await canCreate())) {
-    throw new Error(
-      "Unauthorized: You don't have permission to create artists"
-    );
+    throw new Error("Unauthorized: You don't have permission to create artists");
   }
 
   // Validate form data
@@ -42,9 +40,7 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
@@ -53,7 +49,7 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.name),
     undefined,
-    "artists"
+    "artists",
   );
 
   // Insert artist into database
@@ -105,11 +101,7 @@ export async function updateArtist(id: number, formData: FormData) {
   }
 
   // Get the artist to check if it exists
-  const [artist] = await db
-    .select()
-    .from(artists)
-    .where(eq(artists.id, id))
-    .limit(1);
+  const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
 
   if (!artist) {
     throw new Error("Artist not found");
@@ -140,19 +132,13 @@ export async function updateArtist(id: number, formData: FormData) {
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
 
-  const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(validatedData.name),
-    id,
-    "artists"
-  );
+  const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.name), id, "artists");
 
   await db
     .update(artists)
@@ -186,16 +172,10 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
   }
 
   if (!(await canCreate())) {
-    throw new Error(
-      "Unauthorized: You don't have permission to invite artists"
-    );
+    throw new Error("Unauthorized: You don't have permission to invite artists");
   }
 
-  const [artist] = await db
-    .select()
-    .from(artists)
-    .where(eq(artists.id, artistId))
-    .limit(1);
+  const [artist] = await db.select().from(artists).where(eq(artists.id, artistId)).limit(1);
 
   if (!artist) {
     throw new Error("Artist not found");

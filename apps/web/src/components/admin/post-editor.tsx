@@ -33,13 +33,7 @@ interface PostEditorProps {
   isSubmitting?: boolean;
 }
 
-const categories = [
-  "COUNTRY",
-  "EDM",
-  "HARDCORE & ROCK",
-  "HIP-HOP & R&B",
-  "OTHER",
-] as const;
+const categories = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
 export function PostEditor({
   initialData,
@@ -52,20 +46,17 @@ export function PostEditor({
   const [category, setCategory] = useState(initialData?.category || "");
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || "");
-  const [status, setStatus] = useState<
-    "draft" | "published" | "archived"
-  >(initialData?.status || "draft");
-  const [isCoverStory, setIsCoverStory] = useState(
-    initialData?.isCoverStory || false
+  const [status, setStatus] = useState<"draft" | "published" | "archived">(
+    initialData?.status || "draft",
   );
+  const [isCoverStory, setIsCoverStory] = useState(initialData?.isCoverStory || false);
 
   const editor = useEditor({
     extensions: [StarterKit, Image],
     content: initialData?.content || "",
     editorProps: {
       attributes: {
-        class:
-          "prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none",
+        class: "prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none",
       },
     },
   });
@@ -158,9 +149,7 @@ export function PostEditor({
         <Label htmlFor="status">Status</Label>
         <Select
           value={status}
-          onValueChange={(value: "draft" | "published" | "archived") =>
-            setStatus(value)
-          }
+          onValueChange={(value: "draft" | "published" | "archived") => setStatus(value)}
         >
           <SelectTrigger className="mt-1">
             <SelectValue />

@@ -29,13 +29,9 @@ export async function GET(request: Request) {
     const now = new Date();
     let filteredResults = results;
     if (status === "upcoming") {
-      filteredResults = results.filter(
-        (event) => new Date(event.date) >= now
-      );
+      filteredResults = results.filter((event) => new Date(event.date) >= now);
     } else if (status === "past") {
-      filteredResults = results.filter(
-        (event) => new Date(event.date) < now
-      );
+      filteredResults = results.filter((event) => new Date(event.date) < now);
     }
 
     // Transform to match existing EventList interface
@@ -61,9 +57,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch events" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
   }
 }

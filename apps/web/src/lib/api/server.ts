@@ -66,4 +66,3 @@ export async function getArtist(slug: string): Promise<Artist | null> {
     return null;
   }
 }
-

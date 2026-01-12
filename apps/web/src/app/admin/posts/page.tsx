@@ -23,10 +23,7 @@ export default async function PostsPage() {
   }
 
   // Filter posts based on role
-  const allPosts = await db
-    .select()
-    .from(posts)
-    .orderBy(desc(posts.createdAt));
+  const allPosts = await db.select().from(posts).orderBy(desc(posts.createdAt));
 
   const filteredPosts = isSuperAdmin
     ? allPosts
@@ -96,9 +93,7 @@ export default async function PostsPage() {
                       {post.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {post.category}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">{post.category}</td>
                   <td className="px-6 py-4">
                     {post.isCoverStory ? (
                       <span className="text-[#7CFC00] font-bold">★</span>

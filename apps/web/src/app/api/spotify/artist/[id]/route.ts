@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * Get artist details by Spotify ID using the Spotify Web API
+ * Uses Client Credentials flow (no user authentication required)
+ */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+
+    if (!id || id.trim().length === 0) {
+      return NextResponse.json({ error: "Artist ID is required" }, { status: 400 });
+    }
+
+    // Get Spotify credentials from environment
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error("Spotify credentials not configured");
+      return NextResponse.json({ error: "Spotify API not configured" }, { status: 500 });
+    }
+
+    // Get access token using Client Credentials flow
+    const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      console.error("Failed to get Spotify access token:", await tokenResponse.text());
+      return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // Get artist by ID
+    const artistResponse = await fetch(
+      `https://api.spotify.com/v1/artists/${encodeURIComponent(id)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!artistResponse.ok) {
+      if (artistResponse.status === 404) {
+        return NextResponse.json({ error: "Artist not found" }, { status: 404 });
+      }
+      if (artistResponse.status === 429) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Please try again later." },
+          { status: 429 },
+        );
+      }
+      console.error("Spotify artist fetch failed:", await artistResponse.text());
+      return NextResponse.json({ error: "Failed to fetch artist from Spotify" }, { status: 500 });
+    }
+
+    const artistData = await artistResponse.json();
+
+    // Transform to match our SpotifyArtist interface
+    const formattedArtist = {
+      id: artistData.id,
+      name: artistData.name,
+      images: artistData.images || [],
+      external_urls: artistData.external_urls || {
+        spotify: `https://open.spotify.com/artist/${artistData.id}`,
+      },
+      genres: artistData.genres || [],
+    };
+
+    return NextResponse.json(formattedArtist);
+  } catch (error) {
+    console.error("Error fetching Spotify artist:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

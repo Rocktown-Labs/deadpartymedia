@@ -33,13 +33,14 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
       "@type": "WebPage",
       "@id": getAbsoluteUrl(`/article/${article.slug}`),
     },
-    ...(article.artists && article.artists.length > 0 && {
-      about: article.artists.map((artist) => ({
-        "@type": "MusicGroup",
-        name: artist.name,
-        url: getAbsoluteUrl(`/artists/${artist.slug}`),
-      })),
-    }),
+    ...(article.artists &&
+      article.artists.length > 0 && {
+        about: article.artists.map((artist) => ({
+          "@type": "MusicGroup",
+          name: artist.name,
+          url: getAbsoluteUrl(`/artists/${artist.slug}`),
+        })),
+      }),
   };
 
   return (
@@ -77,13 +78,14 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
       name: "Dead Party Media",
       url: getAbsoluteUrl("/"),
     },
-    ...(event.artists && event.artists.length > 0 && {
-      performer: event.artists.map((artist) => ({
-        "@type": "MusicGroup",
-        name: artist.name,
-        url: getAbsoluteUrl(`/artists/${artist.slug}`),
-      })),
-    }),
+    ...(event.artists &&
+      event.artists.length > 0 && {
+        performer: event.artists.map((artist) => ({
+          "@type": "MusicGroup",
+          name: artist.name,
+          url: getAbsoluteUrl(`/artists/${artist.slug}`),
+        })),
+      }),
     ...(event.ticket_link && {
       offers: {
         "@type": "Offer",
@@ -142,4 +144,3 @@ export function ArtistStructuredData({ artist }: ArtistStructuredDataProps) {
     />
   );
 }
-

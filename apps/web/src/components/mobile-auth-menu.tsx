@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { User } from "lucide-react";
 
 export function MobileAuthMenu() {
@@ -32,4 +32,3 @@ export function MobileAuthMenu() {
     </>
   );
 }
-

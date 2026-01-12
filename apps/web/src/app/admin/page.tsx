@@ -24,18 +24,10 @@ export default async function AdminDashboard() {
     .where(eq(events.status, "published"));
 
   // Get recent posts
-  const recentPosts = await db
-    .select()
-    .from(posts)
-    .orderBy(desc(posts.createdAt))
-    .limit(5);
+  const recentPosts = await db.select().from(posts).orderBy(desc(posts.createdAt)).limit(5);
 
   // Get recent events
-  const recentEvents = await db
-    .select()
-    .from(events)
-    .orderBy(desc(events.createdAt))
-    .limit(5);
+  const recentEvents = await db.select().from(events).orderBy(desc(events.createdAt)).limit(5);
 
   return (
     <div>
@@ -44,16 +36,12 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
           <h2 className="text-xl font-bold mb-2">Published Posts</h2>
-          <p className="text-3xl font-black text-[#7CFC00]">
-            {postsCount?.count || 0}
-          </p>
+          <p className="text-3xl font-black text-[#7CFC00]">{postsCount?.count || 0}</p>
         </div>
 
         <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
           <h2 className="text-xl font-bold mb-2">Published Events</h2>
-          <p className="text-3xl font-black text-[#7CFC00]">
-            {eventsCount?.count || 0}
-          </p>
+          <p className="text-3xl font-black text-[#7CFC00]">{eventsCount?.count || 0}</p>
         </div>
       </div>
 

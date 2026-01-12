@@ -47,22 +47,12 @@ export interface SpotifyArtist {
   genres?: string[];
 }
 
-export interface SpotifyArtist {
-  id: string;
-  name: string;
-  images: Array<{ url: string; height: number; width: number }>;
-  external_urls: { spotify: string };
-  genres?: string[];
-}
-
 export function useArtists(genre?: string) {
   return useQuery<Artist[]>({
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await apiClient.get<Artist[] | { results: Artist[] }>(
-        `/artists/${params}`
-      );
+      const response = await apiClient.get<Artist[] | { results: Artist[] }>(`/artists/${params}`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -95,9 +85,9 @@ export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      const response = await apiClient.get<
-        ArticleList[] | { results: ArticleList[] }
-      >(`/artists/${slug}/articles/`);
+      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(
+        `/artists/${slug}/articles/`,
+      );
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -121,9 +111,9 @@ export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      const response = await apiClient.get<
-        EventList[] | { results: EventList[] }
-      >(`/artists/${slug}/events/`);
+      const response = await apiClient.get<EventList[] | { results: EventList[] }>(
+        `/artists/${slug}/events/`,
+      );
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -183,16 +173,14 @@ export function useUpdateArtist() {
       formData.append("genre", data.genre);
       // Always send URL fields (even if empty) to allow clearing them
       formData.append("spotify_url", data.spotify_url || "");
-      if (data.spotify_artist_id)
-        formData.append("spotify_artist_id", data.spotify_artist_id);
+      if (data.spotify_artist_id) formData.append("spotify_artist_id", data.spotify_artist_id);
       formData.append("instagram", data.instagram || "");
       formData.append("twitter", data.twitter || "");
       formData.append("tiktok", data.tiktok || "");
       formData.append("website", data.website || "");
       if (data.image) formData.append("image", data.image);
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
       const response = await fetch(`${apiUrl}/artists/update_me/`, {
         method: "PATCH",
         body: formData,
@@ -200,14 +188,8 @@ export function useUpdateArtist() {
       });
 
       if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ error: response.statusText }));
-        throw new Error(
-          error.error ||
-            error.detail ||
-            `HTTP error! status: ${response.status}`
-        );
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
       }
 
       return response.json();
@@ -239,8 +221,7 @@ export function useOnboardArtist() {
         formData.append("profileImage", data.profileImage);
       }
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
       const response = await fetch(`${apiUrl}/artists/onboard/`, {
         method: "POST",
         body: formData,
@@ -248,14 +229,8 @@ export function useOnboardArtist() {
       });
 
       if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ error: response.statusText }));
-        throw new Error(
-          error.error ||
-            error.detail ||
-            `HTTP error! status: ${response.status}`
-        );
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
       }
 
       return response.json();
@@ -272,15 +247,35 @@ export function useSearchSpotifyArtists(query: string) {
     queryKey: ["spotify-search", query],
     queryFn: async () => {
       if (!query || query.length < 5) return [];
-      const response = await fetch(
-        `/api/spotify/search?q=${encodeURIComponent(query)}`
-      );
+      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
-        throw new Error("Failed to search Spotify");
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Failed to search Spotify (${response.status})`);
       }
       return response.json();
     },
     enabled: query.length >= 5,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+}
+
+export function useSpotifyArtistById(id: string | null) {
+  return useQuery<SpotifyArtist | null>({
+    queryKey: ["spotify-artist", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const response = await fetch(`/api/spotify/artist/${encodeURIComponent(id)}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Artist not found");
+        }
+        throw new Error("Failed to fetch artist from Spotify");
+      }
+      return response.json();
+    },
+    enabled: !!id && id.trim().length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
   });
 }

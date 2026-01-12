@@ -3,11 +3,7 @@ import { redirect } from "next/navigation";
 import { checkRole } from "@/lib/auth/roles";
 import Link from "next/link";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
 
   if (!userId) {

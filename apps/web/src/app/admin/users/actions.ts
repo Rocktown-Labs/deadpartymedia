@@ -7,11 +7,7 @@ import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 import { inviteUserSchema } from "@/lib/validations/user";
 
-export async function inviteUser(
-  email: string,
-  role: Roles,
-  redirectUrl?: string
-) {
+export async function inviteUser(email: string, role: Roles, redirectUrl?: string) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");

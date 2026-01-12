@@ -62,12 +62,7 @@ export function useArticles(category?: string) {
       if (Array.isArray(data)) {
         return data;
       }
-      if (
-        data &&
-        typeof data === "object" &&
-        "results" in data &&
-        Array.isArray(data.results)
-      ) {
+      if (data && typeof data === "object" && "results" in data && Array.isArray(data.results)) {
         return data.results;
       }
       return [];

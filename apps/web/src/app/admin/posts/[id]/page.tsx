@@ -6,11 +6,7 @@ import { canEdit } from "@/lib/auth/access";
 import { PostEditor } from "@/components/admin/post-editor";
 import { updatePost } from "../actions";
 
-export default async function EditPostPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const postId = Number.parseInt(id, 10);
 
@@ -18,11 +14,7 @@ export default async function EditPostPage({
     redirect("/admin/posts");
   }
 
-  const [post] = await db
-    .select()
-    .from(posts)
-    .where(eq(posts.id, postId))
-    .limit(1);
+  const [post] = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
   if (!post) {
     redirect("/admin/posts");

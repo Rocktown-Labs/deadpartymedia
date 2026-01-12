@@ -10,6 +10,20 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in",
   "/sign-up",
   "/api/webhooks(.*)",
+  "/api/spotify(.*)",
+  "/merch(.*)",
+  "/article(.*)",
+  "/artists(.*)",
+  "/events(.*)",
+  "/music(.*)",
+  "/writers(.*)",
+  "/about",
+  "/contact",
+  "/country",
+  "/edm",
+  "/hardcore",
+  "/hip-hop-r-b",
+  "/other",
 ]);
 
 // Protected routes that require authentication
@@ -58,11 +72,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Redirect to correct dashboard based on role
-    if (
-      isAdminRoute(req) ||
-      isArtistDashboardRoute(req) ||
-      isDashboardRoute(req)
-    ) {
+    if (isAdminRoute(req) || isArtistDashboardRoute(req) || isDashboardRoute(req)) {
       if (role === "super_admin" || role === "writer") {
         return NextResponse.redirect(new URL("/admin", req.url));
       }

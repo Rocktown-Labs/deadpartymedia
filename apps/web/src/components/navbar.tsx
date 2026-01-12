@@ -143,7 +143,8 @@ export default function Navbar() {
                 <UserButton
                   appearance={{
                     elements: {
-                      avatarBox: "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+                      avatarBox:
+                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
                       userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
                       userButtonPopoverActionButton: "text-white hover:bg-gray-900",
                       userButtonPopoverActionButtonText: "text-white",

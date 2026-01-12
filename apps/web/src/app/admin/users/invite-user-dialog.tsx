@@ -38,8 +38,7 @@ export function InviteUserDialog() {
         <DialogHeader>
           <DialogTitle>Invite User</DialogTitle>
           <DialogDescription>
-            Send an invitation to a new user. They will receive an email with a
-            sign-up link.
+            Send an invitation to a new user. They will receive an email with a sign-up link.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -65,13 +64,7 @@ export function InviteUserDialog() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1"
-              />
+              <Input id="email" name="email" type="email" required className="mt-1" />
             </div>
             <div>
               <Label htmlFor="role">Role</Label>

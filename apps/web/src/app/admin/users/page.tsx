@@ -47,15 +47,9 @@ export default async function UsersPage({
             <table className="w-full">
               <thead className="bg-[#0A0A0A] border-b border-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
@@ -86,21 +80,11 @@ export default async function UsersPage({
           <table className="w-full">
             <thead className="bg-[#0A0A0A] border-b border-gray-800">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-bold uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -118,9 +102,8 @@ export default async function UsersPage({
                     </td>
                     <td className="px-6 py-4">
                       {
-                        user.emailAddresses.find(
-                          (email) => email.id === user.primaryEmailAddressId
-                        )?.emailAddress
+                        user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
+                          ?.emailAddress
                       }
                     </td>
                     <td className="px-6 py-4">

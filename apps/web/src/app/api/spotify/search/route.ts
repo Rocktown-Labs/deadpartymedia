@@ -10,10 +10,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("q");
 
     if (!query || query.length < 5) {
-      return NextResponse.json(
-        { error: "Query must be at least 5 characters" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Query must be at least 5 characters" }, { status: 400 });
     }
 
     // Get Spotify credentials from environment
@@ -22,10 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (!clientId || !clientSecret) {
       console.error("Spotify credentials not configured");
-      return NextResponse.json(
-        { error: "Spotify API not configured" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Spotify API not configured" }, { status: 500 });
     }
 
     // Get access token using Client Credentials flow
@@ -42,10 +36,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       console.error("Failed to get Spotify access token:", await tokenResponse.text());
-      return NextResponse.json(
-        { error: "Failed to authenticate with Spotify" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
     }
 
     const tokenData = await tokenResponse.json();
@@ -62,15 +53,12 @@ export async function GET(request: NextRequest) {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     if (!searchResponse.ok) {
       console.error("Spotify search failed:", await searchResponse.text());
-      return NextResponse.json(
-        { error: "Failed to search Spotify" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to search Spotify" }, { status: 500 });
     }
 
     const searchData = await searchResponse.json();
@@ -81,16 +69,15 @@ export async function GET(request: NextRequest) {
       id: artist.id,
       name: artist.name,
       images: artist.images || [],
-      external_urls: artist.external_urls || { spotify: `https://open.spotify.com/artist/${artist.id}` },
+      external_urls: artist.external_urls || {
+        spotify: `https://open.spotify.com/artist/${artist.id}`,
+      },
       genres: artist.genres || [],
     }));
 
     return NextResponse.json(formattedArtists);
   } catch (error) {
     console.error("Error searching Spotify:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
