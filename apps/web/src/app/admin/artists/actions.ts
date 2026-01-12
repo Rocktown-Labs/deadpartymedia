@@ -10,17 +10,16 @@ import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
 import { artistSchema } from "@/lib/validations/artist";
 
-export async function createArtist(
-  formData: FormData,
-  inviteArtist: boolean
-) {
+export async function createArtist(formData: FormData, inviteArtist: boolean) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
   }
 
   if (!(await canCreate())) {
-    throw new Error("Unauthorized: You don't have permission to create artists");
+    throw new Error(
+      "Unauthorized: You don't have permission to create artists"
+    );
   }
 
   // Validate form data
@@ -43,7 +42,9 @@ export async function createArtist(
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.errors.map((e) => e.message).join(", ")
+    );
   }
 
   const validatedData = validationResult.data;
@@ -76,7 +77,7 @@ export async function createArtist(
     .returning();
 
   // If invitation is requested and email is provided, send invitation
-  if (inviteArtist && email) {
+  if (inviteArtist && validatedData.email) {
     const client = await clerkClient();
     try {
       await client.invitations.createInvitation({
@@ -139,7 +140,9 @@ export async function updateArtist(id: number, formData: FormData) {
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.errors.map((e) => e.message).join(", ")
+    );
   }
 
   const validatedData = validationResult.data;
@@ -183,7 +186,9 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
   }
 
   if (!(await canCreate())) {
-    throw new Error("Unauthorized: You don't have permission to invite artists");
+    throw new Error(
+      "Unauthorized: You don't have permission to invite artists"
+    );
   }
 
   const [artist] = await db
@@ -210,10 +215,7 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
 
     // Update artist email if different
     if (email !== artist.email) {
-      await db
-        .update(artists)
-        .set({ email })
-        .where(eq(artists.id, artistId));
+      await db.update(artists).set({ email }).where(eq(artists.id, artistId));
     }
 
     revalidatePath("/admin/artists");

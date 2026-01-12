@@ -39,7 +39,9 @@ export async function createEvent(formData: FormData) {
   const validationResult = eventSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.errors.map((e) => e.message).join(", ")
+    );
   }
 
   const validatedData = validationResult.data;
@@ -58,7 +60,7 @@ export async function createEvent(formData: FormData) {
     image: validatedData.image || null,
     venue: validatedData.venue,
     location: validatedData.location,
-    date: new Date(validatedData.date),
+    date: validatedData.date as any, // Pass date string directly for PostgreSQL date type
     time: validatedData.time || null,
     ticketLink: validatedData.ticketLink || null,
     price: validatedData.price || null,
@@ -89,7 +91,9 @@ export async function updateEvent(id: number, formData: FormData) {
   }
 
   if (!(await canEdit(event.createdById))) {
-    throw new Error("Unauthorized: You don't have permission to edit this event");
+    throw new Error(
+      "Unauthorized: You don't have permission to edit this event"
+    );
   }
 
   // Validate form data
@@ -111,7 +115,9 @@ export async function updateEvent(id: number, formData: FormData) {
   const validationResult = eventSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.errors.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.errors.map((e) => e.message).join(", ")
+    );
   }
 
   const validatedData = validationResult.data;
@@ -132,7 +138,7 @@ export async function updateEvent(id: number, formData: FormData) {
       image: validatedData.image || null,
       venue: validatedData.venue,
       location: validatedData.location,
-      date: new Date(validatedData.date),
+      date: validatedData.date as any, // Pass date string directly for PostgreSQL date type
       time: validatedData.time || null,
       ticketLink: validatedData.ticketLink || null,
       price: validatedData.price || null,
