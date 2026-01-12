@@ -10,7 +10,7 @@ export interface Artist {
   bio: string;
   image: string | null;
   location: string;
-  genre: "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other";
+  genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
   spotify_url: string | null;
   spotify_artist_id: string | null;
   instagram: string | null;
@@ -27,7 +27,7 @@ export interface Artist {
 export interface OnboardArtistData {
   artistName: string;
   location: string;
-  genre: "Country" | "EDM" | "Hardcore & Rock" | "Hip-Hop & R&B" | "Other";
+  genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
   bio: string;
   spotifyId?: string;
   socials?: {
@@ -60,7 +60,9 @@ export function useArtists(genre?: string) {
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await apiClient.get<Artist[] | { results: Artist[] }>(`/artists/${params}`);
+      const response = await apiClient.get<Artist[] | { results: Artist[] }>(
+        `/artists/${params}`
+      );
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -93,9 +95,9 @@ export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(
-        `/artists/${slug}/articles/`,
-      );
+      const response = await apiClient.get<
+        ArticleList[] | { results: ArticleList[] }
+      >(`/artists/${slug}/articles/`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -119,9 +121,9 @@ export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      const response = await apiClient.get<EventList[] | { results: EventList[] }>(
-        `/artists/${slug}/events/`,
-      );
+      const response = await apiClient.get<
+        EventList[] | { results: EventList[] }
+      >(`/artists/${slug}/events/`);
       // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
       // Or direct array if pagination is disabled
       if (Array.isArray(response)) {
@@ -181,14 +183,16 @@ export function useUpdateArtist() {
       formData.append("genre", data.genre);
       // Always send URL fields (even if empty) to allow clearing them
       formData.append("spotify_url", data.spotify_url || "");
-      if (data.spotify_artist_id) formData.append("spotify_artist_id", data.spotify_artist_id);
+      if (data.spotify_artist_id)
+        formData.append("spotify_artist_id", data.spotify_artist_id);
       formData.append("instagram", data.instagram || "");
       formData.append("twitter", data.twitter || "");
       formData.append("tiktok", data.tiktok || "");
       formData.append("website", data.website || "");
       if (data.image) formData.append("image", data.image);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
       const response = await fetch(`${apiUrl}/artists/update_me/`, {
         method: "PATCH",
         body: formData,
@@ -196,8 +200,14 @@ export function useUpdateArtist() {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
+        const error = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
+        throw new Error(
+          error.error ||
+            error.detail ||
+            `HTTP error! status: ${response.status}`
+        );
       }
 
       return response.json();
@@ -229,7 +239,8 @@ export function useOnboardArtist() {
         formData.append("profileImage", data.profileImage);
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
       const response = await fetch(`${apiUrl}/artists/onboard/`, {
         method: "POST",
         body: formData,
@@ -237,8 +248,14 @@ export function useOnboardArtist() {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
+        const error = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
+        throw new Error(
+          error.error ||
+            error.detail ||
+            `HTTP error! status: ${response.status}`
+        );
       }
 
       return response.json();
@@ -256,7 +273,7 @@ export function useSearchSpotifyArtists(query: string) {
     queryFn: async () => {
       if (!query || query.length < 2) return [];
       return apiClient.get<SpotifyArtist[]>(
-        `/artists/search_spotify/?q=${encodeURIComponent(query)}`,
+        `/artists/search_spotify/?q=${encodeURIComponent(query)}`
       );
     },
     enabled: query.length >= 2,

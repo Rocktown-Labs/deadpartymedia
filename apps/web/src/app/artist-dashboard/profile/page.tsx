@@ -45,7 +45,7 @@ export default function ArtistProfilePage() {
       setName(artist.name || "");
       setBio(artist.bio || "");
       setLocation(artist.location || "");
-      setGenre((artist.genre as typeof genre) || "OTHER");
+      setGenre(artist.genre || "OTHER");
       setSpotifyUrl(artist.spotify_url || "");
       setInstagram(artist.instagram || "");
       setTwitter(artist.twitter || "");
@@ -396,7 +396,7 @@ export default function ArtistProfilePage() {
                         setName(artist.name || "");
                         setBio(artist.bio || "");
                         setLocation(artist.location || "");
-                        setGenre((artist.genre as typeof genre) || "OTHER");
+                        setGenre(artist.genre || "OTHER");
                         setSpotifyUrl(artist.spotify_url || "");
                         setInstagram(artist.instagram || "");
                         setTwitter(artist.twitter || "");
