@@ -7,7 +7,11 @@ import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 import { inviteUserSchema } from "@/lib/validations/user";
 
-export async function inviteUser(email: string, role: Roles, redirectUrl?: string) {
+export async function inviteUser(
+  email: string,
+  role: Roles,
+  redirectUrl?: string
+) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
@@ -21,7 +25,9 @@ export async function inviteUser(email: string, role: Roles, redirectUrl?: strin
   const validationResult = inviteUserSchema.safeParse({ email, role });
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.issues.map((e) => e.message).join(", ")
+    );
   }
 
   const validatedData = validationResult.data;
@@ -43,8 +49,11 @@ export async function inviteUser(email: string, role: Roles, redirectUrl?: strin
     const publicMetadata: Record<string, any> = {
       role: validatedData.role,
     };
-    
-    if (validatedData.role === "super_admin" || validatedData.role === "writer") {
+
+    if (
+      validatedData.role === "super_admin" ||
+      validatedData.role === "writer"
+    ) {
       publicMetadata.onboardingComplete = true;
     }
 
@@ -105,15 +114,20 @@ export async function updateUserRole(userId: string, role: Roles) {
     const user = await client.users.getUser(userId);
     const currentMetadata = user.publicMetadata || {};
 
-    // For super_admin and writer roles, set onboardingComplete to true
-    // since they don't need to go through the onboarding flow
+    // Build public metadata with role update
     const publicMetadata: Record<string, any> = {
       ...currentMetadata,
       role,
     };
-    
+
+    // For super_admin and writer roles, set onboardingComplete to true
+    // since they don't need to go through the onboarding flow
     if (role === "super_admin" || role === "writer") {
       publicMetadata.onboardingComplete = true;
+    } else {
+      // For non-admin roles (artist/fan), reset onboardingComplete to false
+      // so users must complete onboarding for their new role
+      publicMetadata.onboardingComplete = false;
     }
 
     await client.users.updateUserMetadata(userId, {
