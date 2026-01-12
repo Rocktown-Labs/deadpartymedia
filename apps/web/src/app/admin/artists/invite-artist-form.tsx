@@ -15,11 +15,15 @@ export function InviteArtistForm({ artistId, email }: InviteArtistFormProps) {
 
   const handleInvite = async () => {
     startTransition(async () => {
-      const result = await inviteArtistToClaim(artistId, email);
-      if (result.success) {
-        toast.success(`Invitation sent to ${email} to claim profile!`);
-      } else {
-        toast.error(result.error || "Failed to send invitation.");
+      try {
+        const result = await inviteArtistToClaim(artistId, email);
+        if (result.success) {
+          toast.success(`Invitation sent to ${email} to claim profile!`);
+        } else {
+          toast.error(result.error || "Failed to send invitation.");
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Failed to send invitation.");
       }
     });
   };
