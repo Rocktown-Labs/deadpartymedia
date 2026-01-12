@@ -7,7 +7,8 @@ import { desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
-import { deleteArtist, inviteArtistToClaim } from "./actions";
+import { deleteArtist } from "./actions";
+import { InviteArtistForm } from "./invite-artist-form";
 
 export default async function ArtistsPage() {
   const { userId } = await auth();
@@ -102,17 +103,10 @@ export default async function ArtistsPage() {
                         </Button>
                       </Link>
                       {!artist.claimed && artist.email && (
-                        <form
-                          action={inviteArtistToClaim.bind(
-                            null,
-                            artist.id,
-                            artist.email!
-                          )}
-                        >
-                          <Button type="submit" variant="outline" size="sm">
-                            Resend Invite
-                          </Button>
-                        </form>
+                        <InviteArtistForm
+                          artistId={artist.id}
+                          email={artist.email}
+                        />
                       )}
                       {isSuperAdmin && (
                         <DeleteConfirm

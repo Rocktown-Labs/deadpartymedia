@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
+import { canCreate, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
 

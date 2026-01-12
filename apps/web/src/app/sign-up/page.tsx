@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,14 +17,6 @@ export default function SignUpPage() {
       return "/onboarding";
     }
     return "/";
-  };
-
-  // Build sign-up URL with query params
-  const getSignUpUrl = () => {
-    const params = new URLSearchParams();
-    if (role) params.set("role", role);
-    if (artistId) params.set("artistId", artistId);
-    return params.toString() ? `/sign-up?${params.toString()}` : "/sign-up";
   };
 
   return (

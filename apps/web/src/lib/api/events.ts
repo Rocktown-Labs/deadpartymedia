@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "./client";
 
 export interface Event {
   id: number;

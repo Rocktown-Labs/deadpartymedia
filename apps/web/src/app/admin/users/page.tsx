@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { canManageUsers } from "@/lib/auth/access";
 import { clerkClient } from "@clerk/nextjs/server";
-import { Roles } from "@/types/globals";
 import { SearchUsers } from "./search-users";
 import { RoleSelectForm } from "./role-select-form";
 import { InviteUserDialog } from "./invite-user-dialog";

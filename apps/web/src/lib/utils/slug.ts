@@ -14,7 +14,7 @@ export async function ensureUniqueSlug(
 ): Promise<string> {
   const { db } = await import("@/lib/db");
   const { posts, events, artists } = await import("@/lib/db/schema");
-  const { eq, and, ne, or } = await import("drizzle-orm");
+  const { eq, and, ne } = await import("drizzle-orm");
 
   let uniqueSlug = slug;
   let counter = 1;

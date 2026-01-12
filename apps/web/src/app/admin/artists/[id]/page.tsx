@@ -4,8 +4,8 @@ import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { canCreate } from "@/lib/auth/access";
 import { ArtistForm } from "@/components/admin/artist-form";
-import { updateArtist, inviteArtistToClaim } from "../actions";
-import { Button } from "@/components/ui/button";
+import { updateArtist } from "../actions";
+import { InviteArtistButton } from "./invite-artist-button";
 
 export default async function EditArtistPage({
   params,
@@ -38,13 +38,7 @@ export default async function EditArtistPage({
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-black">Edit Artist</h1>
         {!artist.claimed && artist.email && (
-          <form
-            action={inviteArtistToClaim.bind(null, artist.id, artist.email!)}
-          >
-            <Button type="submit" variant="outline">
-              Resend Invitation
-            </Button>
-          </form>
+          <InviteArtistButton artistId={artist.id} email={artist.email} />
         )}
       </div>
       <ArtistForm

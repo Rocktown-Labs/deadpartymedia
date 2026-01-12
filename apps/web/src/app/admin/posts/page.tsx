@@ -3,7 +3,7 @@ import { checkRole } from "@/lib/auth/roles";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
