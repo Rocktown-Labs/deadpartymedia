@@ -5,8 +5,8 @@ import { SearchUsers } from "./search-users";
 import { RoleSelectForm } from "./role-select-form";
 import { InviteUserDialog } from "./invite-user-dialog";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
-import { deleteUser, revokeInvitation } from "./actions";
-import { Button } from "@/components/ui/button";
+import { deleteUser } from "./actions";
+import { RevokeInvitationButton } from "./revoke-invitation-button";
 
 export default async function UsersPage({
   searchParams,
@@ -66,16 +66,10 @@ export default async function UsersPage({
                       {(invitation.publicMetadata as any)?.role || "fan"}
                     </td>
                     <td className="px-6 py-4">
-                      <form action={revokeInvitation.bind(null, invitation.id)}>
-                        <Button
-                          type="submit"
-                          variant="outline"
-                          size="sm"
-                          className="text-red-500 hover:text-red-400"
-                        >
-                          Revoke
-                        </Button>
-                      </form>
+                      <RevokeInvitationButton
+                        invitationId={invitation.id}
+                        email={invitation.emailAddress}
+                      />
                     </td>
                   </tr>
                 ))}
