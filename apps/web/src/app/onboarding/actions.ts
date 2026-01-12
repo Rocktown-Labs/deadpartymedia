@@ -81,7 +81,16 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     if (e instanceof ServerValidateError) {
       return e.formState;
     }
-    throw e;
+    // Handle operational errors (database, Clerk API) gracefully
+    console.error("Error completing onboarding:", e);
+    return {
+      ...initialFormState,
+      errors: [
+        e instanceof Error
+          ? e.message
+          : "Failed to complete onboarding. Please try again.",
+      ],
+    } as any;
   }
 }
 

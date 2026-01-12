@@ -22,16 +22,22 @@ export default function OnboardingPage() {
     }
   }, [isLoaded, user, router]);
 
-  // Check if onboarding is already complete
+  // Check if onboarding is already complete or user has admin role
   useEffect(() => {
     if (isLoaded && user) {
       const onboardingComplete = user.publicMetadata?.onboardingComplete;
+      const userRole = user.publicMetadata?.role as string;
+      
+      // Handle admin roles - redirect them immediately
+      if (userRole === "super_admin" || userRole === "writer") {
+        router.push("/admin");
+        return;
+      }
+      
+      // If onboarding is complete, redirect to appropriate dashboard
       if (onboardingComplete) {
-        const userRole = user.publicMetadata?.role as string;
         if (userRole === "artist") {
           router.push("/artist-dashboard");
-        } else if (userRole === "super_admin" || userRole === "writer") {
-          router.push("/admin");
         } else {
           router.push("/dashboard");
         }
@@ -54,6 +60,19 @@ export default function OnboardingPage() {
   // Don't render if not authenticated
   if (!user) {
     return null;
+  }
+
+  // Handle admin roles - they should not be able to change their role
+  // The useEffect above will redirect them, but show loading state while redirecting
+  if (existingRole === "super_admin" || existingRole === "writer") {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7CFC00] mx-auto mb-4"></div>
+          <p className="text-gray-400">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   // Determine which role to use

@@ -38,12 +38,20 @@ export async function inviteUser(email: string, role: Roles, redirectUrl?: strin
   }
 
   try {
+    // For super_admin and writer roles, set onboardingComplete to true
+    // since they don't need to go through the onboarding flow
+    const publicMetadata: Record<string, any> = {
+      role: validatedData.role,
+    };
+    
+    if (validatedData.role === "super_admin" || validatedData.role === "writer") {
+      publicMetadata.onboardingComplete = true;
+    }
+
     const invitation = await client.invitations.createInvitation({
       emailAddress: validatedData.email,
       redirectUrl: redirectUrl || defaultRedirectUrl,
-      publicMetadata: {
-        role: validatedData.role,
-      },
+      publicMetadata,
     });
 
     revalidatePath("/admin/users");
@@ -93,10 +101,23 @@ export async function updateUserRole(userId: string, role: Roles) {
   const client = await clerkClient();
 
   try {
+    // Get current user metadata to preserve existing values
+    const user = await client.users.getUser(userId);
+    const currentMetadata = user.publicMetadata || {};
+
+    // For super_admin and writer roles, set onboardingComplete to true
+    // since they don't need to go through the onboarding flow
+    const publicMetadata: Record<string, any> = {
+      ...currentMetadata,
+      role,
+    };
+    
+    if (role === "super_admin" || role === "writer") {
+      publicMetadata.onboardingComplete = true;
+    }
+
     await client.users.updateUserMetadata(userId, {
-      publicMetadata: {
-        role,
-      },
+      publicMetadata,
     });
 
     revalidatePath("/admin/users");
