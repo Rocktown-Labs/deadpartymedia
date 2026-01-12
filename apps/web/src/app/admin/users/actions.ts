@@ -61,9 +61,7 @@ export async function revokeInvitation(invitationId: string) {
   const client = await clerkClient();
 
   try {
-    await client.invitations.revokeInvitation({
-      invitationId,
-    });
+    await client.invitations.revokeInvitation(invitationId);
 
     revalidatePath("/admin/users");
     return { success: true };
