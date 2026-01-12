@@ -32,59 +32,8 @@ function validateWithZod<T>(schema: any, data: T): string | undefined {
 const fanServerValidate = createServerValidate({
   ...fanFormOptions,
   onServerValidate: async ({ value }) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:34",
-        message: "fanServerValidate onServerValidate entry",
-        data: {
-          hasValue: !!value,
-          valueKeys: value ? Object.keys(value) : null,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     const error = validateWithZod(fanOnboardingSchema, value);
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:36",
-        message: "fanServerValidate validation result",
-        data: { hasError: !!error, errorType: typeof error, errorValue: error },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     if (error) {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "actions.ts:37",
-            message: "fanServerValidate throwing ServerValidateError",
-            data: { error, throwingError: true },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       throw new ServerValidateError({
         formState: {
           ...initialFormState,
@@ -92,40 +41,10 @@ const fanServerValidate = createServerValidate({
         } as any,
       });
     }
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:39",
-        message: "fanServerValidate validation passed",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
   },
 });
 
 export async function fanOnboardingAction(prev: unknown, formData: FormData) {
-  // #region agent log
-  fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "actions.ts:42",
-      message: "fanOnboardingAction entry",
-      data: { hasFormData: !!formData },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "run1",
-      hypothesisId: "A",
-    }),
-  }).catch(() => {});
-  // #endregion
   try {
     const { userId } = await auth();
 
@@ -134,25 +53,6 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     }
 
     const validatedData = await fanServerValidate(formData);
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:50",
-        message: "fanOnboardingAction validatedData received",
-        data: {
-          hasValidatedData: !!validatedData,
-          validatedDataKeys: validatedData ? Object.keys(validatedData) : null,
-          validatedDataName: validatedData?.name,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
@@ -194,59 +94,8 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
 const artistServerValidate = createServerValidate({
   ...artistFormOptions,
   onServerValidate: async ({ value }) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:91",
-        message: "artistServerValidate onServerValidate entry",
-        data: {
-          hasValue: !!value,
-          valueKeys: value ? Object.keys(value) : null,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     const error = validateWithZod(artistOnboardingSchema, value);
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:93",
-        message: "artistServerValidate validation result",
-        data: { hasError: !!error, errorType: typeof error, errorValue: error },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     if (error) {
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "actions.ts:94",
-            message: "artistServerValidate throwing ServerValidateError",
-            data: { error, throwingError: true },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            runId: "run1",
-            hypothesisId: "A",
-          }),
-        }
-      ).catch(() => {});
-      // #endregion
       throw new ServerValidateError({
         formState: {
           ...initialFormState,
@@ -254,21 +103,6 @@ const artistServerValidate = createServerValidate({
         } as any,
       });
     }
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:96",
-        message: "artistServerValidate validation passed",
-        data: {},
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
   },
 });
 
@@ -276,21 +110,6 @@ export async function artistOnboardingAction(
   prev: unknown,
   formData: FormData
 ) {
-  // #region agent log
-  fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      location: "actions.ts:99",
-      message: "artistOnboardingAction entry",
-      data: { hasFormData: !!formData },
-      timestamp: Date.now(),
-      sessionId: "debug-session",
-      runId: "run1",
-      hypothesisId: "A",
-    }),
-  }).catch(() => {});
-  // #endregion
   try {
     const { userId } = await auth();
 
@@ -299,25 +118,6 @@ export async function artistOnboardingAction(
     }
 
     const validatedData = await artistServerValidate(formData);
-    // #region agent log
-    fetch("http://127.0.0.1:7245/ingest/e11f1065-8d66-4a0f-be41-2674079985a7", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "actions.ts:110",
-        message: "artistOnboardingAction validatedData received",
-        data: {
-          hasValidatedData: !!validatedData,
-          validatedDataKeys: validatedData ? Object.keys(validatedData) : null,
-          validatedDataName: validatedData?.name,
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "A",
-      }),
-    }).catch(() => {});
-    // #endregion
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
