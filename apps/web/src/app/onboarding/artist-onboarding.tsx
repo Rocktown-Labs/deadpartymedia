@@ -55,10 +55,47 @@ export function ArtistOnboarding() {
     }
   }, [selectedSpotifyArtist, form]);
 
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep((currentStep + 1) as OnboardingStep);
+  const handleNext = async () => {
+    if (currentStep >= 4) return;
+
+    // Validate required fields for current step before proceeding
+    const formState = form.state;
+    const values = formState.values;
+
+    if (currentStep === 1) {
+      // Step 1: name, location, and genre are required
+      // Trigger validation for each required field to show errors in UI
+      await form.validateField("name", "change");
+      await form.validateField("location", "change");
+      await form.validateField("genre", "change");
+
+      // Check if required fields are filled
+      if (!values.name || values.name.trim() === "") {
+        return; // Don't proceed if name is empty
+      }
+      if (!values.location || values.location.trim() === "") {
+        return; // Don't proceed if location is empty
+      }
+      if (!values.genre) {
+        return; // Don't proceed if genre is not selected
+      }
+    } else if (currentStep === 2) {
+      // Step 2: bio is required (min 10 characters)
+      await form.validateField("bio", "change");
+
+      if (
+        !values.bio ||
+        values.bio.trim() === "" ||
+        values.bio.trim().length < 10 ||
+        values.bio.length > 500
+      ) {
+        return; // Don't proceed if bio is invalid
+      }
     }
+    // Steps 3 and 4 have no required fields, so no validation needed
+
+    // All validations passed, proceed to next step
+    setCurrentStep((currentStep + 1) as OnboardingStep);
   };
 
   const handleBack = () => {

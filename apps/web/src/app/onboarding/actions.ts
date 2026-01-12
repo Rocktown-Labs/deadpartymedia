@@ -56,15 +56,10 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
-    // For fans, if name is empty, use email username or default
-    const name =
-      validatedData.name ||
-      user.emailAddresses[0]?.emailAddress?.split("@")[0] ||
-      "User";
-
     // Update user's profile with name and metadata
+    // validatedData.name is guaranteed to be non-empty by fanOnboardingSchema
     await client.users.updateUser(userId, {
-      firstName: name,
+      firstName: validatedData.name,
     });
 
     // Update user's publicMetadata to set role and mark onboarding as complete
