@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
+      await tokenResponse.text(); // Consume response body
       log.error(
         { operation: "spotify_auth", status: tokenResponse.status },
         "Failed to get Spotify access token"

@@ -1,23 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GET } from '@/app/api/posts/route'
-import { db } from '@/lib/db'
-import { posts } from '@/lib/db/schema'
 
-// Mock database
-vi.mock('@/lib/db', () => ({
-  db: {
+// Mock database with proper chain - use vi.hoisted to properly hoist the variable
+const { mockDbChain } = vi.hoisted(() => {
+  const mockDbChain = {
     select: vi.fn(),
     from: vi.fn(),
     where: vi.fn(),
     orderBy: vi.fn(),
     limit: vi.fn(),
     offset: vi.fn(),
-  },
+  }
+
+  // Set up the chain: select().from().where().orderBy().limit().offset()
+  mockDbChain.select.mockReturnValue({ from: mockDbChain.from })
+  mockDbChain.from.mockReturnValue({ where: mockDbChain.where })
+  mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy })
+  mockDbChain.orderBy.mockReturnValue({ limit: mockDbChain.limit })
+  mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset })
+
+  return { mockDbChain }
+})
+
+vi.mock('@/lib/db', () => ({
+  db: mockDbChain,
 }))
 
 describe('GET /api/posts', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset the chain
+    mockDbChain.select.mockReturnValue({ from: mockDbChain.from })
+    mockDbChain.from.mockReturnValue({ where: mockDbChain.where })
+    mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy })
+    mockDbChain.orderBy.mockReturnValue({ limit: mockDbChain.limit })
+    mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset })
   })
 
   it('should return published posts', async () => {
@@ -39,15 +56,8 @@ describe('GET /api/posts', () => {
       },
     ]
 
-    // Mock the query chain
-    const mockOffset = vi.fn().mockResolvedValue(mockPosts)
-    const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset })
-    const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit })
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy })
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
-    const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
-
-    vi.mocked(db.select).mockReturnValue(mockSelect as any)
+    // Set up the chain to return data
+    mockDbChain.offset.mockResolvedValue(mockPosts)
 
     const request = new Request('http://localhost:3001/api/posts')
     const response = await GET(request)
@@ -77,40 +87,26 @@ describe('GET /api/posts', () => {
       },
     ]
 
-    const mockOffset = vi.fn().mockResolvedValue(mockPosts)
-    const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset })
-    const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit })
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy })
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
-    const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
-
-    vi.mocked(db.select).mockReturnValue(mockSelect as any)
+    mockDbChain.offset.mockResolvedValue(mockPosts)
 
     const request = new Request('http://localhost:3001/api/posts?category=EDM')
     const response = await GET(request)
 
     expect(response.status).toBe(200)
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockDbChain.where).toHaveBeenCalled()
   })
 
   it('should handle pagination with limit and offset', async () => {
     const mockPosts: any[] = []
 
-    const mockOffset = vi.fn().mockResolvedValue(mockPosts)
-    const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset })
-    const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit })
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy })
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
-    const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
-
-    vi.mocked(db.select).mockReturnValue(mockSelect as any)
+    mockDbChain.offset.mockResolvedValue(mockPosts)
 
     const request = new Request('http://localhost:3001/api/posts?limit=5&offset=10')
     const response = await GET(request)
 
     expect(response.status).toBe(200)
-    expect(mockLimit).toHaveBeenCalled()
-    expect(mockOffset).toHaveBeenCalled()
+    expect(mockDbChain.limit).toHaveBeenCalled()
+    expect(mockDbChain.offset).toHaveBeenCalled()
   })
 
   it('should filter cover stories', async () => {
@@ -132,31 +128,17 @@ describe('GET /api/posts', () => {
       },
     ]
 
-    const mockOffset = vi.fn().mockResolvedValue(mockPosts)
-    const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset })
-    const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit })
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy })
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
-    const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
-
-    vi.mocked(db.select).mockReturnValue(mockSelect as any)
+    mockDbChain.offset.mockResolvedValue(mockPosts)
 
     const request = new Request('http://localhost:3001/api/posts?cover_story=true')
     const response = await GET(request)
 
     expect(response.status).toBe(200)
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockDbChain.where).toHaveBeenCalled()
   })
 
   it('should handle database errors', async () => {
-    const mockOffset = vi.fn().mockRejectedValue(new Error('Database error'))
-    const mockLimit = vi.fn().mockReturnValue({ offset: mockOffset })
-    const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit })
-    const mockWhere = vi.fn().mockReturnValue({ orderBy: mockOrderBy })
-    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
-    const mockSelect = vi.fn().mockReturnValue({ from: mockFrom })
-
-    vi.mocked(db.select).mockReturnValue(mockSelect as any)
+    mockDbChain.offset.mockRejectedValue(new Error('Database error'))
 
     const request = new Request('http://localhost:3001/api/posts')
     const response = await GET(request)

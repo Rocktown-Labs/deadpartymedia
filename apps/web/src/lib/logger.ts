@@ -2,7 +2,6 @@ import pino from "pino";
 import { env } from "@dpmedia/env/web";
 
 const isDevelopment = env.NODE_ENV === "development";
-const isProduction = env.NODE_ENV === "production";
 
 // Determine log level based on environment
 const getLogLevel = (): pino.Level => {

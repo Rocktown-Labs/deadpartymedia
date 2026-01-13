@@ -1,11 +1,12 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   getRequestLogger,
   addRequestIdHeader,
   getRequestId,
 } from "@/lib/logger/middleware";
 import { withUserContext } from "@/lib/logger/context";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isArtistDashboardRoute = createRouteMatcher(["/artist-dashboard(.*)"]);
@@ -30,7 +31,6 @@ const isPublicRoute = createRouteMatcher([
   "/hardcore",
   "/hip-hop-r-b",
   "/other",
-  "/sentry-example-page(.*)",
 ]);
 
 // Protected routes that require authentication
@@ -41,7 +41,7 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req: NextRequest) => {
+export default clerkMiddleware(async (auth, req) => {
   const requestId = getRequestId(req);
   const log = getRequestLogger(req);
   let response: NextResponse;
@@ -59,7 +59,11 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       await auth.protect();
     } catch (error) {
       log.warn(
-        { operation: "auth_protect", path: req.nextUrl.pathname },
+        {
+          error: sanitizeError(error),
+          operation: "auth_protect",
+          path: req.nextUrl.pathname,
+        },
         "Unauthorized access attempt"
       );
       response = NextResponse.redirect(new URL("/sign-in", req.url));

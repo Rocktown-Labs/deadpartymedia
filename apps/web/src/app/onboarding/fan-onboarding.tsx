@@ -94,6 +94,8 @@ export function FanOnboarding() {
                 validators={{
                   onChange: ({ value }) =>
                     !value || value.trim() === "" ? "Name is required" : undefined,
+                  onBlur: ({ value }) =>
+                    !value || value.trim() === "" ? "Name is required" : undefined,
                 }}
               >
                 {(field) => (

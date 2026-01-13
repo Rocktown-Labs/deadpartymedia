@@ -1,5 +1,4 @@
 import { vi } from 'vitest'
-import type { artists, posts, events } from '@/lib/db/schema'
 
 /**
  * Mock database module

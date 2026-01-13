@@ -20,6 +20,11 @@ vi.mock('@/lib/db', () => ({
   },
 }))
 
+vi.mock('@/lib/utils/slug', () => ({
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, '-')),
+  ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
+}))
+
 describe('fanOnboardingAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -105,25 +110,23 @@ describe('artistOnboardingAction', () => {
     const userId = 'user_test123'
     vi.mocked(auth).mockResolvedValue({ userId } as any)
 
+    const mockUpdateUserMetadata = vi.fn().mockResolvedValue(undefined)
+    const mockGetUser = vi.fn().mockResolvedValue({
+      id: userId,
+      publicMetadata: {},
+    })
     const mockClient = {
       users: {
-        getUser: vi.fn().mockResolvedValue({
-          publicMetadata: {},
-        }),
-        updateUserMetadata: vi.fn(),
+        getUser: mockGetUser,
+        updateUserMetadata: mockUpdateUserMetadata,
       },
     }
     vi.mocked(clerkClient).mockResolvedValue(mockClient as any)
 
-    // Mock database operations
-    const mockInsert = vi.fn().mockReturnThis()
-    const mockValues = vi.fn().mockReturnThis()
-    const mockReturning = vi.fn().mockResolvedValue([{ id: 1 }])
+    // Mock database operations - db.insert(table).values(...) resolves a promise
+    const mockValues = vi.fn().mockResolvedValue(undefined)
     vi.mocked(db.insert).mockReturnValue({
       values: mockValues,
-    } as any)
-    mockValues.mockReturnValue({
-      returning: mockReturning,
     } as any)
 
     const formData = new FormData()
@@ -134,13 +137,16 @@ describe('artistOnboardingAction', () => {
 
     const result = await artistOnboardingAction(null, formData)
 
-    expect(mockClient.users.updateUserMetadata).toHaveBeenCalledWith(userId, {
+    // Check that the action completed successfully
+    expect((result as any).success).toBe(true)
+    
+    // Verify updateUserMetadata was called with correct arguments
+    expect(mockUpdateUserMetadata).toHaveBeenCalledWith(userId, {
       publicMetadata: {
         role: 'artist',
         onboardingComplete: true,
       },
     })
-    expect((result as any).success).toBe(true)
   })
 
   it('should claim existing artist profile when artistId in metadata', async () => {
@@ -161,7 +167,7 @@ describe('artistOnboardingAction', () => {
     vi.mocked(clerkClient).mockResolvedValue(mockClient as any)
 
     // Mock database select and update
-    const mockSelect = vi.fn().mockReturnThis()
+    const _mockSelect = vi.fn().mockReturnThis()
     const mockFrom = vi.fn().mockReturnThis()
     const mockWhere = vi.fn().mockReturnThis()
     const mockLimit = vi.fn().mockResolvedValue([
@@ -181,7 +187,7 @@ describe('artistOnboardingAction', () => {
       limit: mockLimit,
     } as any)
 
-    const mockUpdate = vi.fn().mockReturnThis()
+    const _mockUpdate = vi.fn().mockReturnThis()
     const mockSet = vi.fn().mockReturnThis()
     vi.mocked(db.update).mockReturnValue({
       set: mockSet,
@@ -219,7 +225,7 @@ describe('artistOnboardingAction', () => {
     vi.mocked(clerkClient).mockResolvedValue(mockClient as any)
 
     // Mock database to return already claimed artist
-    const mockSelect = vi.fn().mockReturnThis()
+    const _mockSelect = vi.fn().mockReturnThis()
     const mockFrom = vi.fn().mockReturnThis()
     const mockWhere = vi.fn().mockReturnThis()
     const mockLimit = vi.fn().mockResolvedValue([

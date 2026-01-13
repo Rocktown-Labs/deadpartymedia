@@ -6,7 +6,7 @@ import path from 'path'
 // This must be run serially if Playwright is configured to run fully parallel
 setup.describe.configure({ mode: 'serial' })
 
-setup('global setup', async ({}) => {
+setup('global setup', async () => {
   await clerkSetup()
 })
 
