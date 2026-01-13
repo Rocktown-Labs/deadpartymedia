@@ -9,42 +9,9 @@ export default function DeadPartyMedia() {
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
   const { data: products, isLoading: productsLoading, error: productsError } = useProducts();
 
-  // Handle loading state
-  if (articlesLoading || eventsLoading || productsLoading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xl mb-4">Loading...</div>
-          <div className="w-16 h-16 border-4 border-[#7CFC00] border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle error state
-  if (articlesError || eventsError || productsError) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4 text-red-500">Error Loading Content</h1>
-          <p className="text-gray-400 mb-4">
-            {articlesError?.message ||
-              eventsError?.message ||
-              productsError?.message ||
-              "Failed to load content"}
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-[#7CFC00] text-black font-bold rounded-lg hover:bg-[#7CFC00]/90"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // Ensure articles and events are arrays
+  // If editorial APIs fail, we still render the homepage and show skeletons/empty states,
+  // while keeping merch (Fourthwall) available.
   const articlesArray = Array.isArray(articles) ? articles : [];
   const eventsArray = Array.isArray(events) ? events : [];
 
@@ -103,6 +70,12 @@ export default function DeadPartyMedia() {
       articlesData={articlesData}
       upcomingEvents={upcomingEvents}
       featuredProducts={featuredProducts}
+      isArticlesLoading={articlesLoading}
+      isEventsLoading={eventsLoading}
+      isProductsLoading={productsLoading}
+      hasArticlesError={Boolean(articlesError)}
+      hasEventsError={Boolean(eventsError)}
+      hasProductsError={Boolean(productsError)}
     />
   );
 }

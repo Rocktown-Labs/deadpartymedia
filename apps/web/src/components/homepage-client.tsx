@@ -1,17 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapPin, Flame, ShoppingBag } from "lucide-react";
+import { MapPin, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
+import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface HomepageClientProps {
   featuredArticles: any[];
   articlesData: any[];
   upcomingEvents: any[];
   featuredProducts: Product[];
+  isArticlesLoading?: boolean;
+  isEventsLoading?: boolean;
+  isProductsLoading?: boolean;
+  hasArticlesError?: boolean;
+  hasEventsError?: boolean;
+  hasProductsError?: boolean;
 }
 
 export default function HomepageClient({
@@ -19,6 +27,12 @@ export default function HomepageClient({
   articlesData = [],
   upcomingEvents = [],
   featuredProducts = [],
+  isArticlesLoading = false,
+  isEventsLoading = false,
+  isProductsLoading = false,
+  hasArticlesError = false,
+  hasEventsError = false,
+  hasProductsError = false,
 }: HomepageClientProps) {
   const [visibleArticles, setVisibleArticles] = useState(9);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -64,7 +78,25 @@ export default function HomepageClient({
         <div className="container mx-auto my-2.5">
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Main Cover Story */}
-            {featuredArticles.length > 0 && (
+            {isArticlesLoading ? (
+              <div className="lg:col-span-8">
+                <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800">
+                  <Skeleton className="absolute inset-0" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
+                    <Skeleton className="h-6 w-40 mb-6" />
+                    <Skeleton className="h-14 w-5/6 mb-4" />
+                    <Skeleton className="h-14 w-3/5 mb-6" />
+                    <Skeleton className="h-6 w-4/5 mb-8" />
+                    <div className="flex items-center space-x-4">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : featuredArticles.length > 0 ? (
               <div className="lg:col-span-8">
                 <Link href={`/article/${featuredArticles[0]?.slug}`}>
                   <div className="relative group cursor-pointer h-full">
@@ -134,6 +166,19 @@ export default function HomepageClient({
                   </div>
                 </Link>
               </div>
+            ) : (
+              <div className="lg:col-span-8">
+                <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800 flex items-center justify-center">
+                  <div className="text-center max-w-md px-6">
+                    <h1 className="text-3xl lg:text-5xl font-black mb-3">Dead Party Media</h1>
+                    <p className="text-gray-400">
+                      {hasArticlesError
+                        ? "Stories are temporarily unavailable. Check back soon."
+                        : "More stories coming soon."}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Sidebar - In This Issue */}
@@ -167,7 +212,26 @@ export default function HomepageClient({
                   In This Issue
                 </h3>
                 <div className="space-y-6">
-                  {featuredArticles.length > 1 ? (
+                  {isArticlesLoading ? (
+                    <>
+                      <div className="group cursor-pointer my-0 py-0 mb-2">
+                        <div className="relative h-48 mb-4 overflow-hidden border border-gray-800">
+                          <Skeleton className="absolute inset-0" />
+                        </div>
+                        <Skeleton className="h-3 w-24 mb-2" />
+                        <Skeleton className="h-6 w-full mb-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </div>
+                      <div className="group cursor-pointer my-0 py-0 mb-2">
+                        <div className="relative h-48 mb-4 overflow-hidden border border-gray-800">
+                          <Skeleton className="absolute inset-0" />
+                        </div>
+                        <Skeleton className="h-3 w-24 mb-2" />
+                        <Skeleton className="h-6 w-full mb-2" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </div>
+                    </>
+                  ) : featuredArticles.length > 1 ? (
                     featuredArticles.slice(1, 3).map((article, index) => (
                       <Link key={article.id || index} href={`/article/${article.slug}`}>
                         <div className="group cursor-pointer my-0 py-0 mb-2">
@@ -239,7 +303,26 @@ export default function HomepageClient({
           </div>
 
           {/* Magazine Grid Layout */}
-          {articlesData.length > 3 ? (
+          {isArticlesLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="group cursor-pointer">
+                  <div className="relative h-80 mb-6 overflow-hidden bg-black border border-gray-800">
+                    <Skeleton className="absolute inset-0" />
+                  </div>
+                  <div className="space-y-3">
+                    <Skeleton className="h-7 w-5/6" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-11/12" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <div className="pt-4 border-t border-gray-800">
+                      <Skeleton className="h-4 w-40" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : articlesData.length > 3 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {articlesData.slice(3, visibleArticles).map((article) => (
                 <Link key={article.id} href={`/article/${article.slug}`}>
@@ -296,7 +379,9 @@ export default function HomepageClient({
             </div>
           ) : (
             <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">More articles coming soon...</p>
+              <p className="text-gray-400 text-lg">
+                {hasArticlesError ? "Stories are temporarily unavailable." : "More articles coming soon..."}
+              </p>
             </div>
           )}
 
@@ -333,110 +418,77 @@ export default function HomepageClient({
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {upcomingEvents.map((event, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="relative h-96 mb-6 overflow-hidden bg-black">
-                  <Image
-                    src={event.image || "/placeholder.svg"}
-                    alt={event.artist}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
-                  <div className="absolute top-4 left-4">
-                    <div className="bg-[#7CFC00] text-black px-4 py-3 font-black">
-                      <div className="text-xs tracking-wider">{event.date.month}</div>
-                      <div className="text-2xl leading-none">{event.date.day}</div>
+          {isEventsLoading ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="group cursor-pointer">
+                  <div className="relative h-96 mb-6 overflow-hidden bg-black border border-gray-800">
+                    <Skeleton className="absolute inset-0" />
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-[#7CFC00] text-black px-4 py-3 font-black">
+                        <Skeleton className="h-3 w-10 bg-black/20" />
+                        <Skeleton className="h-6 w-8 mt-1 bg-black/20" />
+                      </div>
                     </div>
                   </div>
+                  <Skeleton className="h-7 w-2/3 mb-3" />
+                  <Skeleton className="h-4 w-1/2 mb-4" />
+                  <Skeleton className="h-4 w-28" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
-                  {event.artist}
-                </h3>
-                <p className="text-sm text-gray-400 uppercase tracking-wider flex items-center mb-4">
-                  <MapPin className="w-3 h-3 mr-2" />
-                  {event.venue}
-                </p>
-                <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
-                  <span>Get Tickets</span>
-                  <span className="ml-2">→</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Merch Section */}
-      <section className="py-20 px-6 border-t border-gray-800">
-        <div className="container mx-auto">
-          <div className="flex items-end justify-between mb-16">
-            <div>
-              <div className="text-sm tracking-[0.4em] text-gray-500 mb-4 uppercase font-bold">
-                Official Store
-              </div>
-              <h2 className="text-5xl lg:text-6xl font-black tracking-tight">Merch</h2>
+              ))}
             </div>
-            <Link
-              href="/merch"
-              className="text-sm tracking-wider uppercase font-bold text-[#7CFC00] hover:text-[#7CFC00]/80 transition-colors flex items-center space-x-2"
-            >
-              <span>Shop All</span>
-              <span>→</span>
-            </Link>
-          </div>
-
-          {featuredProducts.length > 0 ? (
-            <div className="flex overflow-x-auto gap-8 pb-4 scrollbar-hide -mx-6 px-6">
-              {featuredProducts
-                .filter((product) => product.handle) // Only show products with valid handles
-                .map((product) => (
-                  <Link
-                    key={product.id}
-                    href={`/merch/${product.handle}`}
-                    className="shrink-0 min-w-[300px] max-w-[300px]"
-                  >
-                    <div className="group cursor-pointer">
-                      <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
-                        <Image
-                          src={product.featuredImage.url || "/placeholder.svg"}
-                          alt={product.title}
-                          fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
-                        <div className="absolute top-4 left-4">
-                          <div className="bg-[#9400D3] text-white px-4 py-2 font-black text-xs tracking-wider">
-                            MERCH
-                          </div>
-                        </div>
-                      </div>
-                      <h3 className="text-2xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
-                        {product.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 uppercase tracking-wider flex items-center mb-4">
-                        <ShoppingBag className="w-3 h-3 mr-2" />$
-                        {product.priceRange.minVariantPrice.amount}
-                        {product.priceRange.minVariantPrice.amount !==
-                          product.priceRange.maxVariantPrice.amount &&
-                          ` - $${product.priceRange.maxVariantPrice.amount}`}
-                      </p>
-                      <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
-                        <span>Shop Now</span>
-                        <span className="ml-2">→</span>
+          ) : upcomingEvents.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {upcomingEvents.map((event, index) => (
+                <div key={index} className="group cursor-pointer">
+                  <div className="relative h-96 mb-6 overflow-hidden bg-black">
+                    <Image
+                      src={event.image || "/placeholder.svg"}
+                      alt={event.artist}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-[#7CFC00] text-black px-4 py-3 font-black">
+                        <div className="text-xs tracking-wider">{event.date.month}</div>
+                        <div className="text-2xl leading-none">{event.date.day}</div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  </div>
+                  <h3 className="text-2xl font-black mb-2 group-hover:text-[#7CFC00] transition-colors">
+                    {event.artist}
+                  </h3>
+                  <p className="text-sm text-gray-400 uppercase tracking-wider flex items-center mb-4">
+                    <MapPin className="w-3 h-3 mr-2" />
+                    {event.venue}
+                  </p>
+                  <div className="text-xs font-bold tracking-wider uppercase text-[#7CFC00] flex items-center">
+                    <span>Get Tickets</span>
+                    <span className="ml-2">→</span>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">Check back soon for new merch!</p>
+              <p className="text-gray-400 text-lg">
+                {hasEventsError
+                  ? "Events are temporarily unavailable. Check back soon."
+                  : "No upcoming events right now."}
+              </p>
             </div>
           )}
         </div>
       </section>
+
+      {/* Merch Section */}
+      <MerchCarousel
+        products={featuredProducts}
+        heading="Merch"
+        isLoading={isProductsLoading}
+        hasError={hasProductsError}
+      />
     </div>
   );
 }

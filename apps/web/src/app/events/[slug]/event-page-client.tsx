@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEvent } from "@/lib/api/events";
 import { EventStructuredData } from "@/components/seo/structured-data";
 import posthog from "posthog-js";
+import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface EventPageClientProps {
   slug: string;
@@ -192,6 +193,8 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                 )}
               </div>
             </div>
+
+            <MerchCarousel heading="Merch" />
           </div>
         </main>
       </div>

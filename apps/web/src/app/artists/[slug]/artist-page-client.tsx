@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 import { ArtistStructuredData } from "@/components/seo/structured-data";
 import posthog from "posthog-js";
+import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface ArtistPageClientProps {
   slug: string;
@@ -264,6 +265,8 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
               </div>
             )}
           </div>
+
+          <MerchCarousel heading="Merch" />
         </main>
       </div>
     </>
