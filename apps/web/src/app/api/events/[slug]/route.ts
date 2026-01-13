@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const log = getRequestLogger(request);
   try {
     const { slug } = await params;
 
@@ -37,7 +43,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
     return NextResponse.json(eventData);
   } catch (error) {
-    console.error("Error fetching event:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "fetch_event", slug: (await params).slug },
+      "Error fetching event"
+    );
     return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 });
   }
 }

@@ -4,6 +4,8 @@ import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/li
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 const CART_COOKIE_KEY = "dead-party-cart-id";
 
@@ -98,7 +100,10 @@ export async function updateItemQuantity(
 
     revalidatePath("/");
   } catch (e) {
-    console.error(e);
+    logger.error(
+      { error: sanitizeError(e), operation: "update_cart_item_quantity" },
+      "Error updating item quantity"
+    );
     return "Error updating item quantity";
   }
 }
@@ -108,19 +113,25 @@ export async function redirectToCheckout(_currency: string): Promise<void> {
   const cartId = await getCartId();
 
   if (!cartId) {
-    console.error("Missing cart ID");
+    logger.error({ operation: "redirect_to_checkout" }, "Missing cart ID");
     return;
   }
 
   if (!CHECKOUT_URL) {
-    console.error("Missing checkout URL configuration");
+    logger.error(
+      { operation: "redirect_to_checkout" },
+      "Missing checkout URL configuration"
+    );
     return;
   }
 
   const cart = await getCart(cartId, "USD");
 
   if (!cart) {
-    console.error("Error fetching cart");
+    logger.error(
+      { operation: "redirect_to_checkout", cartId },
+      "Error fetching cart"
+    );
     return;
   }
 

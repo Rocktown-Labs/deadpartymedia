@@ -16,6 +16,9 @@ import {
   artistOnboardingSchema,
 } from "@/lib/validations/onboarding";
 import { fanFormOptions, artistFormOptions } from "./form-options";
+import { logger } from "@/lib/logger";
+import { withUserContext } from "@/lib/logger/context";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 // Helper to validate with Zod and return errors in TanStack Form format
 function validateWithZod<T>(schema: any, data: T): string | undefined {
@@ -45,8 +48,9 @@ const fanServerValidate = createServerValidate({
 });
 
 export async function fanOnboardingAction(prev: unknown, formData: FormData) {
+  const { userId } = await auth();
+  const log = userId ? withUserContext(logger, userId, "fan") : logger;
   try {
-    const { userId } = await auth();
 
     if (!userId) {
       redirect("/sign-in");
@@ -82,7 +86,10 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
       return e.formState;
     }
     // Handle operational errors (database, Clerk API) gracefully
-    console.error("Error completing onboarding:", e);
+    log.error(
+      { error: sanitizeError(e), operation: "fan_onboarding" },
+      "Error completing onboarding"
+    );
     return {
       ...initialFormState,
       errors: [
@@ -114,8 +121,9 @@ export async function artistOnboardingAction(
   prev: unknown,
   formData: FormData
 ) {
+  const { userId } = await auth();
+  const log = userId ? withUserContext(logger, userId, "artist") : logger;
   try {
-    const { userId } = await auth();
 
     if (!userId) {
       redirect("/sign-in");
@@ -218,7 +226,10 @@ export async function artistOnboardingAction(
       return e.formState;
     }
     // Handle operational errors (database, Clerk API) gracefully
-    console.error("Error completing onboarding:", e);
+    log.error(
+      { error: sanitizeError(e), operation: "artist_onboarding" },
+      "Error completing onboarding"
+    );
     return {
       ...initialFormState,
       errors: [

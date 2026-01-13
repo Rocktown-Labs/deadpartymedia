@@ -1,10 +1,11 @@
 "use client";
-import { use } from "react";
+import { use, useRef } from "react";
 import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 import { ArtistStructuredData } from "@/components/seo/structured-data";
+import posthog from "posthog-js";
 
 interface ArtistPageProps {
   params: Promise<{ slug: string }>;
@@ -19,6 +20,32 @@ export default function ArtistDetailPage({ params }: ArtistPageProps) {
   // Ensure articles and events are arrays
   const articlesArray = Array.isArray(articles) ? articles : [];
   const eventsArray = Array.isArray(events) ? events : [];
+  const artistViewedRef = useRef<string | null>(null);
+
+  // Track artist profile viewed event - using ref to prevent duplicate tracking
+  if (artist && artistViewedRef.current !== artist.slug) {
+    posthog.capture("artist_profile_viewed", {
+      artist_id: artist.id,
+      artist_slug: artist.slug,
+      artist_name: artist.name,
+      artist_genre: artist.genre,
+      artist_location: artist.location,
+      article_count: artist.article_count,
+      event_count: artist.event_count,
+    });
+    artistViewedRef.current = artist.slug;
+  }
+
+  // Helper function to track social link clicks
+  const handleSocialClick = (platform: string, url: string) => {
+    posthog.capture("artist_social_clicked", {
+      artist_id: artist?.id,
+      artist_slug: artist?.slug,
+      artist_name: artist?.name,
+      platform,
+      url,
+    });
+  };
 
   if (artistLoading) {
     return (
@@ -86,6 +113,7 @@ export default function ArtistDetailPage({ params }: ArtistPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                        onClick={() => handleSocialClick("instagram", artist.instagram!)}
                       >
                         <Instagram className="w-5 h-5" />
                       </a>
@@ -96,6 +124,7 @@ export default function ArtistDetailPage({ params }: ArtistPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                        onClick={() => handleSocialClick("twitter", artist.twitter!)}
                       >
                         <Twitter className="w-5 h-5" />
                       </a>
@@ -106,6 +135,7 @@ export default function ArtistDetailPage({ params }: ArtistPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors text-sm font-bold"
+                        onClick={() => handleSocialClick("tiktok", artist.tiktok!)}
                       >
                         TT
                       </a>
@@ -116,6 +146,7 @@ export default function ArtistDetailPage({ params }: ArtistPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                        onClick={() => handleSocialClick("website", artist.website!)}
                       >
                         🌐
                       </a>

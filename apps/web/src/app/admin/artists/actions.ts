@@ -9,12 +9,16 @@ import { canCreate, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
 import { artistSchema } from "@/lib/validations/artist";
+import { logger } from "@/lib/logger";
+import { withUserContext, withOperationContext } from "@/lib/logger/context";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 export async function createArtist(formData: FormData, inviteArtist: boolean) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
   }
+  const log = withUserContext(logger, userId);
 
   if (!(await canCreate())) {
     throw new Error("Unauthorized: You don't have permission to create artists");
@@ -85,7 +89,10 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
         },
       });
     } catch (error) {
-      console.error("Failed to send artist invitation:", error);
+      withOperationContext(log, "send_artist_invitation", "artist", artist.id).error(
+        { error: sanitizeError(error), artistId: artist.id },
+        "Failed to send artist invitation"
+      );
       // Continue even if invitation fails - artist is already created
     }
   }

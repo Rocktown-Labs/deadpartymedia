@@ -8,6 +8,7 @@ import { useCart } from "./cart-context";
 import Image from "next/image";
 import { DEFAULT_OPTION } from "@/lib/constants";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import posthog from "posthog-js";
 
 function CheckoutButton() {
   const { pending } = useFormStatus();
@@ -129,6 +130,16 @@ export default function CartModal() {
                           onClick={() => {
                             updateCartItem(item.merchandise.id, "delete");
                             removeItem(null, item.merchandise.id);
+
+                            // Track cart item removed event
+                            posthog.capture("cart_item_removed", {
+                              product_id: item.merchandise.product.id,
+                              product_title: item.merchandise.product.title,
+                              variant_id: item.merchandise.id,
+                              variant_title: item.merchandise.title,
+                              quantity: item.quantity,
+                              price: item.cost.totalAmount.amount,
+                            });
                           }}
                           className="p-2 hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
                         >
@@ -169,7 +180,25 @@ export default function CartModal() {
               </div>
 
               {/* Checkout Button */}
-              <form action={() => redirectToCheckout(cart.currency)}>
+              <form
+                action={() => {
+                  // Track checkout started event
+                  posthog.capture("checkout_started", {
+                    cart_total: cart.cost.totalAmount.amount,
+                    currency: cart.currency,
+                    item_count: cart.totalQuantity,
+                    items: cart.lines.map((item) => ({
+                      product_id: item.merchandise.product.id,
+                      product_title: item.merchandise.product.title,
+                      variant_id: item.merchandise.id,
+                      quantity: item.quantity,
+                      price: item.cost.totalAmount.amount,
+                    })),
+                  });
+
+                  redirectToCheckout(cart.currency);
+                }}
+              >
                 <CheckoutButton />
               </form>
             </div>

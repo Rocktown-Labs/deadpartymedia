@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -9,6 +9,7 @@ import { useArticle, useArticleComments, useCreateComment } from "@/lib/api/arti
 import { useUser } from "@clerk/nextjs";
 import { useMarkArticleRead } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
+import posthog from "posthog-js";
 
 interface ArticlePageProps {
   params: Promise<{
@@ -24,6 +25,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   const createComment = useCreateComment();
   const markArticleRead = useMarkArticleRead();
   const [commentText, setCommentText] = useState("");
+  const articleViewedRef = useRef<string | null>(null);
 
   // Track article read when article loads and user is logged in
   useEffect(() => {
@@ -38,6 +40,19 @@ export default function ArticlePage({ params }: ArticlePageProps) {
     }
   }, [article, isSignedIn, currentUser, markArticleRead]);
 
+  // Track article viewed event (top of content funnel) - using ref to prevent duplicate tracking
+  if (article && articleViewedRef.current !== article.slug) {
+    posthog.capture("article_viewed", {
+      article_id: article.id,
+      article_slug: article.slug,
+      article_title: article.title,
+      article_category: article.category,
+      author_name: article.author?.name,
+      is_signed_in: isSignedIn,
+    });
+    articleViewedRef.current = article.slug;
+  }
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || !isSignedIn || !currentUser) return;
@@ -47,10 +62,38 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         slug: slug,
         content: commentText,
       });
+
+      // Track comment posted event
+      posthog.capture("comment_posted", {
+        article_id: article?.id,
+        article_slug: slug,
+        article_title: article?.title,
+        comment_length: commentText.length,
+      });
+
       setCommentText("");
     } catch (error) {
       console.error("Error posting comment:", error);
+      posthog.captureException(error);
     }
+  };
+
+  const handleLikeClick = () => {
+    posthog.capture("article_liked", {
+      article_id: article?.id,
+      article_slug: slug,
+      article_title: article?.title,
+      article_category: article?.category,
+    });
+  };
+
+  const handleShareClick = () => {
+    posthog.capture("article_shared", {
+      article_id: article?.id,
+      article_slug: slug,
+      article_title: article?.title,
+      article_category: article?.category,
+    });
   };
 
   if (isLoading) {
@@ -119,6 +162,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                   variant="outline"
                   size="sm"
                   className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black bg-transparent"
+                  onClick={handleLikeClick}
                 >
                   <Heart className="w-4 h-4 mr-2" />
                   Like
@@ -127,6 +171,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                   variant="outline"
                   size="sm"
                   className="border-[#9400D3] text-[#9400D3] hover:bg-[#9400D3] hover:text-white bg-transparent"
+                  onClick={handleShareClick}
                 >
                   <Share2 className="w-4 h-4 mr-2" />
                   Share

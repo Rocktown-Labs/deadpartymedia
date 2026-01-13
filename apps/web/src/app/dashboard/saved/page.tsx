@@ -15,19 +15,30 @@ import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import posthog from "posthog-js";
 
 export default function SavedPage() {
   const { data: savedArticles, isLoading } = useSavedArticles();
   const unsaveArticle = useUnsaveArticle();
 
-  const handleUnsave = async (e: React.MouseEvent, savedId: number) => {
+  const handleUnsave = async (e: React.MouseEvent, savedId: number, article: { id: number; slug: string; title: string }) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       await unsaveArticle.mutateAsync(savedId);
+
+      // Track article unsaved event
+      posthog.capture("article_unsaved", {
+        article_id: article.id,
+        article_slug: article.slug,
+        article_title: article.title,
+        saved_id: savedId,
+      });
+
       toast.success("Article unsaved");
-    } catch {
+    } catch (error) {
       toast.error("Failed to unsave article");
+      posthog.captureException(error);
     }
   };
 
@@ -130,7 +141,7 @@ export default function SavedPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={(e) => handleUnsave(e, item.id)}
+                      onClick={(e) => handleUnsave(e, item.id, article)}
                       className="border-gray-700 hover:border-red-500 text-red-500 hover:text-red-400"
                     >
                       <X className="w-4 h-4 mr-2" />

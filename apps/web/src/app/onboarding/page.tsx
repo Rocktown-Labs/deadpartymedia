@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { FanOnboarding } from "./fan-onboarding";
 import { ArtistOnboarding } from "./artist-onboarding";
+import posthog from "posthog-js";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -117,7 +118,14 @@ export default function OnboardingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => setSelectedRole("fan")}
+                  onClick={() => {
+                    setSelectedRole("fan");
+                    // Track onboarding role selection
+                    posthog.capture("onboarding_role_selected", {
+                      role: "fan",
+                      user_id: user?.id,
+                    });
+                  }}
                   className={`p-6 rounded-lg border-2 transition-all text-left ${
                     selectedRole === "fan"
                       ? "border-[#7CFC00] bg-[#7CFC00]/10"
@@ -131,7 +139,14 @@ export default function OnboardingPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedRole("artist")}
+                  onClick={() => {
+                    setSelectedRole("artist");
+                    // Track onboarding role selection
+                    posthog.capture("onboarding_role_selected", {
+                      role: "artist",
+                      user_id: user?.id,
+                    });
+                  }}
                   className={`p-6 rounded-lg border-2 transition-all text-left ${
                     selectedRole === "artist"
                       ? "border-[#7CFC00] bg-[#7CFC00]/10"

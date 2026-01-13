@@ -2,6 +2,8 @@
 
 import { TAGS } from "./constants";
 import type { Cart, Product, ProductOption } from "./types";
+import { logger } from "./logger";
+import { sanitizeError } from "./logger/sanitize";
 
 const FOURTHWALL_API_URL =
   process.env.NEXT_PUBLIC_FW_API_URL || "https://storefront-api.fourthwall.com/v1";
@@ -70,7 +72,7 @@ async function fourthwallFetch<T>({
     const cleanPath = path.startsWith("/") ? path.substring(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    console.log("Fetching from Fourthwall:", url);
+    logger.debug({ operation: "fourthwall_fetch", url }, "Fetching from Fourthwall");
 
     const result = await fetch(url, {
       method: "GET",
@@ -83,14 +85,20 @@ async function fourthwallFetch<T>({
 
     if (!result.ok) {
       const errorText = await result.text();
-      console.error("Fourthwall API error:", result.status, errorText);
+      logger.error(
+        { operation: "fourthwall_fetch", status: result.status, url },
+        "Fourthwall API error"
+      );
       throw new Error(`HTTP ${result.status}: ${errorText}`);
     }
 
     const body = await result.json();
     return body;
   } catch (e) {
-    console.error("Fourthwall fetch error:", e);
+    logger.error(
+      { error: sanitizeError(e), operation: "fourthwall_fetch" },
+      "Fourthwall fetch error"
+    );
     throw e;
   }
 }
@@ -111,7 +119,7 @@ async function fourthwallMutate<T>({
     const cleanPath = path.startsWith("/") ? path.substring(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    console.log("Mutating Fourthwall:", url);
+    logger.debug({ operation: "fourthwall_mutate", url, method }, "Mutating Fourthwall");
 
     const result = await fetch(url, {
       method,
@@ -287,17 +295,23 @@ export async function getProducts(currency = "USD"): Promise<Product[]> {
       cache: "no-store",
     });
 
-    console.log(`Found ${data.results.length} products`);
+    logger.info(
+      { operation: "get_products", count: data.results.length },
+      "Found products"
+    );
     return data.results.map(transformProduct);
   } catch (e) {
-    console.error("Error fetching products:", e);
+    logger.error(
+      { error: sanitizeError(e), operation: "get_products" },
+      "Error fetching products"
+    );
     return [];
   }
 }
 
 export async function getProduct(slug: string, currency = "USD"): Promise<Product | undefined> {
   if (!slug || slug === "undefined") {
-    console.error("getProduct called with invalid slug:", slug);
+    logger.warn({ operation: "get_product", slug }, "getProduct called with invalid slug");
     return undefined;
   }
 
@@ -310,7 +324,10 @@ export async function getProduct(slug: string, currency = "USD"): Promise<Produc
 
     return transformProduct(data);
   } catch (e) {
-    console.error("Error fetching product:", e);
+    logger.error(
+      { error: sanitizeError(e), operation: "get_product", slug },
+      "Error fetching product"
+    );
     return undefined;
   }
 }

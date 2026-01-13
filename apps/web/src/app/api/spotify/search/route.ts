@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 /**
  * Search for artists on Spotify using the Spotify Web API
  * Uses Client Credentials flow (no user authentication required for search)
  */
 export async function GET(request: NextRequest) {
+  const log = getRequestLogger(request);
+  const searchParams = request.nextUrl.searchParams;
+  const query = searchParams.get("q");
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q");
 
     if (!query || query.length < 5) {
       return NextResponse.json({ error: "Query must be at least 5 characters" }, { status: 400 });
@@ -18,7 +22,7 @@ export async function GET(request: NextRequest) {
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      console.error("Spotify credentials not configured");
+      log.error({ operation: "spotify_search" }, "Spotify credentials not configured");
       return NextResponse.json({ error: "Spotify API not configured" }, { status: 500 });
     }
 
@@ -35,7 +39,11 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      console.error("Failed to get Spotify access token:", await tokenResponse.text());
+      const errorText = await tokenResponse.text();
+      log.error(
+        { operation: "spotify_auth", status: tokenResponse.status },
+        "Failed to get Spotify access token"
+      );
       return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
     }
 
@@ -57,7 +65,10 @@ export async function GET(request: NextRequest) {
     );
 
     if (!searchResponse.ok) {
-      console.error("Spotify search failed:", await searchResponse.text());
+      log.error(
+        { operation: "spotify_search", status: searchResponse.status, query },
+        "Spotify search failed"
+      );
       return NextResponse.json({ error: "Failed to search Spotify" }, { status: 500 });
     }
 
@@ -77,7 +88,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(formattedArtists);
   } catch (error) {
-    console.error("Error searching Spotify:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "spotify_search", query },
+      "Error searching Spotify"
+    );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

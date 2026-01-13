@@ -6,6 +6,7 @@ import { useCart } from "./cart-context";
 import type { Product, ProductVariant } from "@/lib/types";
 import { ShoppingCart } from "lucide-react";
 import { useProduct } from "../product/product-context";
+import posthog from "posthog-js";
 
 function SubmitButton({ availableForSale }: { availableForSale: boolean }) {
   const { pending } = useFormStatus();
@@ -50,6 +51,17 @@ export function AddToCart({ product }: { product: Product }) {
         if (!variant) return;
         addCartItem(variant, product);
         await addItem(null, variant.id);
+
+        // Track add to cart event
+        posthog.capture("product_added_to_cart", {
+          product_id: product.id,
+          product_title: product.title,
+          product_handle: product.handle,
+          variant_id: variant.id,
+          variant_title: variant.title,
+          price: variant.price.amount,
+          currency: variant.price.currencyCode,
+        });
       }}
     >
       <SubmitButton availableForSale={availableForSale} />

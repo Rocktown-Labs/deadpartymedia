@@ -7,12 +7,16 @@ import type {
   UserUpdateInput,
   PasswordChangeInput,
 } from "@/lib/validations/user";
+import { logger } from "@/lib/logger";
+import { withUserContext } from "@/lib/logger/context";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 export async function updateUserProfile(data: UserUpdateInput) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
   }
+  const log = withUserContext(logger, userId);
 
   // Validate input
   const validationResult = userUpdateSchema.safeParse(data);
@@ -38,7 +42,10 @@ export async function updateUserProfile(data: UserUpdateInput) {
 
     return { success: true };
   } catch (error: any) {
-    console.error("Error updating user profile:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "update_user_profile" },
+      "Error updating user profile"
+    );
     return {
       success: false,
       error: error.errors?.[0]?.longMessage || "Failed to update profile",

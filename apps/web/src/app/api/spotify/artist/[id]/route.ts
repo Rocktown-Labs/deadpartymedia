@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 /**
  * Get artist details by Spotify ID using the Spotify Web API
  * Uses Client Credentials flow (no user authentication required)
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const log = getRequestLogger(request);
   try {
     const { id } = await params;
 
@@ -17,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      console.error("Spotify credentials not configured");
+      log.error({ operation: "spotify_artist_fetch" }, "Spotify credentials not configured");
       return NextResponse.json({ error: "Spotify API not configured" }, { status: 500 });
     }
 
@@ -34,7 +40,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (!tokenResponse.ok) {
-      console.error("Failed to get Spotify access token:", await tokenResponse.text());
+      log.error(
+        { operation: "spotify_auth", status: tokenResponse.status },
+        "Failed to get Spotify access token"
+      );
       return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
     }
 
@@ -61,7 +70,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           { status: 429 },
         );
       }
-      console.error("Spotify artist fetch failed:", await artistResponse.text());
+      log.error(
+        { operation: "spotify_artist_fetch", status: artistResponse.status, artistId: id },
+        "Spotify artist fetch failed"
+      );
       return NextResponse.json({ error: "Failed to fetch artist from Spotify" }, { status: 500 });
     }
 
@@ -80,7 +92,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json(formattedArtist);
   } catch (error) {
-    console.error("Error fetching Spotify artist:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "spotify_artist_fetch", artistId: (await params).id },
+      "Error fetching Spotify artist"
+    );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

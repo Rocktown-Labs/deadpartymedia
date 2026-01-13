@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEvent } from "@/lib/api/events";
 import { EventStructuredData } from "@/components/seo/structured-data";
+import posthog from "posthog-js";
 
 interface EventPageProps {
   params: Promise<{ slug: string }>;
@@ -172,6 +173,20 @@ export default function EventDetailPage({ params }: EventPageProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold text-center py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      // Track event ticket clicked (conversion event)
+                      posthog.capture("event_ticket_clicked", {
+                        event_id: event.id,
+                        event_slug: event.slug,
+                        event_title: event.title,
+                        event_date: event.date,
+                        event_venue: event.venue,
+                        event_location: event.location,
+                        event_genre: event.genre,
+                        event_price: event.price,
+                        ticket_link: event.ticket_link,
+                      });
+                    }}
                   >
                     Get Tickets
                     <ExternalLink className="w-4 h-4" />

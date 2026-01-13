@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import { useProduct, useUpdateURL } from "./product-context";
 import type { ProductOption, ProductVariant } from "@/lib/types";
+import posthog from "posthog-js";
 
 type Combination = {
   id: string;
@@ -64,6 +65,13 @@ export function VariantSelector({
                 onClick={() => {
                   const newState = updateOption(optionNameLowerCase, value);
                   updateURL(newState);
+
+                  // Track product variant selection
+                  posthog.capture("product_variant_selected", {
+                    option_name: option.name,
+                    option_value: value,
+                    is_available: !!isAvailableForSale,
+                  });
                 }}
                 key={value}
                 aria-disabled={!isAvailableForSale}

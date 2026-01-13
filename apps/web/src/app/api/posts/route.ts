@@ -1,9 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const log = getRequestLogger(request);
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
@@ -50,7 +53,10 @@ export async function GET(request: Request) {
       results: articles,
     });
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "fetch_posts" },
+      "Error fetching posts"
+    );
     return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
   }
 }

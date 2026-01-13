@@ -1,5 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getRequestLogger,
+  addRequestIdHeader,
+  getRequestId,
+} from "@/lib/logger/middleware";
+import { withUserContext } from "@/lib/logger/context";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isArtistDashboardRoute = createRouteMatcher(["/artist-dashboard(.*)"]);
@@ -24,6 +30,7 @@ const isPublicRoute = createRouteMatcher([
   "/hardcore",
   "/hip-hop-r-b",
   "/other",
+  "/sentry-example-page(.*)",
 ]);
 
 // Protected routes that require authentication
@@ -34,29 +41,64 @@ const isProtectedRoute = createRouteMatcher([
   "/onboarding(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  const requestId = getRequestId(req);
+  const log = getRequestLogger(req);
+  let response: NextResponse;
+
   // Allow public routes
   if (isPublicRoute(req)) {
-    return NextResponse.next();
+    response = NextResponse.next();
+    addRequestIdHeader(response, requestId);
+    return response;
   }
 
   // Protect routes that require authentication
   if (isProtectedRoute(req)) {
-    await auth.protect();
+    try {
+      await auth.protect();
+    } catch (error) {
+      log.warn(
+        { operation: "auth_protect", path: req.nextUrl.pathname },
+        "Unauthorized access attempt"
+      );
+      response = NextResponse.redirect(new URL("/sign-in", req.url));
+      addRequestIdHeader(response, requestId);
+      return response;
+    }
   }
 
-  const { sessionClaims } = await auth();
+  const { sessionClaims, userId } = await auth();
   const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
   const role = sessionClaims?.metadata?.role as string | undefined;
+
+  // Add user context to logger if authenticated
+  if (userId) {
+    const userLog = withUserContext(log, userId, role);
+    userLog.debug(
+      { path: req.nextUrl.pathname, role, onboardingComplete },
+      "Authenticated request"
+    );
+  }
 
   // Handle onboarding flow - redirect to onboarding if not complete
   if (!onboardingComplete) {
     // Allow access to onboarding route
     if (isOnboardingRoute(req)) {
-      return NextResponse.next();
+      response = NextResponse.next();
+      addRequestIdHeader(response, requestId);
+      return response;
     }
     // Redirect to onboarding if not completed
-    return NextResponse.redirect(new URL("/onboarding", req.url));
+    if (userId) {
+      log.info(
+        { userId, operation: "onboarding_redirect" },
+        "Redirecting to onboarding"
+      );
+    }
+    response = NextResponse.redirect(new URL("/onboarding", req.url));
+    addRequestIdHeader(response, requestId);
+    return response;
   }
 
   // Handle role-based routing for authenticated users with completed onboarding
@@ -68,24 +110,40 @@ export default clerkMiddleware(async (auth, req) => {
       (role === "fan" && isDashboardRoute(req));
 
     if (isCorrectRoute) {
-      return NextResponse.next();
+      response = NextResponse.next();
+      addRequestIdHeader(response, requestId);
+      return response;
     }
 
     // Redirect to correct dashboard based on role
-    if (isAdminRoute(req) || isArtistDashboardRoute(req) || isDashboardRoute(req)) {
-      if (role === "super_admin" || role === "writer") {
-        return NextResponse.redirect(new URL("/admin", req.url));
+    if (
+      isAdminRoute(req) ||
+      isArtistDashboardRoute(req) ||
+      isDashboardRoute(req)
+    ) {
+      const targetPath =
+        role === "super_admin" || role === "writer"
+          ? "/admin"
+          : role === "artist"
+            ? "/artist-dashboard"
+            : "/dashboard";
+
+      if (userId) {
+        log.info(
+          { userId, role, operation: "role_based_redirect", targetPath },
+          "Redirecting to role-appropriate dashboard"
+        );
       }
-      if (role === "artist") {
-        return NextResponse.redirect(new URL("/artist-dashboard", req.url));
-      }
-      if (role === "fan") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
-      }
+
+      response = NextResponse.redirect(new URL(targetPath, req.url));
+      addRequestIdHeader(response, requestId);
+      return response;
     }
   }
 
-  return NextResponse.next();
+  response = NextResponse.next();
+  addRequestIdHeader(response, requestId);
+  return response;
 });
 
 export const config = {

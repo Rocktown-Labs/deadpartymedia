@@ -1,6 +1,8 @@
 import type { Article } from "./articles";
 import type { Event } from "./events";
 import type { Artist } from "./artists";
+import { logger } from "../logger";
+import { sanitizeError } from "../logger/sanitize";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -38,7 +40,10 @@ export async function getArticle(slug: string): Promise<Article | null> {
   try {
     return await serverFetch<Article>(`/articles/${slug}/`);
   } catch (error) {
-    console.error(`Error fetching article ${slug}:`, error);
+    logger.error(
+      { error: sanitizeError(error), operation: "get_article", slug },
+      "Error fetching article"
+    );
     return null;
   }
 }
@@ -50,7 +55,10 @@ export async function getEvent(slug: string): Promise<Event | null> {
   try {
     return await serverFetch<Event>(`/events/${slug}/`);
   } catch (error) {
-    console.error(`Error fetching event ${slug}:`, error);
+    logger.error(
+      { error: sanitizeError(error), operation: "get_event", slug },
+      "Error fetching event"
+    );
     return null;
   }
 }
@@ -62,7 +70,10 @@ export async function getArtist(slug: string): Promise<Artist | null> {
   try {
     return await serverFetch<Artist>(`/artists/${slug}/`);
   } catch (error) {
-    console.error(`Error fetching artist ${slug}:`, error);
+    logger.error(
+      { error: sanitizeError(error), operation: "get_artist", slug },
+      "Error fetching artist"
+    );
     return null;
   }
 }

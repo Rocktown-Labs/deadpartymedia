@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
+import { withOperationContext } from "@/lib/logger/context";
 
 export async function POST(req: NextRequest) {
+  const log = getRequestLogger(req);
   try {
     const evt = await verifyWebhook(req);
 
@@ -17,7 +21,10 @@ export async function POST(req: NextRequest) {
       )?.email_address;
 
       if (!primaryEmail) {
-        console.error("No primary email found for user:", id);
+        log.error(
+          { operation: "webhook_user_created", userId: id },
+          "No primary email found for user"
+        );
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
@@ -30,7 +37,10 @@ export async function POST(req: NextRequest) {
         imageUrl: image_url || null,
       });
 
-      console.log(`User synced to database: ${id} (${primaryEmail})`);
+      withOperationContext(log, "webhook_user_created", "user", id).info(
+        { userId: id },
+        "User synced to database"
+      );
     }
 
     // Handle user.updated event
@@ -42,7 +52,10 @@ export async function POST(req: NextRequest) {
       )?.email_address;
 
       if (!primaryEmail) {
-        console.error("No primary email found for user:", id);
+        log.error(
+          { operation: "webhook_user_updated", userId: id },
+          "No primary email found for user"
+        );
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
@@ -58,7 +71,10 @@ export async function POST(req: NextRequest) {
         })
         .where(eq(users.clerkId, id));
 
-      console.log(`User updated in database: ${id} (${primaryEmail})`);
+      withOperationContext(log, "webhook_user_updated", "user", id).info(
+        { userId: id },
+        "User updated in database"
+      );
     }
 
     // Handle user.deleted event
@@ -68,12 +84,18 @@ export async function POST(req: NextRequest) {
       // Delete user from database
       await db.delete(users).where(eq(users.clerkId, id!));
 
-      console.log(`User deleted from database: ${id}`);
+      withOperationContext(log, "webhook_user_deleted", "user", id).info(
+        { userId: id },
+        "User deleted from database"
+      );
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err) {
-    console.error("Error verifying webhook:", err);
+    log.error(
+      { error: sanitizeError(err), operation: "webhook_verification" },
+      "Error verifying webhook"
+    );
     return NextResponse.json({ error: "Error verifying webhook" }, { status: 400 });
   }
 }

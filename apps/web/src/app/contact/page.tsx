@@ -2,8 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import posthog from "posthog-js";
 
 export default function ContactPage() {
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    // Track contact form submitted event
+    posthog.capture("contact_form_submitted", {
+      has_first_name: !!formData.get("firstName"),
+      has_last_name: !!formData.get("lastName"),
+      has_email: !!formData.get("email"),
+      has_message: !!formData.get("message"),
+      message_length: (formData.get("message") as string)?.length || 0,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Main Content */}
@@ -18,11 +33,12 @@ export default function ContactPage() {
           </div>
 
           <Card className="bg-[#111111] border-gray-800 p-8">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleFormSubmit}>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <input
                     type="text"
+                    name="firstName"
                     placeholder="First name (required)"
                     className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-700 rounded focus:border-[#7CFC00] focus:outline-none text-white placeholder-gray-500"
                     required
@@ -31,6 +47,7 @@ export default function ContactPage() {
                 <div>
                   <input
                     type="text"
+                    name="lastName"
                     placeholder="Last name (required)"
                     className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-700 rounded focus:border-[#7CFC00] focus:outline-none text-white placeholder-gray-500"
                     required
@@ -40,6 +57,7 @@ export default function ContactPage() {
               <div>
                 <input
                   type="email"
+                  name="email"
                   placeholder="Email (required)"
                   className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-700 rounded focus:border-[#7CFC00] focus:outline-none text-white placeholder-gray-500"
                   required
@@ -47,13 +65,14 @@ export default function ContactPage() {
               </div>
               <div>
                 <textarea
+                  name="message"
                   placeholder="Message"
                   rows={6}
                   className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-700 rounded focus:border-[#7CFC00]  focus:outline-none text-white placeholder-gray-500 resize-none"
                 ></textarea>
               </div>
               <div className="text-center">
-                <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded">
+                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-3 rounded">
                   Send
                 </Button>
               </div>

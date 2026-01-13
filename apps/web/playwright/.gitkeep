@@ -1,0 +1,5 @@
+# This directory stores Clerk authentication state for Playwright tests
+# The .clerk subdirectory is created automatically and contains:
+# - user.json (fan user auth state)
+# - artist.json (artist user auth state)
+# - admin.json (admin user auth state)

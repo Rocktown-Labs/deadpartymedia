@@ -1,9 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const log = getRequestLogger(request);
   try {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
@@ -56,7 +59,10 @@ export async function GET(request: Request) {
       results: eventList,
     });
   } catch (error) {
-    console.error("Error fetching events:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "fetch_events" },
+      "Error fetching events"
+    );
     return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
   }
 }

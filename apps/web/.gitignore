@@ -10,6 +10,11 @@
 
 # Testing
 /coverage
+/test-results
+/playwright-report
+/playwright/.cache
+/playwright/.clerk
+*.spec.ts.snap
 
 # Build outputs
 /.next/
@@ -59,3 +64,6 @@ dev-dist
 .dev.vars*
 
 .open-next
+
+# Sentry Config File
+.env.sentry-build-plugin
