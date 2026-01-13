@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 import type { EventList } from "./events";
 
@@ -123,8 +123,59 @@ export function useCurrentUserArtist() {
   });
 }
 
-// Note: useUpdateArtist and useOnboardArtist removed - these should use server actions instead
-// See apps/web/src/app/onboarding/actions.ts for artist onboarding
+export interface UpdateArtistInput {
+  name: string;
+  bio: string;
+  location: string;
+  genre: Artist["genre"];
+  spotify_url?: string;
+  instagram?: string;
+  twitter?: string;
+  tiktok?: string;
+  website?: string;
+  image?: File | string | null;
+}
+
+export function useUpdateArtist() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: UpdateArtistInput) => {
+      const formData = new FormData();
+      formData.append("name", input.name);
+      formData.append("bio", input.bio);
+      formData.append("location", input.location);
+      formData.append("genre", input.genre);
+
+      formData.append("spotify_url", input.spotify_url ?? "");
+      formData.append("instagram", input.instagram ?? "");
+      formData.append("twitter", input.twitter ?? "");
+      formData.append("tiktok", input.tiktok ?? "");
+      formData.append("website", input.website ?? "");
+
+      if (input.image instanceof File) {
+        formData.append("image", input.image);
+      } else if (typeof input.image === "string") {
+        formData.append("image", input.image);
+      }
+
+      const response = await fetch("/api/artists/me", {
+        method: "PATCH",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Update failed" }));
+        throw new Error(errorData.error || "Failed to update artist");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user-artist"] });
+    },
+  });
+}
 
 export function useSearchSpotifyArtists(query: string) {
   return useQuery<SpotifyArtist[]>({

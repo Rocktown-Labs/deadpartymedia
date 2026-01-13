@@ -233,20 +233,24 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
       const availableForSale =
         v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0;
 
+      const selectedOptions = [
+        {
+          name: "Size",
+          value: v.attributes.size?.name,
+        },
+        {
+          name: "Color",
+          value: v.attributes.color?.name,
+        },
+      ]
+        .filter((opt): opt is { name: string; value: string } => Boolean(opt.value))
+        .map((opt) => ({ name: opt.name, value: opt.value }));
+
       return {
         id: v.id,
         title: v.name,
         availableForSale,
-        selectedOptions: [
-          {
-            name: "Size",
-            value: v.attributes.size?.name,
-          },
-          {
-            name: "Color",
-            value: v.attributes.color?.name,
-          },
-        ],
+        selectedOptions,
         price: {
           amount: v.unitPrice.value.toString(),
           currencyCode: v.unitPrice.currency,
