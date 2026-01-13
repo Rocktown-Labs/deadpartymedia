@@ -11,12 +11,12 @@ export default function SignUpPage() {
   const role = searchParams.get("role");
   const artistId = searchParams.get("artistId");
 
-  // Build redirect URL based on role
+  // Build redirect URL based on role - always go to onboarding after sign-up
   const getRedirectUrl = () => {
     if (role === "artist") {
-      return "/onboarding";
+      return "/onboarding?role=artist";
     }
-    return "/";
+    return "/onboarding";
   };
 
   return (
@@ -50,7 +50,8 @@ export default function SignUpPage() {
             routing="path"
             path="/sign-up"
             signInUrl="/sign-in"
-            afterSignUpUrl={getRedirectUrl()}
+            forceRedirectUrl={getRedirectUrl()}
+            fallbackRedirectUrl={getRedirectUrl()}
             appearance={{
               elements: {
                 rootBox: "mx-auto",

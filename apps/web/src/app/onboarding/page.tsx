@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { FanOnboarding } from "./fan-onboarding";
@@ -10,11 +10,13 @@ import posthog from "posthog-js";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
   const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | undefined>(undefined);
 
   // Get role information
   const existingRole = user?.publicMetadata?.role as string | undefined;
+  const roleFromUrl = searchParams.get("role") as "fan" | "artist" | null;
 
   // Check if user is loaded and authenticated
   useEffect(() => {
@@ -22,6 +24,19 @@ export default function OnboardingPage() {
       router.push("/sign-in");
     }
   }, [isLoaded, user, router]);
+
+  // Auto-select role from URL params if user has no existing role
+  useEffect(() => {
+    if (isLoaded && user && !existingRole && roleFromUrl && (roleFromUrl === "fan" || roleFromUrl === "artist")) {
+      setSelectedRole(roleFromUrl);
+      // Track onboarding role selection from URL
+      posthog.capture("onboarding_role_selected", {
+        role: roleFromUrl,
+        user_id: user?.id,
+        source: "url_param",
+      });
+    }
+  }, [isLoaded, user, existingRole, roleFromUrl]);
 
   // Check if onboarding is already complete or user has admin role
   useEffect(() => {

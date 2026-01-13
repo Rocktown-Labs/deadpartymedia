@@ -12,10 +12,19 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const year = now.getUTCFullYear();
     const monthIndex = now.getUTCMonth();
-    const monthStart = new Date(Date.UTC(year, monthIndex, 1));
-    const nextMonthStart = new Date(Date.UTC(year, monthIndex + 1, 1));
+
+    // For timestamp columns (posts.publishedAt): use Date objects
+    const monthStartTimestamp = new Date(Date.UTC(year, monthIndex, 1));
+    const nextMonthStartTimestamp = new Date(Date.UTC(year, monthIndex + 1, 1));
+
+    // For date columns (events.date): use date-only strings (YYYY-MM-DD)
+    const monthStartDateOnly = monthStartTimestamp.toISOString().split("T")[0];
+    const nextMonthStartDateOnly = nextMonthStartTimestamp
+      .toISOString()
+      .split("T")[0];
 
     // New Articles: published posts with publishedAt in this month
+    // publishedAt is a timestamp column, so use Date objects
     const newArticlesResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(posts)
@@ -23,22 +32,23 @@ export async function GET(request: NextRequest) {
         and(
           eq(posts.status, "published"),
           isNotNull(posts.publishedAt),
-          gte(posts.publishedAt, monthStart),
-          lt(posts.publishedAt, nextMonthStart)
+          gte(posts.publishedAt, monthStartTimestamp),
+          lt(posts.publishedAt, nextMonthStartTimestamp)
         )
       );
 
     const newArticlesCount = newArticlesResult[0]?.count ?? 0;
 
     // Live Events: published events with date in this month
+    // Use date-only strings for date column comparison
     const liveEventsResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(events)
       .where(
         and(
           eq(events.status, "published"),
-          gte(events.date, monthStart.toISOString().split("T")[0]),
-          lt(events.date, nextMonthStart.toISOString().split("T")[0])
+          gte(events.date, monthStartDateOnly),
+          lt(events.date, nextMonthStartDateOnly)
         )
       );
 
@@ -54,8 +64,8 @@ export async function GET(request: NextRequest) {
         and(
           eq(posts.status, "published"),
           isNotNull(posts.publishedAt),
-          gte(posts.publishedAt, monthStart),
-          lt(posts.publishedAt, nextMonthStart)
+          gte(posts.publishedAt, monthStartTimestamp),
+          lt(posts.publishedAt, nextMonthStartTimestamp)
         )
       );
 
@@ -66,8 +76,8 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(events.status, "published"),
-          gte(events.date, monthStart.toISOString().split("T")[0]),
-          lt(events.date, nextMonthStart.toISOString().split("T")[0])
+          gte(events.date, monthStartDateOnly),
+          lt(events.date, nextMonthStartDateOnly)
         )
       );
 
@@ -78,8 +88,10 @@ export async function GET(request: NextRequest) {
     const featuredArtistsCount = uniqueArtistIds.size;
 
     return NextResponse.json({
-      monthStart: monthStart.toISOString().split("T")[0],
-      monthEnd: new Date(nextMonthStart.getTime() - 1).toISOString().split("T")[0],
+      monthStart: monthStartDateOnly,
+      monthEnd: new Date(nextMonthStartTimestamp.getTime() - 1)
+        .toISOString()
+        .split("T")[0],
       featuredArtistsCount,
       liveEventsCount,
       newArticlesCount,
@@ -89,6 +101,9 @@ export async function GET(request: NextRequest) {
       { error: sanitizeError(error), operation: "fetch_monthly_stats" },
       "Error fetching monthly stats"
     );
-    return NextResponse.json({ error: "Failed to fetch monthly stats" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch monthly stats" },
+      { status: 500 }
+    );
   }
 }
