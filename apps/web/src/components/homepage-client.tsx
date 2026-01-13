@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
+import { useRouter } from "next/navigation";
 
 interface HomepageClientProps {
   featuredArticles: any[];
@@ -34,6 +35,7 @@ export default function HomepageClient({
   hasEventsError = false,
   hasProductsError = false,
 }: HomepageClientProps) {
+  const router = useRouter();
   const [visibleArticles, setVisibleArticles] = useState(9);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -196,10 +198,16 @@ export default function HomepageClient({
                   editorial team.
                 </p>
                 <div className="space-y-3">
-                  <Button className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-sm">
+                  <Button
+                    className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-sm"
+                    onClick={() => router.push("/sign-up?role=artist")}
+                  >
                     Artist Registration
                   </Button>
-                  <Button className="w-full bg-transparent border border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-sm">
+                  <Button
+                    className="w-full bg-transparent border border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-sm"
+                    onClick={() => router.push("/sign-in")}
+                  >
                     Sign In
                   </Button>
                 </div>
