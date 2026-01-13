@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, startTransition } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -74,10 +74,7 @@ export function FanOnboarding() {
                 }
               });
               
-              // Call the server action inside startTransition - required for useActionState
-              startTransition(() => {
               action(formData);
-              });
             }}>
               {/* Form Errors */}
               {formErrors.length > 0 && (
