@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useRouter } from "next/navigation";
+import { useMonthlyHomepageStats } from "@/lib/api/stats";
 
 interface HomepageClientProps {
   featuredArticles: any[];
@@ -36,6 +37,7 @@ export default function HomepageClient({
   hasProductsError = false,
 }: HomepageClientProps) {
   const router = useRouter();
+  const { data: monthlyStats, isLoading: isStatsLoading } = useMonthlyHomepageStats();
   const [visibleArticles, setVisibleArticles] = useState(9);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -281,15 +283,33 @@ export default function HomepageClient({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">Featured Artists</span>
-                    <span className="text-lg font-black text-[#7CFC00]">24</span>
+                    {isStatsLoading ? (
+                      <Skeleton className="h-6 w-8" />
+                    ) : (
+                      <span className="text-lg font-black text-[#7CFC00]">
+                        {monthlyStats?.featuredArtistsCount ?? "—"}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">Live Events</span>
-                    <span className="text-lg font-black text-[#9400D3]">18</span>
+                    {isStatsLoading ? (
+                      <Skeleton className="h-6 w-8" />
+                    ) : (
+                      <span className="text-lg font-black text-[#9400D3]">
+                        {monthlyStats?.liveEventsCount ?? "—"}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-400">New Articles</span>
-                    <span className="text-lg font-black text-white">32</span>
+                    {isStatsLoading ? (
+                      <Skeleton className="h-6 w-8" />
+                    ) : (
+                      <span className="text-lg font-black text-white">
+                        {monthlyStats?.newArticlesCount ?? "—"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
