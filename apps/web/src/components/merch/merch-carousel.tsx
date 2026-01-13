@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import type { Route } from "next";
 import { ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/lib/api/products";
@@ -11,7 +12,7 @@ interface MerchCarouselProps {
   products?: Product[];
   limit?: number;
   heading?: string;
-  ctaHref?: string;
+  ctaHref?: Route;
   ctaLabel?: string;
   isLoading?: boolean;
   hasError?: boolean;
@@ -84,7 +85,7 @@ export function MerchCarousel({
             {visibleProducts.map((product) => (
               <Link
                 key={product.id}
-                href={`/merch/${product.handle}`}
+                href={`/merch/${product.handle}` as Route}
                 className="shrink-0 min-w-[300px] max-w-[300px]"
               >
                 <div className="group cursor-pointer">

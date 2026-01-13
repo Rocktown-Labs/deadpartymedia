@@ -54,16 +54,16 @@ export function ArticleComments({
     }
   }
 
-  const visibleCount =
-    typeof commentCount === "number"
-      ? commentCount
-      : Array.isArray(comments)
-        ? comments.length
-        : 0;
+  const renderedCount = Array.isArray(comments) ? comments.length : 0;
+  const totalCount = typeof commentCount === "number" ? commentCount : renderedCount;
+  const hasTotalCountContext = totalCount > renderedCount;
 
   return (
     <section id="comments" className="mt-16 border-t border-gray-800 pt-8 scroll-mt-28">
-      <h2 className="text-2xl font-black mb-6">Comments ({visibleCount})</h2>
+      <h2 className="text-2xl font-black mb-6">
+        Comments ({renderedCount}
+        {hasTotalCountContext ? ` of ${totalCount}` : ""})
+      </h2>
 
       <SignedIn>
         <form onSubmit={handleCommentSubmit} className="mb-8">
