@@ -10,11 +10,30 @@ import { useUser } from "@clerk/nextjs";
 import { useMarkArticleRead } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
 import posthog from "posthog-js";
+import type { Metadata } from "next";
+import { getArticle } from "@/lib/api/server";
+import { generateArticleMetadata } from "@/lib/seo";
 
 interface ArticlePageProps {
   params: Promise<{
     slug: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: ArticlePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticle(slug);
+
+  if (!article) {
+    return {
+      title: "Article Not Found | Dead Party Media",
+      description: "The article you're looking for could not be found.",
+    };
+  }
+
+  return generateArticleMetadata(article);
 }
 
 export default function ArticlePage({ params }: ArticlePageProps) {

@@ -5,6 +5,9 @@ import type { Artist } from "./api/artists";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
+const SITE_NAME = "Dead Party Media";
+const DEFAULT_DESCRIPTION =
+  "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.";
 
 /**
  * Convert a relative path to an absolute URL
@@ -21,6 +24,66 @@ export function getAbsoluteUrl(path: string): string {
 }
 
 /**
+ * Strip HTML tags and decode HTML entities from a string
+ */
+export function stripHtml(html: string | null | undefined): string {
+  if (!html) return "";
+  // Remove HTML tags
+  const text = html.replace(/<[^>]*>/g, "");
+  // Decode common HTML entities
+  return text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .trim();
+}
+
+/**
+ * Truncate text to a maximum length, adding ellipsis if truncated
+ */
+export function truncateText(text: string, maxLength: number = 160): string {
+  if (!text || text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3).trim() + "...";
+}
+
+/**
+ * Sanitize and truncate description text from HTML or plain text
+ */
+export function sanitizeDescription(
+  description: string | null | undefined,
+  fallback: string = DEFAULT_DESCRIPTION,
+  maxLength: number = 160
+): string {
+  if (!description) return fallback;
+  const cleaned = stripHtml(description);
+  if (!cleaned) return fallback;
+  return truncateText(cleaned, maxLength);
+}
+
+/**
+ * Get the OG image URL for a specific type and slug (for dynamic OG images)
+ */
+export function getOgImageUrl(type: "article" | "event" | "artist", slug: string): string {
+  return getAbsoluteUrl(`/api/og/${type}/${slug}`);
+}
+
+/**
+ * Get site defaults for metadata
+ */
+export function getSiteDefaults() {
+  return {
+    siteUrl: SITE_URL,
+    siteName: SITE_NAME,
+    defaultDescription: DEFAULT_DESCRIPTION,
+    defaultOgImage: DEFAULT_OG_IMAGE,
+  };
+}
+
+/**
  * Convert an image path to an absolute URL
  * Handles Django media URLs and relative paths
  */
@@ -34,7 +97,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
     return imagePath;
   }
 
-  // Handle Django media URLs (e.g., /media/articles/image.jpg)
+  // Handle media URLs (e.g., /media/articles/image.jpg)
   if (imagePath.startsWith("/media/")) {
     // Check if we have a media base URL configured
     const mediaBaseUrl = process.env.NEXT_PUBLIC_MEDIA_URL;
@@ -43,14 +106,6 @@ export function getImageUrl(imagePath: string | null | undefined): string {
       const base = mediaBaseUrl.replace(/\/$/, "");
       const path = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
       return `${base}${path}`;
-    }
-
-    // If API_URL is set and includes the domain, use it
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (apiUrl && (apiUrl.startsWith("http://") || apiUrl.startsWith("https://"))) {
-      // Extract base URL from API URL (remove /api suffix)
-      const apiBase = apiUrl.replace(/\/api\/?$/, "");
-      return `${apiBase}${imagePath}`;
     }
 
     // Fallback: assume media is served from the same domain as the site
@@ -70,9 +125,14 @@ export function getImageUrl(imagePath: string | null | undefined): string {
  * Generate metadata for an article
  */
 export function generateArticleMetadata(article: Article): Metadata {
-  const title = `${article.title} | Dead Party Media`;
-  const description = article.excerpt || `Read about ${article.title} on Dead Party Media`;
-  const image = getImageUrl(article.cover_image);
+  const title = `${article.title} | ${SITE_NAME}`;
+  const description = sanitizeDescription(
+    article.excerpt,
+    `Read about ${article.title} on ${SITE_NAME}`
+  );
+  // Use dynamic OG image, fallback to cover image or default
+  const ogImageUrl = getOgImageUrl("article", article.slug);
+  const fallbackImage = getImageUrl(article.cover_image);
   const url = getAbsoluteUrl(`/article/${article.slug}`);
 
   return {
@@ -82,10 +142,16 @@ export function generateArticleMetadata(article: Article): Metadata {
       title,
       description,
       url,
-      siteName: "Dead Party Media",
+      siteName: SITE_NAME,
       images: [
         {
-          url: image,
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+        {
+          url: fallbackImage,
           width: 1200,
           height: 630,
           alt: article.title,
@@ -94,13 +160,13 @@ export function generateArticleMetadata(article: Article): Metadata {
       locale: "en_US",
       type: "article",
       publishedTime: article.published_at || undefined,
-      authors: [article.author.name],
+      authors: article.author?.name ? [article.author.name] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [ogImageUrl, fallbackImage],
     },
     alternates: {
       canonical: url,
@@ -112,11 +178,13 @@ export function generateArticleMetadata(article: Article): Metadata {
  * Generate metadata for an event
  */
 export function generateEventMetadata(event: Event): Metadata {
-  const title = `${event.title} | Dead Party Media`;
-  const description =
-    event.description ||
-    `${event.title} - ${event.venue}, ${event.location} on ${new Date(event.date).toLocaleDateString()}`;
-  const image = getImageUrl(event.image);
+  const title = `${event.title} | ${SITE_NAME}`;
+  const eventDate = event.date ? new Date(event.date).toLocaleDateString() : "";
+  const fallbackDescription = `${event.title} - ${event.venue}, ${event.location}${eventDate ? ` on ${eventDate}` : ""}`;
+  const description = sanitizeDescription(event.description, fallbackDescription);
+  // Use dynamic OG image, fallback to event image or default
+  const ogImageUrl = getOgImageUrl("event", event.slug);
+  const fallbackImage = getImageUrl(event.image);
   const url = getAbsoluteUrl(`/events/${event.slug}`);
 
   return {
@@ -126,10 +194,16 @@ export function generateEventMetadata(event: Event): Metadata {
       title,
       description,
       url,
-      siteName: "Dead Party Media",
+      siteName: SITE_NAME,
       images: [
         {
-          url: image,
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: event.title,
+        },
+        {
+          url: fallbackImage,
           width: 1200,
           height: 630,
           alt: event.title,
@@ -142,7 +216,7 @@ export function generateEventMetadata(event: Event): Metadata {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [ogImageUrl, fallbackImage],
     },
     alternates: {
       canonical: url,
@@ -154,9 +228,14 @@ export function generateEventMetadata(event: Event): Metadata {
  * Generate metadata for an artist
  */
 export function generateArtistMetadata(artist: Artist): Metadata {
-  const title = `${artist.name} | Dead Party Media`;
-  const description = artist.bio || `Learn more about ${artist.name} on Dead Party Media`;
-  const image = getImageUrl(artist.image);
+  const title = `${artist.name} | ${SITE_NAME}`;
+  const description = sanitizeDescription(
+    artist.bio,
+    `Learn more about ${artist.name} on ${SITE_NAME}`
+  );
+  // Use dynamic OG image, fallback to artist image or default
+  const ogImageUrl = getOgImageUrl("artist", artist.slug);
+  const fallbackImage = getImageUrl(artist.image);
   const url = getAbsoluteUrl(`/artists/${artist.slug}`);
 
   return {
@@ -166,10 +245,16 @@ export function generateArtistMetadata(artist: Artist): Metadata {
       title,
       description,
       url,
-      siteName: "Dead Party Media",
+      siteName: SITE_NAME,
       images: [
         {
-          url: image,
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: artist.name,
+        },
+        {
+          url: fallbackImage,
           width: 1200,
           height: 630,
           alt: artist.name,
@@ -182,7 +267,7 @@ export function generateArtistMetadata(artist: Artist): Metadata {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [ogImageUrl, fallbackImage],
     },
     alternates: {
       canonical: url,

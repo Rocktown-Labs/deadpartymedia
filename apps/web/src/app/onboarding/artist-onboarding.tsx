@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, startTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -17,6 +17,9 @@ import { artistFormOptions } from "./form-options";
 import { SpotifySearch } from "@/components/spotify-search";
 import type { SpotifyArtist } from "@/lib/api/artists";
 import { toast } from "sonner";
+import { Upload, X } from "lucide-react";
+import { validateImageFile } from "@/lib/upload";
+import NextImage from "next/image";
 
 type OnboardingStep = 1 | 2 | 3 | 4;
 
@@ -26,6 +29,9 @@ export function ArtistOnboarding() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
   const [selectedSpotifyArtist, setSelectedSpotifyArtist] = useState<SpotifyArtist | null>(null);
   const [state, action] = useActionState(artistOnboardingAction, initialFormState);
+  const [profileImageUploading, setProfileImageUploading] = useState(false);
+  const [useProfileImageUrl, setUseProfileImageUrl] = useState(false);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
     ...artistFormOptions,
@@ -54,6 +60,45 @@ export function ArtistOnboarding() {
       form.setFieldValue("spotifyArtistId", selectedSpotifyArtist.id);
     }
   }, [selectedSpotifyArtist, form]);
+
+  const handleProfileImageUpload = async (file: File | null) => {
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid image file");
+      return;
+    }
+
+    setProfileImageUploading(true);
+
+    try {
+      const loadingId = toast.loading("Uploading profile image...");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/image?type=profile", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(error.error || "Failed to upload image");
+      }
+
+      const { url } = await response.json();
+      form.setFieldValue("image", url);
+      setUseProfileImageUrl(false);
+      toast.dismiss(loadingId);
+      toast.success("Profile image uploaded successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload profile image");
+    } finally {
+      setProfileImageUploading(false);
+    }
+  };
 
   const handleNext = async () => {
     if (currentStep >= 4) return;
@@ -158,8 +203,10 @@ export function ArtistOnboarding() {
                 }
               });
               
-              // Call the server action - server-side validation will handle errors
+              // Call the server action inside startTransition - required for useActionState
+              startTransition(() => {
               action(formData);
+              });
             }}>
               {/* Form Errors */}
               {formErrors.length > 0 && (
@@ -332,18 +379,80 @@ export function ArtistOnboarding() {
                   <form.Field name="image">
                     {(field) => (
                       <div>
-                        <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
-                          Profile Image URL
-                        </label>
-                        <input
-                          name={field.name}
-                          type="url"
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                          placeholder="https://example.com/image.jpg"
-                        />
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-bold uppercase tracking-wider">
+                            Profile Image
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setUseProfileImageUrl(!useProfileImageUrl)}
+                            className="text-xs text-[#7CFC00] hover:text-[#6EE600] transition-colors"
+                          >
+                            {useProfileImageUrl ? "Upload File" : "Use URL"}
+                          </button>
+                        </div>
+
+                        {useProfileImageUrl ? (
+                          <input
+                            name={field.name}
+                            type="url"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
+                            placeholder="https://example.com/image.jpg"
+                          />
+                        ) : (
+                          <div className="space-y-2">
+                            <input
+                              ref={profileImageInputRef}
+                              type="file"
+                              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleProfileImageUpload(file);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => profileImageInputRef.current?.click()}
+                                disabled={profileImageUploading}
+                                className="px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white hover:border-[#7CFC00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                              >
+                                <Upload className="w-4 h-4" />
+                                {profileImageUploading ? "Uploading..." : "Upload Image"}
+                              </button>
+                              {field.state.value && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    field.handleChange("");
+                                    if (profileImageInputRef.current) {
+                                      profileImageInputRef.current.value = "";
+                                    }
+                                  }}
+                                  className="px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white hover:border-red-500 transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            {field.state.value && (
+                              <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
+                                <NextImage
+                                  src={field.state.value}
+                                  alt="Profile preview"
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </form.Field>

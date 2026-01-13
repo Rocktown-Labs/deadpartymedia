@@ -6,15 +6,28 @@ import { logger } from "./logger";
 import { sanitizeError } from "./logger/sanitize";
 
 const FOURTHWALL_API_URL =
-  process.env.NEXT_PUBLIC_FW_API_URL || "https://storefront-api.fourthwall.com/v1";
+  process.env.NEXT_PUBLIC_FW_API_URL ||
+  "https://storefront-api.fourthwall.com/v1";
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_FW_STOREFRONT_TOKEN;
+
+if (!STOREFRONT_TOKEN) {
+  logger.warn(
+    { operation: "fourthwall_config" },
+    "NEXT_PUBLIC_FW_STOREFRONT_TOKEN is not set. Fourthwall API calls will fail."
+  );
+}
 
 type FourthwallProduct = {
   id: string;
   name: string;
   slug: string;
   description: string;
-  images: Array<{ url: string; transformedUrl: string; width: number; height: number }>;
+  images: Array<{
+    url: string;
+    transformedUrl: string;
+    width: number;
+    height: number;
+  }>;
   variants: Array<{
     id: string;
     name: string;
@@ -26,7 +39,7 @@ type FourthwallProduct = {
       color?: { name: string; swatch: string };
       size?: { name: string };
     };
-    stock: { type: "Limited" | "Unlimited"; inStock?: number };
+    stock: { type: "LIMITED" | "UNLIMITED"; inStock?: number };
     images: Array<{ url: string; transformedUrl: string }>;
   }>;
 };
@@ -72,7 +85,10 @@ async function fourthwallFetch<T>({
     const cleanPath = path.startsWith("/") ? path.substring(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    logger.debug({ operation: "fourthwall_fetch", url }, "Fetching from Fourthwall");
+    logger.debug(
+      { operation: "fourthwall_fetch", url },
+      "Fetching from Fourthwall"
+    );
 
     const result = await fetch(url, {
       method: "GET",
@@ -119,7 +135,10 @@ async function fourthwallMutate<T>({
     const cleanPath = path.startsWith("/") ? path.substring(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    logger.debug({ operation: "fourthwall_mutate", url, method }, "Mutating Fourthwall");
+    logger.debug(
+      { operation: "fourthwall_mutate", url, method },
+      "Mutating Fourthwall"
+    );
 
     const result = await fetch(url, {
       method,
@@ -143,7 +162,24 @@ async function fourthwallMutate<T>({
 }
 
 function transformProduct(fwProduct: FourthwallProduct): Product {
-  const prices = fwProduct.variants.map((v) => Number.parseFloat(v.unitPrice.value.toString()));
+  // Add debug logging to verify stock data
+  logger.debug(
+    {
+      operation: "transform_product",
+      product_id: fwProduct.id,
+      variants: fwProduct.variants.map((v) => ({
+        id: v.id,
+        stock_type: v.stock.type,
+        in_stock: v.stock.inStock,
+        available: v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0,
+      })),
+    },
+    "Transforming product with stock data"
+  );
+
+  const prices = fwProduct.variants.map((v) =>
+    Number.parseFloat(v.unitPrice.value.toString())
+  );
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const currency = fwProduct.variants[0]?.unitPrice.currency || "USD";
@@ -161,11 +197,13 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
     }
   });
 
-  const options: ProductOption[] = Array.from(optionsMap.entries()).map(([name, values]) => ({
-    id: name.toLowerCase(),
-    name,
-    values: Array.from(values),
-  }));
+  const options: ProductOption[] = Array.from(optionsMap.entries()).map(
+    ([name, values]) => ({
+      id: name.toLowerCase(),
+      name,
+      values: Array.from(values),
+    })
+  );
 
   return {
     id: fwProduct.id,
@@ -174,11 +212,11 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
     description: fwProduct.description,
     descriptionHtml: fwProduct.description,
     availableForSale: fwProduct.variants.some(
-      (v) =>
-        v.stock.type === "Unlimited" || (v.stock.type === "Limited" && (v.stock.inStock || 0) > 0),
+      (v) => v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0
     ),
     featuredImage: {
-      url: fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
+      url:
+        fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
       altText: fwProduct.name,
       width: fwProduct.images[0]?.width || 800,
       height: fwProduct.images[0]?.height || 800,
@@ -189,26 +227,38 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
       width: img.width,
       height: img.height,
     })),
-    variants: fwProduct.variants.map((v) => ({
-      id: v.id,
-      title: v.name,
-      availableForSale:
-        v.stock.type === "Unlimited" || (v.stock.type === "Limited" && (v.stock.inStock || 0) > 0),
-      selectedOptions: [
-        ...(v.attributes.color ? [{ name: "Color", value: v.attributes.color.name }] : []),
-        ...(v.attributes.size ? [{ name: "Size", value: v.attributes.size.name }] : []),
-      ],
-      price: {
-        amount: v.unitPrice.value.toString(),
-        currencyCode: v.unitPrice.currency,
-      },
-      images: v.images.map((img) => ({
-        url: img.transformedUrl || img.url,
-        altText: fwProduct.name,
-        width: 800,
-        height: 800,
-      })),
-    })),
+    variants: fwProduct.variants.map((v) => {
+      // Determine availability: UNLIMITED stock is always available
+      // LIMITED stock is available if inStock > 0
+      const availableForSale =
+        v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0;
+
+      return {
+        id: v.id,
+        title: v.name,
+        availableForSale,
+        selectedOptions: [
+          {
+            name: "Size",
+            value: v.attributes.size?.name,
+          },
+          {
+            name: "Color",
+            value: v.attributes.color?.name,
+          },
+        ],
+        price: {
+          amount: v.unitPrice.value.toString(),
+          currencyCode: v.unitPrice.currency,
+        },
+        images: v.images.map((img) => ({
+          url: img.transformedUrl || img.url,
+          altText: fwProduct.name,
+          width: 800,
+          height: 800,
+        })),
+      };
+    }),
     options,
     priceRange: {
       minVariantPrice: {
@@ -252,7 +302,10 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
           handle: item.variant.product.slug,
           title: item.variant.product.name,
           featuredImage: {
-            url: item.variant.images[0]?.transformedUrl || item.variant.images[0]?.url || "",
+            url:
+              item.variant.images[0]?.transformedUrl ||
+              item.variant.images[0]?.url ||
+              "",
             altText: item.variant.product.name,
             width: 800,
             height: 800,
@@ -264,7 +317,7 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
 
   const totalAmount = lines.reduce(
     (sum, line) => sum + Number.parseFloat(line.cost.totalAmount.amount),
-    0,
+    0
   );
   const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0);
 
@@ -309,9 +362,15 @@ export async function getProducts(currency = "USD"): Promise<Product[]> {
   }
 }
 
-export async function getProduct(slug: string, currency = "USD"): Promise<Product | undefined> {
+export async function getProduct(
+  slug: string,
+  currency = "USD"
+): Promise<Product | undefined> {
   if (!slug || slug === "undefined") {
-    logger.warn({ operation: "get_product", slug }, "getProduct called with invalid slug");
+    logger.warn(
+      { operation: "get_product", slug },
+      "getProduct called with invalid slug"
+    );
     return undefined;
   }
 
@@ -343,7 +402,7 @@ export async function createCart(): Promise<Cart> {
 
 export async function getCart(
   cartId: string | undefined,
-  currency = "USD",
+  currency = "USD"
 ): Promise<Cart | undefined> {
   if (!cartId) {
     return undefined;
@@ -364,7 +423,7 @@ export async function getCart(
 
 export async function addToCart(
   cartId: string,
-  lines: Array<{ merchandiseId: string; quantity: number }>,
+  lines: Array<{ merchandiseId: string; quantity: number }>
 ): Promise<Cart> {
   const data = await fourthwallMutate<FourthwallCart>({
     path: `carts/${cartId}/add?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
@@ -381,7 +440,7 @@ export async function addToCart(
 
 export async function updateCart(
   cartId: string,
-  lines: Array<{ id: string; merchandiseId: string; quantity: number }>,
+  lines: Array<{ id: string; merchandiseId: string; quantity: number }>
 ): Promise<Cart> {
   const data = await fourthwallMutate<FourthwallCart>({
     path: `carts/${cartId}/change?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
@@ -396,7 +455,10 @@ export async function updateCart(
   return transformCart(data, "USD");
 }
 
-export async function removeFromCart(cartId: string, lineIds: string[]): Promise<Cart> {
+export async function removeFromCart(
+  cartId: string,
+  lineIds: string[]
+): Promise<Cart> {
   // Extract variant IDs from line IDs (format: variantId-cartId)
   const items = lineIds.map((lineId) => {
     const variantId = lineId.split("-")[0];

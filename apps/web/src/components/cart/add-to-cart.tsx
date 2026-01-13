@@ -37,12 +37,16 @@ export function AddToCart({ product }: { product: Product }) {
 
   const variants = product.variants;
 
+  // Find variant that matches all selected options
   const selectedVariant: ProductVariant | undefined = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every((option) => option.value === state[option.name.toLowerCase()]),
   );
 
-  const defaultVariant = variants.length === 1 ? variants[0] : undefined;
-  const variant = selectedVariant || defaultVariant;
+  // Fallback to first available variant if no match, or single variant if only one exists
+  const fallbackVariant = variants.find((v) => v.availableForSale) || 
+    (variants.length === 1 ? variants[0] : undefined);
+  
+  const variant = selectedVariant || fallbackVariant;
   const availableForSale = variant ? variant.availableForSale : false;
 
   return (

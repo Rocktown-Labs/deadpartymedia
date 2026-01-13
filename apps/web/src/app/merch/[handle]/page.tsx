@@ -17,8 +17,17 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
 
   if (!product) return notFound();
 
+  // Preselect the first available variant so options and Add to Cart aren't disabled by default
+  const initialVariant =
+    product.variants.find((variant) => variant.availableForSale) || product.variants[0];
+  const initialState =
+    initialVariant?.selectedOptions.reduce<Record<string, string>>((acc, option) => {
+      acc[option.name.toLowerCase()] = option.value;
+      return acc;
+    }, {}) || {};
+
   return (
-    <ProductProvider>
+    <ProductProvider initialState={initialState}>
       <div className="min-h-screen bg-[#0A0A0A] text-white">
         <main className="pt-40 pb-20">
           <div className="container mx-auto px-6 max-w-7xl">

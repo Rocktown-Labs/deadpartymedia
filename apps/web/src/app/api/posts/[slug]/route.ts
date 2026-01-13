@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts } from "@/lib/db/schema";
+import { posts, postArtists, artists } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { generateHTML } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
 
 export async function GET(
   request: NextRequest,
@@ -23,11 +26,26 @@ export async function GET(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Parse Tiptap content
+    // Get artist relations for this post
+    const postArtistsData = await db
+      .select({
+        id: artists.id,
+        slug: artists.slug,
+        name: artists.name,
+        image: artists.image,
+      })
+      .from(postArtists)
+      .innerJoin(artists, eq(postArtists.artistId, artists.id))
+      .where(eq(postArtists.postId, post.id));
+
+    // Parse Tiptap content and convert to HTML
     let content;
     try {
-      content = JSON.parse(post.content);
+      const tiptapJson = JSON.parse(post.content);
+      // Convert Tiptap JSON to HTML using the same extensions as the editor
+      content = generateHTML(tiptapJson, [StarterKit, Image]);
     } catch {
+      // If parsing fails, assume it's already HTML or plain text
       content = post.content;
     }
 
@@ -44,6 +62,7 @@ export async function GET(
         id: post.authorId,
         name: "", // Would need to fetch from Clerk or join
       },
+      artists: postArtistsData,
       published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
       views: post.views,
       is_cover_story: post.isCoverStory,

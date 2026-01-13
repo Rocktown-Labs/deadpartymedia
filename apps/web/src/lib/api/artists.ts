@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./client";
+import { useQuery } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 import type { EventList } from "./events";
 
@@ -52,21 +51,11 @@ export function useArtists(genre?: string) {
     queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await apiClient.get<Artist[] | { results: Artist[] }>(`/artists/${params}`);
-      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
-      // Or direct array if pagination is disabled
-      if (Array.isArray(response)) {
-        return response;
+      const response = await fetch(`/api/artists${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch artists");
       }
-      if (
-        response &&
-        typeof response === "object" &&
-        "results" in response &&
-        Array.isArray(response.results)
-      ) {
-        return response.results;
-      }
-      return [];
+      return response.json();
     },
   });
 }
@@ -75,7 +64,11 @@ export function useArtist(slug: string) {
   return useQuery<Artist>({
     queryKey: ["artist", slug],
     queryFn: async () => {
-      return apiClient.get<Artist>(`/artists/${slug}/`);
+      const response = await fetch(`/api/artists/${slug}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch artist");
+      }
+      return response.json();
     },
     enabled: !!slug,
   });
@@ -85,23 +78,11 @@ export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
     queryKey: ["artist-articles", slug],
     queryFn: async () => {
-      const response = await apiClient.get<ArticleList[] | { results: ArticleList[] }>(
-        `/artists/${slug}/articles/`,
-      );
-      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
-      // Or direct array if pagination is disabled
-      if (Array.isArray(response)) {
-        return response;
+      const response = await fetch(`/api/artists/${slug}/articles`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch artist articles");
       }
-      if (
-        response &&
-        typeof response === "object" &&
-        "results" in response &&
-        Array.isArray(response.results)
-      ) {
-        return response.results;
-      }
-      return [];
+      return response.json();
     },
     enabled: !!slug,
   });
@@ -111,23 +92,11 @@ export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
     queryKey: ["artist-events", slug],
     queryFn: async () => {
-      const response = await apiClient.get<EventList[] | { results: EventList[] }>(
-        `/artists/${slug}/events/`,
-      );
-      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
-      // Or direct array if pagination is disabled
-      if (Array.isArray(response)) {
-        return response;
+      const response = await fetch(`/api/artists/${slug}/events`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch artist events");
       }
-      if (
-        response &&
-        typeof response === "object" &&
-        "results" in response &&
-        Array.isArray(response.results)
-      ) {
-        return response.results;
-      }
-      return [];
+      return response.json();
     },
     enabled: !!slug,
   });
@@ -138,7 +107,14 @@ export function useCurrentUserArtist() {
     queryKey: ["current-user-artist"],
     queryFn: async () => {
       try {
-        return await apiClient.get<Artist>("/artists/me/");
+        const response = await fetch("/api/artists/me");
+        if (!response.ok) {
+          if (response.status === 404) {
+            return null;
+          }
+          throw new Error("Failed to fetch current user artist");
+        }
+        return response.json();
       } catch {
         return null;
       }
@@ -147,100 +123,8 @@ export function useCurrentUserArtist() {
   });
 }
 
-export interface ArtistUpdateData {
-  name: string;
-  bio: string;
-  location: string;
-  genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
-  spotify_url?: string;
-  spotify_artist_id?: string;
-  instagram?: string;
-  twitter?: string;
-  tiktok?: string;
-  website?: string;
-  image?: File | string;
-}
-
-export function useUpdateArtist() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: ArtistUpdateData) => {
-      const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("bio", data.bio);
-      formData.append("location", data.location);
-      formData.append("genre", data.genre);
-      // Always send URL fields (even if empty) to allow clearing them
-      formData.append("spotify_url", data.spotify_url || "");
-      if (data.spotify_artist_id) formData.append("spotify_artist_id", data.spotify_artist_id);
-      formData.append("instagram", data.instagram || "");
-      formData.append("twitter", data.twitter || "");
-      formData.append("tiktok", data.tiktok || "");
-      formData.append("website", data.website || "");
-      if (data.image) formData.append("image", data.image);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const response = await fetch(`${apiUrl}/artists/update_me/`, {
-        method: "PATCH",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["current-user-artist"] });
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
-    },
-  });
-}
-
-export function useOnboardArtist() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: OnboardArtistData) => {
-      const formData = new FormData();
-      formData.append("artistName", data.artistName);
-      formData.append("location", data.location);
-      formData.append("genre", data.genre);
-      formData.append("bio", data.bio);
-      if (data.spotifyId) {
-        formData.append("spotifyId", data.spotifyId);
-      }
-      if (data.socials) {
-        formData.append("socials", JSON.stringify(data.socials));
-      }
-      if (data.profileImage) {
-        formData.append("profileImage", data.profileImage);
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const response = await fetch(`${apiUrl}/artists/onboard/`, {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: response.statusText }));
-        throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user-artist"] });
-    },
-  });
-}
+// Note: useUpdateArtist and useOnboardArtist removed - these should use server actions instead
+// See apps/web/src/app/onboarding/actions.ts for artist onboarding
 
 export function useSearchSpotifyArtists(query: string) {
   return useQuery<SpotifyArtist[]>({

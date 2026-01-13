@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { events } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { events, eventArtists, artists } from "@/lib/db/schema";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -37,22 +37,63 @@ export async function GET(request: NextRequest) {
       filteredResults = results.filter((event) => new Date(event.date) < now);
     }
 
+    // Get artist relations for all events
+    const eventIds = filteredResults.map((event) => event.id);
+    let artistRelations: Record<number, Array<{
+      eventId: number;
+      artistId: number;
+      artistSlug: string;
+      artistName: string;
+      artistImage: string | null;
+    }>> = {};
+
+    if (eventIds.length > 0) {
+      const relations = await db
+        .select({
+          eventId: eventArtists.eventId,
+          artistId: artists.id,
+          artistSlug: artists.slug,
+          artistName: artists.name,
+          artistImage: artists.image,
+        })
+        .from(eventArtists)
+        .innerJoin(artists, eq(eventArtists.artistId, artists.id))
+        .where(inArray(eventArtists.eventId, eventIds));
+
+      // Group by eventId
+      for (const rel of relations) {
+        if (!artistRelations[rel.eventId]) {
+          artistRelations[rel.eventId] = [];
+        }
+        artistRelations[rel.eventId].push(rel);
+      }
+    }
+
     // Transform to match existing EventList interface
-    const eventList = filteredResults.map((event) => ({
-      id: event.id,
-      title: event.title,
-      slug: event.slug,
-      description: event.description,
-      image: event.image,
-      venue: event.venue,
-      location: event.location,
-      date: event.date,
-      time: event.time,
-      ticket_link: event.ticketLink,
-      price: event.price,
-      genre: event.genre,
-      created_at: event.createdAt.toISOString(),
-    }));
+    const eventList = filteredResults.map((event) => {
+      const eventArtistsData = artistRelations[event.id] || [];
+      return {
+        id: event.id,
+        title: event.title,
+        slug: event.slug,
+        description: event.description,
+        image: event.image,
+        venue: event.venue,
+        location: event.location,
+        date: event.date,
+        time: event.time,
+        ticket_link: event.ticketLink,
+        price: event.price,
+        genre: event.genre,
+        artists: eventArtistsData.map((a) => ({
+          id: a.artistId,
+          slug: a.artistSlug,
+          name: a.artistName,
+          image: a.artistImage,
+        })),
+        created_at: event.createdAt.toISOString(),
+      };
+    });
 
     return NextResponse.json({
       count: eventList.length,

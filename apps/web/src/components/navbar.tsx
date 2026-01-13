@@ -42,7 +42,7 @@ export default function Navbar() {
           <span className="hidden md:block">{issueDate.toUpperCase()}</span>
           <span className="hidden md:block">ARKANSAS MUSIC</span>
         </div>
-        <nav className="py-6 flex items-center justify-between">
+        <nav className="py-6 flex items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex-1">
             <div className="lg:hidden">
@@ -70,7 +70,7 @@ export default function Navbar() {
             </div>
           </div>
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-8">
             {/* Music Dropdown */}
             <div
               className="relative"
@@ -119,11 +119,15 @@ export default function Navbar() {
               Merch
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
+          </div>
+          {/* Actions */}
+          <div className="hidden lg:flex items-center gap-3">
             <CartModal />
             <SignedOut>
+              <div className="flex items-center gap-2">
               <SignInButton mode="modal">
                 <button
-                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-4"
+                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
                   aria-label="Sign in"
                 >
                   <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
@@ -131,12 +135,13 @@ export default function Navbar() {
               </SignInButton>
               <SignUpButton mode="modal">
                 <button
-                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-4"
+                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
                   aria-label="Get started"
                 >
                   <span className="text-xs font-bold tracking-wider uppercase">Get Started</span>
                 </button>
               </SignUpButton>
+              </div>
             </SignedOut>
             <SignedIn>
               <div className="hidden lg:block">

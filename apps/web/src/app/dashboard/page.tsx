@@ -1,6 +1,7 @@
 "use client";
 
-import { useDashboardStats } from "@/lib/api/user-activity";
+import { useEffect } from "react";
+import { useDashboardStats, type DashboardStats } from "@/lib/api/user-activity";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -14,10 +15,70 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 import type { Route } from "next";
+import * as Sentry from "@sentry/nextjs";
+import posthog from "posthog-js";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useDashboardStats();
+  const { data: stats, isLoading, error } = useDashboardStats();
   const { user } = useUser();
+  const queryClient = useQueryClient();
+
+  // Default stats for new users
+  const defaultStats: DashboardStats = {
+    articles_read_count: 0,
+    articles_saved_count: 0,
+    comments_count: 0,
+  };
+
+  // Use default stats if no error and no data (new user)
+  const displayStats = stats || (!error ? defaultStats : null);
+
+  // Comprehensive error logging
+  useEffect(() => {
+    if (error) {
+      // Log to Sentry for error monitoring
+      Sentry.captureException(error, {
+        tags: {
+          component: "dashboard",
+          route: "fan-dashboard",
+        },
+        extra: {
+          userId: user?.id,
+          userRole: user?.publicMetadata?.role,
+          errorMessage: error.message,
+          errorStack: error.stack,
+        },
+      });
+
+      // Track error event in PostHog
+      posthog.capture("dashboard_stats_error", {
+        error_message: error.message,
+        error_type: error.name || "Unknown",
+        user_role: user?.publicMetadata?.role || "unknown",
+        user_id: user?.id,
+      });
+    } else if (!stats && !isLoading) {
+      // Track new user scenario (not an error, but useful for analytics)
+      posthog.capture("dashboard_stats_empty", {
+        user_role: user?.publicMetadata?.role || "unknown",
+        is_new_user: true,
+        user_id: user?.id,
+      });
+    } else if (stats) {
+      // Track successful dashboard load
+      posthog.capture("dashboard_stats_loaded", {
+        articles_read: stats.articles_read_count,
+        articles_saved: stats.articles_saved_count,
+        comments_count: stats.comments_count,
+        user_role: user?.publicMetadata?.role || "unknown",
+      });
+    }
+  }, [error, stats, isLoading, user]);
+
+  const handleRetry = () => {
+    queryClient.invalidateQueries({ queryKey: ["user", "stats"] });
+  };
 
   if (isLoading) {
     return (
@@ -39,7 +100,8 @@ export default function DashboardPage() {
     );
   }
 
-  if (!stats) {
+  // Show error state only if there's an actual error
+  if (error) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
         <main className="pt-40 pb-20 px-6">
@@ -51,15 +113,27 @@ export default function DashboardPage() {
                 </EmptyMedia>
                 <EmptyTitle>Unable to load dashboard</EmptyTitle>
                 <EmptyDescription>
-                  There was an error loading your dashboard statistics. Please try refreshing the
-                  page.
+                  There was an error loading your dashboard statistics. Please try again.
                 </EmptyDescription>
               </EmptyHeader>
+              <div className="mt-6 flex justify-center">
+                <Button
+                  onClick={handleRetry}
+                  className="bg-[#7CFC00] text-black hover:bg-[#6EE600]"
+                >
+                  Retry
+                </Button>
+              </div>
             </Empty>
           </div>
         </main>
       </div>
     );
+  }
+
+  // If no stats and no error, show dashboard with zero stats (new user)
+  if (!displayStats) {
+    return null; // This shouldn't happen, but fallback
   }
 
   const statsCards: Array<{
@@ -71,21 +145,21 @@ export default function DashboardPage() {
   }> = [
     {
       title: "Articles Read",
-      value: stats.articles_read_count,
+      value: displayStats.articles_read_count,
       icon: BookOpen,
       href: "/dashboard/history" as Route,
       color: "text-[#7CFC00]",
     },
     {
       title: "Articles Saved",
-      value: stats.articles_saved_count,
+      value: displayStats.articles_saved_count,
       icon: Bookmark,
       href: "/dashboard/saved" as Route,
       color: "text-[#9400D3]",
     },
     {
       title: "Comments Made",
-      value: stats.comments_count,
+      value: displayStats.comments_count,
       icon: MessageSquare,
       href: "/dashboard/comments" as Route,
       color: "text-[#7CFC00]",

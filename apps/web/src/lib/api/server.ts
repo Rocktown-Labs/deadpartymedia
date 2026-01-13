@@ -4,14 +4,14 @@ import type { Artist } from "./artists";
 import { logger } from "../logger";
 import { sanitizeError } from "../logger/sanitize";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
 /**
- * Server-side API client for fetching data without browser dependencies.
+ * Server-side API client for fetching data from Next.js API routes.
  * Used for generating metadata in Next.js server components.
  */
 async function serverFetch<T>(endpoint: string): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Use absolute URL for server-side fetching
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const url = `${baseUrl}${endpoint}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -26,8 +26,12 @@ async function serverFetch<T>(endpoint: string): Promise<T> {
     if (response.status === 404) {
       return null as T;
     }
-    const error = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
+    const error = await response
+      .json()
+      .catch(() => ({ error: response.statusText }));
+    throw new Error(
+      error.error || error.detail || `HTTP error! status: ${response.status}`
+    );
   }
 
   return response.json();
@@ -38,7 +42,7 @@ async function serverFetch<T>(endpoint: string): Promise<T> {
  */
 export async function getArticle(slug: string): Promise<Article | null> {
   try {
-    return await serverFetch<Article>(`/articles/${slug}/`);
+    return await serverFetch<Article>(`/api/posts/${slug}`);
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_article", slug },
@@ -53,7 +57,7 @@ export async function getArticle(slug: string): Promise<Article | null> {
  */
 export async function getEvent(slug: string): Promise<Event | null> {
   try {
-    return await serverFetch<Event>(`/events/${slug}/`);
+    return await serverFetch<Event>(`/api/events/${slug}`);
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_event", slug },
@@ -68,7 +72,7 @@ export async function getEvent(slug: string): Promise<Event | null> {
  */
 export async function getArtist(slug: string): Promise<Artist | null> {
   try {
-    return await serverFetch<Artist>(`/artists/${slug}/`);
+    return await serverFetch<Artist>(`/api/artists/${slug}`);
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_artist", slug },

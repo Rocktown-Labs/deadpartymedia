@@ -57,6 +57,8 @@ export const posts = pgTable("posts", {
   isCoverStory: boolean("is_cover_story").notNull().default(false),
   publishedAt: timestamp("published_at"),
   views: integer("views").notNull().default(0),
+  deleteRequested: boolean("delete_requested").notNull().default(false),
+  deleteRequestedAt: timestamp("delete_requested_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

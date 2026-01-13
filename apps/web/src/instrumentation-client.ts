@@ -1,9 +1,12 @@
 import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 
+const POSTHOG_HOST =
+  process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com";
+
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-  api_host: "/ingest",
-  ui_host: "https://us.posthog.com",
+  api_host: POSTHOG_HOST,
+  ui_host: POSTHOG_HOST,
   // Enables capturing unhandled exceptions via Error Tracking
   capture_exceptions: true,
   // Turn on debug in development mode

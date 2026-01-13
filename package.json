@@ -13,7 +13,21 @@
     "dev:all": "turbo run dev --parallel",
     "build": "turbo build",
     "check-types": "turbo check-types",
-    "check": "oxlint && oxfmt --write"
+    "check": "oxlint && oxfmt --write",
+    "web:dev": "pnpm --filter web dev",
+    "web:build": "pnpm --filter web build",
+    "web:start": "pnpm --filter web start",
+    "web:lint": "pnpm --filter web lint",
+    "web:test": "pnpm --filter web test",
+    "web:test:ui": "pnpm --filter web test:ui",
+    "web:test:coverage": "pnpm --filter web test:coverage",
+    "web:test:e2e": "pnpm --filter web test:e2e",
+    "web:test:e2e:ui": "pnpm --filter web test:e2e:ui",
+    "web:test:e2e:debug": "pnpm --filter web test:e2e:debug",
+    "web:db:generate": "pnpm --filter web db:generate",
+    "web:db:migrate": "pnpm --filter web db:migrate",
+    "web:db:push": "pnpm --filter web db:push",
+    "web:db:studio": "pnpm --filter web db:studio"
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",

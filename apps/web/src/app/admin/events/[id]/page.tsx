@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { events } from "@/lib/db/schema";
+import { events, eventArtists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
 import { EventForm } from "@/components/admin/event-form";
@@ -24,6 +24,14 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     redirect("/admin/events");
   }
 
+  // Load artist relations for this event
+  const eventArtistRelations = await db
+    .select({ artistId: eventArtists.artistId })
+    .from(eventArtists)
+    .where(eq(eventArtists.eventId, eventId));
+
+  const artistIds = eventArtistRelations.map((rel) => rel.artistId);
+
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Edit Event</h1>
@@ -41,6 +49,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           price: event.price || undefined,
           genre: event.genre,
           status: event.status,
+          artistIds,
         }}
         onSubmit={(formData) => updateEvent(eventId, formData)}
         onCancel={() => redirect("/admin/events")}

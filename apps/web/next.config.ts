@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
         hostname: "**.amazonaws.com",
         pathname: "/**",
       },
+      // Vercel Blob storage for uploaded images
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+        pathname: "/**",
+      },
     ],
   },
   // PostHog reverse proxy rewrites

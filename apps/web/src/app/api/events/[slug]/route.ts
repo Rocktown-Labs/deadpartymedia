@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { events } from "@/lib/db/schema";
+import { events, eventArtists, artists } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -23,6 +23,18 @@ export async function GET(
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    // Get artist relations for this event
+    const eventArtistsData = await db
+      .select({
+        id: artists.id,
+        slug: artists.slug,
+        name: artists.name,
+        image: artists.image,
+      })
+      .from(eventArtists)
+      .innerJoin(artists, eq(eventArtists.artistId, artists.id))
+      .where(eq(eventArtists.eventId, event.id));
+
     // Transform to match existing Event interface
     const eventData = {
       id: event.id,
@@ -37,6 +49,7 @@ export async function GET(
       ticket_link: event.ticketLink,
       price: event.price,
       genre: event.genre,
+      artists: eventArtistsData,
       created_at: event.createdAt.toISOString(),
       updated_at: event.updatedAt.toISOString(),
     };

@@ -7,9 +7,28 @@ import Link from "next/link";
 import { useEvent } from "@/lib/api/events";
 import { EventStructuredData } from "@/components/seo/structured-data";
 import posthog from "posthog-js";
+import type { Metadata } from "next";
+import { getEvent } from "@/lib/api/server";
+import { generateEventMetadata } from "@/lib/seo";
 
 interface EventPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: EventPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await getEvent(slug);
+
+  if (!event) {
+    return {
+      title: "Event Not Found | Dead Party Media",
+      description: "The event you're looking for could not be found.",
+    };
+  }
+
+  return generateEventMetadata(event);
 }
 
 export default function EventDetailPage({ params }: EventPageProps) {

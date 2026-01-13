@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react";
 
-type ProductState = {
+export type ProductState = {
   [key: string]: string;
 } & {
   image?: string;
@@ -18,11 +18,17 @@ type ProductContextType = {
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
-export function ProductProvider({ children }: { children: React.ReactNode }) {
+export function ProductProvider({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState?: ProductState;
+}) {
   const searchParams = useSearchParams();
 
   const getInitialState = () => {
-    const params: ProductState = {};
+    const params: ProductState = { ...initialState };
     for (const [key, value] of searchParams.entries()) {
       params[key] = value;
     }

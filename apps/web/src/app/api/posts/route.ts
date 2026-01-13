@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { posts, postArtists, artists } from "@/lib/db/schema";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -31,22 +31,64 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
+    // Get artist relations for all posts
+    const postIds = results.map((post) => post.id);
+    let artistRelations: Record<number, Array<{
+      postId: number;
+      artistId: number;
+      artistSlug: string;
+      artistName: string;
+      artistImage: string | null;
+    }>> = {};
+
+    if (postIds.length > 0) {
+      const relations = await db
+        .select({
+          postId: postArtists.postId,
+          artistId: artists.id,
+          artistSlug: artists.slug,
+          artistName: artists.name,
+          artistImage: artists.image,
+        })
+        .from(postArtists)
+        .innerJoin(artists, eq(postArtists.artistId, artists.id))
+        .where(inArray(postArtists.postId, postIds));
+
+      // Group by postId
+      for (const rel of relations) {
+        if (!artistRelations[rel.postId]) {
+          artistRelations[rel.postId] = [];
+        }
+        artistRelations[rel.postId].push(rel);
+      }
+    }
+
     // Transform to match existing ArticleList interface
-    const articles = results.map((post) => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      category: post.category,
-      excerpt: post.excerpt,
-      cover_image: post.coverImage,
-      author: {
-        id: post.authorId,
-        name: "", // Would need to fetch from Clerk or join
-      },
-      published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
-      views: post.views,
-      is_cover_story: post.isCoverStory,
-    }));
+    const articles = results.map((post) => {
+      const postArtistsData = artistRelations[post.id] || [];
+      return {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        category: post.category,
+        excerpt: post.excerpt,
+        cover_image: post.coverImage,
+        author: {
+          id: post.authorId,
+          name: "", // Would need to fetch from Clerk or join
+        },
+        artists: postArtistsData.map((a) => ({
+          id: a.artistId,
+          slug: a.artistSlug,
+          name: a.artistName,
+          image: a.artistImage,
+        })),
+        published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
+        views: post.views,
+        is_cover_story: post.isCoverStory,
+        created_at: post.createdAt.toISOString(),
+      };
+    });
 
     return NextResponse.json({
       count: articles.length,

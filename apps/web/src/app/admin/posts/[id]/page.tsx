@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { posts } from "@/lib/db/schema";
+import { posts, postArtists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
 import { PostEditor } from "@/components/admin/post-editor";
@@ -24,6 +24,14 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
     redirect("/admin/posts");
   }
 
+  // Load artist relations for this post
+  const postArtistRelations = await db
+    .select({ artistId: postArtists.artistId })
+    .from(postArtists)
+    .where(eq(postArtists.postId, postId));
+
+  const artistIds = postArtistRelations.map((rel) => rel.artistId);
+
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Edit Post</h1>
@@ -37,6 +45,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           coverImage: post.coverImage || undefined,
           status: post.status,
           isCoverStory: post.isCoverStory,
+          artistIds,
         }}
         onSubmit={(formData) => updatePost(postId, formData)}
         onCancel={() => redirect("/admin/posts")}

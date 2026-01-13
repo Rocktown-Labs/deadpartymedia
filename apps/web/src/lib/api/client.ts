@@ -1,4 +1,8 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+// DEPRECATED: This client was used for Django backend. 
+// Most functionality has been migrated to Next.js API routes.
+// Only kept for backward compatibility with legacy code.
+// TODO: Remove once all apiClient usage is migrated to Next.js routes.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export class ApiClient {
   private baseUrl: string;

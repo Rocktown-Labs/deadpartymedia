@@ -6,8 +6,14 @@ import { posts } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
-import { deletePost } from "./actions";
+import {
+  deletePost,
+  requestDeletePost,
+  approveDeletePost,
+  denyDeletePost,
+} from "./actions";
 
 export default async function PostsPage() {
   const { userId } = await auth();
@@ -81,17 +87,24 @@ export default async function PostsPage() {
                     </Link>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${
-                        post.status === "published"
-                          ? "bg-green-500/20 text-green-400"
-                          : post.status === "draft"
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-gray-500/20 text-gray-400"
-                      }`}
-                    >
-                      {post.status}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-bold ${
+                          post.status === "published"
+                            ? "bg-green-500/20 text-green-400"
+                            : post.status === "draft"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-gray-500/20 text-gray-400"
+                        }`}
+                      >
+                        {post.status}
+                      </span>
+                      {post.deleteRequested && (
+                        <Badge variant="destructive" className="text-xs">
+                          Delete Requested
+                        </Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-400">{post.category}</td>
                   <td className="px-6 py-4">
@@ -111,7 +124,26 @@ export default async function PostsPage() {
                           Edit
                         </Button>
                       </Link>
-                      {isSuperAdmin && (
+                      {post.deleteRequested && isSuperAdmin ? (
+                        <>
+                          <form
+                            action={approveDeletePost.bind(null, post.id)}
+                            className="inline"
+                          >
+                            <Button type="submit" variant="destructive" size="sm">
+                              Approve Delete
+                            </Button>
+                          </form>
+                          <form
+                            action={denyDeletePost.bind(null, post.id)}
+                            className="inline"
+                          >
+                            <Button type="submit" variant="outline" size="sm">
+                              Deny
+                            </Button>
+                          </form>
+                        </>
+                      ) : isSuperAdmin ? (
                         <DeleteConfirm
                           onConfirm={async () => {
                             await deletePost(post.id);
@@ -119,7 +151,16 @@ export default async function PostsPage() {
                           title="Delete Post"
                           description={`Are you sure you want to delete "${post.title}"? This action cannot be undone.`}
                         />
-                      )}
+                      ) : post.authorId === userId && !post.deleteRequested ? (
+                        <form
+                          action={requestDeletePost.bind(null, post.id)}
+                          className="inline"
+                        >
+                          <Button type="submit" variant="outline" size="sm">
+                            Request Delete
+                          </Button>
+                        </form>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
