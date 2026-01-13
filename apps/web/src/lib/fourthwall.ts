@@ -243,7 +243,9 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
           value: v.attributes.color?.name,
         },
       ]
-        .filter((opt): opt is { name: string; value: string } => Boolean(opt.value))
+        .filter((opt): opt is { name: string; value: string } =>
+          Boolean(opt.value)
+        )
         .map((opt) => ({ name: opt.name, value: opt.value }));
 
       return {

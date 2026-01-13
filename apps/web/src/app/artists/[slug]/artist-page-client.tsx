@@ -244,7 +244,19 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         <h3 className="font-bold mt-2 mb-2 group-hover:text-[#7CFC00] transition-colors">
                           {event.title}
                         </h3>
-                        <p className="text-sm text-gray-400">{event.date}</p>
+                        <p className="text-sm text-gray-400">
+                          {new Date(event.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                        <div className="mt-2 space-y-1 text-sm text-gray-500">
+                          {event.time && <p>{event.time}</p>}
+                          {event.venue && <p>{event.venue}</p>}
+                          {event.location && <p>{event.location}</p>}
+                        </div>
                       </div>
                     </Link>
                   ))}

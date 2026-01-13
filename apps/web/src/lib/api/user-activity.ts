@@ -122,7 +122,8 @@ export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryKey: ["user", "stats"],
     queryFn: async () => {
-      return apiClient.get<DashboardStats>("/user/stats/");
+      // Note: `skipTrailingSlashRedirect` is enabled in `next.config.ts`, so prefer no trailing slash.
+      return apiClient.get<DashboardStats>("/user/stats");
     },
     retry: false,
   });

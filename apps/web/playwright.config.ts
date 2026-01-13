@@ -32,72 +32,68 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
-  projects: [
-    // Global setup project - runs first to authenticate users
-    {
-      name: 'global setup',
-      testMatch: /global\.setup\.ts/,
-    },
-    // Public tests - no authentication required
-    {
-      name: 'public tests',
-      testMatch: /.*public.*\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['global setup'],
-    },
-    // Authenticated fan tests
-    {
-      name: 'authenticated fan tests',
-      testMatch: /.*(onboarding|dashboard).*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        // Use prepared Clerk auth state for fan user
-        storageState: 'playwright/.clerk/user.json',
+  projects: (() => {
+    const shouldRunAuthenticated = process.env.E2E_RUN_AUTHENTICATED === 'true'
+
+    const baseProjects = [
+      // Public tests - no authentication required
+      {
+        name: 'public tests',
+        testMatch: /.*public.*\.spec\.ts/,
+        use: { ...devices['Desktop Chrome'] },
       },
-      dependencies: ['global setup'],
-    },
-    // Authenticated artist tests
-    {
-      name: 'authenticated artist tests',
-      testMatch: /.*artist.*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        // Use prepared Clerk auth state for artist user
-        storageState: 'playwright/.clerk/artist.json',
+      // All other tests (unauthenticated)
+      {
+        name: 'chromium',
+        testMatch: /.*auth\.spec\.ts/,
+        use: { ...devices['Desktop Chrome'] },
       },
-      dependencies: ['global setup'],
-    },
-    // Authenticated admin tests
-    {
-      name: 'authenticated admin tests',
-      testMatch: /.*admin.*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        // Use prepared Clerk auth state for admin user
-        storageState: 'playwright/.clerk/admin.json',
+      {
+        name: 'firefox',
+        testMatch: /.*public.*\.spec\.ts/,
+        use: { ...devices['Desktop Firefox'] },
       },
-      dependencies: ['global setup'],
-    },
-    // All other tests (unauthenticated)
-    {
-      name: 'chromium',
-      testMatch: /.*auth\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['global setup'],
-    },
-    {
-      name: 'firefox',
-      testMatch: /.*public.*\.spec\.ts/,
-      use: { ...devices['Desktop Firefox'] },
-      dependencies: ['global setup'],
-    },
-    {
-      name: 'webkit',
-      testMatch: /.*public.*\.spec\.ts/,
-      use: { ...devices['Desktop Safari'] },
-      dependencies: ['global setup'],
-    },
-  ],
+      {
+        name: 'webkit',
+        testMatch: /.*public.*\.spec\.ts/,
+        use: { ...devices['Desktop Safari'] },
+      },
+    ] as const
+
+    if (!shouldRunAuthenticated) return [...baseProjects]
+
+    return [
+      ...baseProjects,
+      // Authenticated fan tests
+      {
+        name: 'authenticated fan tests',
+        // Fan-only suites (avoid artist dashboard suite which also contains "dashboard" in its filename)
+        testMatch: /.*(onboarding|authenticated)\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          storageState: 'playwright/.clerk/user.json',
+        },
+      },
+      // Authenticated artist tests
+      {
+        name: 'authenticated artist tests',
+        testMatch: /.*artist-dashboard\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          storageState: 'playwright/.clerk/artist.json',
+        },
+      },
+      // Authenticated admin tests
+      {
+        name: 'authenticated admin tests',
+        testMatch: /.*admin\.spec\.ts/,
+        use: {
+          ...devices['Desktop Chrome'],
+          storageState: 'playwright/.clerk/admin.json',
+        },
+      },
+    ]
+  })(),
 
   /* Run your local dev server before starting the tests */
   webServer: {

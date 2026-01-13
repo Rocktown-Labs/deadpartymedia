@@ -1,11 +1,16 @@
 import { test, expect } from '@playwright/test'
 import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import path from 'path'
 
 /**
  * These tests use the authenticated fan user state
  * from the global setup (playwright/.clerk/user.json)
  */
 test.describe('Authenticated User Flows', () => {
+  const fanIdentifier = process.env.E2E_CLERK_USER_USERNAME || process.env.E2E_CLERK_FAN_EMAIL
+  const fanPassword = process.env.E2E_CLERK_USER_PASSWORD || process.env.E2E_CLERK_FAN_PASSWORD
+  test.skip(!fanIdentifier || !fanPassword, 'Missing fan creds (E2E_CLERK_FAN_EMAIL/PASSWORD)')
+
   test('should access dashboard when authenticated', async ({ page }) => {
     // This test automatically uses the authenticated state from global setup
     await setupClerkTestingToken({ page })

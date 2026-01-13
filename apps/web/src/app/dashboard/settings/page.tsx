@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { User, Lock, Save } from "lucide-react";
 import { toast } from "sonner";
+import { DashboardBackButton } from "../dashboard-back-button";
 
 export default function SettingsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -110,6 +111,7 @@ export default function SettingsPage() {
       <main className="pt-40 pb-20 px-6">
         <div className="container mx-auto max-w-2xl">
           <div className="mb-8">
+            <DashboardBackButton />
             <h1 className="text-4xl font-black mb-2">Settings</h1>
             <p className="text-gray-400">Manage your account settings</p>
           </div>

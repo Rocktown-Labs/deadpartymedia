@@ -34,6 +34,6 @@ test.describe('Public Pages', () => {
     await page.goto('/contact')
     
     // Check that contact page loads
-    await expect(page.locator('h1, h2')).toContainText(/contact/i)
+    await expect(page.getByRole('heading', { name: /get in touch/i })).toBeVisible()
   })
 })

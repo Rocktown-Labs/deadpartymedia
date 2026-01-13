@@ -1,11 +1,16 @@
 import { test, expect } from '@playwright/test'
 import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import path from 'path'
 
 /**
  * These tests use the authenticated artist user state
  * from the global setup (playwright/.clerk/artist.json)
  */
 test.describe('Artist Dashboard Flows', () => {
+  const artistIdentifier = process.env.E2E_CLERK_ARTIST_EMAIL || process.env.E2E_CLERK_USER_USERNAME
+  const artistPassword = process.env.E2E_CLERK_ARTIST_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD
+  test.skip(!artistIdentifier || !artistPassword, 'Missing artist creds (E2E_CLERK_ARTIST_EMAIL/PASSWORD)')
+
   test('should access artist dashboard', async ({ page }) => {
     // This test automatically uses the authenticated artist state from global setup
     await setupClerkTestingToken({ page })

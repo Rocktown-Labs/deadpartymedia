@@ -2,6 +2,7 @@
 
 import { useReadArticles } from "@/lib/api/user-activity";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardBackButton } from "../dashboard-back-button";
 import {
   Empty,
   EmptyHeader,
@@ -45,6 +46,7 @@ export default function HistoryPage() {
         <main className="pt-40 pb-20 px-6">
           <div className="container mx-auto max-w-6xl">
             <div className="mb-8">
+              <DashboardBackButton />
               <h1 className="text-4xl font-black mb-2">Reading History</h1>
               <p className="text-gray-400">Articles you've read will appear here.</p>
             </div>
@@ -70,6 +72,7 @@ export default function HistoryPage() {
       <main className="pt-40 pb-20 px-6">
         <div className="container mx-auto max-w-6xl">
           <div className="mb-8">
+            <DashboardBackButton />
             <h1 className="text-4xl font-black mb-2">Reading History</h1>
             <p className="text-gray-400">Articles you've read ({articles.length})</p>
           </div>

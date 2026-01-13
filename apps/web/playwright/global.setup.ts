@@ -1,84 +1,94 @@
-import { clerk, clerkSetup } from '@clerk/testing/playwright'
-import { test as setup } from '@playwright/test'
-import path from 'path'
+import { clerk, clerkSetup, setupClerkTestingToken } from "@clerk/testing/playwright";
+import { chromium, type FullConfig } from "@playwright/test";
+import fs from "fs/promises";
+import path from "path";
 
-// Configure Playwright with Clerk
-// This must be run serially if Playwright is configured to run fully parallel
-setup.describe.configure({ mode: 'serial' })
+async function signInAndSaveState(args: {
+  baseUrl: string;
+  storagePath: string;
+  verifyPath: string;
+  identifier: string;
+  password: string;
+}) {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await setupClerkTestingToken({ page });
+    await page.goto(args.baseUrl);
+    await clerk.loaded({ page });
 
-setup('global setup', async () => {
-  await clerkSetup()
-})
+    await clerk.signIn({
+      page,
+      signInParams: {
+        strategy: "password",
+        identifier: args.identifier,
+        password: args.password,
+      },
+    });
 
-// Define the path to the storage file
-const authFile = path.join(__dirname, '.clerk/user.json')
+    await page.goto(`${args.baseUrl}${args.verifyPath}`);
+    await page.waitForSelector("body", { timeout: 15_000 });
+    await page.context().storageState({ path: args.storagePath });
+  } finally {
+    await browser.close();
+  }
+}
 
-// Authenticate and save state for different user roles
-setup('authenticate fan user', async ({ page }) => {
-  // Navigate to an unprotected page that loads Clerk
-  await page.goto('/')
+export default async function globalSetup(config: FullConfig) {
+  await clerkSetup();
 
-  // Sign in using test credentials from environment variables
-  // For development, you can use phone_code or email_code strategies
-  // Make sure to set E2E_CLERK_USER_USERNAME and E2E_CLERK_USER_PASSWORD in your .env
-  await clerk.signIn({
-    page,
-    signInParams: {
-      strategy: 'password',
-      identifier: process.env.E2E_CLERK_USER_USERNAME || process.env.E2E_CLERK_FAN_EMAIL || '',
-      password: process.env.E2E_CLERK_USER_PASSWORD || process.env.E2E_CLERK_FAN_PASSWORD || '',
-    },
-  })
+  const baseUrl = (config.projects[0]?.use?.baseURL as string | undefined) || "http://localhost:3001";
 
-  // Verify authentication by accessing a protected page
-  await page.goto('/dashboard')
-  
-  // Wait for a page element that indicates successful authentication
-  // Adjust selector based on your actual dashboard implementation
-  await page.waitForSelector('body', { timeout: 5000 })
+  const clerkDir = path.join(__dirname, ".clerk");
+  await fs.mkdir(clerkDir, { recursive: true });
 
-  // Save the authenticated state
-  await page.context().storageState({ path: authFile })
-})
+  const fanStorage = path.join(clerkDir, "user.json");
+  const artistStorage = path.join(clerkDir, "artist.json");
+  const adminStorage = path.join(clerkDir, "admin.json");
 
-// Optional: Create separate auth states for different user roles
-const artistAuthFile = path.join(__dirname, '.clerk/artist.json')
+  const fanIdentifier =
+    process.env.E2E_CLERK_USER_USERNAME || process.env.E2E_CLERK_FAN_EMAIL || "";
+  const fanPassword =
+    process.env.E2E_CLERK_USER_PASSWORD || process.env.E2E_CLERK_FAN_PASSWORD || "";
 
-setup('authenticate artist user', async ({ page }) => {
-  await page.goto('/')
+  const artistIdentifier =
+    process.env.E2E_CLERK_ARTIST_EMAIL || process.env.E2E_CLERK_USER_USERNAME || "";
+  const artistPassword =
+    process.env.E2E_CLERK_ARTIST_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD || "";
 
-  await clerk.signIn({
-    page,
-    signInParams: {
-      strategy: 'password',
-      identifier: process.env.E2E_CLERK_ARTIST_EMAIL || process.env.E2E_CLERK_USER_USERNAME || '',
-      password: process.env.E2E_CLERK_ARTIST_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD || '',
-    },
-  })
+  const adminIdentifier =
+    process.env.E2E_CLERK_ADMIN_EMAIL || process.env.E2E_CLERK_USER_USERNAME || "";
+  const adminPassword =
+    process.env.E2E_CLERK_ADMIN_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD || "";
 
-  await page.goto('/artist-dashboard')
-  await page.waitForSelector('body', { timeout: 5000 })
+  // Only attempt sign-in if credentials are provided, otherwise rely on existing storageState files.
+  if (fanIdentifier && fanPassword) {
+    await signInAndSaveState({
+      baseUrl,
+      storagePath: fanStorage,
+      verifyPath: "/dashboard",
+      identifier: fanIdentifier,
+      password: fanPassword,
+    });
+  }
 
-  await page.context().storageState({ path: artistAuthFile })
-})
+  if (artistIdentifier && artistPassword) {
+    await signInAndSaveState({
+      baseUrl,
+      storagePath: artistStorage,
+      verifyPath: "/artist-dashboard",
+      identifier: artistIdentifier,
+      password: artistPassword,
+    });
+  }
 
-// Optional: Create auth state for admin/writer users
-const adminAuthFile = path.join(__dirname, '.clerk/admin.json')
-
-setup('authenticate admin user', async ({ page }) => {
-  await page.goto('/')
-
-  await clerk.signIn({
-    page,
-    signInParams: {
-      strategy: 'password',
-      identifier: process.env.E2E_CLERK_ADMIN_EMAIL || process.env.E2E_CLERK_USER_USERNAME || '',
-      password: process.env.E2E_CLERK_ADMIN_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD || '',
-    },
-  })
-
-  await page.goto('/admin')
-  await page.waitForSelector('body', { timeout: 5000 })
-
-  await page.context().storageState({ path: adminAuthFile })
-})
+  if (adminIdentifier && adminPassword) {
+    await signInAndSaveState({
+      baseUrl,
+      storagePath: adminStorage,
+      verifyPath: "/admin",
+      identifier: adminIdentifier,
+      password: adminPassword,
+    });
+  }
+}
