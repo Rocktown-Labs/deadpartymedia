@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -74,7 +74,9 @@ export function FanOnboarding() {
                 }
               });
               
-              action(formData);
+              // `action` is called imperatively (not via native `<form action={...}>` submit),
+              // so wrap in a transition to keep React state updates consistent.
+              startTransition(() => action(formData));
             }}>
               {/* Form Errors */}
               {formErrors.length > 0 && (
