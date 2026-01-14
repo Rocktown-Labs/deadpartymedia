@@ -24,7 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* Offset fixed global navbar */}
       <div className="flex pt-32">
         {/* Sidebar */}
-        <aside className="w-64 bg-[#111111] border-r border-gray-800 min-h-screen p-6">
+        <aside className="w-64 bg-[#111111] border-r border-gray-800 h-[calc(100vh-8rem)] sticky top-32 overflow-y-auto p-6">
           <div className="mb-8">
             <h1 className="text-2xl font-black text-[#7CFC00]">Admin</h1>
             <p className="text-sm text-gray-400 mt-1">
