@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
+import { toast } from "sonner";
 
 interface ArtistFormProps {
   initialData?: {
@@ -82,6 +83,13 @@ export function ArtistForm({
     formData.append("inviteArtist", String(inviteArtist && Boolean(email)));
     try {
       await onSubmit(formData);
+    } catch (error) {
+      // Server actions may throw on validation/authorization, or throw a redirect signal.
+      const digest = (error as any)?.digest as string | undefined;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "Failed to save artist");
     } finally {
       setIsSaving(false);
     }

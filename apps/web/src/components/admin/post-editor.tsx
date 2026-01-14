@@ -223,6 +223,12 @@ export function PostEditor({
     }
     try {
       await onSubmit(formData);
+    } catch (error) {
+      const digest = (error as any)?.digest as string | undefined;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "Failed to save post");
     } finally {
       setIsSaving(false);
     }

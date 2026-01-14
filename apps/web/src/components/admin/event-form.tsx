@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
+import { toast } from "sonner";
 
 interface EventFormProps {
   initialData?: {
@@ -110,6 +111,12 @@ export function EventForm({
     }
     try {
       await onSubmit(formData);
+    } catch (error) {
+      const digest = (error as any)?.digest as string | undefined;
+      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "Failed to save event");
     } finally {
       setIsSaving(false);
     }
