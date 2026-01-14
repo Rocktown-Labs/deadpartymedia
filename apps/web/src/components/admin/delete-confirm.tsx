@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 interface DeleteConfirmProps {
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<unknown>;
   title: string;
   description?: string;
   trigger?: React.ReactNode;

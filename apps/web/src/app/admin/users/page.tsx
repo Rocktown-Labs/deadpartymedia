@@ -117,9 +117,7 @@ export default async function UsersPage({
                     </td>
                     <td className="px-6 py-4">
                       <DeleteConfirm
-                        onConfirm={async () => {
-                          await deleteUser(user.id);
-                        }}
+                        onConfirm={deleteUser.bind(null, user.id)}
                         title="Delete User"
                         description={`Are you sure you want to delete ${user.firstName} ${user.lastName}? This action cannot be undone.`}
                       />

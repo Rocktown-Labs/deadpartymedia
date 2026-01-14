@@ -6,6 +6,7 @@ import { canCreate } from "@/lib/auth/access";
 import { ArtistForm } from "@/components/admin/artist-form";
 import { updateArtist } from "../actions";
 import { InviteArtistButton } from "./invite-artist-button";
+import type { Route } from "next";
 
 export default async function EditArtistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,8 +50,8 @@ export default async function EditArtistPage({ params }: { params: Promise<{ id:
           website: artist.website || undefined,
           email: artist.email || undefined,
         }}
-        onSubmit={(formData) => updateArtist(artistId, formData)}
-        onCancel={() => redirect("/admin/artists")}
+        onSubmit={updateArtist.bind(null, artistId)}
+        cancelHref={"/admin/artists" as Route}
       />
     </div>
   );

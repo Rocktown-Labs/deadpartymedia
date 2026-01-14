@@ -21,6 +21,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 interface EventFormProps {
   initialData?: {
@@ -38,8 +40,8 @@ interface EventFormProps {
     status?: "draft" | "published" | "past";
     artistIds?: number[];
   };
-  onSubmit: (formData: FormData) => void;
-  onCancel: () => void;
+  onSubmit: (formData: FormData) => void | Promise<unknown>;
+  cancelHref: Route;
   isSubmitting?: boolean;
 }
 
@@ -48,9 +50,10 @@ const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] a
 export function EventForm({
   initialData,
   onSubmit,
-  onCancel,
+  cancelHref,
   isSubmitting = false,
 }: EventFormProps) {
+  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -69,6 +72,7 @@ export function EventForm({
     initialData?.artistIds || []
   );
   const [artistPopoverOpen, setArtistPopoverOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
 
@@ -84,8 +88,9 @@ export function EventForm({
     setSelectedArtistIds((prev) => prev.filter((id) => id !== artistId));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSaving(true);
     const formData = new FormData();
     formData.append("title", title);
     formData.append("slug", slug || title.toLowerCase().replace(/\s+/g, "-"));
@@ -103,7 +108,11 @@ export function EventForm({
     if (selectedArtistIds.length > 0) {
       formData.append("artistIds", selectedArtistIds.join(","));
     }
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const selectedArtists = artists.filter((artist) =>
@@ -336,10 +345,10 @@ export function EventForm({
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Event"}
+        <Button type="submit" disabled={isSubmitting || isSaving}>
+          {isSubmitting || isSaving ? "Saving..." : "Save Event"}
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel
         </Button>
       </div>

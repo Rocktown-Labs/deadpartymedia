@@ -28,6 +28,8 @@ import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 interface PostEditorProps {
   initialData?: {
@@ -41,8 +43,8 @@ interface PostEditorProps {
     isCoverStory?: boolean;
     artistIds?: number[];
   };
-  onSubmit: (formData: FormData) => void;
-  onCancel: () => void;
+  onSubmit: (formData: FormData) => void | Promise<unknown>;
+  cancelHref: Route;
   isSubmitting?: boolean;
 }
 
@@ -51,9 +53,10 @@ const categories = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER
 export function PostEditor({
   initialData,
   onSubmit,
-  onCancel,
+  cancelHref,
   isSubmitting = false,
 }: PostEditorProps) {
+  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [category, setCategory] = useState(initialData?.category || "");
@@ -70,6 +73,7 @@ export function PostEditor({
   const [coverImageUploading, setCoverImageUploading] = useState(false);
   const [useCoverImageUrl, setUseCoverImageUrl] = useState(false);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
 
@@ -201,8 +205,9 @@ export function PostEditor({
     setSelectedArtistIds((prev) => prev.filter((id) => id !== artistId));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSaving(true);
     const formData = new FormData();
     formData.append("title", title);
     formData.append("slug", slug || title.toLowerCase().replace(/\s+/g, "-"));
@@ -216,7 +221,11 @@ export function PostEditor({
     if (selectedArtistIds.length > 0) {
       formData.append("artistIds", selectedArtistIds.join(","));
     }
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const selectedArtists = artists.filter((artist) =>
@@ -460,10 +469,10 @@ export function PostEditor({
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Post"}
+        <Button type="submit" disabled={isSubmitting || isSaving}>
+          {isSubmitting || isSaving ? "Saving..." : "Save Post"}
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel
         </Button>
       </div>

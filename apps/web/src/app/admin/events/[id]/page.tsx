@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
 import { EventForm } from "@/components/admin/event-form";
 import { updateEvent } from "../actions";
+import type { Route } from "next";
 
 export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,8 +52,8 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           status: event.status,
           artistIds,
         }}
-        onSubmit={(formData) => updateEvent(eventId, formData)}
-        onCancel={() => redirect("/admin/events")}
+        onSubmit={updateEvent.bind(null, eventId)}
+        cancelHref={"/admin/events" as Route}
       />
     </div>
   );

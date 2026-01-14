@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
 import { PostEditor } from "@/components/admin/post-editor";
 import { updatePost } from "../actions";
+import type { Route } from "next";
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,8 +48,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           isCoverStory: post.isCoverStory,
           artistIds,
         }}
-        onSubmit={(formData) => updatePost(postId, formData)}
-        onCancel={() => redirect("/admin/posts")}
+        onSubmit={updatePost.bind(null, postId)}
+        cancelHref={"/admin/posts" as Route}
       />
     </div>
   );

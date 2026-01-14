@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 import { withUserContext, withOperationContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function createArtist(formData: FormData, inviteArtist: boolean) {
+export async function createArtist(formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
@@ -49,6 +49,7 @@ export async function createArtist(formData: FormData, inviteArtist: boolean) {
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
+  const inviteArtist = formData.get("inviteArtist") === "true";
 
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.name),

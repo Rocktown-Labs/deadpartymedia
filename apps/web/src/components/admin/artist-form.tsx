@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 interface ArtistFormProps {
   initialData?: {
@@ -30,8 +32,8 @@ interface ArtistFormProps {
     website?: string;
     email?: string;
   };
-  onSubmit: (formData: FormData, inviteArtist: boolean) => void;
-  onCancel: () => void;
+  onSubmit: (formData: FormData) => void | Promise<unknown>;
+  cancelHref: Route;
   isSubmitting?: boolean;
 }
 
@@ -40,9 +42,10 @@ const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] a
 export function ArtistForm({
   initialData,
   onSubmit,
-  onCancel,
+  cancelHref,
   isSubmitting = false,
 }: ArtistFormProps) {
+  const router = useRouter();
   const [name, setName] = useState(initialData?.name || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [bio, setBio] = useState(initialData?.bio || "");
@@ -57,9 +60,11 @@ export function ArtistForm({
   const [website, setWebsite] = useState(initialData?.website || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [inviteArtist, setInviteArtist] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSaving(true);
     const formData = new FormData();
     formData.append("name", name);
     formData.append("slug", slug || name.toLowerCase().replace(/\s+/g, "-"));
@@ -74,7 +79,12 @@ export function ArtistForm({
     formData.append("tiktok", tiktok);
     formData.append("website", website);
     formData.append("email", email);
-    onSubmit(formData, inviteArtist && !!email);
+    formData.append("inviteArtist", String(inviteArtist && Boolean(email)));
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -247,10 +257,10 @@ export function ArtistForm({
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Artist"}
+        <Button type="submit" disabled={isSubmitting || isSaving}>
+          {isSubmitting || isSaving ? "Saving..." : "Save Artist"}
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel
         </Button>
       </div>
