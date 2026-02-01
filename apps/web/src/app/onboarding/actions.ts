@@ -131,6 +131,10 @@ export async function artistOnboardingAction(
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
+    // Artists are identified publicly by their slug; keep it derived from the artist name.
+    // We also best-effort mirror this to the Clerk user's profile (firstName/username).
+    let artistSlug: string | undefined;
+
     // Get artistId from publicMetadata (set during invitation)
     const artistId = user.publicMetadata?.artistId
       ? Number.parseInt(user.publicMetadata.artistId as string, 10)
@@ -158,23 +162,29 @@ export async function artistOnboardingAction(
         } as any;
       }
 
+      artistSlug = await ensureUniqueSlug(
+        generateSlug(validatedData.name),
+        artistId,
+        "artists",
+      );
+
       // Update artist profile with user's information
       await db
         .update(artists)
         .set({
-          name: validatedData.name || artist.name,
-          bio: validatedData.bio || artist.bio,
-          location: validatedData.location || artist.location,
-          genre: (validatedData.genre as any) || artist.genre,
-          spotifyUrl: validatedData.spotifyUrl || artist.spotifyUrl,
-          spotifyArtistId:
-            validatedData.spotifyArtistId || artist.spotifyArtistId,
-          instagram: validatedData.instagram || artist.instagram,
-          twitter: validatedData.twitter || artist.twitter,
-          tiktok: validatedData.tiktok || artist.tiktok,
-          website: validatedData.website || artist.website,
-          image: validatedData.image || artist.image,
-          phoneNumber: validatedData.phoneNumber || artist.phoneNumber,
+          slug: artistSlug,
+          name: validatedData.name,
+          bio: validatedData.bio,
+          location: validatedData.location,
+          genre: validatedData.genre as any,
+          spotifyUrl: validatedData.spotifyUrl,
+          spotifyArtistId: validatedData.spotifyArtistId,
+          instagram: validatedData.instagram,
+          twitter: validatedData.twitter || null,
+          tiktok: validatedData.tiktok || null,
+          website: validatedData.website || null,
+          image: validatedData.image || null,
+          phoneNumber: validatedData.phoneNumber || null,
           claimed: true,
           claimedById: userId,
           updatedAt: new Date(),
@@ -182,7 +192,7 @@ export async function artistOnboardingAction(
         .where(eq(artists.id, artistId));
     } else {
       // If user is an artist but doesn't have an artistId, create a new artist profile
-      const slug = await ensureUniqueSlug(
+      artistSlug = await ensureUniqueSlug(
         generateSlug(validatedData.name),
         undefined,
         "artists",
@@ -190,7 +200,7 @@ export async function artistOnboardingAction(
 
       await db.insert(artists).values({
         name: validatedData.name,
-        slug,
+        slug: artistSlug,
         bio: validatedData.bio,
         location: validatedData.location,
         genre: validatedData.genre as any,
@@ -205,6 +215,21 @@ export async function artistOnboardingAction(
         claimed: true,
         claimedById: userId,
       });
+    }
+
+    // Best-effort: keep the Clerk user's display identity aligned with the artist's name.
+    // Username is optional depending on Clerk configuration, so failures should not block onboarding.
+    try {
+      const usernameCandidate = artistSlug;
+      await client.users.updateUser(userId, {
+        firstName: validatedData.name,
+        username: usernameCandidate,
+      });
+    } catch (e) {
+      log.warn(
+        { error: sanitizeError(e), operation: "artist_onboarding_update_user" },
+        "Unable to update Clerk user profile during artist onboarding",
+      );
     }
 
     // Update user's publicMetadata to set role and mark onboarding as complete

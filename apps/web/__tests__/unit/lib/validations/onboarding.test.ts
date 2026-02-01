@@ -122,6 +122,39 @@ describe("artistOnboardingSchema", () => {
     }
   });
 
+  it("should accept username-only instagram input (including dots/underscores)", () => {
+    const dotted = artistOnboardingSchema.safeParse({
+      ...validArtistData,
+      instagram: "@my.handle_name",
+    });
+    expect(dotted.success).toBe(true);
+    if (dotted.success) {
+      expect(dotted.data.instagram).toBe(
+        "https://instagram.com/my.handle_name",
+      );
+    }
+
+    const bare = artistOnboardingSchema.safeParse({
+      ...validArtistData,
+      instagram: "my.handle_name",
+    });
+    expect(bare.success).toBe(true);
+    if (bare.success) {
+      expect(bare.data.instagram).toBe("https://instagram.com/my.handle_name");
+    }
+  });
+
+  it("should normalize instagram URL input to canonical profile URL", () => {
+    const result = artistOnboardingSchema.safeParse({
+      ...validArtistData,
+      instagram: "https://www.instagram.com/myhandle/?utm_source=test",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.instagram).toBe("https://instagram.com/myhandle");
+    }
+  });
+
   it("should accept optional phoneNumber and normalize to E.164", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,

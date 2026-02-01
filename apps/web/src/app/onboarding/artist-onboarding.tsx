@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, startTransition } from "re
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { MapPin, Instagram, Twitter, Phone } from "lucide-react";
+import { MapPin, Instagram, Twitter, Phone, Upload, X } from "lucide-react";
 import {
   initialFormState,
   mergeForm,
@@ -17,12 +17,10 @@ import { artistFormOptions } from "./form-options";
 import { SpotifySearch } from "@/components/spotify-search";
 import type { SpotifyArtist } from "@/lib/api/artists";
 import { toast } from "sonner";
-import { Upload, X } from "lucide-react";
 import { validateImageFile } from "@/lib/upload";
-import NextImage from "next/image";
+import { normalizeInstagramInput } from "./validation";
 
 type OnboardingStep = 1 | 2 | 3;
-
 export function ArtistOnboarding() {
   const router = useRouter();
   const { user } = useUser();
@@ -52,18 +50,6 @@ export function ArtistOnboarding() {
       });
     }
   }, [state, user, router]);
-
-  const normalizeInstagram = (input: string) => {
-    const raw = input.trim();
-    if (!raw) return "";
-    const withoutAt = raw.startsWith("@") ? raw.slice(1).trim() : raw;
-    if (!withoutAt) return "";
-    if (withoutAt.startsWith("instagram.com/")) return `https://${withoutAt}`;
-    if (!withoutAt.includes("://") && !withoutAt.includes("/") && !withoutAt.includes(".")) {
-      return `https://instagram.com/${withoutAt}`;
-    }
-    return withoutAt;
-  };
 
   const handleProfileImageUpload = async (file: File | null) => {
     if (!file) return;
@@ -252,10 +238,8 @@ export function ArtistOnboarding() {
                             spotifyArtistIdField.handleChange(artist.id);
                             form.setFieldValue("spotifyUrl", artist.external_urls.spotify);
 
-                            const currentName = form.getFieldValue("name");
-                            if (!currentName || currentName.trim() === "") {
-                              form.setFieldValue("name", artist.name);
-                            }
+                            // Artist name/username is tied to streaming identity; lock to Spotify.
+                            form.setFieldValue("name", artist.name);
                           }}
                         />
                         {spotifyArtistIdField.state.meta.errors.length > 0 && (
@@ -277,17 +261,22 @@ export function ArtistOnboarding() {
                     {(field) => (
                       <div>
                         <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
-                          Artist/Band Name
+                          Artist/Band Name (from Spotify)
                         </label>
                         <input
                           name={field.name}
                           type="text"
                           value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          readOnly
+                          aria-readonly="true"
+
                           onBlur={field.handleBlur}
                           className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                          placeholder="Your artist name"
+                          placeholder="Select your Spotify artist above"
                         />
+                        <p className="mt-2 text-xs text-gray-500">
+                          This is locked to match your Spotify artist profile.
+                        </p>
                         {field.state.meta.errors.length > 0 && (
                           <p className="mt-2 text-sm text-red-400">
                             {field.state.meta.errors[0] as string}
@@ -472,11 +461,10 @@ export function ArtistOnboarding() {
                           field.state.value ? (
                             <div className="space-y-2">
                               <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                                <NextImage
+                                <img
                                   src={field.state.value}
                                   alt="Spotify profile preview"
-                                  fill
-                                  className="object-cover"
+                                  className="h-full w-full object-cover"
                                 />
                               </div>
                               <p className="text-xs text-gray-500">
@@ -529,7 +517,7 @@ export function ArtistOnboarding() {
                             </div>
                             {field.state.value && (
                               <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                                <NextImage
+                                <Image
                                   src={field.state.value}
                                   alt="Profile preview"
                                   fill
@@ -557,8 +545,8 @@ export function ArtistOnboarding() {
                     name="instagram"
                     validators={{
                       onChange: ({ value }) => {
-                        const normalized = normalizeInstagram(String(value ?? ""));
-                        if (!normalized) return "Instagram is required";
+                        const normalized = normalizeInstagramInput(String(value ?? ""));
+                        if (!normalized) return "Instagram username is required";
                         return undefined;
                       },
                     }}
@@ -566,21 +554,21 @@ export function ArtistOnboarding() {
                     {(field) => (
                       <div>
                         <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
-                          Instagram (Required)
+                          Instagram Username (Required)
                         </label>
                         <div className="relative">
                           <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                           <input
                             name={field.name}
                             type="text"
-                            value={field.state.value}
+                            value={String(field.state.value ?? "")}
                             onChange={(e) => field.handleChange(e.target.value)}
                             onBlur={(e) => {
-                              field.handleChange(normalizeInstagram(e.target.value));
+                              field.handleChange(normalizeInstagramInput(e.target.value));
                               field.handleBlur();
                             }}
                             className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                            placeholder="@yourhandle or https://instagram.com/yourhandle"
+                            placeholder="yourhandle (no @)"
                           />
                         </div>
                         {field.state.meta.errors.length > 0 && (
@@ -594,15 +582,17 @@ export function ArtistOnboarding() {
 
                   {/* Optional socials nudge */}
                   {(() => {
-                    const values = form.state.values;
+                    const values = form.state.values as Record<string, unknown>;
                     const hasOptionalSocial =
-                      Boolean(values.twitter?.trim?.()) ||
-                      Boolean(values.tiktok?.trim?.()) ||
-                      Boolean(values.website?.trim?.());
+                      Boolean(String(values.twitter ?? "").trim()) ||
+                      Boolean(String(values.tiktok ?? "").trim()) ||
+                      Boolean(String(values.website ?? "").trim());
                     if (hasOptionalSocial) return null;
                     return (
                       <div className="p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg">
-                        <p className="text-sm text-gray-300 font-bold">Finish setting up your account</p>
+                        <p className="text-sm text-gray-300 font-bold">
+                          Finish setting up your account
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
                           Add other social links so fans can follow you everywhere.
                         </p>
@@ -621,7 +611,7 @@ export function ArtistOnboarding() {
                           <input
                             name={field.name}
                             type="url"
-                            value={field.state.value}
+                            value={String(field.state.value ?? "")}
                             onChange={(e) => field.handleChange(e.target.value)}
                             onBlur={field.handleBlur}
                             className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
@@ -641,7 +631,7 @@ export function ArtistOnboarding() {
                         <input
                           name={field.name}
                           type="url"
-                          value={field.state.value}
+                          value={String(field.state.value ?? "")}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
@@ -660,7 +650,7 @@ export function ArtistOnboarding() {
                         <input
                           name={field.name}
                           type="url"
-                          value={field.state.value}
+                          value={String(field.state.value ?? "")}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
                           className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"

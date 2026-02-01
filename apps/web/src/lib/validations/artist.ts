@@ -23,8 +23,7 @@ const urlSchema = z
   .transform((val) => (val === "" ? undefined : val));
 
 const phoneNumberSchema = z
-  .union([z.string(), z.literal("")])
-  .optional()
+  .union([z.string(), z.number(), z.null()])
   .transform((val) => normalizeE164Phone(val))
   .refine((val) => val === undefined || /^\+[1-9]\d{1,14}$/.test(val), {
     message: "Phone number must be in E.164 format (e.g. +15551234567)",
@@ -63,7 +62,7 @@ export const artistSchema = z.object({
     .email("Must be a valid email address")
     .optional()
     .or(z.literal("")),
-  phoneNumber: phoneNumberSchema,
+  phoneNumber: phoneNumberSchema.optional(),
 });
 
 export type ArtistFormData = z.infer<typeof artistSchema>;

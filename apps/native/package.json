@@ -9,6 +9,7 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
     "web": "expo start --web",
+    "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint"
   },
   "dependencies": {
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@babel/core": "^7.26.10",
     "@dpmedia/config": "workspace:*",
+    "@types/node": "^20.19.28",
     "@types/react": "^19.2.7",
     "typescript": "catalog:"
   }

@@ -71,7 +71,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
 
             {/* Event Image */}
             {event.image && (
-              <div className="relative h-96 md:h-[500px] rounded-lg overflow-hidden mb-8">
+              <div className="relative h-96 md:h-125 rounded-lg overflow-hidden mb-8">
                 <Image src={event.image} alt={event.title} fill className="object-cover" />
               </div>
             )}
@@ -100,7 +100,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                           className="flex items-center gap-4 p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg hover:border-[#7CFC00] transition-colors"
                         >
                           {artist.image && (
-                            <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                            <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0">
                               <Image
                                 src={artist.image}
                                 alt={artist.name}
@@ -128,7 +128,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                   <h3 className="text-xl font-bold mb-4">Event Details</h3>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <Calendar className="w-5 h-5 text-[#7CFC00] mt-0.5 flex-shrink-0" />
+                      <Calendar className="w-5 h-5 text-[#7CFC00] mt-0.5 shrink-0" />
                       <div>
                         <p className="font-medium">
                           {eventDate.toLocaleDateString("en-US", {
@@ -142,14 +142,14 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <Clock className="w-5 h-5 text-[#7CFC00] mt-0.5 flex-shrink-0" />
+                      <Clock className="w-5 h-5 text-[#7CFC00] mt-0.5 shrink-0" />
                       <div>
                         <p className="font-medium">{event.time}</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-[#7CFC00] mt-0.5 flex-shrink-0" />
+                      <MapPin className="w-5 h-5 text-[#7CFC00] mt-0.5 shrink-0" />
                       <div>
                         <p className="font-medium">{event.venue}</p>
                         <p className="text-sm text-gray-400">{event.location}</p>
@@ -171,7 +171,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                     href={event.ticket_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold text-center py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#7CFC00] px-6 py-3 text-center font-bold text-black transition-colors hover:bg-[#7CFC00]/90"
                     onClick={() => {
                       // Track event ticket clicked (conversion event)
                       posthog.capture("event_ticket_clicked", {

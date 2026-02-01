@@ -128,6 +128,7 @@ describe("artistOnboardingAction", () => {
     const mockClient = {
       users: {
         getUser: mockGetUser,
+        updateUser: vi.fn().mockResolvedValue(undefined),
         updateUserMetadata: mockUpdateUserMetadata,
       },
     };
@@ -146,7 +147,7 @@ describe("artistOnboardingAction", () => {
     formData.append("bio", "This is a valid bio with more than 10 characters");
     formData.append("spotifyUrl", "https://open.spotify.com/artist/123");
     formData.append("spotifyArtistId", "123");
-    formData.append("instagram", "https://instagram.com/testartist");
+    formData.append("instagram", "testartist");
 
     const result = await artistOnboardingAction(null, formData);
 
@@ -174,6 +175,7 @@ describe("artistOnboardingAction", () => {
             artistId: artistId.toString(),
           },
         }),
+        updateUser: vi.fn().mockResolvedValue(undefined),
         updateUserMetadata: vi.fn(),
       },
     };
@@ -216,7 +218,7 @@ describe("artistOnboardingAction", () => {
     formData.append("bio", "This is a valid bio with more than 10 characters");
     formData.append("spotifyUrl", "https://open.spotify.com/artist/123");
     formData.append("spotifyArtistId", "123");
-    formData.append("instagram", "https://instagram.com/testartist");
+    formData.append("instagram", "@testartist");
 
     const result = await artistOnboardingAction(null, formData);
 

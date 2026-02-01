@@ -10,6 +10,7 @@ import {
 
 import { authClient } from "@/lib/auth-client";
 import { NAV_THEME } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/error-message";
 import { useColorScheme } from "@/lib/use-color-scheme";
 
 function SignUp() {
@@ -32,8 +33,8 @@ function SignUp() {
         password,
       },
       {
-        onError(error) {
-          setError(error.error?.message || "Failed to sign up");
+        onError(error: unknown) {
+          setError(getErrorMessage(error) ?? "Failed to sign up");
           setIsLoading(false);
         },
         onSuccess() {

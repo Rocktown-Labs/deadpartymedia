@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const MAX_INSTAGRAM_USERNAME_LENGTH = 30;
+
 const optionalUrlField = z
   .union([z.string().url("Must be a valid URL"), z.literal("")])
   .optional()
@@ -9,25 +11,36 @@ function normalizeInstagramInput(input: unknown): string {
   const raw = String(input ?? "").trim();
   if (!raw) return "";
 
-  // Accept @handle
-  const withoutAt = raw.startsWith("@") ? raw.slice(1).trim() : raw;
-  if (!withoutAt) return "";
+  // Username-first: accept @handle, handle-only, or a full instagram.com URL and normalize
+  // to a canonical URL: https://instagram.com/<username>
+  let candidate = raw.startsWith("@") ? raw.slice(1).trim() : raw;
+  if (!candidate) return "";
 
-  // Accept handle-only (no spaces, no slashes)
+  // Strip instagram domain/protocol if present
+  candidate = candidate.replace(
+    /^(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\//i,
+    "",
+  );
+
+  // Remove leading slashes and drop path/query/hash, keeping only the first segment
+  candidate = candidate.replace(/^\/+/, "");
+
+  candidate = candidate.split(/[/?#]/)[0]?.trim() ?? "";
+  if (!candidate) return "";
+
+  // Be permissive but safe: instagram usernames are typically 1-30 of letters/numbers/._
   if (
-    !withoutAt.includes("/") &&
-    !withoutAt.includes(".") &&
-    !withoutAt.includes("://")
+    !new RegExp(`^[A-Za-z0-9._]{1,${MAX_INSTAGRAM_USERNAME_LENGTH}}$`).test(
+      candidate,
+    )
   ) {
-    return `https://instagram.com/${withoutAt}`;
+    // Throw a specific error so callers can surface a clear username-format message
+    throw new Error(
+      "Invalid Instagram username format. Username must be 1-30 characters and may contain only letters, numbers, dots, and underscores.",
+    );
   }
 
-  // Accept instagram.com/... without protocol
-  if (withoutAt.startsWith("instagram.com/")) {
-    return `https://${withoutAt}`;
-  }
-
-  return withoutAt;
+  return `https://instagram.com/${candidate}`;
 }
 
 function normalizeE164Phone(input: unknown): string | undefined {
@@ -83,7 +96,23 @@ const requiredInstagram = z
   .union([z.string(), z.literal("")])
   .transform((val) => normalizeInstagramInput(val))
   .refine((val) => val.length > 0, { message: "Instagram is required" })
-  .pipe(z.string().url("Must be a valid URL"));
+  .pipe(z.string().url("Must be a valid URL"))
+  .refine(
+    (val) => {
+      try {
+        const url = new URL(val);
+        return (
+          url.hostname === "instagram.com" ||
+          url.hostname === "www.instagram.com"
+        );
+      } catch {
+        return false;
+      }
+    },
+    {
+      message: "Must be a valid Instagram profile",
+    },
+  );
 
 // Artist onboarding schema - requires location, genre, and bio
 export const artistOnboardingSchema = z.object({

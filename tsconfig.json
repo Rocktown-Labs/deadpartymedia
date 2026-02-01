@@ -1,3 +1,5 @@
 {
-  "extends": "@dpmedia/config/tsconfig.base.json"
+  "extends": "@dpmedia/config/tsconfig.base.json",
+  "files": [],
+  "include": []
 }
