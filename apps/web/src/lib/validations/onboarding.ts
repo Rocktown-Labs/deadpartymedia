@@ -25,7 +25,8 @@ function normalizeInstagramInput(input: unknown): string {
   // Remove leading slashes and drop path/query/hash, keeping only the first segment
   candidate = candidate.replace(/^\/+/, "");
 
-  candidate = candidate.split(/[/?#]/)[0]?.trim() ?? "";
+  const [firstSegment = ""] = candidate.split(/[/?#]/);
+  candidate = firstSegment.trim();
   if (!candidate) return "";
 
   // Be permissive but safe: instagram usernames are typically 1-30 of letters/numbers/._
@@ -34,10 +35,9 @@ function normalizeInstagramInput(input: unknown): string {
       candidate,
     )
   ) {
-    // Throw a specific error so callers can surface a clear username-format message
-    throw new Error(
-      "Invalid Instagram username format. Username must be 1-30 characters and may contain only letters, numbers, dots, and underscores.",
-    );
+    // Return an empty string on invalid format so callers (e.g. Zod schemas) can
+    // handle the error via refinement instead of relying on thrown exceptions.
+    return "";
   }
 
   return `https://instagram.com/${candidate}`;

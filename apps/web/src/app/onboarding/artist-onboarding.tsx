@@ -238,7 +238,7 @@ export function ArtistOnboarding() {
                             spotifyArtistIdField.handleChange(artist.id);
                             form.setFieldValue("spotifyUrl", artist.external_urls.spotify);
 
-                            // Artist name/username is tied to streaming identity; lock to Spotify.
+                            // Artist/Band Name is tied to streaming identity; lock to Spotify.
                             form.setFieldValue("name", artist.name);
                           }}
                         />
@@ -270,7 +270,6 @@ export function ArtistOnboarding() {
                           readOnly
                           aria-readonly="true"
 
-                          onBlur={field.handleBlur}
                           className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                           placeholder="Select your Spotify artist above"
                         />

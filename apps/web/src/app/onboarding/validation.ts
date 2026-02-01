@@ -13,7 +13,7 @@ export function normalizeInstagramInput(input: unknown): string {
   );
 
   candidate = candidate.replace(/^\/+/, "");
-  candidate = candidate.split(/[/?#]/)[0]?.trim() ?? "";
+  candidate = (candidate.split(/[/?#]/)[0] ?? "").trim();
 
   return candidate;
 }
