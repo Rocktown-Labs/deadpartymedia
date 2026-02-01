@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
         twitter: artists.twitter,
         tiktok: artists.tiktok,
         website: artists.website,
+        phone_number: artists.phoneNumber,
         claimed: artists.claimed,
         profile_views: artists.profileViews,
         created_at: artists.createdAt,
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
       twitter: artist.twitter,
       tiktok: artist.tiktok,
       website: artist.website,
+      phone_number: artist.phone_number,
       claimed: artist.claimed,
       article_count: artist.article_count || 0,
       event_count: artist.event_count || 0,
@@ -92,11 +94,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_current_user_artist" },
-      "Error fetching current user artist"
+      "Error fetching current user artist",
     );
     return NextResponse.json(
       { error: "Failed to fetch artist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -117,12 +119,15 @@ export async function PATCH(request: NextRequest) {
     const genre = String(formData.get("genre") ?? "");
 
     const spotifyUrl = String(
-      formData.get("spotifyUrl") ?? formData.get("spotify_url") ?? ""
+      formData.get("spotifyUrl") ?? formData.get("spotify_url") ?? "",
     );
     const instagram = String(formData.get("instagram") ?? "");
     const twitter = String(formData.get("twitter") ?? "");
     const tiktok = String(formData.get("tiktok") ?? "");
     const website = String(formData.get("website") ?? "");
+    const phoneNumber = String(
+      formData.get("phoneNumber") ?? formData.get("phone_number") ?? "",
+    );
 
     // Image can be either a File or a URL string (or empty to clear)
     const imageField = formData.get("image");
@@ -156,12 +161,13 @@ export async function PATCH(request: NextRequest) {
       tiktok,
       website,
       image: imageUrl ?? "",
+      phoneNumber,
     });
 
     if (!validationResult.success) {
       return NextResponse.json(
         { error: "Validation failed", issues: validationResult.error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -180,6 +186,7 @@ export async function PATCH(request: NextRequest) {
         tiktok: validated.tiktok ?? null,
         website: validated.website ?? null,
         image: validated.image ?? null,
+        phoneNumber: validated.phoneNumber ?? null,
         updatedAt: new Date(),
       })
       .where(eq(artists.claimedById, userId))
@@ -205,6 +212,7 @@ export async function PATCH(request: NextRequest) {
         twitter: artists.twitter,
         tiktok: artists.tiktok,
         website: artists.website,
+        phone_number: artists.phoneNumber,
         claimed: artists.claimed,
         profile_views: artists.profileViews,
         created_at: artists.createdAt,
@@ -245,6 +253,7 @@ export async function PATCH(request: NextRequest) {
       twitter: artistWithCounts.twitter,
       tiktok: artistWithCounts.tiktok,
       website: artistWithCounts.website,
+      phone_number: artistWithCounts.phone_number,
       claimed: artistWithCounts.claimed,
       profile_views: artistWithCounts.profile_views,
       created_at: artistWithCounts.created_at.toISOString(),
@@ -254,11 +263,11 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "update_current_user_artist" },
-      "Error updating current user artist"
+      "Error updating current user artist",
     );
     return NextResponse.json(
       { error: "Failed to update artist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

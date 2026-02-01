@@ -21,7 +21,9 @@ export async function createArtist(formData: FormData) {
   const log = withUserContext(logger, userId);
 
   if (!(await canCreate())) {
-    throw new Error("Unauthorized: You don't have permission to create artists");
+    throw new Error(
+      "Unauthorized: You don't have permission to create artists",
+    );
   }
 
   // Validate form data
@@ -39,12 +41,15 @@ export async function createArtist(formData: FormData) {
     tiktok: formData.get("tiktok") as string | undefined,
     website: formData.get("website") as string | undefined,
     email: formData.get("email") as string | undefined,
+    phoneNumber: formData.get("phoneNumber") as string | undefined,
   };
 
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.issues.map((e) => e.message).join(", "),
+    );
   }
 
   const validatedData = validationResult.data;
@@ -74,6 +79,7 @@ export async function createArtist(formData: FormData) {
       tiktok: validatedData.tiktok || null,
       website: validatedData.website || null,
       email: validatedData.email || null,
+      phoneNumber: validatedData.phoneNumber || null,
     })
     .returning();
 
@@ -90,9 +96,14 @@ export async function createArtist(formData: FormData) {
         },
       });
     } catch (error) {
-      withOperationContext(log, "send_artist_invitation", "artist", artist.id).error(
+      withOperationContext(
+        log,
+        "send_artist_invitation",
+        "artist",
+        artist.id,
+      ).error(
         { error: sanitizeError(error), artistId: artist.id },
-        "Failed to send artist invitation"
+        "Failed to send artist invitation",
       );
       // Continue even if invitation fails - artist is already created
     }
@@ -109,7 +120,11 @@ export async function updateArtist(id: number, formData: FormData) {
   }
 
   // Get the artist to check if it exists
-  const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
+  const [artist] = await db
+    .select()
+    .from(artists)
+    .where(eq(artists.id, id))
+    .limit(1);
 
   if (!artist) {
     throw new Error("Artist not found");
@@ -135,18 +150,25 @@ export async function updateArtist(id: number, formData: FormData) {
     tiktok: formData.get("tiktok") as string | undefined,
     website: formData.get("website") as string | undefined,
     email: formData.get("email") as string | undefined,
+    phoneNumber: formData.get("phoneNumber") as string | undefined,
   };
 
   const validationResult = artistSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
+    throw new Error(
+      validationResult.error.issues.map((e) => e.message).join(", "),
+    );
   }
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
 
-  const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.name), id, "artists");
+  const slug = await ensureUniqueSlug(
+    slugInput || generateSlug(validatedData.name),
+    id,
+    "artists",
+  );
 
   await db
     .update(artists)
@@ -164,6 +186,7 @@ export async function updateArtist(id: number, formData: FormData) {
       tiktok: validatedData.tiktok || null,
       website: validatedData.website || null,
       email: validatedData.email || null,
+      phoneNumber: validatedData.phoneNumber || null,
       updatedAt: new Date(),
     })
     .where(eq(artists.id, id));
@@ -180,10 +203,16 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
   }
 
   if (!(await canCreate())) {
-    throw new Error("Unauthorized: You don't have permission to invite artists");
+    throw new Error(
+      "Unauthorized: You don't have permission to invite artists",
+    );
   }
 
-  const [artist] = await db.select().from(artists).where(eq(artists.id, artistId)).limit(1);
+  const [artist] = await db
+    .select()
+    .from(artists)
+    .where(eq(artists.id, artistId))
+    .limit(1);
 
   if (!artist) {
     throw new Error("Artist not found");

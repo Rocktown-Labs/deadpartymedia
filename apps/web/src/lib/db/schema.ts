@@ -27,9 +27,17 @@ export const genreEnum = pgEnum("genre", [
   "OTHER",
 ]);
 
-export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
+export const postStatusEnum = pgEnum("post_status", [
+  "draft",
+  "published",
+  "archived",
+]);
 
-export const eventStatusEnum = pgEnum("event_status", ["draft", "published", "past"]);
+export const eventStatusEnum = pgEnum("event_status", [
+  "draft",
+  "published",
+  "past",
+]);
 
 // Users Table (synced from Clerk)
 export const users = pgTable("users", {
@@ -99,6 +107,7 @@ export const artists = pgTable("artists", {
   tiktok: text("tiktok"),
   website: text("website"),
   email: text("email"), // Email for sending claim invitation
+  phoneNumber: text("phone_number"),
   claimed: boolean("claimed").notNull().default(false),
   claimedById: text("claimed_by_id"), // Clerk user ID of artist who claimed
   profileViews: integer("profile_views").notNull().default(0),

@@ -4,7 +4,7 @@ import { useState, useActionState, useEffect, useRef, startTransition } from "re
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { MapPin, Instagram, Twitter } from "lucide-react";
+import { MapPin, Instagram, Twitter, Phone } from "lucide-react";
 import {
   initialFormState,
   mergeForm,
@@ -21,7 +21,7 @@ import { Upload, X } from "lucide-react";
 import { validateImageFile } from "@/lib/upload";
 import NextImage from "next/image";
 
-type OnboardingStep = 1 | 2 | 3 | 4;
+type OnboardingStep = 1 | 2 | 3;
 
 export function ArtistOnboarding() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export function ArtistOnboarding() {
   const [selectedSpotifyArtist, setSelectedSpotifyArtist] = useState<SpotifyArtist | null>(null);
   const [state, action] = useActionState(artistOnboardingAction, initialFormState);
   const [profileImageUploading, setProfileImageUploading] = useState(false);
-  const [useProfileImageUrl, setUseProfileImageUrl] = useState(false);
+  const [useSpotifyProfileImage, setUseSpotifyProfileImage] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
@@ -53,13 +53,17 @@ export function ArtistOnboarding() {
     }
   }, [state, user, router]);
 
-  // Update form when Spotify artist is selected
-  useEffect(() => {
-    if (selectedSpotifyArtist) {
-      form.setFieldValue("spotifyUrl", selectedSpotifyArtist.external_urls.spotify);
-      form.setFieldValue("spotifyArtistId", selectedSpotifyArtist.id);
+  const normalizeInstagram = (input: string) => {
+    const raw = input.trim();
+    if (!raw) return "";
+    const withoutAt = raw.startsWith("@") ? raw.slice(1).trim() : raw;
+    if (!withoutAt) return "";
+    if (withoutAt.startsWith("instagram.com/")) return `https://${withoutAt}`;
+    if (!withoutAt.includes("://") && !withoutAt.includes("/") && !withoutAt.includes(".")) {
+      return `https://instagram.com/${withoutAt}`;
     }
-  }, [selectedSpotifyArtist, form]);
+    return withoutAt;
+  };
 
   const handleProfileImageUpload = async (file: File | null) => {
     if (!file) return;
@@ -90,7 +94,7 @@ export function ArtistOnboarding() {
 
       const { url } = await response.json();
       form.setFieldValue("image", url);
-      setUseProfileImageUrl(false);
+      setUseSpotifyProfileImage(false);
       toast.dismiss(loadingId);
       toast.success("Profile image uploaded successfully");
     } catch (error) {
@@ -101,7 +105,7 @@ export function ArtistOnboarding() {
   };
 
   const handleNext = async () => {
-    if (currentStep >= 4) return;
+    if (currentStep >= 3) return;
 
     // Validate required fields for current step before proceeding
     const formState = form.state;
@@ -110,11 +114,15 @@ export function ArtistOnboarding() {
     if (currentStep === 1) {
       // Step 1: name, location, and genre are required
       // Trigger validation for each required field to show errors in UI
+      await form.validateField("spotifyArtistId", "change");
       await form.validateField("name", "change");
       await form.validateField("location", "change");
       await form.validateField("genre", "change");
 
       // Check if required fields are filled
+      if (!values.spotifyArtistId || String(values.spotifyArtistId).trim() === "") {
+        return; // Don't proceed if Spotify artist isn't selected
+      }
       if (!values.name || values.name.trim() === "") {
         return; // Don't proceed if name is empty
       }
@@ -137,7 +145,7 @@ export function ArtistOnboarding() {
         return; // Don't proceed if bio is invalid
       }
     }
-    // Steps 3 and 4 have no required fields, so no validation needed
+    // Step 3 is the final step; required fields are validated on submit
 
     // All validations passed, proceed to next step
     setCurrentStep((currentStep + 1) as OnboardingStep);
@@ -149,7 +157,7 @@ export function ArtistOnboarding() {
     }
   };
 
-  const progressPercentage = (currentStep / 4) * 100;
+  const progressPercentage = (currentStep / 3) * 100;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -171,7 +179,7 @@ export function ArtistOnboarding() {
           {/* Progress Bar */}
           <div className="mb-12">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-400">Step {currentStep} of 4</span>
+              <span className="text-gray-400">Step {currentStep} of 3</span>
               <span className="text-[#7CFC00] font-bold">
                 {Math.round(progressPercentage)}% Complete
               </span>
@@ -225,6 +233,39 @@ export function ArtistOnboarding() {
                     <h2 className="text-2xl font-black mb-2">Basic Information</h2>
                     <p className="text-gray-400 text-sm">Tell us about yourself</p>
                   </div>
+
+                  <form.Field
+                    name="spotifyArtistId"
+                    validators={{
+                      onChange: ({ value }) =>
+                        !value || String(value).trim() === ""
+                          ? "Spotify artist is required"
+                          : undefined,
+                    }}
+                  >
+                    {(spotifyArtistIdField) => (
+                      <div>
+                        <SpotifySearch
+                          value={form.getFieldValue("spotifyUrl")}
+                          onSelect={(artist: SpotifyArtist) => {
+                            setSelectedSpotifyArtist(artist);
+                            spotifyArtistIdField.handleChange(artist.id);
+                            form.setFieldValue("spotifyUrl", artist.external_urls.spotify);
+
+                            const currentName = form.getFieldValue("name");
+                            if (!currentName || currentName.trim() === "") {
+                              form.setFieldValue("name", artist.name);
+                            }
+                          }}
+                        />
+                        {spotifyArtistIdField.state.meta.errors.length > 0 && (
+                          <p className="mt-2 text-sm text-red-400">
+                            {spotifyArtistIdField.state.meta.errors[0] as string}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
 
                   <form.Field
                     name="name"
@@ -324,6 +365,28 @@ export function ArtistOnboarding() {
                       </div>
                     )}
                   </form.Field>
+
+                  <form.Field name="phoneNumber">
+                    {(field) => (
+                      <div>
+                        <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
+                          Phone Number (Optional)
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                          <input
+                            name={field.name}
+                            type="tel"
+                            value={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            onBlur={field.handleBlur}
+                            className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
+                            placeholder="+1 555 123 4567"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </form.Field>
                 </div>
               )}
 
@@ -384,23 +447,47 @@ export function ArtistOnboarding() {
                           </label>
                           <button
                             type="button"
-                            onClick={() => setUseProfileImageUrl(!useProfileImageUrl)}
+                            onClick={() => {
+                              const next = !useSpotifyProfileImage;
+                              setUseSpotifyProfileImage(next);
+                              if (next) {
+                                const spotifyImage = selectedSpotifyArtist?.images?.[0]?.url;
+                                if (!spotifyImage) {
+                                  toast.error(
+                                    "No Spotify profile image found for this artist. Please upload an image instead."
+                                  );
+                                  setUseSpotifyProfileImage(false);
+                                  return;
+                                }
+                                field.handleChange(spotifyImage);
+                              }
+                            }}
                             className="text-xs text-[#7CFC00] hover:text-[#6EE600] transition-colors"
                           >
-                            {useProfileImageUrl ? "Upload File" : "Use URL"}
+                            {useSpotifyProfileImage ? "Upload Image" : "Use Spotify Image"}
                           </button>
                         </div>
 
-                        {useProfileImageUrl ? (
-                          <input
-                            name={field.name}
-                            type="url"
-                            value={field.state.value}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            onBlur={field.handleBlur}
-                            className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                            placeholder="https://example.com/image.jpg"
-                          />
+                        {useSpotifyProfileImage ? (
+                          field.state.value ? (
+                            <div className="space-y-2">
+                              <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
+                                <NextImage
+                                  src={field.state.value}
+                                  alt="Spotify profile preview"
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                Using your Spotify profile image
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-400">
+                              Select your Spotify artist in Step 1 to use this option.
+                            </p>
+                          )
                         ) : (
                           <div className="space-y-2">
                             <input
@@ -458,52 +545,70 @@ export function ArtistOnboarding() {
                 </div>
               )}
 
-              {/* Step 3: Spotify Search */}
+              {/* Step 3: Social Links */}
               {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-black mb-2">Connect Your Music</h2>
-                    <p className="text-gray-400 text-sm">Link your music platforms</p>
-                  </div>
-
-                  <SpotifySearch
-                    value={form.getFieldValue("spotifyUrl")}
-                    onSelect={(artist: SpotifyArtist) => {
-                      setSelectedSpotifyArtist(artist);
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* Step 4: Social Links */}
-              {currentStep === 4 && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-black mb-2">Social Media</h2>
                     <p className="text-gray-400 text-sm">Connect with your fans</p>
                   </div>
 
-                  <form.Field name="instagram">
+                  <form.Field
+                    name="instagram"
+                    validators={{
+                      onChange: ({ value }) => {
+                        const normalized = normalizeInstagram(String(value ?? ""));
+                        if (!normalized) return "Instagram is required";
+                        return undefined;
+                      },
+                    }}
+                  >
                     {(field) => (
                       <div>
                         <label className="block text-sm font-bold mb-2 uppercase tracking-wider">
-                          Instagram
+                          Instagram (Required)
                         </label>
                         <div className="relative">
                           <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                           <input
                             name={field.name}
-                            type="url"
+                            type="text"
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
-                            onBlur={field.handleBlur}
+                            onBlur={(e) => {
+                              field.handleChange(normalizeInstagram(e.target.value));
+                              field.handleBlur();
+                            }}
                             className="w-full pl-11 pr-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
-                            placeholder="https://instagram.com/yourhandle"
+                            placeholder="@yourhandle or https://instagram.com/yourhandle"
                           />
                         </div>
+                        {field.state.meta.errors.length > 0 && (
+                          <p className="mt-2 text-sm text-red-400">
+                            {field.state.meta.errors[0] as string}
+                          </p>
+                        )}
                       </div>
                     )}
                   </form.Field>
+
+                  {/* Optional socials nudge */}
+                  {(() => {
+                    const values = form.state.values;
+                    const hasOptionalSocial =
+                      Boolean(values.twitter?.trim?.()) ||
+                      Boolean(values.tiktok?.trim?.()) ||
+                      Boolean(values.website?.trim?.());
+                    if (hasOptionalSocial) return null;
+                    return (
+                      <div className="p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg">
+                        <p className="text-sm text-gray-300 font-bold">Finish setting up your account</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Add other social links so fans can follow you everywhere.
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <form.Field name="twitter">
                     {(field) => (
@@ -578,7 +683,7 @@ export function ArtistOnboarding() {
                   Back
                 </button>
 
-                {currentStep < 4 ? (
+                {currentStep < 3 ? (
                   <button
                     type="button"
                     onClick={handleNext}

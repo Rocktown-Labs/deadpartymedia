@@ -49,6 +49,7 @@ export default async function EditArtistPage({ params }: { params: Promise<{ id:
           tiktok: artist.tiktok || undefined,
           website: artist.website || undefined,
           email: artist.email || undefined,
+          phoneNumber: artist.phoneNumber || undefined,
         }}
         onSubmit={updateArtist.bind(null, artistId)}
         cancelHref={"/admin/artists" as Route}

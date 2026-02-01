@@ -10,6 +10,12 @@ export default function ArtistsPage() {
   const [filterGenre, setFilterGenre] = useState<string>("ALL");
   const { data: artists, isLoading } = useArtists(filterGenre !== "ALL" ? filterGenre : undefined);
 
+  const completeArtists = (artists ?? []).filter((artist) => {
+    const hasSpotify = Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
+    const hasInstagram = Boolean(artist.instagram?.trim());
+    return Boolean(artist.claimed) && hasSpotify && hasInstagram;
+  });
+
   const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
 
   if (isLoading) {
@@ -58,8 +64,8 @@ export default function ArtistsPage() {
 
           {/* Artists Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {artists && artists.length > 0 ? (
-              artists.map((artist) => (
+            {completeArtists.length > 0 ? (
+              completeArtists.map((artist) => (
                 <Link key={artist.id} href={`/artists/${artist.slug}`}>
                   <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-col">
                     <div className="relative h-64 overflow-hidden">

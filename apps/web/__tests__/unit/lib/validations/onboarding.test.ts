@@ -1,200 +1,219 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from "vitest";
 import {
   artistOnboardingSchema,
   fanOnboardingSchema,
   type ArtistOnboardingFormData,
   type FanOnboardingFormData,
-} from '@/lib/validations/onboarding'
+} from "@/lib/validations/onboarding";
 
-describe('artistOnboardingSchema', () => {
+describe("artistOnboardingSchema", () => {
   const validArtistData: ArtistOnboardingFormData = {
-    name: 'Test Artist',
-    location: 'Little Rock, AR',
-    genre: 'EDM',
-    bio: 'This is a valid bio with more than 10 characters',
-  }
+    name: "Test Artist",
+    location: "Little Rock, AR",
+    genre: "EDM",
+    bio: "This is a valid bio with more than 10 characters",
+    spotifyUrl: "https://open.spotify.com/artist/123",
+    spotifyArtistId: "123",
+    instagram: "https://instagram.com/testartist",
+  };
 
-  it('should validate correct artist data', () => {
-    const result = artistOnboardingSchema.safeParse(validArtistData)
-    expect(result.success).toBe(true)
+  it("should validate correct artist data", () => {
+    const result = artistOnboardingSchema.safeParse(validArtistData);
+    expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.name).toBe('Test Artist')
-      expect(result.data.location).toBe('Little Rock, AR')
-      expect(result.data.genre).toBe('EDM')
+      expect(result.data.name).toBe("Test Artist");
+      expect(result.data.location).toBe("Little Rock, AR");
+      expect(result.data.genre).toBe("EDM");
     }
-  })
+  });
 
-  it('should require name', () => {
+  it("should require name", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      name: '',
-    })
-    expect(result.success).toBe(false)
+      name: "",
+    });
+    expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('required')
+      expect(result.error.issues[0].message).toContain("required");
     }
-  })
+  });
 
-  it('should require location', () => {
+  it("should require location", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      location: '',
-    })
-    expect(result.success).toBe(false)
-  })
+      location: "",
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should require genre', () => {
+  it("should require genre", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
       genre: undefined,
-    })
-    expect(result.success).toBe(false)
-  })
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should require valid genre enum', () => {
+  it("should require valid genre enum", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      genre: 'INVALID_GENRE',
-    })
-    expect(result.success).toBe(false)
-  })
+      genre: "INVALID_GENRE",
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should require bio with minimum 10 characters', () => {
+  it("should require bio with minimum 10 characters", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      bio: 'short',
-    })
-    expect(result.success).toBe(false)
+      bio: "short",
+    });
+    expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('at least 10')
+      expect(result.error.issues[0].message).toContain("at least 10");
     }
-  })
+  });
 
-  it('should enforce bio maximum length of 500 characters', () => {
-    const longBio = 'a'.repeat(501)
+  it("should enforce bio maximum length of 500 characters", () => {
+    const longBio = "a".repeat(501);
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
       bio: longBio,
-    })
-    expect(result.success).toBe(false)
+    });
+    expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('less than 500')
+      expect(result.error.issues[0].message).toContain("less than 500");
     }
-  })
+  });
 
-  it('should validate URL fields', () => {
+  it("should validate URL fields", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      spotifyUrl: 'https://open.spotify.com/artist/123',
-      instagram: 'https://instagram.com/artist',
-      twitter: 'https://twitter.com/artist',
-      website: 'https://example.com',
-    })
-    expect(result.success).toBe(true)
-  })
+      twitter: "https://twitter.com/artist",
+      website: "https://example.com",
+    });
+    expect(result.success).toBe(true);
+  });
 
-  it('should reject invalid URLs', () => {
+  it("should reject invalid URLs", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      spotifyUrl: 'not-a-url',
-    })
-    expect(result.success).toBe(false)
-  })
+      spotifyUrl: "not-a-url",
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should transform empty strings to undefined for optional URL fields', () => {
+  it("should require spotifyUrl and instagram (empty string should fail)", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      spotifyUrl: '',
-      instagram: '',
-    })
-    expect(result.success).toBe(true)
+      spotifyUrl: "",
+      instagram: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should normalize instagram handle input", () => {
+    const result = artistOnboardingSchema.safeParse({
+      ...validArtistData,
+      instagram: "@myhandle",
+    });
+    expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.spotifyUrl).toBeUndefined()
-      expect(result.data.instagram).toBeUndefined()
+      expect(result.data.instagram).toBe("https://instagram.com/myhandle");
     }
-  })
+  });
 
-  it('should enforce name max length of 100 characters', () => {
-    const longName = 'a'.repeat(101)
+  it("should accept optional phoneNumber and normalize to E.164", () => {
+    const result = artistOnboardingSchema.safeParse({
+      ...validArtistData,
+      phoneNumber: "(501) 555-1212",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.phoneNumber).toBe("+15015551212");
+    }
+  });
+
+  it("should enforce name max length of 100 characters", () => {
+    const longName = "a".repeat(101);
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
       name: longName,
-    })
-    expect(result.success).toBe(false)
-  })
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should enforce location max length of 100 characters', () => {
-    const longLocation = 'a'.repeat(101)
+  it("should enforce location max length of 100 characters", () => {
+    const longLocation = "a".repeat(101);
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
       location: longLocation,
-    })
-    expect(result.success).toBe(false)
-  })
-})
+    });
+    expect(result.success).toBe(false);
+  });
+});
 
-describe('fanOnboardingSchema', () => {
+describe("fanOnboardingSchema", () => {
   const validFanData: FanOnboardingFormData = {
-    name: 'Test Fan',
-  }
+    name: "Test Fan",
+  };
 
-  it('should validate correct fan data with only name', () => {
-    const result = fanOnboardingSchema.safeParse(validFanData)
-    expect(result.success).toBe(true)
-  })
+  it("should validate correct fan data with only name", () => {
+    const result = fanOnboardingSchema.safeParse(validFanData);
+    expect(result.success).toBe(true);
+  });
 
-  it('should require name', () => {
+  it("should require name", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: '',
-    })
-    expect(result.success).toBe(false)
-  })
+      name: "",
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should trim and validate name is not only whitespace', () => {
+  it("should trim and validate name is not only whitespace", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: '   ',
-    })
-    expect(result.success).toBe(false)
+      name: "   ",
+    });
+    expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('whitespace')
+      expect(result.error.issues[0].message).toContain("whitespace");
     }
-  })
+  });
 
-  it('should allow optional fields', () => {
+  it("should allow optional fields", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: 'Test Fan',
-      location: 'Little Rock, AR',
-      genre: 'EDM',
-      bio: 'Optional bio',
-    })
-    expect(result.success).toBe(true)
-  })
+      name: "Test Fan",
+      location: "Little Rock, AR",
+      genre: "EDM",
+      bio: "Optional bio",
+    });
+    expect(result.success).toBe(true);
+  });
 
-  it('should validate optional URL fields when provided', () => {
+  it("should validate optional URL fields when provided", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: 'Test Fan',
-      spotifyUrl: 'not-a-url',
-    })
-    expect(result.success).toBe(false)
-  })
+      name: "Test Fan",
+      spotifyUrl: "not-a-url",
+    });
+    expect(result.success).toBe(false);
+  });
 
-  it('should transform empty strings to undefined for optional fields', () => {
+  it("should transform empty strings to undefined for optional fields", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: 'Test Fan',
-      spotifyUrl: '',
-      location: '',
-    })
-    expect(result.success).toBe(true)
+      name: "Test Fan",
+      spotifyUrl: "",
+      location: "",
+    });
+    expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.spotifyUrl).toBeUndefined()
+      expect(result.data.spotifyUrl).toBeUndefined();
     }
-  })
+  });
 
-  it('should enforce name max length of 100 characters', () => {
-    const longName = 'a'.repeat(101)
+  it("should enforce name max length of 100 characters", () => {
+    const longName = "a".repeat(101);
     const result = fanOnboardingSchema.safeParse({
       name: longName,
-    })
-    expect(result.success).toBe(false)
-  })
-})
+    });
+    expect(result.success).toBe(false);
+  });
+});

@@ -20,6 +20,7 @@ export const fanFormOptions = formOptions({
     tiktok: "",
     website: "",
     image: "",
+    phoneNumber: "",
   },
 });
 
@@ -28,7 +29,12 @@ export const artistFormOptions = formOptions({
   defaultValues: {
     name: "",
     location: "",
-    genre: "OTHER" as "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER",
+    genre: "OTHER" as
+      | "COUNTRY"
+      | "EDM"
+      | "HARDCORE & ROCK"
+      | "HIP-HOP & R&B"
+      | "OTHER",
     bio: "",
     spotifyUrl: "",
     spotifyArtistId: "",
@@ -37,6 +43,7 @@ export const artistFormOptions = formOptions({
     tiktok: "",
     website: "",
     image: "",
+    phoneNumber: "",
   },
 });
 

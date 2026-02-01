@@ -51,7 +51,6 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
   const { userId } = await auth();
   const log = userId ? withUserContext(logger, userId, "fan") : logger;
   try {
-
     if (!userId) {
       redirect("/sign-in");
     }
@@ -88,7 +87,7 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     // Handle operational errors (database, Clerk API) gracefully
     log.error(
       { error: sanitizeError(e), operation: "fan_onboarding" },
-      "Error completing onboarding"
+      "Error completing onboarding",
     );
     return {
       ...initialFormState,
@@ -119,12 +118,11 @@ const artistServerValidate = createServerValidate({
 
 export async function artistOnboardingAction(
   prev: unknown,
-  formData: FormData
+  formData: FormData,
 ) {
   const { userId } = await auth();
   const log = userId ? withUserContext(logger, userId, "artist") : logger;
   try {
-
     if (!userId) {
       redirect("/sign-in");
     }
@@ -176,6 +174,7 @@ export async function artistOnboardingAction(
           tiktok: validatedData.tiktok || artist.tiktok,
           website: validatedData.website || artist.website,
           image: validatedData.image || artist.image,
+          phoneNumber: validatedData.phoneNumber || artist.phoneNumber,
           claimed: true,
           claimedById: userId,
           updatedAt: new Date(),
@@ -186,7 +185,7 @@ export async function artistOnboardingAction(
       const slug = await ensureUniqueSlug(
         generateSlug(validatedData.name),
         undefined,
-        "artists"
+        "artists",
       );
 
       await db.insert(artists).values({
@@ -195,13 +194,14 @@ export async function artistOnboardingAction(
         bio: validatedData.bio,
         location: validatedData.location,
         genre: validatedData.genre as any,
-        spotifyUrl: validatedData.spotifyUrl || null,
-        spotifyArtistId: validatedData.spotifyArtistId || null,
-        instagram: validatedData.instagram || null,
+        spotifyUrl: validatedData.spotifyUrl,
+        spotifyArtistId: validatedData.spotifyArtistId,
+        instagram: validatedData.instagram,
         twitter: validatedData.twitter || null,
         tiktok: validatedData.tiktok || null,
         website: validatedData.website || null,
         image: validatedData.image || null,
+        phoneNumber: validatedData.phoneNumber || null,
         claimed: true,
         claimedById: userId,
       });
@@ -228,7 +228,7 @@ export async function artistOnboardingAction(
     // Handle operational errors (database, Clerk API) gracefully
     log.error(
       { error: sanitizeError(e), operation: "artist_onboarding" },
-      "Error completing onboarding"
+      "Error completing onboarding",
     );
     return {
       ...initialFormState,

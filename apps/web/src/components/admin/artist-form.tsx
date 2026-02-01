@@ -32,6 +32,7 @@ interface ArtistFormProps {
     tiktok?: string;
     website?: string;
     email?: string;
+    phoneNumber?: string;
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
   cancelHref: Route;
@@ -60,6 +61,7 @@ export function ArtistForm({
   const [tiktok, setTiktok] = useState(initialData?.tiktok || "");
   const [website, setWebsite] = useState(initialData?.website || "");
   const [email, setEmail] = useState(initialData?.email || "");
+  const [phoneNumber, setPhoneNumber] = useState(initialData?.phoneNumber || "");
   const [inviteArtist, setInviteArtist] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -80,6 +82,7 @@ export function ArtistForm({
     formData.append("tiktok", tiktok);
     formData.append("website", website);
     formData.append("email", email);
+    formData.append("phoneNumber", phoneNumber);
     formData.append("inviteArtist", String(inviteArtist && Boolean(email)));
     try {
       await onSubmit(formData);
@@ -178,6 +181,17 @@ export function ArtistForm({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="phoneNumber">Phone Number (optional)</Label>
+        <Input
+          id="phoneNumber"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          placeholder="+1 555 123 4567"
           className="mt-1"
         />
       </div>
