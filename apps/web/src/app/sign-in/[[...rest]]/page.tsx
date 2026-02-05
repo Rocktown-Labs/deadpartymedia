@@ -1,26 +1,13 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
-import { SignUp } from "@clerk/nextjs";
+import { SignIn } from "@clerk/nextjs";
 
-export default function SignUpPage() {
-  const searchParams = useSearchParams();
-  const role = searchParams.get("role");
-  const artistId = searchParams.get("artistId");
-
-  // Build redirect URL based on role - always go to onboarding after sign-up
-  const getRedirectUrl = () => {
-    if (role === "artist") {
-      return "/onboarding?role=artist";
-    }
-    return "/onboarding";
-  };
-
+export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-28 lg:pt-20 pb-28 lg:pb-20">
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-[calc(var(--navbar-offset)+1.5rem)] pb-28 lg:pb-20">
       <div className="w-full max-w-md">
         <Link
           href="/"
@@ -38,20 +25,15 @@ export default function SignUpPage() {
             height={80}
             className="mx-auto mb-6"
           />
-          <h1 className="text-4xl font-black mb-2">Join the Scene</h1>
-          <p className="text-gray-400">Create your Dead Party Media account</p>
-          {role === "artist" && artistId && (
-            <p className="text-[#7CFC00] text-sm mt-2">You're claiming an artist profile</p>
-          )}
+          <h1 className="text-4xl font-black mb-2">Welcome Back</h1>
+          <p className="text-gray-400">Sign in to your Dead Party Media account</p>
         </div>
 
         <div className="flex justify-center">
-          <SignUp
+          <SignIn
             routing="path"
-            path="/sign-up"
-            signInUrl="/sign-in"
-            forceRedirectUrl={getRedirectUrl()}
-            fallbackRedirectUrl={getRedirectUrl()}
+            path="/sign-in"
+            signUpUrl="/sign-up"
             appearance={{
               elements: {
                 rootBox: "mx-auto",

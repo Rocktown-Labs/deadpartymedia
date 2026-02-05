@@ -15,8 +15,8 @@ const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 const isArtistMeRoute = createRouteMatcher(["/api/artists/me(.*)"]);
 const isPublicRoute = createRouteMatcher([
   "/",
-  "/sign-in",
-  "/sign-up",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/posts(.*)",
   "/api/events(.*)",
