@@ -87,15 +87,22 @@ export async function GET(request: NextRequest) {
     artistsFromEvents.forEach((a) => uniqueArtistIds.add(a.artistId));
     const featuredArtistsCount = uniqueArtistIds.size;
 
-    return NextResponse.json({
-      monthStart: monthStartDateOnly,
-      monthEnd: new Date(nextMonthStartTimestamp.getTime() - 1)
-        .toISOString()
-        .split("T")[0],
-      featuredArtistsCount,
-      liveEventsCount,
-      newArticlesCount,
-    });
+    return NextResponse.json(
+      {
+        monthStart: monthStartDateOnly,
+        monthEnd: new Date(nextMonthStartTimestamp.getTime() - 1)
+          .toISOString()
+          .split("T")[0],
+        featuredArtistsCount,
+        liveEventsCount,
+        newArticlesCount,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800",
+        },
+      }
+    );
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_monthly_stats" },

@@ -102,7 +102,7 @@ export default function HomepageClient({
               </div>
             ) : featuredArticles.length > 0 ? (
               <div className="lg:col-span-8">
-                <Link href={`/article/${featuredArticles[0]?.slug}`}>
+                <Link href={`/article/${featuredArticles[0]?.slug}`} prefetch={false}>
                   <div className="relative group cursor-pointer h-full">
                     {/* Cover Image */}
                     <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
@@ -243,7 +243,11 @@ export default function HomepageClient({
                     </>
                   ) : featuredArticles.length > 1 ? (
                     featuredArticles.slice(1, 3).map((article, index) => (
-                      <Link key={article.id || index} href={`/article/${article.slug}`}>
+                      <Link
+                        key={article.id || index}
+                        href={`/article/${article.slug}`}
+                        prefetch={false}
+                      >
                         <div className="group cursor-pointer my-0 py-0 mb-2">
                           <div className="relative h-48 mb-4 overflow-hidden">
                             <Image
@@ -353,7 +357,7 @@ export default function HomepageClient({
           ) : articlesData.length > 3 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {articlesData.slice(3, visibleArticles).map((article) => (
-                <Link key={article.id} href={`/article/${article.slug}`}>
+                <Link key={article.id} href={`/article/${article.slug}`} prefetch={false}>
                   <article className="group cursor-pointer">
                     {/* Image */}
                     <div className="relative h-80 mb-6 overflow-hidden bg-black">

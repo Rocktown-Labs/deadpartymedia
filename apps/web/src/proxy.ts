@@ -12,11 +12,16 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isArtistDashboardRoute = createRouteMatcher(["/artist-dashboard(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
+const isArtistMeRoute = createRouteMatcher(["/api/artists/me(.*)"]);
 const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in",
   "/sign-up",
   "/api/webhooks(.*)",
+  "/api/posts(.*)",
+  "/api/events(.*)",
+  "/api/stats/monthly",
+  "/api/artists(.*)",
   "/api/spotify(.*)",
   "/merch(.*)",
   "/article(.*)",
@@ -39,15 +44,30 @@ const isProtectedRoute = createRouteMatcher([
   "/artist-dashboard(.*)",
   "/dashboard(.*)",
   "/onboarding(.*)",
+  "/api/artists/me(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
   const requestId = getRequestId(req);
   const log = getRequestLogger(req);
   let response: NextResponse;
+  const isRscRequest = req.nextUrl.searchParams.has("_rsc");
 
-  // Allow public routes
-  if (isPublicRoute(req)) {
+  if (isRscRequest) {
+    log.info(
+      {
+        operation: "rsc_request",
+        path: req.nextUrl.pathname,
+        method: req.method,
+        purpose: req.headers.get("purpose"),
+        middlewarePrefetch: req.headers.get("x-middleware-prefetch"),
+      },
+      "RSC request observed"
+    );
+  }
+
+  // Allow public routes (except explicitly protected artist endpoints)
+  if (isPublicRoute(req) && !isArtistMeRoute(req)) {
     response = NextResponse.next();
     addRequestIdHeader(response, requestId);
     return response;
@@ -85,8 +105,8 @@ export default clerkMiddleware(async (auth, req) => {
     );
   }
 
-  // Handle onboarding flow - redirect to onboarding if not complete
-  if (!onboardingComplete) {
+  // Handle onboarding flow - only for authenticated users
+  if (userId && !onboardingComplete) {
     // Allow access to onboarding route
     if (isOnboardingRoute(req)) {
       response = NextResponse.next();

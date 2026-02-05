@@ -95,10 +95,17 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({
-      count: eventList.length,
-      results: eventList,
-    });
+    return NextResponse.json(
+      {
+        count: eventList.length,
+        results: eventList,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_events" },
