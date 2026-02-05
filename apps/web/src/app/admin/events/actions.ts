@@ -7,10 +7,22 @@ import { events, eventArtists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { eventSchema } from "@/lib/validations/event";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
+
+function normalizeArtistIds(ids: number[]) {
+  return Array.from(new Set(ids)).sort((a, b) => a - b);
+}
+
+function haveDifferentArtistIds(a: number[], b: number[]) {
+  if (a.length !== b.length) return true;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return true;
+  }
+  return false;
+}
 
 export async function createEvent(formData: FormData) {
   const { userId } = await auth();
@@ -94,12 +106,15 @@ export async function createEvent(formData: FormData) {
   }
 
   // Handle artist relations (optional for events)
+  let artistIds: number[] = [];
   const artistIdsStr = formData.get("artistIds");
   if (artistIdsStr && typeof artistIdsStr === "string" && artistIdsStr.trim()) {
-    const artistIds = artistIdsStr
-      .split(",")
-      .map((id) => Number.parseInt(id.trim(), 10))
-      .filter((id) => !Number.isNaN(id) && id > 0);
+    artistIds = normalizeArtistIds(
+      artistIdsStr
+        .split(",")
+        .map((id) => Number.parseInt(id.trim(), 10))
+        .filter((id) => !Number.isNaN(id) && id > 0)
+    );
 
     if (artistIds.length > 0) {
       try {
@@ -126,6 +141,15 @@ export async function createEvent(formData: FormData) {
         );
         // Don't throw - event is already created, relations can be added later
       }
+    }
+  }
+
+  const isPublished = validatedData.status === "published";
+  if (isPublished) {
+    revalidateTag("events", "max");
+    revalidateTag("stats-monthly", "max");
+    if (artistIds.length > 0) {
+      revalidateTag("artists", "max");
     }
   }
 
@@ -232,26 +256,54 @@ export async function updateEvent(id: number, formData: FormData) {
 
   // Handle artist relations - delete existing and insert new
   try {
+    const existingArtistRelations = await db
+      .select({ artistId: eventArtists.artistId })
+      .from(eventArtists)
+      .where(eq(eventArtists.eventId, id));
+    const existingArtistIds = normalizeArtistIds(
+      existingArtistRelations.map((rel) => rel.artistId)
+    );
+
     await db.delete(eventArtists).where(eq(eventArtists.eventId, id));
 
+    let newArtistIds: number[] = [];
     const artistIdsStr = formData.get("artistIds");
     if (artistIdsStr && typeof artistIdsStr === "string" && artistIdsStr.trim()) {
-      const artistIds = artistIdsStr
-        .split(",")
-        .map((id) => Number.parseInt(id.trim(), 10))
-        .filter((id) => !Number.isNaN(id) && id > 0);
+      newArtistIds = normalizeArtistIds(
+        artistIdsStr
+          .split(",")
+          .map((id) => Number.parseInt(id.trim(), 10))
+          .filter((id) => !Number.isNaN(id) && id > 0)
+      );
 
-      if (artistIds.length > 0) {
+      if (newArtistIds.length > 0) {
         await db.insert(eventArtists).values(
-          artistIds.map((artistId) => ({
+          newArtistIds.map((artistId) => ({
             eventId: id,
             artistId,
           }))
         );
         logger.debug(
-          { userId, operation: "update_event", eventId: id, artistIds },
+          { userId, operation: "update_event", eventId: id, artistIds: newArtistIds },
           "Event artist relations updated"
         );
+      }
+    }
+
+    const wasPublished = event.status === "published";
+    const isPublished = validatedData.status === "published";
+    const artistIdsChanged = haveDifferentArtistIds(
+      existingArtistIds,
+      newArtistIds
+    );
+    const publicationChanged = wasPublished !== isPublished;
+    const hasAnyArtistIds =
+      existingArtistIds.length > 0 || newArtistIds.length > 0;
+    if (wasPublished || isPublished) {
+      revalidateTag("events", "max");
+      revalidateTag("stats-monthly", "max");
+      if (artistIdsChanged || (publicationChanged && hasAnyArtistIds)) {
+        revalidateTag("artists", "max");
       }
     }
   } catch (error) {
@@ -287,8 +339,25 @@ export async function deleteEvent(id: number) {
   }
 
   try {
+    const [event] = await db
+      .select({ status: events.status })
+      .from(events)
+      .where(eq(events.id, id))
+      .limit(1);
+    const existingArtistRelations = await db
+      .select({ artistId: eventArtists.artistId })
+      .from(eventArtists)
+      .where(eq(eventArtists.eventId, id));
+
     await db.delete(events).where(eq(events.id, id));
     logger.info({ userId, operation: "delete_event", eventId: id }, "Event deleted successfully");
+    if (event?.status === "published") {
+      revalidateTag("events", "max");
+      revalidateTag("stats-monthly", "max");
+      if (existingArtistRelations.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), userId, operation: "delete_event", eventId: id },

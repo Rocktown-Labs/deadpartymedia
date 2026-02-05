@@ -7,7 +7,7 @@ import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { canCreate, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { artistSchema } from "@/lib/validations/artist";
 import { logger } from "@/lib/logger";
 import { withUserContext, withOperationContext } from "@/lib/logger/context";
@@ -109,6 +109,7 @@ export async function createArtist(formData: FormData) {
     }
   }
 
+  revalidateTag("artists", "max");
   revalidatePath("/admin/artists");
   redirect("/admin/artists");
 }
@@ -191,6 +192,7 @@ export async function updateArtist(id: number, formData: FormData) {
     })
     .where(eq(artists.id, id));
 
+  revalidateTag("artists", "max");
   revalidatePath("/admin/artists");
   revalidatePath(`/admin/artists/${id}`);
   redirect("/admin/artists");
@@ -235,6 +237,7 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
       await db.update(artists).set({ email }).where(eq(artists.id, artistId));
     }
 
+    revalidateTag("artists", "max");
     revalidatePath("/admin/artists");
     return { success: true };
   } catch (error: any) {
@@ -254,5 +257,6 @@ export async function deleteArtist(id: number) {
 
   await db.delete(artists).where(eq(artists.id, id));
 
+  revalidateTag("artists", "max");
   revalidatePath("/admin/artists");
 }

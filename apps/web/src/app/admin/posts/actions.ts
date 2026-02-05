@@ -7,10 +7,22 @@ import { posts, postArtists } from "@/lib/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { postSchema } from "@/lib/validations/post";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
+
+function normalizeArtistIds(ids: number[]) {
+  return Array.from(new Set(ids)).sort((a, b) => a - b);
+}
+
+function haveDifferentArtistIds(a: number[], b: number[]) {
+  if (a.length !== b.length) return true;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return true;
+  }
+  return false;
+}
 
 export async function createPost(formData: FormData) {
   const { userId } = await auth();
@@ -105,12 +117,15 @@ export async function createPost(formData: FormData) {
   }
 
   // Handle artist relations
+  let artistIds: number[] = [];
   const artistIdsStr = formData.get("artistIds");
   if (artistIdsStr && typeof artistIdsStr === "string" && artistIdsStr.trim()) {
-    const artistIds = artistIdsStr
-      .split(",")
-      .map((id) => Number.parseInt(id.trim(), 10))
-      .filter((id) => !Number.isNaN(id) && id > 0);
+    artistIds = normalizeArtistIds(
+      artistIdsStr
+        .split(",")
+        .map((id) => Number.parseInt(id.trim(), 10))
+        .filter((id) => !Number.isNaN(id) && id > 0)
+    );
 
     if (artistIds.length > 0) {
       try {
@@ -137,6 +152,15 @@ export async function createPost(formData: FormData) {
         );
         // Don't throw - post is already created, relations can be added later
       }
+    }
+  }
+
+  const isPublished = validatedData.status === "published";
+  if (isPublished) {
+    revalidateTag("posts", "max");
+    revalidateTag("stats-monthly", "max");
+    if (artistIds.length > 0) {
+      revalidateTag("artists", "max");
     }
   }
 
@@ -271,30 +295,58 @@ export async function updatePost(id: number, formData: FormData) {
 
   // Handle artist relations - delete existing and insert new
   try {
+    const existingArtistRelations = await db
+      .select({ artistId: postArtists.artistId })
+      .from(postArtists)
+      .where(eq(postArtists.postId, id));
+    const existingArtistIds = normalizeArtistIds(
+      existingArtistRelations.map((rel) => rel.artistId)
+    );
+
     await db.delete(postArtists).where(eq(postArtists.postId, id));
 
+    let newArtistIds: number[] = [];
     const artistIdsStr = formData.get("artistIds");
     if (
       artistIdsStr &&
       typeof artistIdsStr === "string" &&
       artistIdsStr.trim()
     ) {
-      const artistIds = artistIdsStr
-        .split(",")
-        .map((id) => Number.parseInt(id.trim(), 10))
-        .filter((id) => !Number.isNaN(id) && id > 0);
+      newArtistIds = normalizeArtistIds(
+        artistIdsStr
+          .split(",")
+          .map((id) => Number.parseInt(id.trim(), 10))
+          .filter((id) => !Number.isNaN(id) && id > 0)
+      );
 
-      if (artistIds.length > 0) {
+      if (newArtistIds.length > 0) {
         await db.insert(postArtists).values(
-          artistIds.map((artistId) => ({
+          newArtistIds.map((artistId) => ({
             postId: id,
             artistId,
           }))
         );
         logger.debug(
-          { userId, operation: "update_post", postId: id, artistIds },
+          { userId, operation: "update_post", postId: id, artistIds: newArtistIds },
           "Post artist relations updated"
         );
+      }
+    }
+
+    const wasPublished = post.status === "published";
+    const isPublished = validatedData.status === "published";
+    const artistIdsChanged = haveDifferentArtistIds(
+      existingArtistIds,
+      newArtistIds
+    );
+    const publicationChanged = wasPublished !== isPublished;
+    const hasAnyArtistIds =
+      existingArtistIds.length > 0 || newArtistIds.length > 0;
+    if (wasPublished || isPublished) {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (artistIdsChanged || (publicationChanged && hasAnyArtistIds)) {
+        revalidateTag("artists", "max");
       }
     }
   } catch (error) {
@@ -390,6 +442,17 @@ export async function requestDeletePost(id: number) {
       );
       throw error;
     }
+    const existingArtistRelations = await db
+      .select({ artistId: postArtists.artistId })
+      .from(postArtists)
+      .where(eq(postArtists.postId, id));
+    if (post.status === "published") {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (existingArtistRelations.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
     revalidatePath("/admin/posts");
     return;
   }
@@ -445,11 +508,28 @@ export async function approveDeletePost(id: number) {
   }
 
   try {
+    const [post] = await db
+      .select({ status: posts.status })
+      .from(posts)
+      .where(eq(posts.id, id))
+      .limit(1);
+    const existingArtistRelations = await db
+      .select({ artistId: postArtists.artistId })
+      .from(postArtists)
+      .where(eq(postArtists.postId, id));
+
     await db.delete(posts).where(eq(posts.id, id));
     logger.info(
       { userId, operation: "approve_delete_post", postId: id },
       "Post deletion approved"
     );
+    if (post?.status === "published") {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (existingArtistRelations.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
   } catch (error) {
     logger.error(
       {
@@ -535,11 +615,28 @@ export async function deletePost(id: number) {
   }
 
   try {
+    const [post] = await db
+      .select({ status: posts.status })
+      .from(posts)
+      .where(eq(posts.id, id))
+      .limit(1);
+    const existingArtistRelations = await db
+      .select({ artistId: postArtists.artistId })
+      .from(postArtists)
+      .where(eq(postArtists.postId, id));
+
     await db.delete(posts).where(eq(posts.id, id));
     logger.info(
       { userId, operation: "delete_post", postId: id },
       "Post deleted successfully"
     );
+    if (post?.status === "published") {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (existingArtistRelations.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
   } catch (error) {
     logger.error(
       {
