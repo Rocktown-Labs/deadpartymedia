@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { db } from "@/lib/db";
 import { events, eventArtists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -27,7 +28,7 @@ function haveDifferentArtistIds(a: number[], b: number[]) {
 export async function createEvent(formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info({ userId, operation: "create_event" }, "Starting event creation");
@@ -161,7 +162,7 @@ export async function createEvent(formData: FormData) {
 export async function updateEvent(id: number, formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info({ userId, operation: "update_event", eventId: id }, "Starting event update");
@@ -328,7 +329,7 @@ export async function updateEvent(id: number, formData: FormData) {
 export async function deleteEvent(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info({ userId, operation: "delete_event", eventId: id }, "Deleting event");

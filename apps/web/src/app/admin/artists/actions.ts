@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -16,7 +17,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
 export async function createArtist(formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
   const log = withUserContext(logger, userId);
 
@@ -117,7 +118,7 @@ export async function createArtist(formData: FormData) {
 export async function updateArtist(id: number, formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   // Get the artist to check if it exists
@@ -201,7 +202,7 @@ export async function updateArtist(id: number, formData: FormData) {
 export async function inviteArtistToClaim(artistId: number, email: string) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canCreate())) {
@@ -248,7 +249,7 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
 export async function deleteArtist(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canDelete())) {

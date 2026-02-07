@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { checkRole } from "@/lib/auth/roles";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
@@ -18,7 +19,7 @@ import {
 export default async function PostsPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   const isSuperAdmin = await checkRole("super_admin");

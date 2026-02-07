@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { userUpdateSchema, passwordChangeSchema } from "@/lib/validations/user";
 import type {
   UserUpdateInput,
@@ -14,7 +15,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
 export async function updateUserProfile(data: UserUpdateInput) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
   const log = withUserContext(logger, userId);
 
@@ -58,7 +59,7 @@ export async function changeUserPassword(
 ) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   // Validate input

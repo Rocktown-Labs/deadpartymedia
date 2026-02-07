@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import {
   ServerValidateError,
   createServerValidate,
@@ -52,7 +53,7 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
   const log = userId ? withUserContext(logger, userId, "fan") : logger;
   try {
     if (!userId) {
-      redirect("/sign-in");
+      redirect("/sign-in" as Route);
     }
 
     const validatedData = await fanServerValidate(formData);
@@ -124,7 +125,7 @@ export async function artistOnboardingAction(
   const log = userId ? withUserContext(logger, userId, "artist") : logger;
   try {
     if (!userId) {
-      redirect("/sign-in");
+      redirect("/sign-in" as Route);
     }
 
     const validatedData = await artistServerValidate(formData);

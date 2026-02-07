@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { checkRole } from "@/lib/auth/roles";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
@@ -13,7 +14,7 @@ import { InviteArtistForm } from "./invite-artist-form";
 export default async function ArtistsPage() {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   const isSuperAdmin = await checkRole("super_admin");

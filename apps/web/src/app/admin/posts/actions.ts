@@ -2,6 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { db } from "@/lib/db";
 import { posts, postArtists } from "@/lib/db/schema";
 import { eq, and, ne } from "drizzle-orm";
@@ -27,7 +28,7 @@ function haveDifferentArtistIds(a: number[], b: number[]) {
 export async function createPost(formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info({ userId, operation: "create_post" }, "Starting post creation");
@@ -172,7 +173,7 @@ export async function createPost(formData: FormData) {
 export async function updatePost(id: number, formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info(
@@ -371,7 +372,7 @@ export async function updatePost(id: number, formData: FormData) {
 export async function requestDeletePost(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info(
@@ -489,7 +490,7 @@ export async function requestDeletePost(id: number) {
 export async function approveDeletePost(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info(
@@ -549,7 +550,7 @@ export async function approveDeletePost(id: number) {
 export async function denyDeletePost(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info(
@@ -598,7 +599,7 @@ export async function denyDeletePost(id: number) {
 export async function deletePost(id: number) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   logger.info(

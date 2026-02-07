@@ -3,8 +3,13 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import type { Route } from "next";
 
-export default function ArtistDashboardLayout({ children }: { children: React.ReactNode }) {
+export default function ArtistDashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
@@ -12,7 +17,7 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
 
   useEffect(() => {
     if (isLoaded && (!isSignedIn || role !== "artist")) {
-      router.push("/sign-in");
+      router.push("/sign-in" as Route);
     }
   }, [isLoaded, isSignedIn, role, router]);
 
@@ -29,7 +34,8 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
         }
 
         const artist = await response.json();
-        const hasSpotify = Boolean(artist?.spotify_artist_id) && Boolean(artist?.spotify_url);
+        const hasSpotify =
+          Boolean(artist?.spotify_artist_id) && Boolean(artist?.spotify_url);
         const hasInstagram = Boolean(artist?.instagram);
 
         if (!hasSpotify || !hasInstagram) {

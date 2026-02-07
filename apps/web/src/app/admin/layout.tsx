@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { checkRole } from "@/lib/auth/roles";
 import { AdminShell } from "./admin-shell";
 
@@ -7,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { userId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   const isSuperAdmin = await checkRole("super_admin");

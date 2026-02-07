@@ -7,6 +7,7 @@ import Image from "next/image";
 import { FanOnboarding } from "./fan-onboarding";
 import { ArtistOnboarding } from "./artist-onboarding";
 import posthog from "posthog-js";
+import type { Route } from "next";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function OnboardingPage() {
   // Check if user is loaded and authenticated
   useEffect(() => {
     if (isLoaded && !user) {
-      router.push("/sign-in");
+      router.push("/sign-in" as Route);
     }
   }, [isLoaded, user, router]);
 

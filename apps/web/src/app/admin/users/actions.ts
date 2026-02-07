@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { canManageUsers } from "@/lib/auth/access";
 import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
@@ -14,7 +15,7 @@ export async function inviteUser(
 ) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canManageUsers())) {
@@ -73,7 +74,7 @@ export async function inviteUser(
 export async function revokeInvitation(invitationId: string) {
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canManageUsers())) {
@@ -95,7 +96,7 @@ export async function revokeInvitation(invitationId: string) {
 export async function updateUserRole(userId: string, role: Roles) {
   const { userId: currentUserId } = await auth();
   if (!currentUserId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canManageUsers())) {
@@ -144,7 +145,7 @@ export async function updateUserRole(userId: string, role: Roles) {
 export async function deleteUser(userId: string) {
   const { userId: currentUserId } = await auth();
   if (!currentUserId) {
-    redirect("/sign-in");
+    redirect("/sign-in" as Route);
   }
 
   if (!(await canManageUsers())) {

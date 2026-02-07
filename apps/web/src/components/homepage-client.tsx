@@ -10,6 +10,7 @@ import type { Product } from "@/lib/types";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useRouter } from "next/navigation";
 import { useMonthlyHomepageStats } from "@/lib/api/stats";
+import type { Route } from "next";
 
 interface HomepageClientProps {
   featuredArticles: any[];
@@ -202,13 +203,13 @@ export default function HomepageClient({
                 <div className="space-y-3">
                   <Button
                     className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-sm"
-                    onClick={() => router.push("/sign-up?role=artist")}
+                    onClick={() => router.push("/sign-up?role=artist" as Route)}
                   >
                     Artist Registration
                   </Button>
                   <Button
                     className="w-full bg-transparent border border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-sm"
-                    onClick={() => router.push("/sign-in")}
+                    onClick={() => router.push("/sign-in" as Route)}
                   >
                     Sign In
                   </Button>
