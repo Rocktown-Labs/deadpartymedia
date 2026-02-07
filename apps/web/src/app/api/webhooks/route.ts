@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { withOperationContext } from "@/lib/logger/context";
+import { roleOrDefault } from "@/lib/auth/role";
 
 export async function POST(req: NextRequest) {
   const log = getRequestLogger(req);
@@ -14,7 +15,14 @@ export async function POST(req: NextRequest) {
 
     // Handle user.created event
     if (evt.type === "user.created") {
-      const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+      const {
+        id,
+        email_addresses,
+        first_name,
+        last_name,
+        image_url,
+        public_metadata,
+      } = evt.data;
 
       const primaryEmail = email_addresses.find(
         (email) => email.id === evt.data.primary_email_address_id,
@@ -28,14 +36,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
-      // Insert user into database
-      await db.insert(users).values({
-        clerkId: id,
-        email: primaryEmail,
-        firstName: first_name || null,
-        lastName: last_name || null,
-        imageUrl: image_url || null,
-      });
+      const role = roleOrDefault((public_metadata as Record<string, unknown>)?.role, "fan");
+      const onboardingComplete =
+        (public_metadata as Record<string, unknown>)?.onboardingComplete === true;
+
+      // Upsert user to make webhook retries idempotent.
+      await db
+        .insert(users)
+        .values({
+          clerkId: id,
+          email: primaryEmail,
+          firstName: first_name || null,
+          lastName: last_name || null,
+          imageUrl: image_url || null,
+          role,
+          onboardingComplete,
+        })
+        .onConflictDoUpdate({
+          target: users.clerkId,
+          set: {
+            email: primaryEmail,
+            firstName: first_name || null,
+            lastName: last_name || null,
+            imageUrl: image_url || null,
+            role,
+            onboardingComplete,
+            updatedAt: new Date(),
+          },
+        });
 
       withOperationContext(log, "webhook_user_created", "user", id).info(
         { userId: id },
@@ -45,7 +73,14 @@ export async function POST(req: NextRequest) {
 
     // Handle user.updated event
     if (evt.type === "user.updated") {
-      const { id, email_addresses, first_name, last_name, image_url } = evt.data;
+      const {
+        id,
+        email_addresses,
+        first_name,
+        last_name,
+        image_url,
+        public_metadata,
+      } = evt.data;
 
       const primaryEmail = email_addresses.find(
         (email) => email.id === evt.data.primary_email_address_id,
@@ -59,17 +94,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
-      // Update user in database
+      const role = roleOrDefault((public_metadata as Record<string, unknown>)?.role, "fan");
+      const onboardingComplete =
+        (public_metadata as Record<string, unknown>)?.onboardingComplete === true;
+
+      // Upsert user to make update deliveries idempotent even when row is missing.
       await db
-        .update(users)
-        .set({
+        .insert(users)
+        .values({
+          clerkId: id,
           email: primaryEmail,
           firstName: first_name || null,
           lastName: last_name || null,
           imageUrl: image_url || null,
-          updatedAt: new Date(),
+          role,
+          onboardingComplete,
         })
-        .where(eq(users.clerkId, id));
+        .onConflictDoUpdate({
+          target: users.clerkId,
+          set: {
+            email: primaryEmail,
+            firstName: first_name || null,
+            lastName: last_name || null,
+            imageUrl: image_url || null,
+            role,
+            onboardingComplete,
+            updatedAt: new Date(),
+          },
+        });
 
       withOperationContext(log, "webhook_user_updated", "user", id).info(
         { userId: id },

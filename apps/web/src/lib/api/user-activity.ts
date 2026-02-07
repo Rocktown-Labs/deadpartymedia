@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./client";
 import type { ArticleList } from "./articles";
 
 export interface ArticleRead {
@@ -47,7 +46,11 @@ export function useReadArticles() {
   return useQuery<PaginatedResponse<ArticleRead>>({
     queryKey: ["user", "read-articles"],
     queryFn: async () => {
-      return apiClient.get<PaginatedResponse<ArticleRead>>("/user/articles/read/");
+      const response = await fetch("/api/user/articles/read");
+      if (!response.ok) {
+        throw new Error("Failed to fetch read articles");
+      }
+      return response.json();
     },
     retry: false,
   });
@@ -58,7 +61,17 @@ export function useMarkArticleRead() {
 
   return useMutation({
     mutationFn: async (articleId: number) => {
-      return apiClient.post<ArticleRead>("/user/articles/read/", { article_id: articleId });
+      const response = await fetch("/api/user/articles/read", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ article_id: articleId }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to mark article as read");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "read-articles"] });
@@ -72,7 +85,11 @@ export function useSavedArticles() {
   return useQuery<PaginatedResponse<SavedArticle>>({
     queryKey: ["user", "saved-articles"],
     queryFn: async () => {
-      return apiClient.get<PaginatedResponse<SavedArticle>>("/user/articles/saved/");
+      const response = await fetch("/api/user/articles/saved");
+      if (!response.ok) {
+        throw new Error("Failed to fetch saved articles");
+      }
+      return response.json();
     },
     retry: false,
   });
@@ -83,7 +100,17 @@ export function useSaveArticle() {
 
   return useMutation({
     mutationFn: async (articleId: number) => {
-      return apiClient.post<SavedArticle>("/user/articles/saved/", { article_id: articleId });
+      const response = await fetch("/api/user/articles/saved", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ article_id: articleId }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save article");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "saved-articles"] });
@@ -97,7 +124,13 @@ export function useUnsaveArticle() {
 
   return useMutation({
     mutationFn: async (savedId: number) => {
-      return apiClient.delete(`/user/articles/saved/${savedId}/`);
+      const response = await fetch(`/api/user/articles/saved/${savedId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to unsave article");
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", "saved-articles"] });
@@ -111,7 +144,11 @@ export function useUserComments() {
   return useQuery<PaginatedResponse<UserComment>>({
     queryKey: ["user", "comments"],
     queryFn: async () => {
-      return apiClient.get<PaginatedResponse<UserComment>>("/user/comments/");
+      const response = await fetch("/api/user/comments");
+      if (!response.ok) {
+        throw new Error("Failed to fetch user comments");
+      }
+      return response.json();
     },
     retry: false,
   });
@@ -122,8 +159,11 @@ export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryKey: ["user", "stats"],
     queryFn: async () => {
-      // Note: `skipTrailingSlashRedirect` is enabled in `next.config.ts`, so prefer no trailing slash.
-      return apiClient.get<DashboardStats>("/user/stats");
+      const response = await fetch("/api/user/stats");
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard stats");
+      }
+      return response.json();
     },
     retry: false,
   });

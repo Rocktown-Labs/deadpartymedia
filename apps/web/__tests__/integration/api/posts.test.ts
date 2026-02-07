@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GET } from '@/app/api/posts/route'
 
+vi.mock('next/cache', () => ({
+  cacheTag: vi.fn(),
+}))
+
 // Mock database with proper chain - use vi.hoisted to properly hoist the variable
-const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
+const { mockDbChain, mockArtistRelationsChain, mockCommentCountsChain } = vi.hoisted(() => {
   const mockDbChain = {
     select: vi.fn(),
     from: vi.fn(),
@@ -19,6 +23,13 @@ const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
     where: vi.fn(),
   }
 
+  const mockCommentCountsChain = {
+    select: vi.fn(),
+    from: vi.fn(),
+    where: vi.fn(),
+    groupBy: vi.fn(),
+  }
+
   // Set up the chain: select().from().where().orderBy().limit().offset()
   mockDbChain.select.mockReturnValue({ from: mockDbChain.from })
   mockDbChain.from.mockReturnValue({ where: mockDbChain.where })
@@ -32,7 +43,13 @@ const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
   mockArtistRelationsChain.innerJoin.mockReturnValue({ where: mockArtistRelationsChain.where })
   mockArtistRelationsChain.where.mockResolvedValue([]) // Default to empty artist relations
 
-  return { mockDbChain, mockArtistRelationsChain }
+  // Set up comment counts chain: select().from().where().groupBy()
+  mockCommentCountsChain.select.mockReturnValue({ from: mockCommentCountsChain.from })
+  mockCommentCountsChain.from.mockReturnValue({ where: mockCommentCountsChain.where })
+  mockCommentCountsChain.where.mockReturnValue({ groupBy: mockCommentCountsChain.groupBy })
+  mockCommentCountsChain.groupBy.mockResolvedValue([]) // Default to no comments
+
+  return { mockDbChain, mockArtistRelationsChain, mockCommentCountsChain }
 })
 
 // Track which select call we're on
@@ -42,15 +59,16 @@ vi.mock('@/lib/db', () => ({
   db: {
     ...mockDbChain,
     // Override select to handle both posts query and artist relations query
+    // and comment-count query
     select: vi.fn((_fields) => {
       selectCallIndex++
-      // First call is posts query (no args), second call is artist relations (with object)
+      // First call is posts query, second is artist relations, third is comment counts
       if (selectCallIndex === 1) {
-        // Posts query - no arguments
         return mockDbChain.select()
-      } else {
-        // Artist relations query - has fields object
+      } else if (selectCallIndex === 2) {
         return mockArtistRelationsChain.select()
+      } else {
+        return mockCommentCountsChain.select()
       }
     }),
   },
@@ -73,6 +91,12 @@ describe('GET /api/posts', () => {
     mockArtistRelationsChain.from.mockReturnValue({ innerJoin: mockArtistRelationsChain.innerJoin })
     mockArtistRelationsChain.innerJoin.mockReturnValue({ where: mockArtistRelationsChain.where })
     mockArtistRelationsChain.where.mockResolvedValue([]) // Default to empty artist relations
+
+    // Reset comment counts chain
+    mockCommentCountsChain.select.mockReturnValue({ from: mockCommentCountsChain.from })
+    mockCommentCountsChain.from.mockReturnValue({ where: mockCommentCountsChain.where })
+    mockCommentCountsChain.where.mockReturnValue({ groupBy: mockCommentCountsChain.groupBy })
+    mockCommentCountsChain.groupBy.mockResolvedValue([]) // Default to no comments
   })
 
   it('should return published posts', async () => {
@@ -106,6 +130,7 @@ describe('GET /api/posts', () => {
     expect(data.results).toHaveLength(1)
     expect(data.results[0].title).toBe('Test Post')
     expect(data.results[0].artists).toEqual([]) // Should include empty artists array
+    expect(data.results[0].comment_count).toBe(0)
   })
 
   it('should filter by category', async () => {
@@ -232,5 +257,40 @@ describe('GET /api/posts', () => {
       name: 'Test Artist',
       image: 'https://example.com/image.jpg',
     })
+  })
+
+  it('should include comment count data when posts have comments', async () => {
+    const mockPosts = [
+      {
+        id: 1,
+        title: 'Test Post',
+        slug: 'test-post',
+        category: 'EDM',
+        excerpt: 'Test excerpt',
+        coverImage: null,
+        authorId: 'user1',
+        status: 'published',
+        isCoverStory: false,
+        publishedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        views: 0,
+      },
+    ]
+
+    mockDbChain.offset.mockResolvedValue(mockPosts)
+    mockCommentCountsChain.groupBy.mockResolvedValue([
+      {
+        postId: 1,
+        count: 3,
+      },
+    ])
+
+    const request = new Request('http://localhost:3001/api/posts')
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.results[0].comment_count).toBe(3)
   })
 })

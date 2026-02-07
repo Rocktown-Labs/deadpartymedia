@@ -65,6 +65,10 @@ vi.mock('@/lib/logger/middleware', () => ({
   })),
 }))
 
+vi.mock('next/cache', () => ({
+  cacheTag: vi.fn(),
+}))
+
 describe('GET /api/events', () => {
   beforeEach(() => {
     vi.clearAllMocks()

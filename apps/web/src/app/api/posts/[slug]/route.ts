@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts, postArtists, artists } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { posts, postArtists, artists, articleComments } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { generateHTML } from "@tiptap/html";
@@ -38,6 +38,11 @@ export async function GET(
       .innerJoin(artists, eq(postArtists.artistId, artists.id))
       .where(eq(postArtists.postId, post.id));
 
+    const [commentCountResult] = await db
+      .select({ count: sql<number>`count(*)::int`.as("count") })
+      .from(articleComments)
+      .where(eq(articleComments.postId, post.id));
+
     // Parse Tiptap content and convert to HTML
     let content;
     try {
@@ -65,6 +70,7 @@ export async function GET(
       artists: postArtistsData,
       published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
       views: post.views,
+      comment_count: commentCountResult?.count ?? 0,
       is_cover_story: post.isCoverStory,
       created_at: post.createdAt.toISOString(),
       updated_at: post.updatedAt.toISOString(),

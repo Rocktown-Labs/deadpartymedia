@@ -20,6 +20,8 @@ import { fanFormOptions, artistFormOptions } from "./form-options";
 import { logger } from "@/lib/logger";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { upsertUserAuthState } from "@/lib/auth/user-state";
+import { getPrimaryEmail } from "@/lib/auth/clerk";
 
 // Helper to validate with Zod and return errors in TanStack Form format
 function validateWithZod<T>(schema: any, data: T): string | undefined {
@@ -73,6 +75,21 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
         role: "fan",
         onboardingComplete: true,
       },
+    });
+
+    const primaryEmail = getPrimaryEmail(user);
+    if (!primaryEmail) {
+      throw new Error("Unable to determine user email for onboarding sync");
+    }
+
+    await upsertUserAuthState({
+      clerkId: userId,
+      email: primaryEmail,
+      firstName: validatedData.name,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+      role: "fan",
+      onboardingComplete: true,
     });
 
     // Return success in a way that TanStack Form can handle
@@ -240,6 +257,21 @@ export async function artistOnboardingAction(
         role: "artist",
         onboardingComplete: true,
       },
+    });
+
+    const primaryEmail = getPrimaryEmail(user);
+    if (!primaryEmail) {
+      throw new Error("Unable to determine user email for onboarding sync");
+    }
+
+    await upsertUserAuthState({
+      clerkId: userId,
+      email: primaryEmail,
+      firstName: validatedData.name,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+      role: "artist",
+      onboardingComplete: true,
     });
 
     // Return success in a way that TanStack Form can handle

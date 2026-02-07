@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "./client";
 
 export interface Article {
   id: number;
@@ -48,6 +47,7 @@ export interface ArticleList {
   }>;
   published_at: string | null;
   views: number;
+  comment_count?: number;
   created_at: string;
 }
 
@@ -97,20 +97,17 @@ export interface Comment {
 export function useArticleComments(slug: string) {
   return useQuery<Comment[]>({
     queryKey: ["article-comments", slug],
-    queryFn: async () => {
-      const response = await apiClient.get<any>(`/articles/${slug}/comments/`);
-      // Handle DRF pagination format: {results: [], count: 0, next: null, previous: null}
-      // Or direct array if pagination is disabled
-      if (Array.isArray(response)) {
-        return response;
+    queryFn: async ({ signal }) => {
+      const response = await fetch(`/api/articles/${slug}/comments`, { signal });
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
       }
-      if (
-        response &&
-        typeof response === "object" &&
-        "results" in response &&
-        Array.isArray(response.results)
-      ) {
-        return response.results;
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data && typeof data === "object" && "results" in data && Array.isArray(data.results)) {
+        return data.results as Comment[];
       }
       return [];
     },
@@ -131,7 +128,36 @@ export function useCreateComment() {
       content: string;
       parent?: number;
     }) => {
-      return apiClient.post(`/articles/${slug}/comments/`, { content, parent });
+      const response = await fetch(`/api/articles/${slug}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content, parent }),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        const baseErrorMessage =
+          typeof errorPayload?.error === "string"
+            ? errorPayload.error
+            : "Failed to create comment";
+        const detailsMessage = Array.isArray(errorPayload?.details)
+          ? errorPayload.details
+              .map((detail: unknown) =>
+                typeof detail === "string"
+                  ? detail
+                  : typeof detail === "object" && detail !== null
+                    ? JSON.stringify(detail)
+                    : "",
+              )
+              .filter(Boolean)
+              .join(", ")
+          : "";
+        throw new Error(detailsMessage ? `${baseErrorMessage}: ${detailsMessage}` : baseErrorMessage);
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

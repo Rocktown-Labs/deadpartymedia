@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts, postArtists, artists } from "@/lib/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { posts, postArtists, artists, articleComments } from "@/lib/db/schema";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { cacheTag } from "next/cache";
@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
       artistName: string;
       artistImage: string | null;
     }>> = {};
+    const commentCountByPostId = new Map<number, number>();
 
     if (postIds.length > 0) {
       const relations = await db
@@ -62,6 +63,19 @@ export async function GET(request: NextRequest) {
           artistRelations[rel.postId] = [];
         }
         artistRelations[rel.postId].push(rel);
+      }
+
+      const commentCounts = await db
+        .select({
+          postId: articleComments.postId,
+          count: sql<number>`count(*)::int`.as("count"),
+        })
+        .from(articleComments)
+        .where(inArray(articleComments.postId, postIds))
+        .groupBy(articleComments.postId);
+
+      for (const row of commentCounts) {
+        commentCountByPostId.set(row.postId, row.count);
       }
     }
 
@@ -87,6 +101,7 @@ export async function GET(request: NextRequest) {
         })),
         published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
         views: post.views,
+        comment_count: commentCountByPostId.get(post.id) ?? 0,
         is_cover_story: post.isCoverStory,
         created_at: post.createdAt.toISOString(),
       };

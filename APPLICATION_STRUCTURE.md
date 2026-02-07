@@ -140,7 +140,14 @@ AWS_S3_REGION_NAME=us-east-1
 ```bash
 # Django API URL
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
+
+# Postgres connection string used by Next.js server code + API routes (Drizzle + Neon)
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 ```
+
+Tip: Example templates for Neon branch switching live in:
+- `apps/web/.env.development.local.example` (Neon `dev` branch)
+- `apps/web/.env.production.local.example` (Neon `main` branch)
 
 **For Production:**
 - Set to your production Django API URL (e.g., `https://api.deadpartymedia.com/api`)

@@ -1,11 +1,12 @@
 packages:
   - apps/*
   - packages/*
+
 catalog:
-  dotenv: ^17.2.2
-  zod: ^4.1.13
-  typescript: ^5
-  convex: ^1.31.2
+  '@better-auth/expo': 1.4.9
+  '@convex-dev/better-auth': ^0.10.9
   better-auth: 1.4.9
-  "@convex-dev/better-auth": ^0.10.9
-  "@better-auth/expo": 1.4.9
+  convex: ^1.31.2
+  dotenv: 17.2.3
+  typescript: ^5
+  zod: ^4.1.13

@@ -7,6 +7,9 @@ import {
   date,
   pgEnum,
   serial,
+  type AnyPgColumn,
+  index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -39,6 +42,13 @@ export const eventStatusEnum = pgEnum("event_status", [
   "past",
 ]);
 
+export const roleEnum = pgEnum("role", [
+  "artist",
+  "fan",
+  "super_admin",
+  "writer",
+]);
+
 // Users Table (synced from Clerk)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -47,6 +57,8 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   imageUrl: text("image_url"),
+  role: roleEnum("role").notNull().default("fan"),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -70,6 +82,77 @@ export const posts = pgTable("posts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Article Comments Table
+export const articleComments = pgTable(
+  "article_comments",
+  {
+    id: serial("id").primaryKey(),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    clerkUserId: text("clerk_user_id").notNull(),
+    userName: text("user_name"),
+    userEmail: text("user_email"),
+    content: text("content").notNull(),
+    parentId: integer("parent_id").references((): AnyPgColumn => articleComments.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    postIdIdx: index("article_comments_post_id_idx").on(table.postId),
+    parentIdIdx: index("article_comments_parent_id_idx").on(table.parentId),
+    clerkUserIdIdx: index("article_comments_clerk_user_id_idx").on(
+      table.clerkUserId,
+    ),
+    clerkUserCreatedAtIdx: index("article_comments_user_created_at_idx").on(
+      table.clerkUserId,
+      table.createdAt,
+    ),
+  }),
+);
+
+// User Article Reads Table
+export const userArticleReads = pgTable(
+  "user_article_reads",
+  {
+    id: serial("id").primaryKey(),
+    clerkUserId: text("clerk_user_id").notNull(),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    readAt: timestamp("read_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("user_article_reads_user_idx").on(table.clerkUserId),
+    userPostUnique: uniqueIndex("user_article_reads_user_post_unique").on(
+      table.clerkUserId,
+      table.postId,
+    ),
+  }),
+);
+
+// User Article Saves Table
+export const userArticleSaves = pgTable(
+  "user_article_saves",
+  {
+    id: serial("id").primaryKey(),
+    clerkUserId: text("clerk_user_id").notNull(),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    savedAt: timestamp("saved_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdx: index("user_article_saves_user_idx").on(table.clerkUserId),
+    userPostUnique: uniqueIndex("user_article_saves_user_post_unique").on(
+      table.clerkUserId,
+      table.postId,
+    ),
+  }),
+);
 
 // Events Table
 export const events = pgTable("events", {
@@ -138,6 +221,9 @@ export const eventArtists = pgTable("event_artists", {
 // Relations
 export const postsRelations = relations(posts, ({ many }) => ({
   postArtists: many(postArtists),
+  comments: many(articleComments),
+  reads: many(userArticleReads),
+  saves: many(userArticleSaves),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -157,6 +243,35 @@ export const postArtistsRelations = relations(postArtists, ({ one }) => ({
   artist: one(artists, {
     fields: [postArtists.artistId],
     references: [artists.id],
+  }),
+}));
+
+export const articleCommentsRelations = relations(articleComments, ({ one, many }) => ({
+  post: one(posts, {
+    fields: [articleComments.postId],
+    references: [posts.id],
+  }),
+  parent: one(articleComments, {
+    fields: [articleComments.parentId],
+    references: [articleComments.id],
+    relationName: "comment_replies",
+  }),
+  replies: many(articleComments, {
+    relationName: "comment_replies",
+  }),
+}));
+
+export const userArticleReadsRelations = relations(userArticleReads, ({ one }) => ({
+  post: one(posts, {
+    fields: [userArticleReads.postId],
+    references: [posts.id],
+  }),
+}));
+
+export const userArticleSavesRelations = relations(userArticleSaves, ({ one }) => ({
+  post: one(posts, {
+    fields: [userArticleSaves.postId],
+    references: [posts.id],
   }),
 }));
 

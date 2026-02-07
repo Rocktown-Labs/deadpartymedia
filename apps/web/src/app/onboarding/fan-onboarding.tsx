@@ -15,7 +15,11 @@ import { fanOnboardingAction } from "./actions";
 import { fanFormOptions } from "./form-options";
 import { toast } from "sonner";
 
-export function FanOnboarding() {
+type FanOnboardingProps = {
+  initialName?: string;
+};
+
+export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const router = useRouter();
   const { user } = useUser();
   const [state, action] = useActionState(fanOnboardingAction, initialFormState);
@@ -26,6 +30,13 @@ export function FanOnboarding() {
   });
 
   const formErrors = useStore(form.store, (formState) => formState.errors);
+
+  useEffect(() => {
+    if (!initialName || initialName.trim().length === 0) return;
+    const currentName = String(form.getFieldValue("name") ?? "");
+    if (currentName.trim().length > 0) return;
+    form.setFieldValue("name", initialName.trim());
+  }, [form, initialName]);
 
   // Handle successful submission
   useEffect(() => {

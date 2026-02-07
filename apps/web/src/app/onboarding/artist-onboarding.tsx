@@ -19,9 +19,14 @@ import type { SpotifyArtist } from "@/lib/api/artists";
 import { toast } from "sonner";
 import { validateImageFile } from "@/lib/upload";
 import { normalizeInstagramInput } from "./validation";
+import type { ArtistFormData } from "./form-options";
 
 type OnboardingStep = 1 | 2 | 3;
-export function ArtistOnboarding() {
+type ArtistOnboardingProps = {
+  initialValues?: Partial<ArtistFormData> | null;
+};
+
+export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const router = useRouter();
   const { user } = useUser();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
@@ -30,6 +35,7 @@ export function ArtistOnboarding() {
   const [profileImageUploading, setProfileImageUploading] = useState(false);
   const [useSpotifyProfileImage, setUseSpotifyProfileImage] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const hasAppliedPrefill = useRef(false);
 
   const form = useForm({
     ...artistFormOptions,
@@ -39,6 +45,34 @@ export function ArtistOnboarding() {
   const formErrors = useStore(form.store, (formState) => formState.errors);
 
   const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
+
+  useEffect(() => {
+    if (!initialValues || hasAppliedPrefill.current) return;
+
+    const fields: Array<keyof ArtistFormData> = [
+      "name",
+      "location",
+      "genre",
+      "bio",
+      "spotifyUrl",
+      "spotifyArtistId",
+      "instagram",
+      "twitter",
+      "tiktok",
+      "website",
+      "image",
+      "phoneNumber",
+    ];
+
+    for (const field of fields) {
+      const value = initialValues[field];
+      if (typeof value === "string" && value.trim().length > 0) {
+        form.setFieldValue(field, value as never);
+      }
+    }
+
+    hasAppliedPrefill.current = true;
+  }, [form, initialValues]);
 
   // Handle successful submission
   useEffect(() => {

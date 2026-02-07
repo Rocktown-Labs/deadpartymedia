@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { roleOrDefault } from "@/lib/auth/role";
 
 export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const { sessionClaims, userId } = await auth();
@@ -10,7 +11,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
   // If onboarding is already complete, redirect to appropriate dashboard.
   // Exception: artists missing required profile fields (Spotify + Instagram) must complete onboarding.
   if (sessionClaims?.metadata?.onboardingComplete === true) {
-    const role = sessionClaims.metadata.role as string;
+    const role = roleOrDefault(sessionClaims.metadata.role, "fan");
 
     if (role === "artist" && userId) {
       const [artist] = await db

@@ -7,6 +7,7 @@ import CartModal from "./cart/cart-modal";
 import { ChevronDown, LayoutDashboard } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
+import { roleOrDefault } from "@/lib/auth/role";
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
@@ -25,7 +26,7 @@ export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
   const { user } = useUser();
 
-  const role = (user?.publicMetadata?.role as string | undefined) || "fan";
+  const role = roleOrDefault(user?.publicMetadata?.role, "fan");
   const mobileDashboardHref: Route =
     role === "super_admin" || role === "writer"
       ? "/admin"

@@ -28,6 +28,7 @@ Your #1 outlet for Arkansas music.
    cp apps/web/.env.example apps/web/.env.local
    # Edit apps/web/.env.local with your settings
    # Default: NEXT_PUBLIC_API_URL=http://localhost:8000/api
+   # Also set DATABASE_URL for the web app (Drizzle + Neon)
    ```
 
 3. **Start PostgreSQL (Docker):**
@@ -124,6 +125,31 @@ docker-compose logs     # View logs
 **Location:** `apps/web/.env.local` (create from `.env.example`)
 
 - `NEXT_PUBLIC_API_URL` - Django API URL (default: http://localhost:8000/api)
+- `DATABASE_URL` - Postgres connection string for Next.js server code + API routes (Neon)
+
+Tip: For Neon branch switching, see `apps/web/.env.development.local.example` (dev) and `apps/web/.env.production.local.example` (main).
+
+## Vercel + Neon
+
+This repo expects `DATABASE_URL` to be set in the Vercel Project Environment Variables so API routes can access Postgres.
+
+- **Production**: set `DATABASE_URL` to the Neon **main** branch pooler URL (host like `ep-restless-leaf-...-pooler...`).
+- **Preview**: set `DATABASE_URL` to the Neon **dev** branch pooler URL (host like `ep-autumn-lab-...-pooler...`).
+
+Optional (nice for catching migration drift in Preview/CI):
+- Set `DB_SCHEMA_SANITY_CHECK=1` for **Preview** (and/or **Development**).
+
+## Database Migrations (GitHub Actions)
+
+This repo includes a workflow that runs Drizzle migrations against the Neon **main** branch when code is pushed to `main`.
+
+- Workflow: `.github/workflows/web-db-migrate.yml`
+- Required repo variable:
+   - `NEON_PROJECT_ID` (Neon project id, e.g. `cold-mud-71328663`)
+
+- Required repo secrets:
+   - `NEON_DATABASE_URL_MAIN` (set this to the Neon **main** branch pooled connection string)
+   - `NEON_API_KEY` (Neon API key used to create/delete a temporary branch for a migration dry-run)
 
 ## Production
 

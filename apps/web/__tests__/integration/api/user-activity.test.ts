@@ -1,0 +1,482 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { auth } from "@clerk/nextjs/server";
+import { GET as getReadArticles, POST as postReadArticle } from "@/app/api/user/articles/read/route";
+import { GET as getSavedArticles, POST as postSavedArticle } from "@/app/api/user/articles/saved/route";
+import { DELETE as deleteSavedArticle } from "@/app/api/user/articles/saved/[id]/route";
+import { GET as getUserComments } from "@/app/api/user/comments/route";
+
+const { mockDb } = vi.hoisted(() => ({
+  mockDb: {
+    select: vi.fn(),
+    insert: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/db", () => ({
+  db: mockDb,
+}));
+
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+}));
+
+function mockSelectWithLimit(rows: unknown[]) {
+  const limit = vi.fn().mockResolvedValue(rows);
+  const where = vi.fn().mockReturnValue({ limit });
+  const from = vi.fn().mockReturnValue({ where });
+  mockDb.select.mockReturnValueOnce({ from });
+}
+
+function mockSelectWithInnerJoinOrderBy(rows: unknown[]) {
+  const orderBy = vi.fn().mockResolvedValue(rows);
+  const where = vi.fn().mockReturnValue({ orderBy });
+  const innerJoin = vi.fn().mockReturnValue({ where });
+  const from = vi.fn().mockReturnValue({ innerJoin });
+  mockDb.select.mockReturnValueOnce({ from });
+}
+
+function mockSelectCount(total: number) {
+  const where = vi.fn().mockResolvedValue([{ total }]);
+  const innerJoin = vi.fn().mockReturnValue({ where });
+  const from = vi.fn().mockReturnValue({ innerJoin });
+  mockDb.select.mockReturnValueOnce({ from });
+}
+
+function mockSelectWithInnerJoinOrderByLimitOffset(rows: unknown[]) {
+  const offset = vi.fn().mockResolvedValue(rows);
+  const limit = vi.fn().mockReturnValue({ offset });
+  const orderBy = vi.fn().mockReturnValue({ limit });
+  const where = vi.fn().mockReturnValue({ orderBy });
+  const innerJoin = vi.fn().mockReturnValue({ where });
+  const from = vi.fn().mockReturnValue({ innerJoin });
+  mockDb.select.mockReturnValueOnce({ from });
+}
+
+function mockSelectWithWhereOrderBy(rows: unknown[]) {
+  const orderBy = vi.fn().mockResolvedValue(rows);
+  const where = vi.fn().mockReturnValue({ orderBy });
+  const from = vi.fn().mockReturnValue({ where });
+  mockDb.select.mockReturnValueOnce({ from });
+}
+
+function mockInsertUpsertReturning<T>(rows: T[]) {
+  const returning = vi.fn().mockResolvedValue(rows);
+  const onConflictDoUpdate = vi.fn().mockReturnValue({ returning });
+  const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
+  mockDb.insert.mockReturnValueOnce({ values });
+  return { onConflictDoUpdate, values };
+}
+
+function mockDeleteReturning(rows: unknown[]) {
+  const returning = vi.fn().mockResolvedValue(rows);
+  const where = vi.fn().mockReturnValue({ returning });
+  mockDb.delete.mockReturnValueOnce({ where });
+}
+
+describe("API /api/user activity endpoints", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 401 on read-articles GET when unauthenticated", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+
+    const response = await getReadArticles(
+      new Request("http://localhost:3001/api/user/articles/read"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("returns read-articles GET with empty pagination when no reads exist", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+    mockSelectCount(0);
+
+    const response = await getReadArticles(
+      new Request("http://localhost:3001/api/user/articles/read"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    });
+  });
+
+  it("returns read-articles GET with paginated shape", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectCount(2);
+    mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 4,
+        readAt: new Date("2026-01-03T00:00:00.000Z"),
+        article: {
+          id: 11,
+          slug: "test-post",
+          title: "Test Post",
+          excerpt: "Excerpt",
+          coverImage: null,
+          authorId: "author_1",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 12,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getReadArticles(
+      new Request("http://localhost:3001/api/user/articles/read?page=1&page_size=1"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(2);
+    expect(data.results).toHaveLength(1);
+    expect(data.results[0].id).toBe(4);
+    expect(data.results[0].article.slug).toBe("test-post");
+    expect(data.results[0].read_at).toBeTypeOf("string");
+    expect(data.next).toContain("page=2");
+    expect(data.previous).toBeNull();
+  });
+
+  it("returns 401 on read-articles POST when unauthenticated", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_id: 11 }),
+    });
+
+    const response = await postReadArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("returns 400 on read-articles POST when validation fails", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_id: "invalid" }),
+    });
+
+    const response = await postReadArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid article_id");
+  });
+
+  it("returns 400 on read-articles POST when JSON is malformed", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{",
+    });
+
+    const response = await postReadArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid JSON payload");
+  });
+
+  it("returns 404 on read-articles POST when article is not found", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+    mockSelectWithLimit([]);
+
+    const request = new Request("http://localhost:3001/api/user/articles/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_id: 999 }),
+    });
+
+    const response = await postReadArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.error).toBe("Article not found");
+  });
+
+  it("upserts read-articles POST idempotently and returns shape", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectWithLimit([
+      {
+        id: 11,
+        slug: "test-post",
+        title: "Test Post",
+        excerpt: "Excerpt",
+        coverImage: null,
+        authorId: "author_1",
+        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+        views: 12,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      },
+    ]);
+
+    const { onConflictDoUpdate } = mockInsertUpsertReturning([
+      { id: 5, readAt: new Date("2026-01-02T00:00:00.000Z") },
+    ]);
+
+    const request = new Request("http://localhost:3001/api/user/articles/read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_id: 11 }),
+    });
+
+    const response = await postReadArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
+    expect(data.id).toBe(5);
+    expect(data.article.slug).toBe("test-post");
+    expect(data.read_at).toBeTypeOf("string");
+  });
+
+  it("returns saved-articles GET with expected shape", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectWithInnerJoinOrderBy([
+      {
+        id: 9,
+        savedAt: new Date("2026-01-03T00:00:00.000Z"),
+        article: {
+          id: 22,
+          slug: "saved-post",
+          title: "Saved Post",
+          excerpt: "Saved excerpt",
+          coverImage: null,
+          authorId: "author_2",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 2,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getSavedArticles();
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(1);
+    expect(data.results[0].id).toBe(9);
+    expect(data.results[0].article.slug).toBe("saved-post");
+    expect(data.results[0].saved_at).toBeTypeOf("string");
+  });
+
+  it("upserts saved-articles POST idempotently", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectWithLimit([
+      {
+        id: 33,
+        slug: "savable-post",
+        title: "Savable Post",
+        excerpt: "Savable excerpt",
+        coverImage: null,
+        authorId: "author_3",
+        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+        views: 4,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      },
+    ]);
+
+    const { onConflictDoUpdate } = mockInsertUpsertReturning([
+      { id: 17, savedAt: new Date("2026-01-04T00:00:00.000Z") },
+    ]);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ article_id: 33 }),
+    });
+
+    const response = await postSavedArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
+    expect(data.id).toBe(17);
+    expect(data.saved_at).toBeTypeOf("string");
+  });
+
+  it("returns 400 on saved-articles POST when JSON is malformed", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{",
+    });
+
+    const response = await postSavedArticle(request as any);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid JSON payload");
+  });
+
+  it("returns 401 on delete saved article when unauthenticated", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved/1", {
+      method: "DELETE",
+    });
+    const response = await deleteSavedArticle(request as any, {
+      params: Promise.resolve({ id: "1" }),
+    });
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("returns 400 on delete saved article when id is invalid", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved/invalid", {
+      method: "DELETE",
+    });
+    const response = await deleteSavedArticle(request as any, {
+      params: Promise.resolve({ id: "invalid" }),
+    });
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Invalid id");
+  });
+
+  it("returns 401 on user-comments GET when unauthenticated", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+
+    const response = await getUserComments(
+      new Request("http://localhost:3001/api/user/comments"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("returns user-comments GET with nested replies shape", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectCount(1);
+    mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 101,
+        postId: 12,
+        content: "Top level",
+        parent: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        article: {
+          id: 12,
+          slug: "post-12",
+          title: "Post 12",
+          coverImage: null,
+        },
+      },
+    ]);
+
+    mockSelectWithWhereOrderBy([
+      {
+        id: 202,
+        parentId: 101,
+        content: "Reply",
+        createdAt: new Date("2026-01-02T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+
+    const response = await getUserComments(
+      new Request("http://localhost:3001/api/user/comments"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(1);
+    expect(data.results[0].article.slug).toBe("post-12");
+    expect(data.results[0].replies).toHaveLength(1);
+    expect(data.results[0].replies[0].content).toBe("Reply");
+    expect(data.next).toBeNull();
+    expect(data.previous).toBeNull();
+  });
+
+  it("returns only top-level comments in results when base set includes replies", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectCount(2);
+    mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 101,
+        postId: 12,
+        content: "Top level",
+        parent: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+        article: {
+          id: 12,
+          slug: "post-12",
+          title: "Post 12",
+          coverImage: null,
+        },
+      },
+    ]);
+
+    mockSelectWithWhereOrderBy([
+      {
+        id: 202,
+        parentId: 101,
+        content: "Reply",
+        createdAt: new Date("2026-01-02T00:00:00.000Z"),
+        updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+
+    const response = await getUserComments(
+      new Request("http://localhost:3001/api/user/comments?page=1&page_size=1"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(2);
+    expect(data.results).toHaveLength(1);
+    expect(data.results[0].id).toBe(101);
+    expect(data.results[0].replies).toHaveLength(1);
+    expect(data.results[0].replies[0].id).toBe(202);
+    expect(data.next).toContain("page=2");
+    expect(data.previous).toBeNull();
+  });
+
+  it("deletes saved article successfully", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+    mockDeleteReturning([{ id: 50 }]);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved/50", {
+      method: "DELETE",
+    });
+    const response = await deleteSavedArticle(request as any, {
+      params: Promise.resolve({ id: "50" }),
+    });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+  });
+});

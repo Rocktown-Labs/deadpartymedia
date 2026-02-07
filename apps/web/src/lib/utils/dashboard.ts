@@ -1,13 +1,10 @@
 import type { Route } from "next";
+import type { Roles } from "@/types/globals";
+import { roleOrDefault } from "@/lib/auth/role";
 
-/**
- * Get the dashboard route based on user role.
- * Works with Clerk's publicMetadata.role format.
- */
-export function getDashboardRoute(role: string | undefined | null): Route {
+function mapRoleToDashboardRoute(role: Roles): Route {
   switch (role) {
     case "super_admin":
-    case "admin":
     case "writer":
       return "/admin" as Route;
     case "artist":
@@ -16,4 +13,19 @@ export function getDashboardRoute(role: string | undefined | null): Route {
     default:
       return "/dashboard" as Route;
   }
+}
+
+/**
+ * Get the dashboard route based on user role.
+ * Works with Clerk's publicMetadata.role format.
+ */
+export function getDashboardRoute(role: string | undefined | null): Route {
+  return mapRoleToDashboardRoute(roleOrDefault(role, "fan"));
+}
+
+/**
+ * Safe boundary when input comes from untyped metadata.
+ */
+export function getDashboardRouteFromMetadata(roleInput: unknown): Route {
+  return mapRoleToDashboardRoute(roleOrDefault(roleInput, "fan"));
 }

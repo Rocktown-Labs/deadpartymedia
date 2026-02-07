@@ -48,6 +48,10 @@ vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(),
 }))
 
+vi.mock('next/cache', () => ({
+  cacheTag: vi.fn(),
+}))
+
 vi.mock('@/lib/logger/middleware', () => ({
   getRequestLogger: vi.fn(() => ({
     error: vi.fn(),

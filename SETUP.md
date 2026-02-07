@@ -64,7 +64,19 @@ Edit `apps/web/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
+
+# Required for Next.js server code + API routes (Drizzle + Neon)
+# Use the Neon branch you want to target (dev vs main)
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 ```
+
+#### Vercel (recommended)
+
+If you're deploying the web app to Vercel, set `DATABASE_URL` in **Vercel → Project → Settings → Environment Variables**:
+- **Production**: point to Neon **main** branch connection string
+- **Preview**: point to Neon **dev** branch connection string
+
+Optional (helps catch missing migrations early): set `DB_SCHEMA_SANITY_CHECK=1` for Preview.
 
 ### 3. Start PostgreSQL (Docker)
 

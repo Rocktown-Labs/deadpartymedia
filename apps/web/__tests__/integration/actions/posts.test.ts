@@ -22,6 +22,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(() => {}), // Mock to not throw
+  revalidateTag: vi.fn(() => {}),
 }));
 
 vi.mock("@/lib/auth/access", () => ({
@@ -186,24 +187,41 @@ describe("createPost", () => {
 });
 
 describe("updatePost", () => {
+  let selectCallCount = 0;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    selectCallCount = 0;
     const userId = "user_test123";
     vi.mocked(auth).mockResolvedValue({ userId } as any);
 
-    // Mock select chain for getting post
-    mockLimit.mockResolvedValue([
-      {
-        id: 1,
-        title: "Existing Post",
-        authorId: userId,
-        isCoverStory: false,
-        publishedAt: null,
-      },
-    ]);
-    mockFrom.mockReturnValue({ where: mockWhere });
-    mockWhere.mockReturnValue({ limit: mockLimit });
-    mockSelect.mockReturnValue({ from: mockFrom });
+    // First select call: post lookup with limit(1)
+    // Second select call: existing postArtists lookup returns rows directly
+    mockSelect.mockImplementation(() => {
+      selectCallCount += 1;
+      if (selectCallCount === 1) {
+        const firstWhere = vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 1,
+              title: "Existing Post",
+              authorId: userId,
+              isCoverStory: false,
+              publishedAt: null,
+              status: "published",
+            },
+          ]),
+        });
+        return {
+          from: vi.fn().mockReturnValue({ where: firstWhere }),
+        };
+      }
+
+      const secondWhere = vi.fn().mockResolvedValue([]);
+      return {
+        from: vi.fn().mockReturnValue({ where: secondWhere }),
+      };
+    });
 
     vi.mocked(canEdit).mockResolvedValue(true);
 
@@ -263,7 +281,13 @@ describe("updatePost", () => {
   });
 
   it("should throw error if post not found", async () => {
-    mockLimit.mockResolvedValue([]);
+    mockSelect.mockImplementation(() => ({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    }));
 
     const formData = new FormData();
     formData.append("title", "Updated Post");
@@ -299,6 +323,24 @@ describe("deletePost", () => {
     const userId = "user_test123";
     vi.mocked(auth).mockResolvedValue({ userId } as any);
     vi.mocked(canDelete).mockResolvedValue(true);
+
+    const mockSelectLimit = vi.fn().mockResolvedValue([{ status: "published" }]);
+    const mockSelectWhere = vi.fn().mockReturnValue({ limit: mockSelectLimit });
+    const mockSelectFrom = vi.fn().mockReturnValue({ where: mockSelectWhere });
+    // First select call in deletePost: post status lookup with limit()
+    // Second select call in deletePost: postArtists lookup resolved directly
+    let selectCallCount = 0;
+    mockSelect.mockImplementation(() => {
+      selectCallCount += 1;
+      if (selectCallCount === 1) {
+        return { from: mockSelectFrom };
+      }
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      };
+    });
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });

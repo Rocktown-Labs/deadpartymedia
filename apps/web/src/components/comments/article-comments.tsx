@@ -32,10 +32,12 @@ export function ArticleComments({
   const { data: comments } = useArticleComments(slug);
   const createComment = useCreateComment();
   const [commentText, setCommentText] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleCommentSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!commentText.trim() || !isSignedIn || !currentUser) return;
+    setSubmitError(null);
 
     try {
       await createComment.mutateAsync({ slug, content: commentText });
@@ -51,6 +53,9 @@ export function ArticleComments({
     } catch (error) {
       console.error("Error posting comment:", error);
       posthog.captureException(error);
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to post comment. Please try again.",
+      );
     }
   }
 
@@ -81,6 +86,11 @@ export function ArticleComments({
           >
             {createComment.isPending ? "Posting..." : "Post Comment"}
           </Button>
+          {submitError ? (
+            <p className="mt-3 text-sm text-red-400" role="alert" aria-live="assertive">
+              {submitError}
+            </p>
+          ) : null}
         </form>
       </SignedIn>
 
@@ -153,4 +163,3 @@ export function ArticleComments({
     </section>
   );
 }
-

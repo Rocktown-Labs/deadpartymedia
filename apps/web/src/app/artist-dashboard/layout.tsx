@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Route } from "next";
+import { parseRole } from "@/lib/auth/role";
 
 export default function ArtistDashboardLayout({
   children,
@@ -13,7 +14,7 @@ export default function ArtistDashboardLayout({
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
-  const role = user?.publicMetadata?.role as string | undefined;
+  const role = parseRole(user?.publicMetadata?.role);
 
   useEffect(() => {
     if (isLoaded && (!isSignedIn || role !== "artist")) {

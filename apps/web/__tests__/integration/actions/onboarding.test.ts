@@ -23,6 +23,10 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/auth/user-state", () => ({
+  upsertUserAuthState: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/lib/utils/slug", () => ({
   generateSlug: vi.fn((name: string) =>
     name.toLowerCase().replace(/\s+/g, "-"),
@@ -56,6 +60,10 @@ describe("fanOnboardingAction", () => {
       users: {
         getUser: vi.fn().mockResolvedValue({
           publicMetadata: {},
+          emailAddresses: [{ id: "email_1", emailAddress: "fan@example.com" }],
+          primaryEmailAddressId: "email_1",
+          lastName: null,
+          imageUrl: null,
         }),
         updateUser: vi.fn(),
         updateUserMetadata: vi.fn(),
@@ -124,6 +132,10 @@ describe("artistOnboardingAction", () => {
     const mockGetUser = vi.fn().mockResolvedValue({
       id: userId,
       publicMetadata: {},
+      emailAddresses: [{ id: "email_1", emailAddress: "artist@example.com" }],
+      primaryEmailAddressId: "email_1",
+      lastName: null,
+      imageUrl: null,
     });
     const mockClient = {
       users: {
@@ -174,6 +186,10 @@ describe("artistOnboardingAction", () => {
           publicMetadata: {
             artistId: artistId.toString(),
           },
+          emailAddresses: [{ id: "email_1", emailAddress: "artist2@example.com" }],
+          primaryEmailAddressId: "email_1",
+          lastName: null,
+          imageUrl: null,
         }),
         updateUser: vi.fn().mockResolvedValue(undefined),
         updateUserMetadata: vi.fn(),

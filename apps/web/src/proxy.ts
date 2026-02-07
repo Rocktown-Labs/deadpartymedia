@@ -7,6 +7,8 @@ import {
 } from "@/lib/logger/middleware";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { parseRole } from "@/lib/auth/role";
+import type { Roles } from "@/types/globals";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isArtistDashboardRoute = createRouteMatcher(["/artist-dashboard(.*)"]);
@@ -19,9 +21,11 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/posts(.*)",
+  "/api/articles(.*)",
   "/api/events(.*)",
   "/api/stats/monthly",
   "/api/artists(.*)",
+  "/api/writers(.*)",
   "/api/spotify(.*)",
   "/merch(.*)",
   "/article(.*)",
@@ -62,7 +66,7 @@ export default clerkMiddleware(async (auth, req) => {
         purpose: req.headers.get("purpose"),
         middlewarePrefetch: req.headers.get("x-middleware-prefetch"),
       },
-      "RSC request observed"
+      "RSC request observed",
     );
   }
 
@@ -84,7 +88,7 @@ export default clerkMiddleware(async (auth, req) => {
           operation: "auth_protect",
           path: req.nextUrl.pathname,
         },
-        "Unauthorized access attempt"
+        "Unauthorized access attempt",
       );
       response = NextResponse.redirect(new URL("/sign-in", req.url));
       addRequestIdHeader(response, requestId);
@@ -94,14 +98,28 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { sessionClaims, userId } = await auth();
   const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
-  const role = sessionClaims?.metadata?.role as string | undefined;
+  const rawRole = sessionClaims?.metadata?.role;
+  const parsedRole = parseRole(rawRole);
+  const role: Roles = parsedRole ?? "fan";
 
   // Add user context to logger if authenticated
   if (userId) {
+    if (parsedRole === null && rawRole != null) {
+      log.warn(
+        {
+          userId,
+          rawRole,
+          rawRoleType: typeof rawRole,
+          operation: "invalid_role_metadata",
+        },
+        "Unexpected role value in session metadata; applying fan fallback",
+      );
+    }
+
     const userLog = withUserContext(log, userId, role);
     userLog.debug(
       { path: req.nextUrl.pathname, role, onboardingComplete },
-      "Authenticated request"
+      "Authenticated request",
     );
   }
 
@@ -117,7 +135,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (userId) {
       log.info(
         { userId, operation: "onboarding_redirect" },
-        "Redirecting to onboarding"
+        "Redirecting to onboarding",
       );
     }
     response = NextResponse.redirect(new URL("/onboarding", req.url));
@@ -126,7 +144,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Handle role-based routing for authenticated users with completed onboarding
-  if (onboardingComplete && role) {
+  if (onboardingComplete) {
     // Check if user is accessing the correct dashboard for their role
     const isCorrectRoute =
       ((role === "super_admin" || role === "writer") && isAdminRoute(req)) ||
@@ -155,7 +173,7 @@ export default clerkMiddleware(async (auth, req) => {
       if (userId) {
         log.info(
           { userId, role, operation: "role_based_redirect", targetPath },
-          "Redirecting to role-appropriate dashboard"
+          "Redirecting to role-appropriate dashboard",
         );
       }
 

@@ -15,6 +15,34 @@
       "when": 1768275361050,
       "tag": "0001_curly_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770487020036,
+      "tag": "0002_curved_vindicator",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770496200000,
+      "tag": "0003_sticky_user_auth_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770501600000,
+      "tag": "0004_clear_comment_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770505200000,
+      "tag": "0005_sparkling_activity_tables",
+      "breakpoints": true
     }
   ]
 }

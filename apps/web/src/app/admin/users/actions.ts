@@ -7,6 +7,7 @@ import { canManageUsers } from "@/lib/auth/access";
 import { type Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 import { inviteUserSchema } from "@/lib/validations/user";
+import { upsertUserAuthState } from "@/lib/auth/user-state";
 
 export async function inviteUser(
   email: string,
@@ -133,6 +134,24 @@ export async function updateUserRole(userId: string, role: Roles) {
 
     await client.users.updateUserMetadata(userId, {
       publicMetadata,
+    });
+
+    const primaryEmail =
+      user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
+        ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
+
+    if (!primaryEmail) {
+      throw new Error("User has no email address");
+    }
+
+    await upsertUserAuthState({
+      clerkId: user.id,
+      email: primaryEmail,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      imageUrl: user.imageUrl,
+      role,
+      onboardingComplete: Boolean(publicMetadata.onboardingComplete),
     });
 
     revalidatePath("/admin/users");
