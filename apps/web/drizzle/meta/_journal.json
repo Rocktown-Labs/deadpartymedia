@@ -43,6 +43,13 @@
       "when": 1770505200000,
       "tag": "0005_sparkling_activity_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770501197219,
+      "tag": "0006_sloppy_marrow",
+      "breakpoints": true
     }
   ]
 }

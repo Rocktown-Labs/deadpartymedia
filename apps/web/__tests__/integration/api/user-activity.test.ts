@@ -28,14 +28,6 @@ function mockSelectWithLimit(rows: unknown[]) {
   mockDb.select.mockReturnValueOnce({ from });
 }
 
-function mockSelectWithInnerJoinOrderBy(rows: unknown[]) {
-  const orderBy = vi.fn().mockResolvedValue(rows);
-  const where = vi.fn().mockReturnValue({ orderBy });
-  const innerJoin = vi.fn().mockReturnValue({ where });
-  const from = vi.fn().mockReturnValue({ innerJoin });
-  mockDb.select.mockReturnValueOnce({ from });
-}
-
 function mockSelectCount(total: number) {
   const where = vi.fn().mockResolvedValue([{ total }]);
   const innerJoin = vi.fn().mockReturnValue({ where });
@@ -51,6 +43,7 @@ function mockSelectWithInnerJoinOrderByLimitOffset(rows: unknown[]) {
   const innerJoin = vi.fn().mockReturnValue({ where });
   const from = vi.fn().mockReturnValue({ innerJoin });
   mockDb.select.mockReturnValueOnce({ from });
+  return { limit, offset, orderBy, where };
 }
 
 function mockSelectWithWhereOrderBy(rows: unknown[]) {
@@ -144,6 +137,41 @@ describe("API /api/user activity endpoints", () => {
     expect(data.results[0].read_at).toBeTypeOf("string");
     expect(data.next).toContain("page=2");
     expect(data.previous).toBeNull();
+  });
+
+  it("returns read-articles GET with previous URL on later pages", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectCount(2);
+    mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 6,
+        readAt: new Date("2026-01-04T00:00:00.000Z"),
+        article: {
+          id: 22,
+          slug: "page-two-post",
+          title: "Page Two Post",
+          excerpt: "Excerpt",
+          coverImage: null,
+          authorId: "author_2",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 2,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getReadArticles(
+      new Request("http://localhost:3001/api/user/articles/read?page=2&page_size=1"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(2);
+    expect(data.results).toHaveLength(1);
+    expect(data.next).toBeNull();
+    expect(data.previous).toContain("page=1");
+    expect(data.previous).toContain("page_size=1");
   });
 
   it("returns 401 on read-articles POST when unauthenticated", async () => {
@@ -243,18 +271,46 @@ describe("API /api/user activity endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
+    expect(onConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: expect.any(Array),
+        set: expect.objectContaining({
+          readAt: expect.any(Date),
+        }),
+      }),
+    );
     expect(data.id).toBe(5);
     expect(data.article.slug).toBe("test-post");
     expect(data.read_at).toBeTypeOf("string");
   });
 
-  it("returns saved-articles GET with expected shape", async () => {
+  it("returns saved-articles GET with empty pagination when no saves exist", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+    mockSelectWithInnerJoinOrderByLimitOffset([]);
+    mockSelectCount(0);
+
+    const response = await getSavedArticles(
+      new Request("http://localhost:3001/api/user/articles/saved"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    });
+  });
+
+  it("returns saved-articles GET with paginated shape", async () => {
     vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
 
-    mockSelectWithInnerJoinOrderBy([
+    mockSelectWithInnerJoinOrderByLimitOffset([
       {
         id: 9,
         savedAt: new Date("2026-01-03T00:00:00.000Z"),
+        totalSaves: 2,
         article: {
           id: 22,
           slug: "saved-post",
@@ -269,14 +325,124 @@ describe("API /api/user activity endpoints", () => {
       },
     ]);
 
-    const response = await getSavedArticles();
+    const response = await getSavedArticles(
+      new Request("http://localhost:3001/api/user/articles/saved?page=1&page_size=1"),
+    );
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.count).toBe(1);
+    expect(data.count).toBe(2);
+    expect(data.results).toHaveLength(1);
     expect(data.results[0].id).toBe(9);
     expect(data.results[0].article.slug).toBe("saved-post");
     expect(data.results[0].saved_at).toBeTypeOf("string");
+    expect(data.next).toContain("page=2");
+    expect(data.previous).toBeNull();
+  });
+
+  it("returns saved-articles GET with previous URL on later pages", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 10,
+        savedAt: new Date("2026-01-04T00:00:00.000Z"),
+        totalSaves: 2,
+        article: {
+          id: 23,
+          slug: "saved-page-two",
+          title: "Saved Page Two",
+          excerpt: "Saved excerpt",
+          coverImage: null,
+          authorId: "author_2",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 3,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getSavedArticles(
+      new Request("http://localhost:3001/api/user/articles/saved?page=2&page_size=1"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.count).toBe(2);
+    expect(data.results).toHaveLength(1);
+    expect(data.next).toBeNull();
+    expect(data.previous).toContain("page=1");
+    expect(data.previous).toContain("page_size=1");
+  });
+
+  it("falls back to default pagination for invalid saved-articles params", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 11,
+        savedAt: new Date("2026-01-05T00:00:00.000Z"),
+        totalSaves: 25,
+        article: {
+          id: 24,
+          slug: "saved-fallback",
+          title: "Saved Fallback",
+          excerpt: "Saved excerpt",
+          coverImage: null,
+          authorId: "author_3",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 4,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getSavedArticles(
+      new Request("http://localhost:3001/api/user/articles/saved?page=abc&page_size=-7"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(queryMock.limit).toHaveBeenCalledWith(20);
+    expect(queryMock.offset).toHaveBeenCalledWith(0);
+    expect(data.next).toContain("page=2");
+    expect(data.next).toContain("page_size=20");
+    expect(data.previous).toBeNull();
+  });
+
+  it("clamps saved-articles page_size to max value", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+
+    const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
+      {
+        id: 12,
+        savedAt: new Date("2026-01-06T00:00:00.000Z"),
+        totalSaves: 101,
+        article: {
+          id: 25,
+          slug: "saved-clamped",
+          title: "Saved Clamped",
+          excerpt: "Saved excerpt",
+          coverImage: null,
+          authorId: "author_4",
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
+          views: 5,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        },
+      },
+    ]);
+
+    const response = await getSavedArticles(
+      new Request("http://localhost:3001/api/user/articles/saved?page=1&page_size=999"),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(queryMock.limit).toHaveBeenCalledWith(100);
+    expect(queryMock.offset).toHaveBeenCalledWith(0);
+    expect(data.next).toContain("page=2");
+    expect(data.next).toContain("page_size=100");
+    expect(data.previous).toBeNull();
   });
 
   it("upserts saved-articles POST idempotently", async () => {
@@ -478,5 +644,21 @@ describe("API /api/user activity endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
+  });
+
+  it("returns 404 when deleting a saved article that does not belong to the user", async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
+    mockDeleteReturning([]);
+
+    const request = new Request("http://localhost:3001/api/user/articles/saved/77", {
+      method: "DELETE",
+    });
+    const response = await deleteSavedArticle(request as any, {
+      params: Promise.resolve({ id: "77" }),
+    });
+    const data = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(data.error).toBe("Saved article not found");
   });
 });

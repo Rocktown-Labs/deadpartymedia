@@ -45,8 +45,8 @@ export interface PaginatedResponse<T> {
 export function useReadArticles() {
   return useQuery<PaginatedResponse<ArticleRead>>({
     queryKey: ["user", "read-articles"],
-    queryFn: async () => {
-      const response = await fetch("/api/user/articles/read");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/user/articles/read", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch read articles");
       }
@@ -84,8 +84,8 @@ export function useMarkArticleRead() {
 export function useSavedArticles() {
   return useQuery<PaginatedResponse<SavedArticle>>({
     queryKey: ["user", "saved-articles"],
-    queryFn: async () => {
-      const response = await fetch("/api/user/articles/saved");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/user/articles/saved", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch saved articles");
       }
@@ -143,8 +143,8 @@ export function useUnsaveArticle() {
 export function useUserComments() {
   return useQuery<PaginatedResponse<UserComment>>({
     queryKey: ["user", "comments"],
-    queryFn: async () => {
-      const response = await fetch("/api/user/comments");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/user/comments", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch user comments");
       }
@@ -158,8 +158,8 @@ export function useUserComments() {
 export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryKey: ["user", "stats"],
-    queryFn: async () => {
-      const response = await fetch("/api/user/stats");
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/user/stats", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch dashboard stats");
       }

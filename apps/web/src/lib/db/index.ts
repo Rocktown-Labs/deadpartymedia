@@ -90,7 +90,10 @@ if (shouldRunSchemaSanityCheck) {
         "Failing fast because startup schema sanity check failed in CI",
       );
 
-      if (typeof process !== "undefined" && typeof process.exit === "function") {
+      if (
+        typeof process !== "undefined" &&
+        typeof process.exit === "function"
+      ) {
         process.exit(1);
       }
     }

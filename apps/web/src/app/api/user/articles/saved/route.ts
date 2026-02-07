@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { posts, userArticleSaves } from "@/lib/db/schema";
@@ -8,6 +8,25 @@ import { posts, userArticleSaves } from "@/lib/db/schema";
 const saveArticleSchema = z.object({
   article_id: z.number().int().positive(),
 });
+
+const DEFAULT_PAGE_SIZE = 20;
+const MAX_PAGE_SIZE = 100;
+
+function parsePositiveInt(value: string | null, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return parsed;
+}
+
+function buildPaginationUrl(url: URL, page: number, pageSize: number): string {
+  const nextUrl = new URL(url.toString());
+  nextUrl.searchParams.set("page", String(page));
+  nextUrl.searchParams.set("page_size", String(pageSize));
+  const path = nextUrl.pathname;
+  const search = nextUrl.searchParams.toString();
+  return search ? `${path}?${search}` : path;
+}
 
 function serializeArticle(row: {
   id: number;
@@ -36,16 +55,28 @@ function serializeArticle(row: {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const requestUrl = new URL(request.url);
+  const page = parsePositiveInt(requestUrl.searchParams.get("page"), 1);
+  const pageSize = Math.min(
+    parsePositiveInt(
+      requestUrl.searchParams.get("page_size"),
+      DEFAULT_PAGE_SIZE,
+    ),
+    MAX_PAGE_SIZE,
+  );
+  const offset = (page - 1) * pageSize;
+
   const items = await db
     .select({
       id: userArticleSaves.id,
       savedAt: userArticleSaves.savedAt,
+      totalSaves: sql<number>`count(*) over()`,
       article: {
         id: posts.id,
         slug: posts.slug,
@@ -60,13 +91,59 @@ export async function GET() {
     })
     .from(userArticleSaves)
     .innerJoin(posts, eq(userArticleSaves.postId, posts.id))
-    .where(and(eq(userArticleSaves.clerkUserId, userId), eq(posts.status, "published")))
-    .orderBy(desc(userArticleSaves.savedAt));
+    .where(
+      and(
+        eq(userArticleSaves.clerkUserId, userId),
+        eq(posts.status, "published"),
+      ),
+    )
+    .orderBy(desc(userArticleSaves.savedAt))
+    .limit(pageSize)
+    .offset(offset);
+
+  if (items.length === 0) {
+    const [countResult] = await db
+      .select({ total: count() })
+      .from(userArticleSaves)
+      .innerJoin(posts, eq(userArticleSaves.postId, posts.id))
+      .where(
+        and(
+          eq(userArticleSaves.clerkUserId, userId),
+          eq(posts.status, "published"),
+        ),
+      );
+
+    const totalSaves = Number(countResult?.total ?? 0);
+    if (totalSaves === 0) {
+      return NextResponse.json({
+        count: 0,
+        next: null,
+        previous: null,
+        results: [],
+      });
+    }
+
+    return NextResponse.json({
+      count: totalSaves,
+      next: null,
+      previous:
+        page > 1 ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
+      results: [],
+    });
+  }
+
+  const totalSaves = Number(items[0].totalSaves ?? 0);
+  const hasNextPage = offset + items.length < totalSaves;
+  const hasPreviousPage = page > 1;
 
   return NextResponse.json({
-    count: items.length,
-    next: null,
-    previous: null,
+    count: totalSaves,
+    next: hasNextPage
+      ? buildPaginationUrl(requestUrl, page + 1, pageSize)
+      : null,
+    previous: hasPreviousPage
+      ? buildPaginationUrl(requestUrl, page - 1, pageSize)
+      : null,
     results: items.map((item) => ({
       id: item.id,
       article: serializeArticle(item.article),

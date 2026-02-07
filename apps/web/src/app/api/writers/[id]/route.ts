@@ -3,9 +3,12 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
 
+// Next's generated RouteHandlerConfig types this as Promise-based params in this project.
+type WriterRouteContext = { params: Promise<{ id: string }> };
+
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: WriterRouteContext,
 ) {
   const { id } = await params;
   const parsedId = Number.parseInt(id, 10);
