@@ -102,7 +102,9 @@ export default async function RootLayout({
           <CartProvider cartPromise={cart}>
             <Navbar />
             <div className="pb-16 lg:pb-0">{children}</div>
-            <Footer />
+            <div className="pb-16 lg:pb-0">
+              <Footer />
+            </div>
             <MobileBottomNav />
           </CartProvider>
         </Providers>

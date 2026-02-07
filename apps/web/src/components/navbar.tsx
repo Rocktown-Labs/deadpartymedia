@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Route } from "next";
 import CartModal from "./cart/cart-modal";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LayoutDashboard } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
@@ -22,6 +23,15 @@ const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year:
 
 export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
+  const { user } = useUser();
+
+  const role = (user?.publicMetadata?.role as string | undefined) || "fan";
+  const mobileDashboardHref: Route =
+    role === "super_admin" || role === "writer"
+      ? "/admin"
+      : role === "artist"
+        ? "/artist-dashboard"
+        : "/dashboard";
 
   // Mount-only for global scroll listener (keep if adding scroll effects later)
   useEffect(() => {
@@ -159,9 +169,51 @@ export default function Navbar() {
               </div>
             </SignedIn>
           </div>
-          {/* Mobile Layout - Logo and Cart */}
+          {/* Mobile Layout - Cart + Auth/Dashboard */}
           <div className="flex items-center gap-2 lg:hidden">
             <CartModal />
+            <SignedOut>
+              <div className="flex items-center gap-2">
+                <SignInButton mode="modal">
+                  <button
+                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
+                    aria-label="Sign in"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
+                    aria-label="Sign up"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign Up</span>
+                  </button>
+                </SignUpButton>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={mobileDashboardHref}
+                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ml-2 text-xs font-bold tracking-wider uppercase">Dashboard</span>
+                </Link>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox:
+                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
+                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
+                      userButtonPopoverActionButtonText: "text-white",
+                    },
+                  }}
+                />
+              </div>
+            </SignedIn>
           </div>
         </nav>
       </div>

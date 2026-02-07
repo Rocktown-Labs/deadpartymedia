@@ -1,11 +1,10 @@
 "use client";
 
-import { Home, Music, Calendar, ShoppingBag } from "lucide-react";
+import { Home, Music, Calendar, ShoppingBag, Mic2 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MobileAuthMenu } from "./mobile-auth-menu";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
@@ -15,6 +14,7 @@ export default function MobileBottomNav() {
     { icon: Music, label: "Music", href: "/music" as Route },
     { icon: Calendar, label: "Events", href: "/events" as Route },
     { icon: ShoppingBag, label: "Merch", href: "/merch" as Route },
+    { icon: Mic2, label: "Artists", href: "/artists" as Route },
   ];
 
   return (
@@ -36,9 +36,6 @@ export default function MobileBottomNav() {
             </Link>
           );
         })}
-        <div className="flex flex-col items-center justify-center">
-          <MobileAuthMenu />
-        </div>
       </div>
     </nav>
   );
