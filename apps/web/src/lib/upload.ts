@@ -2,7 +2,7 @@
  * Upload utility functions for file validation and path generation
  */
 
-export type UploadType = "cover" | "content" | "profile";
+export type UploadType = "cover" | "content" | "profile" | "event";
 
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -52,6 +52,9 @@ export function generateImagePathname(
       break;
     case "profile":
       pathname = `artists/profiles/${timestamp}-${sanitizedFilename}`;
+      break;
+    case "event":
+      pathname = `events/images/${timestamp}-${sanitizedFilename}`;
       break;
     default:
       pathname = `uploads/${timestamp}-${sanitizedFilename}`;

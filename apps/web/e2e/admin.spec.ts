@@ -69,6 +69,7 @@ test.describe('Admin User Flows', () => {
     await expect(page.getByLabel('Title')).toBeVisible()
     await expect(page.getByLabel('Venue')).toBeVisible()
     await expect(page.getByLabel('Location')).toBeVisible()
+    await expect(page.getByRole('button', { name: /upload image/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /save|create|submit/i }).first()).toBeVisible()
   })
 })

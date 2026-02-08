@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +21,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { toast } from "sonner";
+import { validateImageFile } from "@/lib/upload";
 
 interface EventFormProps {
   initialData?: {
@@ -43,6 +45,7 @@ interface EventFormProps {
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
   cancelHref: Route;
+  allowImageUrl?: boolean;
   isSubmitting?: boolean;
 }
 
@@ -52,6 +55,7 @@ export function EventForm({
   initialData,
   onSubmit,
   cancelHref,
+  allowImageUrl = true,
   isSubmitting = false,
 }: EventFormProps) {
   const router = useRouter();
@@ -73,6 +77,9 @@ export function EventForm({
     initialData?.artistIds || []
   );
   const [artistPopoverOpen, setArtistPopoverOpen] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [useImageUrl, setUseImageUrl] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
@@ -87,6 +94,44 @@ export function EventForm({
 
   const handleRemoveArtist = (artistId: number) => {
     setSelectedArtistIds((prev) => prev.filter((id) => id !== artistId));
+  };
+
+  const handleEventImageUpload = async (file: File | null) => {
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid image file");
+      return;
+    }
+
+    setImageUploading(true);
+    const loadingId = toast.loading("Uploading event image...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/image?type=event", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(error.error || "Failed to upload image");
+      }
+
+      const { url } = await response.json();
+      setImage(url);
+      setUseImageUrl(false);
+      toast.success("Event image uploaded successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload event image");
+    } finally {
+      toast.dismiss(loadingId);
+      setImageUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -163,14 +208,75 @@ export function EventForm({
       </div>
 
       <div>
-        <Label htmlFor="image">Image URL</Label>
-        <Input
-          id="image"
-          type="url"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          className="mt-1"
-        />
+        <div className="flex items-center justify-between mb-2">
+          <Label htmlFor="image">Event Image</Label>
+          {allowImageUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setUseImageUrl(!useImageUrl)}
+              className="text-xs"
+            >
+              {useImageUrl ? "Upload File" : "Use URL"}
+            </Button>
+          )}
+        </div>
+
+        {allowImageUrl && useImageUrl ? (
+          <Input
+            id="image"
+            type="url"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            className="mt-1"
+            placeholder="https://example.com/event-image.jpg"
+          />
+        ) : (
+          <div className="space-y-2">
+            <input
+              id="image"
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+              aria-label="Event Image"
+              data-testid="event-image-input"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleEventImageUpload(file);
+                }
+              }}
+              className="hidden"
+            />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={imageUploading}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {imageUploading ? "Uploading..." : "Upload Image"}
+              </Button>
+              {image && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setImage("")}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            {image && (
+              <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
+                <NextImage src={image} alt="Event image preview" fill className="object-cover" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -352,8 +458,12 @@ export function EventForm({
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting || isSaving}>
-          {isSubmitting || isSaving ? "Saving..." : "Save Event"}
+        <Button type="submit" disabled={isSubmitting || isSaving || imageUploading}>
+          {imageUploading
+            ? "Uploading image..."
+            : isSubmitting || isSaving
+              ? "Saving..."
+              : "Save Event"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

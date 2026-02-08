@@ -77,6 +77,11 @@ describe("Upload utilities", () => {
       expect(pathname).toMatch(/^artists\/profiles\/\d+-avatar\.jpg$/);
     });
 
+    it("should generate pathname for event images", () => {
+      const pathname = generateImagePathname("event", "flyer.jpg");
+      expect(pathname).toMatch(/^events\/images\/\d+-flyer\.jpg$/);
+    });
+
     it("should sanitize special characters in filename", () => {
       const pathname = generateImagePathname("cover", "test image (1).jpg");
       expect(pathname).toMatch(/^posts\/covers\/\d+-test_image.*\.jpg$/);

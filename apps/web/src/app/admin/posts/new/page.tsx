@@ -12,7 +12,11 @@ export default async function NewPostPage() {
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Create New Post</h1>
-      <PostEditor onSubmit={createPost} cancelHref={"/admin/posts" as Route} />
+      <PostEditor
+        onSubmit={createPost}
+        cancelHref={"/admin/posts" as Route}
+        allowCoverImageUrl={false}
+      />
     </div>
   );
 }

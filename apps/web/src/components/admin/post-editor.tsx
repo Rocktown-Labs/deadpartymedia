@@ -45,6 +45,7 @@ interface PostEditorProps {
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
   cancelHref: Route;
+  allowCoverImageUrl?: boolean;
   isSubmitting?: boolean;
 }
 
@@ -54,6 +55,7 @@ export function PostEditor({
   initialData,
   onSubmit,
   cancelHref,
+  allowCoverImageUrl = true,
   isSubmitting = false,
 }: PostEditorProps) {
   const router = useRouter();
@@ -165,10 +167,9 @@ export function PostEditor({
     }
 
     setCoverImageUploading(true);
+    const loadingId = toast.loading("Uploading cover image...");
 
     try {
-      toast.loading("Uploading cover image...");
-
       const formData = new FormData();
       formData.append("file", file);
 
@@ -189,6 +190,7 @@ export function PostEditor({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to upload cover image");
     } finally {
+      toast.dismiss(loadingId);
       setCoverImageUploading(false);
     }
   };
@@ -293,18 +295,20 @@ export function PostEditor({
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label htmlFor="coverImage">Cover Image</Label>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setUseCoverImageUrl(!useCoverImageUrl)}
-            className="text-xs"
-          >
-            {useCoverImageUrl ? "Upload File" : "Use URL"}
-          </Button>
+          {allowCoverImageUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setUseCoverImageUrl(!useCoverImageUrl)}
+              className="text-xs"
+            >
+              {useCoverImageUrl ? "Upload File" : "Use URL"}
+            </Button>
+          )}
         </div>
 
-        {useCoverImageUrl ? (
+        {allowCoverImageUrl && useCoverImageUrl ? (
           <Input
             id="coverImage"
             type="url"
@@ -475,8 +479,12 @@ export function PostEditor({
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting || isSaving}>
-          {isSubmitting || isSaving ? "Saving..." : "Save Post"}
+        <Button type="submit" disabled={isSubmitting || isSaving || coverImageUploading}>
+          {coverImageUploading
+            ? "Uploading cover..."
+            : isSubmitting || isSaving
+              ? "Saving..."
+              : "Save Post"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

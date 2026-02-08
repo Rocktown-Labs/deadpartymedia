@@ -22,7 +22,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const type = (searchParams.get("type") || "content") as UploadType;
 
     // Validate upload type
-    if (!["cover", "content", "profile"].includes(type)) {
+    if (!["cover", "content", "profile", "event"].includes(type)) {
       return NextResponse.json(
         { error: "Invalid upload type" },
         { status: 400 }
@@ -47,13 +47,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const pathname = generateImagePathname(
       type,
       file.name,
-      type === "content" || type === "profile" // Add random suffix for content/profile images
+      type === "content" || type === "profile" || type === "event" // Add random suffix for content/profile/event images
     );
 
     // Upload to Vercel Blob
     const blob = await put(pathname, file, {
       access: "public",
-      addRandomSuffix: type === "content" || type === "profile",
+      addRandomSuffix: type === "content" || type === "profile" || type === "event",
     });
 
     logger.info(

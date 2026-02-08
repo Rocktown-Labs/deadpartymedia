@@ -12,7 +12,11 @@ export default async function NewEventPage() {
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Create New Event</h1>
-      <EventForm onSubmit={createEvent} cancelHref={"/admin/events" as Route} />
+      <EventForm
+        onSubmit={createEvent}
+        cancelHref={"/admin/events" as Route}
+        allowImageUrl={false}
+      />
     </div>
   );
 }
