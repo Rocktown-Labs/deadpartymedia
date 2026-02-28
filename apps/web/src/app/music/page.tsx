@@ -2,12 +2,16 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useArticles, type ArticleList } from "@/lib/api/articles";
+import { useArticles } from '@/lib/api/articles';
+import type { ArticleList } from '@/lib/api/articles';
 
 const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
-
-const getCategorySlug = (category: string): string => {
-  return category.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-");
+const categoryRouteMap: Record<string, Route> = {
+  COUNTRY: "/country",
+  EDM: "/edm",
+  "HARDCORE & ROCK": "/hardcore",
+  "HIP-HOP & R&B": "/hip-hop-r-b",
+  OTHER: "/other",
 };
 
 export default function MusicPage() {
@@ -82,10 +86,9 @@ export default function MusicPage() {
           <div className="space-y-16">
             {categoryOrder.map((category) => {
               const articles = categoryGroups[category as keyof typeof categoryGroups] || [];
-              if (articles.length === 0) return null;
+              if (articles.length === 0) {return null;}
 
-              const categorySlug = getCategorySlug(category);
-              const categoryHref = `/${categorySlug}` as Route;
+              const categoryHref = categoryRouteMap[category] ?? "/music";
 
               return (
                 <section key={category} className="animate-fadeInUp">
