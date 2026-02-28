@@ -4,12 +4,10 @@ import { posts, events, postArtists, eventArtists } from "@/lib/db/schema";
 import { eq, and, gte, lt, sql, isNotNull } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
-import { cacheTag } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
-    cacheTag("stats-monthly");
     // Calculate current month boundaries (UTC)
     const now = new Date();
     const year = now.getUTCFullYear();

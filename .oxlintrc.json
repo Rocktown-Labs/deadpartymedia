@@ -1,5 +1,9 @@
 {
-  "plugins": ["unicorn", "typescript", "oxc"],
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc"
+  ],
   "categories": {},
   "rules": {
     "constructor-super": "warn",
@@ -139,5 +143,9 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": []
+  "ignorePatterns": [],
+  "extends": [
+    "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json"
+  ],
+  "$schema": "./node_modules/oxlint/configuration_schema.json"
 }

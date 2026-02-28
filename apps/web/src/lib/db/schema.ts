@@ -218,12 +218,40 @@ export const eventArtists = pgTable("event_artists", {
     .references(() => artists.id, { onDelete: "cascade" }),
 });
 
+// Post Import Source Metadata (WordPress backfill traceability)
+export const postImportSources = pgTable(
+  "post_import_sources",
+  {
+    id: serial("id").primaryKey(),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    sourceUrl: text("source_url").notNull(),
+    sourceAuthorSlug: text("source_author_slug").notNull(),
+    sourceCategoriesJson: text("source_categories_json").notNull(),
+    sourcePublishedAt: timestamp("source_published_at").notNull(),
+    sourceModifiedAt: timestamp("source_modified_at"),
+    importedAt: timestamp("imported_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    postIdUnique: uniqueIndex("post_import_sources_post_id_unique").on(table.postId),
+    sourceUrlUnique: uniqueIndex("post_import_sources_source_url_unique").on(
+      table.sourceUrl,
+    ),
+    sourceAuthorSlugIdx: index("post_import_sources_source_author_slug_idx").on(
+      table.sourceAuthorSlug,
+    ),
+  }),
+);
+
 // Relations
 export const postsRelations = relations(posts, ({ many }) => ({
   postArtists: many(postArtists),
   comments: many(articleComments),
   reads: many(userArticleReads),
   saves: many(userArticleSaves),
+  importSources: many(postImportSources),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -283,5 +311,12 @@ export const eventArtistsRelations = relations(eventArtists, ({ one }) => ({
   artist: one(artists, {
     fields: [eventArtists.artistId],
     references: [artists.id],
+  }),
+}));
+
+export const postImportSourcesRelations = relations(postImportSources, ({ one }) => ({
+  post: one(posts, {
+    fields: [postImportSources.postId],
+    references: [posts.id],
   }),
 }));

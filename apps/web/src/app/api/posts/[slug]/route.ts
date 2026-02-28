@@ -7,6 +7,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
 import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
 export async function GET(
   request: NextRequest,
@@ -43,16 +44,11 @@ export async function GET(
       .from(articleComments)
       .where(eq(articleComments.postId, post.id));
 
-    // Parse Tiptap content and convert to HTML
-    let content;
-    try {
-      const tiptapJson = JSON.parse(post.content);
-      // Convert Tiptap JSON to HTML using the same extensions as the editor
-      content = generateHTML(tiptapJson, [StarterKit, Image]);
-    } catch {
-      // If parsing fails, assume it's already HTML or plain text
-      content = post.content;
-    }
+    // Normalize stored content and convert to HTML when TipTap JSON is present.
+    const normalizedContent = normalizeStoredPostContent(post.content);
+    const content = normalizedContent.tiptapDoc
+      ? generateHTML(normalizedContent.tiptapDoc, [StarterKit, Image])
+      : post.content;
 
     // Transform to match existing Article interface
     const article = {

@@ -184,6 +184,66 @@ describe("createPost", () => {
 
     await expect(createPost(formData)).rejects.toThrow("Unauthorized");
   });
+
+  it("allows super_admin to override authorId to another writer profile", async () => {
+    vi.mocked(canDelete).mockResolvedValue(true);
+
+    const authorSelectLimit = vi.fn().mockResolvedValue([{ clerkId: "writer_target" }]);
+    const authorSelectWhere = vi.fn().mockReturnValue({ limit: authorSelectLimit });
+    const authorSelectFrom = vi.fn().mockReturnValue({ where: authorSelectWhere });
+    mockSelect.mockReturnValue({ from: authorSelectFrom });
+
+    const insertValues = vi.fn().mockReturnValue({
+      returning: vi.fn().mockResolvedValue([{ id: 1, slug: "test-post" }]),
+    });
+    mockInsert.mockReturnValue({ values: insertValues });
+
+    const formData = new FormData();
+    formData.append("title", "Author Override");
+    formData.append("slug", "author-override");
+    formData.append("category", "EDM");
+    formData.append("excerpt", "Test excerpt");
+    formData.append("content", "{}");
+    formData.append("status", "draft");
+    formData.append("isCoverStory", "false");
+    formData.append("authorId", "writer_target");
+
+    await createPost(formData);
+
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorId: "writer_target",
+      }),
+    );
+  });
+
+  it("does not allow writer to override authorId", async () => {
+    vi.mocked(canDelete).mockResolvedValue(false);
+
+    const insertValues = vi.fn().mockReturnValue({
+      returning: vi.fn().mockResolvedValue([{ id: 1, slug: "test-post" }]),
+    });
+    mockInsert.mockReturnValue({ values: insertValues });
+
+    const formData = new FormData();
+    formData.append("title", "Author Override");
+    formData.append("slug", "author-override");
+    formData.append("category", "EDM");
+    formData.append("excerpt", "Test excerpt");
+    formData.append("content", "{}");
+    formData.append("status", "draft");
+    formData.append("isCoverStory", "false");
+    formData.append("authorId", "writer_target");
+
+    await createPost(formData);
+
+    expect(mockSelect).not.toHaveBeenCalled();
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authorId: "user_test123",
+      }),
+    );
+  });
 });
 
 describe("updatePost", () => {

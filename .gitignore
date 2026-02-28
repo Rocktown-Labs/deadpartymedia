@@ -74,5 +74,6 @@ docker-compose.override.yml
 .uv/
 # Note: uv.lock is needed for Docker builds, so it's committed
 .vercel
+.firecrawl/
 
 # Terraform (removed - using Vercel now)

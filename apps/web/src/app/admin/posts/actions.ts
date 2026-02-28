@@ -4,8 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { db } from "@/lib/db";
-import { posts, postArtists } from "@/lib/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { posts, postArtists, users } from "@/lib/db/schema";
+import { eq, and, ne, inArray } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -23,6 +23,35 @@ function haveDifferentArtistIds(a: number[], b: number[]) {
     if (a[i] !== b[i]) return true;
   }
   return false;
+}
+
+async function resolveAuthorIdForPost(
+  formData: FormData,
+  fallbackAuthorId: string
+): Promise<string> {
+  const selectedAuthorId = formData.get("authorId");
+  if (typeof selectedAuthorId !== "string" || selectedAuthorId.trim().length === 0) {
+    return fallbackAuthorId;
+  }
+
+  const isSuperAdmin = await canDelete();
+  if (!isSuperAdmin) {
+    return fallbackAuthorId;
+  }
+
+  const authorId = selectedAuthorId.trim();
+  const [author] = await db
+    .select({ clerkId: users.clerkId })
+    .from(users)
+    .where(
+      and(
+        eq(users.clerkId, authorId),
+        inArray(users.role, ["writer", "super_admin"])
+      )
+    )
+    .limit(1);
+
+  return author?.clerkId ?? fallbackAuthorId;
 }
 
 export async function createPost(formData: FormData) {
@@ -65,6 +94,7 @@ export async function createPost(formData: FormData) {
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
+  const resolvedAuthorId = await resolveAuthorIdForPost(formData, userId);
 
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.title),
@@ -93,7 +123,7 @@ export async function createPost(formData: FormData) {
         excerpt: validatedData.excerpt,
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
-        authorId: userId,
+        authorId: resolvedAuthorId,
         status: validatedData.status as any,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,
@@ -240,6 +270,7 @@ export async function updatePost(id: number, formData: FormData) {
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
+  const resolvedAuthorId = await resolveAuthorIdForPost(formData, post.authorId);
 
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.title),
@@ -270,6 +301,7 @@ export async function updatePost(id: number, formData: FormData) {
         excerpt: validatedData.excerpt,
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
+        authorId: resolvedAuthorId,
         status: validatedData.status as any,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,

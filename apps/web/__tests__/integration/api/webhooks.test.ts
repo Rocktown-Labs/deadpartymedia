@@ -8,6 +8,7 @@ const { mockDb, mockLogger, mockWithOperationContext } = vi.hoisted(() => ({
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    select: vi.fn(),
   },
   mockLogger: {
     error: vi.fn(),
@@ -152,6 +153,67 @@ describe("POST /api/webhooks", () => {
           onboardingComplete: true,
           updatedAt: expect.any(Date),
         }),
+      }),
+    );
+  });
+
+  it("remaps placeholder local profile on invite-linked user.updated webhook", async () => {
+    vi.mocked(verifyWebhook).mockResolvedValue({
+      type: "user.updated",
+      data: {
+        id: "user_real_123",
+        email_addresses: [{ id: "email_3", email_address: "writer.remapped@example.com" }],
+        primary_email_address_id: "email_3",
+        first_name: "Remapped",
+        last_name: "Writer",
+        image_url: "https://example.com/remapped.png",
+        public_metadata: {
+          role: "writer",
+          onboardingComplete: true,
+          localUserProfileId: "99",
+        },
+      },
+    } as any);
+
+    const selectLimit = vi.fn().mockResolvedValue([
+      {
+        id: 99,
+        clerkId: "local_placeholder:remapped-99",
+        role: "writer",
+        onboardingComplete: true,
+      },
+    ]);
+    const selectWhere = vi.fn().mockReturnValue({ limit: selectLimit });
+    const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
+    mockDb.select.mockReturnValue({ from: selectFrom });
+
+    const updateWhere = vi.fn().mockResolvedValue(undefined);
+    const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
+    mockDb.update.mockReturnValue({ set: updateSet });
+
+    const deleteWhere = vi.fn().mockResolvedValue(undefined);
+    mockDb.delete.mockReturnValue({ where: deleteWhere });
+
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
+    const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
+    mockDb.insert.mockReturnValue({ values });
+
+    const response = await POST(
+      new Request("http://localhost:3001/api/webhooks", {
+        method: "POST",
+      }) as any,
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ received: true });
+    expect(mockDb.update).toHaveBeenCalledTimes(1);
+    expect(mockDb.delete).toHaveBeenCalledTimes(1);
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clerkId: "user_real_123",
+        role: "writer",
+        onboardingComplete: true,
       }),
     );
   });

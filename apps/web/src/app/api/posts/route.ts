@@ -4,12 +4,10 @@ import { posts, postArtists, artists, articleComments } from "@/lib/db/schema";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
-import { cacheTag } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
-    cacheTag("posts");
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const limit = Number.parseInt(searchParams.get("limit") || "10", 10);

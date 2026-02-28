@@ -50,6 +50,13 @@
       "when": 1770501197219,
       "tag": "0006_sloppy_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772211864792,
+      "tag": "0007_sharp_chimera",
+      "breakpoints": true
     }
   ]
 }

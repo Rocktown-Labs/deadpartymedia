@@ -108,9 +108,7 @@ export default async function EventsPage() {
                       </Link>
                       {isSuperAdmin && (
                         <DeleteConfirm
-                          onConfirm={async () => {
-                            await deleteEvent(event.id);
-                          }}
+                          action={deleteEvent.bind(null, event.id)}
                           title="Delete Event"
                           description={`Are you sure you want to delete "${event.title}"? This action cannot be undone.`}
                         />

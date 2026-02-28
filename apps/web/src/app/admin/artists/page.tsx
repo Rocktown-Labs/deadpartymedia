@@ -99,7 +99,7 @@ export default async function ArtistsPage() {
                       )}
                       {isSuperAdmin && (
                         <DeleteConfirm
-                          onConfirm={deleteArtist.bind(null, artist.id)}
+                          action={deleteArtist.bind(null, artist.id)}
                           title="Delete Artist"
                           description={`Are you sure you want to delete "${artist.name}"? This action cannot be undone.`}
                         />

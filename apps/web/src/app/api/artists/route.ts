@@ -4,12 +4,10 @@ import { artists, postArtists, eventArtists, posts, events } from "@/lib/db/sche
 import { eq, and, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
-import { cacheTag } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
-    cacheTag("artists");
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
 

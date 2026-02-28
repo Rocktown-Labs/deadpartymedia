@@ -4,12 +4,10 @@ import { events, eventArtists, artists } from "@/lib/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
-import { cacheTag } from "next/cache";
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
-    cacheTag("events");
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
     const status = searchParams.get("status"); // "upcoming" or "past"

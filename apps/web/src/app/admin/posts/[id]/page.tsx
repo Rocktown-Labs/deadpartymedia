@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { posts, postArtists } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { posts, postArtists, users } from "@/lib/db/schema";
+import { eq, asc, inArray } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
 import { PostEditor } from "@/components/admin/post-editor";
 import { updatePost } from "../actions";
 import type { Route } from "next";
+import { checkRole } from "@/lib/auth/roles";
+import {
+  createArtistProfileStub,
+  createUserProfileStub,
+} from "@/app/admin/users/actions";
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -32,6 +37,29 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
     .where(eq(postArtists.postId, postId));
 
   const artistIds = postArtistRelations.map((rel) => rel.artistId);
+  const isSuperAdmin = await checkRole("super_admin");
+  const authorOptions = isSuperAdmin
+    ? await db
+        .select({
+          clerkId: users.clerkId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          role: users.role,
+        })
+        .from(users)
+        .where(inArray(users.role, ["writer", "super_admin"]))
+        .orderBy(asc(users.firstName), asc(users.lastName))
+        .then((rows) =>
+          rows.map((row) => ({
+            clerkId: row.clerkId,
+            role: row.role,
+            name:
+              [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
+              row.email,
+          }))
+        )
+    : [];
 
   return (
     <div>
@@ -47,7 +75,12 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           status: post.status,
           isCoverStory: post.isCoverStory,
           artistIds,
+          authorId: post.authorId,
         }}
+        canManageAuthor={isSuperAdmin}
+        authorOptions={authorOptions}
+        onCreateAuthorStub={isSuperAdmin ? createUserProfileStub : undefined}
+        onCreateArtistStub={isSuperAdmin ? createArtistProfileStub : undefined}
         onSubmit={updatePost.bind(null, postId)}
         cancelHref={"/admin/posts" as Route}
       />

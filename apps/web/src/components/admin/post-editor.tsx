@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import FileHandler from "@tiptap/extension-file-handler";
-import { useState, useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useArtists } from "@/lib/api/artists";
+import { useArtists, type Artist } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
 import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +30,37 @@ import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
+import { normalizeStoredPostContent } from "@/lib/content/post-content";
+
+type AuthorOption = {
+  clerkId: string;
+  name: string;
+  role: string;
+};
+
+type CreateAuthorStubResult = {
+  success: boolean;
+  error?: string;
+  profile?: {
+    clerkId: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    role: string;
+  };
+};
+
+type CreateArtistStubResult = {
+  success: boolean;
+  error?: string;
+  artist?: {
+    id: number;
+    name: string;
+    genre: string;
+    location: string;
+    email: string | null;
+  };
+};
 
 interface PostEditorProps {
   initialData?: {
@@ -42,7 +73,12 @@ interface PostEditorProps {
     status?: "draft" | "published" | "archived";
     isCoverStory?: boolean;
     artistIds?: number[];
+    authorId?: string;
   };
+  authorOptions?: AuthorOption[];
+  canManageAuthor?: boolean;
+  onCreateAuthorStub?: (formData: FormData) => Promise<CreateAuthorStubResult>;
+  onCreateArtistStub?: (formData: FormData) => Promise<CreateArtistStubResult>;
   onSubmit: (formData: FormData) => void | Promise<unknown>;
   cancelHref: Route;
   allowCoverImageUrl?: boolean;
@@ -53,6 +89,10 @@ const categories = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER
 
 export function PostEditor({
   initialData,
+  authorOptions = [],
+  canManageAuthor = false,
+  onCreateAuthorStub,
+  onCreateArtistStub,
   onSubmit,
   cancelHref,
   allowCoverImageUrl = true,
@@ -71,13 +111,37 @@ export function PostEditor({
   const [selectedArtistIds, setSelectedArtistIds] = useState<number[]>(
     initialData?.artistIds || []
   );
+  const [selectedAuthorId, setSelectedAuthorId] = useState(
+    initialData?.authorId && authorOptions.some((author) => author.clerkId === initialData.authorId)
+      ? initialData.authorId
+      : authorOptions[0]?.clerkId || initialData?.authorId || ""
+  );
+  const [availableAuthors, setAvailableAuthors] = useState<AuthorOption[]>(authorOptions);
+  const [createdArtists, setCreatedArtists] = useState<Artist[]>([]);
+  const [newAuthorName, setNewAuthorName] = useState("");
+  const [newAuthorEmail, setNewAuthorEmail] = useState("");
+  const [creatingAuthor, setCreatingAuthor] = useState(false);
+  const [newArtistName, setNewArtistName] = useState("");
+  const [newArtistGenre, setNewArtistGenre] = useState("OTHER");
+  const [newArtistLocation, setNewArtistLocation] = useState("");
+  const [creatingArtist, setCreatingArtist] = useState(false);
   const [artistPopoverOpen, setArtistPopoverOpen] = useState(false);
   const [coverImageUploading, setCoverImageUploading] = useState(false);
   const [useCoverImageUrl, setUseCoverImageUrl] = useState(false);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const normalizedInitialContent = useMemo(
+    () => normalizeStoredPostContent(initialData?.content || ""),
+    [initialData?.content],
+  );
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
+  const allArtists = useMemo(() => {
+    const deduped = new Map<number, Artist>();
+    for (const artist of artists) deduped.set(artist.id, artist);
+    for (const artist of createdArtists) deduped.set(artist.id, artist);
+    return Array.from(deduped.values());
+  }, [artists, createdArtists]);
 
   const editor = useEditor({
     extensions: [
@@ -99,7 +163,7 @@ export function PostEditor({
         },
       }),
     ],
-    content: initialData?.content || "",
+    content: normalizedInitialContent.editorValue,
     editorProps: {
       attributes: {
         class: "prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none",
@@ -207,6 +271,123 @@ export function PostEditor({
     setSelectedArtistIds((prev) => prev.filter((id) => id !== artistId));
   };
 
+  const handleCreateAuthorStub = async () => {
+    if (!onCreateAuthorStub) return;
+
+    const displayName = newAuthorName.trim();
+    if (!displayName) {
+      toast.error("Author name is required");
+      return;
+    }
+
+    setCreatingAuthor(true);
+    try {
+      const formData = new FormData();
+      formData.append("displayName", displayName);
+      formData.append("role", "writer");
+      if (newAuthorEmail.trim()) {
+        formData.append("email", newAuthorEmail.trim());
+      }
+
+      const result = await onCreateAuthorStub(formData);
+      const profile = result.profile;
+      if (!result.success || !profile) {
+        toast.error(result.error || "Failed to create author");
+        return;
+      }
+
+      const name =
+        [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() ||
+        profile.email;
+
+      setAvailableAuthors((previous) => {
+        const next = [...previous];
+        if (!next.some((author) => author.clerkId === profile.clerkId)) {
+          next.push({
+            clerkId: profile.clerkId,
+            name,
+            role: profile.role,
+          });
+        }
+        return next;
+      });
+      setSelectedAuthorId(profile.clerkId);
+      setNewAuthorName("");
+      setNewAuthorEmail("");
+      toast.success("Author profile created");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create author");
+    } finally {
+      setCreatingAuthor(false);
+    }
+  };
+
+  const handleCreateArtistStub = async () => {
+    if (!onCreateArtistStub) return;
+
+    const displayName = newArtistName.trim();
+    if (!displayName) {
+      toast.error("Artist name is required");
+      return;
+    }
+
+    setCreatingArtist(true);
+    try {
+      const formData = new FormData();
+      formData.append("displayName", displayName);
+      formData.append("genre", newArtistGenre);
+      if (newArtistLocation.trim()) {
+        formData.append("location", newArtistLocation.trim());
+      }
+
+      const result = await onCreateArtistStub(formData);
+      const artist = result.artist;
+      if (!result.success || !artist) {
+        toast.error(result.error || "Failed to create artist");
+        return;
+      }
+
+      setCreatedArtists((previous) => {
+        if (previous.some((existingArtist) => existingArtist.id === artist.id)) {
+          return previous;
+        }
+        const createdArtist: Artist = {
+          id: artist.id,
+          slug: "",
+          name: artist.name,
+          bio: "Profile pending update.",
+          image: null,
+          location: artist.location,
+          genre: artist.genre as Artist["genre"],
+          spotify_url: null,
+          spotify_artist_id: null,
+          instagram: null,
+          twitter: null,
+          tiktok: null,
+          website: null,
+          claimed: false,
+          article_count: 0,
+          event_count: 0,
+          profile_views: 0,
+          created_at: new Date().toISOString(),
+        };
+        return [...previous, createdArtist];
+      });
+
+      setSelectedArtistIds((previous) =>
+        previous.includes(artist.id) ? previous : [...previous, artist.id]
+      );
+      setNewArtistName("");
+      setNewArtistLocation("");
+      setNewArtistGenre("OTHER");
+      toast.success("Artist profile created");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create artist");
+    } finally {
+      setCreatingArtist(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
@@ -219,6 +400,9 @@ export function PostEditor({
     formData.append("coverImage", coverImage);
     formData.append("status", status);
     formData.append("isCoverStory", isCoverStory.toString());
+    if (canManageAuthor && selectedAuthorId) {
+      formData.append("authorId", selectedAuthorId);
+    }
     // Append artist IDs as comma-separated string
     if (selectedArtistIds.length > 0) {
       formData.append("artistIds", selectedArtistIds.join(","));
@@ -236,7 +420,7 @@ export function PostEditor({
     }
   };
 
-  const selectedArtists = artists.filter((artist) =>
+  const selectedArtists = allArtists.filter((artist) =>
     selectedArtistIds.includes(artist.id)
   );
 
@@ -263,6 +447,56 @@ export function PostEditor({
           className="mt-1"
         />
       </div>
+
+      {canManageAuthor && (
+        <div className="space-y-3 rounded-lg border border-gray-800 bg-[#111111] p-4">
+          <div>
+            <Label htmlFor="authorId">Author</Label>
+            <Select value={selectedAuthorId} onValueChange={setSelectedAuthorId}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select author" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableAuthors.length === 0 ? (
+                  <SelectItem value="__none__" disabled>
+                    No authors available
+                  </SelectItem>
+                ) : (
+                  availableAuthors.map((author) => (
+                    <SelectItem key={author.clerkId} value={author.clerkId}>
+                      {author.name} ({author.role})
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          {onCreateAuthorStub && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <Input
+                value={newAuthorName}
+                onChange={(event) => setNewAuthorName(event.target.value)}
+                placeholder="New author name"
+                className="md:col-span-2"
+              />
+              <Input
+                value={newAuthorEmail}
+                onChange={(event) => setNewAuthorEmail(event.target.value)}
+                placeholder="Email (optional)"
+                type="email"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateAuthorStub}
+                disabled={creatingAuthor}
+              >
+                {creatingAuthor ? "Creating..." : "Quick Create Author"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <Label htmlFor="category">Category</Label>
@@ -426,13 +660,13 @@ export function PostEditor({
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
               <div className="max-h-[300px] overflow-y-auto p-2">
-                {artists.length === 0 ? (
+                {allArtists.length === 0 ? (
                   <div className="p-4 text-center text-sm text-gray-400">
                     No artists available
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {artists.map((artist) => (
+                    {allArtists.map((artist) => (
                       <div
                         key={artist.id}
                         className="flex items-center space-x-2 p-2 hover:bg-gray-800 rounded"
@@ -473,6 +707,40 @@ export function PostEditor({
                   </button>
                 </Badge>
               ))}
+            </div>
+          )}
+          {onCreateArtistStub && (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-3">
+              <Input
+                value={newArtistName}
+                onChange={(event) => setNewArtistName(event.target.value)}
+                placeholder="New artist name"
+                className="md:col-span-2"
+              />
+              <select
+                value={newArtistGenre}
+                onChange={(event) => setNewArtistGenre(event.target.value)}
+                className="bg-[#0A0A0A] border border-gray-800 rounded px-3 py-2 text-sm"
+              >
+                {categories.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={newArtistLocation}
+                onChange={(event) => setNewArtistLocation(event.target.value)}
+                placeholder="Location (optional)"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCreateArtistStub}
+                disabled={creatingArtist}
+              >
+                {creatingArtist ? "Creating..." : "Quick Create"}
+              </Button>
             </div>
           )}
         </div>

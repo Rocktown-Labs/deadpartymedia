@@ -11,33 +11,35 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 
 interface DeleteConfirmProps {
-  onConfirm: () => void | Promise<unknown>;
+  action: (formData: FormData) => void | Promise<unknown>;
   title: string;
   description?: string;
   trigger?: React.ReactNode;
 }
 
+function ConfirmDeleteButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" variant="destructive" disabled={pending}>
+      {pending ? "Deleting..." : "Delete"}
+    </Button>
+  );
+}
+
 export function DeleteConfirm({
-  onConfirm,
+  action,
   title,
   description = "This action cannot be undone.",
   trigger,
 }: DeleteConfirmProps) {
   const [open, setOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleConfirm = async () => {
-    setIsDeleting(true);
-    try {
-      await onConfirm();
-      setOpen(false);
-    } catch (error) {
-      console.error("Delete failed:", error);
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleSubmit = async (formData: FormData) => {
+    await action(formData);
+    setOpen(false);
   };
 
   return (
@@ -55,12 +57,12 @@ export function DeleteConfirm({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={isDeleting}>
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
+          <form action={handleSubmit}>
+            <ConfirmDeleteButton />
+          </form>
         </DialogFooter>
       </DialogContent>
     </Dialog>

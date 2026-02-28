@@ -146,9 +146,7 @@ export default async function PostsPage() {
                         </>
                       ) : isSuperAdmin ? (
                         <DeleteConfirm
-                          onConfirm={async () => {
-                            await deletePost(post.id);
-                          }}
+                          action={deletePost.bind(null, post.id)}
                           title="Delete Post"
                           description={`Are you sure you want to delete "${post.title}"? This action cannot be undone.`}
                         />

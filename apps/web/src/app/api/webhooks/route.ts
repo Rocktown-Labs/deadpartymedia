@@ -1,12 +1,24 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { posts, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { withOperationContext } from "@/lib/logger/context";
 import { roleOrDefault } from "@/lib/auth/role";
+
+function parseLocalUserProfileId(metadata: unknown): number | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const value = (metadata as Record<string, unknown>).localUserProfileId;
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+  if (typeof value !== "string") return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return null;
+  return parsed;
+}
 
 export async function POST(req: NextRequest) {
   const log = getRequestLogger(req);
@@ -36,9 +48,37 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
-      const role = roleOrDefault((public_metadata as Record<string, unknown>)?.role, "fan");
+      const localUserProfileId = parseLocalUserProfileId(public_metadata);
+      const linkedLocalProfile = localUserProfileId
+        ? await db
+            .select({
+              id: users.id,
+              clerkId: users.clerkId,
+              role: users.role,
+              onboardingComplete: users.onboardingComplete,
+            })
+            .from(users)
+            .where(eq(users.id, localUserProfileId))
+            .limit(1)
+            .then((rows) => rows[0] ?? null)
+        : null;
+
+      if (linkedLocalProfile && linkedLocalProfile.clerkId !== id) {
+        await db
+          .update(posts)
+          .set({ authorId: id, updatedAt: new Date() })
+          .where(eq(posts.authorId, linkedLocalProfile.clerkId));
+        await db.delete(users).where(eq(users.id, linkedLocalProfile.id));
+      }
+
+      const role = roleOrDefault(
+        (public_metadata as Record<string, unknown>)?.role ??
+          linkedLocalProfile?.role,
+        "fan"
+      );
       const onboardingComplete =
-        (public_metadata as Record<string, unknown>)?.onboardingComplete === true;
+        (public_metadata as Record<string, unknown>)?.onboardingComplete === true ||
+        linkedLocalProfile?.onboardingComplete === true;
 
       // Upsert user to make webhook retries idempotent.
       await db
@@ -94,9 +134,37 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
 
-      const role = roleOrDefault((public_metadata as Record<string, unknown>)?.role, "fan");
+      const localUserProfileId = parseLocalUserProfileId(public_metadata);
+      const linkedLocalProfile = localUserProfileId
+        ? await db
+            .select({
+              id: users.id,
+              clerkId: users.clerkId,
+              role: users.role,
+              onboardingComplete: users.onboardingComplete,
+            })
+            .from(users)
+            .where(eq(users.id, localUserProfileId))
+            .limit(1)
+            .then((rows) => rows[0] ?? null)
+        : null;
+
+      if (linkedLocalProfile && linkedLocalProfile.clerkId !== id) {
+        await db
+          .update(posts)
+          .set({ authorId: id, updatedAt: new Date() })
+          .where(eq(posts.authorId, linkedLocalProfile.clerkId));
+        await db.delete(users).where(eq(users.id, linkedLocalProfile.id));
+      }
+
+      const role = roleOrDefault(
+        (public_metadata as Record<string, unknown>)?.role ??
+          linkedLocalProfile?.role,
+        "fan"
+      );
       const onboardingComplete =
-        (public_metadata as Record<string, unknown>)?.onboardingComplete === true;
+        (public_metadata as Record<string, unknown>)?.onboardingComplete === true ||
+        linkedLocalProfile?.onboardingComplete === true;
 
       // Upsert user to make update deliveries idempotent even when row is missing.
       await db

@@ -1,10 +1,16 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import "@dpmedia/env/web";
 import type { NextConfig } from "next";
+import path from "node:path";
+
+const turbopackRoot = path.resolve(process.cwd(), "../..");
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
+  turbopack: {
+    root: turbopackRoot,
+  },
   images: {
     remotePatterns: [
       {
@@ -43,7 +49,7 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryConfig = withSentryConfig(nextConfig, {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
@@ -80,3 +86,5 @@ export default withSentryConfig(nextConfig, {
     },
   },
 });
+
+export default process.env.NODE_ENV === "development" ? nextConfig : sentryConfig;
