@@ -1,9 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useState, type CSSProperties } from "react";
-import Link from "next/link";
+import { useLayoutEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { Route } from "next";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { CalendarDays, LayoutDashboard, Mic2, Newspaper, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -27,34 +27,35 @@ interface AdminShellProps {
   userRole: "super_admin" | "writer";
 }
 
-type NavItem = {
+interface NavItem {
   href: Route;
   label: string;
   icon: LucideIcon;
   superAdminOnly?: boolean;
-};
+}
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/posts", label: "Posts", icon: Newspaper },
-  { href: "/admin/events", label: "Events", icon: CalendarDays },
-  { href: "/admin/artists", label: "Artists", icon: Mic2 },
-  { href: "/admin/users", label: "Users", icon: Users, superAdminOnly: true },
+  { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin/posts", icon: Newspaper, label: "Posts" },
+  { href: "/admin/events", icon: CalendarDays, label: "Events" },
+  { href: "/admin/artists", icon: Mic2, label: "Artists" },
+  { href: "/admin/users", icon: Users, label: "Users", superAdminOnly: true },
 ];
 
 function getNavbarHeight() {
   const header = document.querySelector("header");
-  if (!header) return 0;
+  if (!header) {return 0;}
   return Math.ceil(header.getBoundingClientRect().height);
 }
 
 function isActiveRoute(pathname: string, href: Route) {
-  if (href === "/admin") return pathname === href;
+  if (href === "/admin") {return pathname === href;}
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [navbarHeight, setNavbarHeight] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -66,7 +67,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
     measure();
 
     const header = document.querySelector("header");
-    if (!header) return;
+    if (!header) {return;}
 
     const ro = new ResizeObserver(measure);
     ro.observe(header);
@@ -80,14 +81,14 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
 
   useLayoutEffect(() => {
     const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]+)/);
-    if (!match) return;
+    if (!match) {return;}
     setSidebarOpen(match[1] === "true");
   }, []);
 
   const visibleNavItems = useMemo(
     () =>
       NAV_ITEMS.filter((item) => {
-        if (item.superAdminOnly && !isSuperAdmin) return false;
+        if (item.superAdminOnly && !isSuperAdmin) {return false;}
         return true;
       }),
     [isSuperAdmin],
@@ -122,7 +123,10 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                   Control Center
                 </p>
               </div>
-              <Badge variant="outline" className="border-gray-700 text-[10px] uppercase text-gray-300">
+              <Badge
+                variant="outline"
+                className="border-gray-700 text-[10px] uppercase text-gray-300"
+              >
                 {userRole === "super_admin" ? "Super Admin" : "Writer"}
               </Badge>
             </div>
@@ -135,8 +139,8 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
-                      render={<Link href={item.href} />}
                       isActive={isActive}
+                      onClick={() => router.push(item.href)}
                       className="rounded-md text-sm data-[active=true]:bg-[#1A1A1A] data-[active=true]:text-[#7CFC00] hover:bg-[#1A1A1A]"
                     >
                       <Icon className="size-4" />

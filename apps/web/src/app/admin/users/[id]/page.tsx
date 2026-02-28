@@ -13,7 +13,7 @@ import {
   updateLocalUserRole,
 } from "../actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
 
@@ -65,11 +66,7 @@ async function deleteLocalUserProfileAction(formData: FormData) {
   redirect("/admin/users");
 }
 
-export default async function UserDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   if (!(await canManageUsers())) {
     redirect("/admin");
   }
@@ -128,14 +125,13 @@ export default async function UserDetailPage({
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <Button
-          render={<Link href={"/admin/users" as Route} />}
-          variant="outline"
-          className="border-gray-700"
+        <Link
+          href={"/admin/users" as Route}
+          className={cn(buttonVariants({ variant: "outline" }), "border-gray-700")}
         >
           <ArrowLeft className="mr-2 size-4" />
           Back to Users
-        </Button>
+        </Link>
         <div>
           <h1 className="text-3xl font-black">{formatUserName(profile)}</h1>
           <p className="mt-2 text-sm text-gray-400">Local profile id: {profile.id}</p>
@@ -152,21 +148,25 @@ export default async function UserDetailPage({
             <p>
               <span className="text-gray-400">Email:</span> {profile.email}
             </p>
-            <p>
+            <div>
               <span className="text-gray-400">Role:</span>{" "}
               <Badge variant="outline" className="border-gray-700 text-gray-200">
                 {profile.role}
               </Badge>
-            </p>
-            <p>
+            </div>
+            <div>
               <span className="text-gray-400">Onboarding:</span>{" "}
               <Badge
                 variant="outline"
-                className={profile.onboardingComplete ? "border-emerald-700 text-emerald-300" : "border-gray-700 text-gray-300"}
+                className={
+                  profile.onboardingComplete
+                    ? "border-emerald-700 text-emerald-300"
+                    : "border-gray-700 text-gray-300"
+                }
               >
                 {profile.onboardingComplete ? "Complete" : "Incomplete"}
               </Badge>
-            </p>
+            </div>
           </div>
           <div className="space-y-2 text-sm">
             <p className="break-all">
@@ -277,14 +277,15 @@ export default async function UserDetailPage({
                       </TableCell>
                       <TableCell>{post.updatedAt.toLocaleString()}</TableCell>
                       <TableCell>
-                        <Button
-                          render={<Link href={`/posts/${post.slug}` as Route} target="_blank" rel="noreferrer" />}
-                          size="sm"
-                          variant="outline"
+                        <Link
+                          href={`/posts/${post.slug}` as Route}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={buttonVariants({ size: "sm", variant: "outline" })}
                         >
                           View
                           <ExternalLink className="ml-1 size-3" />
-                        </Button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   ))}
