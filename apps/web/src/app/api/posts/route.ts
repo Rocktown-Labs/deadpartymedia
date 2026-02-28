@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts, postArtists, artists, articleComments } from "@/lib/db/schema";
+import { posts, postArtists, artists, articleComments, users } from "@/lib/db/schema";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+
+function resolveAuthorName(firstName: string | null, lastName: string | null, email: string | null) {
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  if (fullName.length > 0) return fullName;
+  if (typeof email === "string" && email.trim().length > 0) return email;
+  return "Unknown";
+}
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
@@ -24,8 +31,26 @@ export async function GET(request: NextRequest) {
     }
 
     const results = await db
-      .select()
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        category: posts.category,
+        excerpt: posts.excerpt,
+        coverImage: posts.coverImage,
+        authorId: posts.authorId,
+        status: posts.status,
+        isCoverStory: posts.isCoverStory,
+        publishedAt: posts.publishedAt,
+        createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
+        views: posts.views,
+        authorFirstName: users.firstName,
+        authorLastName: users.lastName,
+        authorEmail: users.email,
+      })
       .from(posts)
+      .leftJoin(users, eq(posts.authorId, users.clerkId))
       .where(conditions.length > 1 ? and(...conditions) : conditions[0])
       .orderBy(desc(posts.publishedAt))
       .limit(limit)
@@ -89,7 +114,7 @@ export async function GET(request: NextRequest) {
         cover_image: post.coverImage,
         author: {
           id: post.authorId,
-          name: "", // Would need to fetch from Clerk or join
+          name: resolveAuthorName(post.authorFirstName, post.authorLastName, post.authorEmail),
         },
         artists: postArtistsData.map((a) => ({
           id: a.artistId,

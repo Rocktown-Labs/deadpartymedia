@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { posts, postArtists, artists, articleComments } from "@/lib/db/schema";
+import { posts, postArtists, artists, articleComments, users } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -8,6 +8,13 @@ import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
+
+function resolveAuthorName(firstName: string | null, lastName: string | null, email: string | null) {
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  if (fullName.length > 0) return fullName;
+  if (typeof email === "string" && email.trim().length > 0) return email;
+  return "Unknown";
+}
 
 export async function GET(
   request: NextRequest,
@@ -17,12 +24,32 @@ export async function GET(
   try {
     const { slug } = await params;
 
-    const [post] = await db
-      .select()
+    const [row] = await db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        category: posts.category,
+        excerpt: posts.excerpt,
+        content: posts.content,
+        coverImage: posts.coverImage,
+        authorId: posts.authorId,
+        status: posts.status,
+        isCoverStory: posts.isCoverStory,
+        publishedAt: posts.publishedAt,
+        createdAt: posts.createdAt,
+        updatedAt: posts.updatedAt,
+        views: posts.views,
+        authorFirstName: users.firstName,
+        authorLastName: users.lastName,
+        authorEmail: users.email,
+      })
       .from(posts)
+      .leftJoin(users, eq(posts.authorId, users.clerkId))
       .where(and(eq(posts.slug, slug), eq(posts.status, "published")))
       .limit(1);
 
+    const post = row;
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
@@ -61,7 +88,7 @@ export async function GET(
       cover_image: post.coverImage,
       author: {
         id: post.authorId,
-        name: "", // Would need to fetch from Clerk or join
+        name: resolveAuthorName(post.authorFirstName, post.authorLastName, post.authorEmail),
       },
       artists: postArtistsData,
       published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),

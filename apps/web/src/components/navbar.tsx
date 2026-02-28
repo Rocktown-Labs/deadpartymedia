@@ -7,7 +7,7 @@ import CartModal from "./cart/cart-modal";
 import { ChevronDown, LayoutDashboard } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
-import { roleOrDefault } from "@/lib/auth/role";
+import { getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
@@ -25,14 +25,7 @@ const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year:
 export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
   const { user } = useUser();
-
-  const role = roleOrDefault(user?.publicMetadata?.role, "fan");
-  const mobileDashboardHref: Route =
-    role === "super_admin" || role === "writer"
-      ? "/admin"
-      : role === "artist"
-        ? "/artist-dashboard"
-        : "/dashboard";
+  const dashboardHref: Route = getDashboardRouteFromMetadata(user?.publicMetadata?.role);
 
   // Mount-only for global scroll listener (keep if adding scroll effects later)
   useEffect(() => {
@@ -155,7 +148,14 @@ export default function Navbar() {
               </div>
             </SignedOut>
             <SignedIn>
-              <div className="hidden lg:block">
+              <div className="hidden lg:flex items-center gap-2">
+                <Link
+                  href={dashboardHref}
+                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ml-2 text-xs font-bold tracking-wider uppercase">Dashboard</span>
+                </Link>
                 <UserButton
                   appearance={{
                     elements: {
@@ -196,7 +196,7 @@ export default function Navbar() {
             <SignedIn>
               <div className="flex items-center gap-2">
                 <Link
-                  href={mobileDashboardHref}
+                  href={dashboardHref}
                   className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
                 >
                   <LayoutDashboard className="h-4 w-4" />

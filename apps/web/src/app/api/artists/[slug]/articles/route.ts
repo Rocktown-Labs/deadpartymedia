@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { artists, postArtists, posts } from "@/lib/db/schema";
+import { artists, postArtists, posts, users } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+
+function resolveAuthorName(firstName: string | null, lastName: string | null, email: string | null) {
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  if (fullName.length > 0) return fullName;
+  if (typeof email === "string" && email.trim().length > 0) return email;
+  return "Unknown";
+}
 
 export async function GET(
   request: NextRequest,
@@ -34,6 +41,9 @@ export async function GET(
         excerpt: posts.excerpt,
         cover_image: posts.coverImage,
         author_id: posts.authorId,
+        author_first_name: users.firstName,
+        author_last_name: users.lastName,
+        author_email: users.email,
         published_at: posts.publishedAt,
         views: posts.views,
         is_cover_story: posts.isCoverStory,
@@ -41,6 +51,7 @@ export async function GET(
       })
       .from(posts)
       .innerJoin(postArtists, eq(posts.id, postArtists.postId))
+      .leftJoin(users, eq(posts.authorId, users.clerkId))
       .where(and(eq(postArtists.artistId, artist.id), eq(posts.status, "published")))
       .orderBy(desc(posts.publishedAt));
 
@@ -54,7 +65,11 @@ export async function GET(
       cover_image: post.cover_image,
       author: {
         id: post.author_id,
-        name: "", // Would need to fetch from Clerk or join
+        name: resolveAuthorName(
+          post.author_first_name,
+          post.author_last_name,
+          post.author_email,
+        ),
       },
       published_at: post.published_at?.toISOString() || post.created_at.toISOString(),
       views: post.views,

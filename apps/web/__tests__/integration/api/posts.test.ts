@@ -10,6 +10,7 @@ const { mockDbChain, mockArtistRelationsChain, mockCommentCountsChain } = vi.hoi
   const mockDbChain = {
     select: vi.fn(),
     from: vi.fn(),
+    leftJoin: vi.fn(),
     where: vi.fn(),
     orderBy: vi.fn(),
     limit: vi.fn(),
@@ -32,7 +33,8 @@ const { mockDbChain, mockArtistRelationsChain, mockCommentCountsChain } = vi.hoi
 
   // Set up the chain: select().from().where().orderBy().limit().offset()
   mockDbChain.select.mockReturnValue({ from: mockDbChain.from })
-  mockDbChain.from.mockReturnValue({ where: mockDbChain.where })
+  mockDbChain.from.mockReturnValue({ leftJoin: mockDbChain.leftJoin })
+  mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where })
   mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy })
   mockDbChain.orderBy.mockReturnValue({ limit: mockDbChain.limit })
   mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset })
@@ -81,7 +83,8 @@ describe('GET /api/posts', () => {
     
     // Reset the chain
     mockDbChain.select.mockReturnValue({ from: mockDbChain.from })
-    mockDbChain.from.mockReturnValue({ where: mockDbChain.where })
+    mockDbChain.from.mockReturnValue({ leftJoin: mockDbChain.leftJoin })
+    mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where })
     mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy })
     mockDbChain.orderBy.mockReturnValue({ limit: mockDbChain.limit })
     mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset })
@@ -115,6 +118,9 @@ describe('GET /api/posts', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         views: 0,
+        authorFirstName: 'Test',
+        authorLastName: 'Writer',
+        authorEmail: 'test@example.com',
       },
     ]
 
@@ -131,6 +137,10 @@ describe('GET /api/posts', () => {
     expect(data.results[0].title).toBe('Test Post')
     expect(data.results[0].artists).toEqual([]) // Should include empty artists array
     expect(data.results[0].comment_count).toBe(0)
+    expect(data.results[0].author.id).toBe('user1')
+    expect(typeof data.results[0].author.id).toBe('string')
+    expect(data.results[0].author.name).toBe('Test Writer')
+    expect(data.results[0].author.name.length).toBeGreaterThan(0)
   })
 
   it('should filter by category', async () => {

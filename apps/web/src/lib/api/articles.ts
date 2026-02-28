@@ -9,7 +9,7 @@ export interface Article {
   content: string;
   cover_image: string;
   author: {
-    id: number;
+    id: string;
     name: string;
     bio: string;
     image: string | null;
@@ -37,7 +37,7 @@ export interface ArticleList {
   excerpt: string;
   cover_image: string;
   author: {
-    id: number;
+    id: string;
     name: string;
   };
   artists: Array<{

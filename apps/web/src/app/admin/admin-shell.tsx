@@ -1,7 +1,25 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import type { Route } from "next";
+import { usePathname } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Mic2, Newspaper, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -9,14 +27,36 @@ interface AdminShellProps {
   userRole: "super_admin" | "writer";
 }
 
+type NavItem = {
+  href: Route;
+  label: string;
+  icon: LucideIcon;
+  superAdminOnly?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/posts", label: "Posts", icon: Newspaper },
+  { href: "/admin/events", label: "Events", icon: CalendarDays },
+  { href: "/admin/artists", label: "Artists", icon: Mic2 },
+  { href: "/admin/users", label: "Users", icon: Users, superAdminOnly: true },
+];
+
 function getNavbarHeight() {
   const header = document.querySelector("header");
   if (!header) return 0;
   return Math.ceil(header.getBoundingClientRect().height);
 }
 
+function isActiveRoute(pathname: string, href: Route) {
+  if (href === "/admin") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps) {
+  const pathname = usePathname();
   const [navbarHeight, setNavbarHeight] = useState<number>(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useLayoutEffect(() => {
     function measure() {
@@ -38,65 +78,87 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
     };
   }, []);
 
+  useLayoutEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]+)/);
+    if (!match) return;
+    setSidebarOpen(match[1] === "true");
+  }, []);
+
+  const visibleNavItems = useMemo(
+    () =>
+      NAV_ITEMS.filter((item) => {
+        if (item.superAdminOnly && !isSuperAdmin) return false;
+        return true;
+      }),
+    [isSuperAdmin],
+  );
+
+  const shellVariables = useMemo(
+    () =>
+      ({
+        "--admin-navbar-height": `${navbarHeight}px`,
+        "--sidebar-offset-top": `${navbarHeight}px`,
+      }) as CSSProperties,
+    [navbarHeight],
+  );
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white" style={{ paddingTop: navbarHeight }}>
-      <div className="flex">
-        {/* Sidebar */}
-        <aside
-          className="w-64 bg-[#111111] border-r border-gray-800 overflow-y-auto p-6"
-          style={{
-            height: `calc(100vh - ${navbarHeight}px)`,
-            position: "sticky",
-            top: navbarHeight,
-          }}
+      <SidebarProvider
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
+        style={shellVariables}
+        className="min-h-[calc(100svh-var(--admin-navbar-height))] bg-[#0A0A0A]"
+      >
+        <Sidebar
+          collapsible="icon"
+          className="border-r border-gray-800/80 bg-[#111111] group-data-[variant=sidebar]:border-r"
         >
-          <div className="mb-8">
-            <h1 className="text-2xl font-black text-[#7CFC00]">Admin</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Role: {userRole === "super_admin" ? "Super Admin" : "Writer"}
-            </p>
+          <SidebarHeader className="border-b border-gray-800/80 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-black text-[#7CFC00] leading-none">Admin</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gray-400">
+                  Control Center
+                </p>
+              </div>
+              <Badge variant="outline" className="border-gray-700 text-[10px] uppercase text-gray-300">
+                {userRole === "super_admin" ? "Super Admin" : "Writer"}
+              </Badge>
+            </div>
+          </SidebarHeader>
+          <SidebarContent className="p-2">
+            <SidebarMenu>
+              {visibleNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isActiveRoute(pathname, item.href);
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      render={<Link href={item.href} />}
+                      isActive={isActive}
+                      className="rounded-md text-sm data-[active=true]:bg-[#1A1A1A] data-[active=true]:text-[#7CFC00] hover:bg-[#1A1A1A]"
+                    >
+                      <Icon className="size-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter className="border-t border-gray-800/80 p-3 text-xs text-gray-500">
+            <p className="truncate">Cmd/Ctrl + B to toggle sidebar</p>
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>
+        <SidebarInset className="min-w-0 bg-[#0A0A0A]">
+          <div className="sticky top-[var(--admin-navbar-height)] z-20 border-b border-gray-800/80 bg-[#0A0A0A]/95 px-4 py-3 backdrop-blur md:hidden">
+            <SidebarTrigger className="border border-gray-700 text-white hover:border-[#7CFC00] hover:text-[#7CFC00]" />
           </div>
-
-          <nav className="space-y-2">
-            <Link
-              href="/admin"
-              className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/admin/posts"
-              className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Posts
-            </Link>
-            <Link
-              href="/admin/events"
-              className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Events
-            </Link>
-            <Link
-              href="/admin/artists"
-              className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              Artists
-            </Link>
-            {isSuperAdmin && (
-              <Link
-                href="/admin/users"
-                className="block px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Users
-              </Link>
-            )}
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-8">{children}</main>
-      </div>
+          <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 }
-

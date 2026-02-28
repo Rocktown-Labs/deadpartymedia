@@ -22,6 +22,7 @@ const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
     where: vi.fn(),
     limit: mockLimit,
     innerJoin: vi.fn(),
+    leftJoin: vi.fn(),
     orderBy: mockOrderBy,
   }
 
@@ -30,8 +31,10 @@ const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
   mockDbChain.from.mockReturnValue({ 
     where: mockDbChain.where,
     innerJoin: mockDbChain.innerJoin,
+    leftJoin: mockDbChain.leftJoin,
   })
   mockDbChain.innerJoin.mockReturnValue({ where: mockDbChain.where })
+  mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where })
   // where() can return results directly (for artists route) or chain to limit/orderBy
   // Default: return promise (for artists list route) - will be overridden per test
   mockDbChain.where.mockResolvedValue([])
@@ -218,8 +221,10 @@ describe('GET /api/artists/[slug]/articles', () => {
     mockDbChain.from.mockReturnValue({ 
       where: mockDbChain.where,
       innerJoin: mockDbChain.innerJoin,
+      leftJoin: mockDbChain.leftJoin,
     })
-    mockDbChain.innerJoin.mockReturnValue({ where: mockDbChain.where })
+    mockDbChain.innerJoin.mockReturnValue({ leftJoin: mockDbChain.leftJoin })
+    mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where })
     // where() returns chainable object with limit() and orderBy() for routes that chain
     // Use the hoisted mockWhereResult
     mockDbChain.where.mockReturnValue(mockWhereResult)
@@ -240,6 +245,9 @@ describe('GET /api/artists/[slug]/articles', () => {
         excerpt: 'Test excerpt',
         cover_image: null,
         author_id: 'user1',
+        author_first_name: 'Test',
+        author_last_name: 'Writer',
+        author_email: 'writer@example.com',
         published_at: new Date(),
         views: 0,
         is_cover_story: false,
@@ -253,7 +261,7 @@ describe('GET /api/artists/[slug]/articles', () => {
     // where() returns chainable, limit() returns results
     mockDbChain.limit.mockResolvedValueOnce([mockArtist])
     
-    // Second query: articles - select().from().innerJoin().where().orderBy()
+    // Second query: articles - select().from().innerJoin().leftJoin().where().orderBy()
     // where() returns chainable, orderBy() returns results
     mockDbChain.orderBy.mockResolvedValueOnce(mockArticles)
 
@@ -267,6 +275,8 @@ describe('GET /api/artists/[slug]/articles', () => {
     expect(Array.isArray(data)).toBe(true)
     expect(data).toHaveLength(1)
     expect(data[0].title).toBe('Test Article')
+    expect(data[0].author.id).toBe('user1')
+    expect(data[0].author.name).toBe('Test Writer')
   })
 
   it('should return 404 if artist not found', async () => {
