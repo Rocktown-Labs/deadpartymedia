@@ -11,15 +11,19 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: article.title,
-    description: article.excerpt,
-    image: getImageUrl(article.cover_image),
-    datePublished: article.published_at || article.created_at,
-    dateModified: article.updated_at,
     author: {
       "@type": "Person",
       name: article.author.name,
       ...(article.author.image && { image: getImageUrl(article.author.image) }),
+    },
+    dateModified: article.updated_at,
+    datePublished: article.published_at || article.created_at,
+    description: article.excerpt,
+    headline: article.title,
+    image: getImageUrl(article.cover_image),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": getAbsoluteUrl(`/article/${article.slug}`),
     },
     publisher: {
       "@type": "Organization",
@@ -28,10 +32,6 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
         "@type": "ImageObject",
         url: getImageUrl("/images/dead-party-logo.png"),
       },
-    },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": getAbsoluteUrl(`/article/${article.slug}`),
     },
     ...(article.artists &&
       article.artists.length > 0 && {
@@ -59,12 +59,10 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: event.title,
     description: event.description,
-    image: getImageUrl(event.image),
-    startDate: `${event.date}T${event.time || "00:00:00"}`,
-    eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    image: getImageUrl(event.image),
     location: {
       "@type": "Place",
       name: event.venue,
@@ -73,11 +71,13 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
         addressLocality: event.location,
       },
     },
+    name: event.title,
     organizer: {
       "@type": "Organization",
       name: "Dead Party Media",
       url: getAbsoluteUrl("/"),
     },
+    startDate: `${event.date}T${event.time || "00:00:00"}`,
     ...(event.artists &&
       event.artists.length > 0 && {
         performer: event.artists.map((artist) => ({
@@ -89,10 +89,10 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
     ...(event.ticket_link && {
       offers: {
         "@type": "Offer",
-        url: event.ticket_link,
+        availability: "https://schema.org/InStock",
         price: event.price || "0",
         priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
+        url: event.ticket_link,
       },
     }),
   };
@@ -113,11 +113,11 @@ export function ArtistStructuredData({ artist }: ArtistStructuredDataProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "MusicGroup",
-    name: artist.name,
     description: artist.bio,
-    image: getImageUrl(artist.image),
-    url: getAbsoluteUrl(`/artists/${artist.slug}`),
     genre: artist.genre,
+    image: getImageUrl(artist.image),
+    name: artist.name,
+    url: getAbsoluteUrl(`/artists/${artist.slug}`),
     ...(artist.spotify_url && {
       sameAs: [
         artist.spotify_url,

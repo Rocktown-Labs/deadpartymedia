@@ -14,12 +14,12 @@ export interface Event {
   price: string | null;
   genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
   status: "draft" | "published" | "past";
-  artists: Array<{
+  artists: {
     id: number;
     slug: string;
     name: string;
     image: string | null;
-  }>;
+  }[];
   created_by_name: string;
   created_at: string;
   updated_at: string;
@@ -38,17 +38,16 @@ export interface EventList {
   ticket_link: string | null;
   price: string | null;
   genre: string;
-  artists: Array<{
+  artists: {
     id: number;
     slug: string;
     name: string;
-  }>;
+  }[];
   created_at: string;
 }
 
 export function useEvents(genre?: string) {
   return useQuery<EventList[]>({
-    queryKey: ["events", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
       const response = await fetch(`/api/events${params}`);
@@ -62,12 +61,13 @@ export function useEvents(genre?: string) {
       }
       return [];
     },
+    queryKey: ["events", genre],
   });
 }
 
 export function useEvent(slug: string) {
   return useQuery<Event>({
-    queryKey: ["event", slug],
+    enabled: !!slug,
     queryFn: async () => {
       const response = await fetch(`/api/events/${slug}`);
       if (!response.ok) {
@@ -75,6 +75,6 @@ export function useEvent(slug: string) {
       }
       return response.json();
     },
-    enabled: !!slug,
+    queryKey: ["event", slug],
   });
 }

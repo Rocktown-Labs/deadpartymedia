@@ -14,10 +14,10 @@ const getLogLevel = (): pino.Level => {
 // Create base logger configuration
 const createLoggerConfig = (): pino.LoggerOptions => {
   const baseConfig: pino.LoggerOptions = {
-    level: getLogLevel(),
     base: {
       env: env.NODE_ENV || "development",
     },
+    level: getLogLevel(),
     timestamp: pino.stdTimeFunctions.isoTime,
   };
 
@@ -26,13 +26,13 @@ const createLoggerConfig = (): pino.LoggerOptions => {
     return {
       ...baseConfig,
       transport: {
-        target: "pino-pretty",
         options: {
           colorize: true,
           translateTime: "SYS:standard",
           ignore: "pid,hostname",
           singleLine: false,
         },
+        target: "pino-pretty",
       },
     };
   }
@@ -41,9 +41,7 @@ const createLoggerConfig = (): pino.LoggerOptions => {
   return {
     ...baseConfig,
     formatters: {
-      level: (label) => {
-        return { level: label };
-      },
+      level: (label) => ({ level: label }),
     },
     serializers: {
       err: pino.stdSerializers.err,
@@ -67,7 +65,7 @@ export function createChildLogger(context: Record<string, unknown>): Logger {
 // Helper to create request-scoped logger
 export function createRequestLogger(
   requestId: string,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): Logger {
   return logger.child({
     requestId,

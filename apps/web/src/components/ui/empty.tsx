@@ -1,11 +1,11 @@
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
 
 import { cn } from "@/lib/utils";
 
 const Empty = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => {
-    return (
+  ({ className, ...props }, ref) => (
       <div
         ref={ref}
         data-slot="empty"
@@ -15,36 +15,33 @@ const Empty = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
         )}
         {...props}
       />
-    );
-  },
+    ),
 );
 Empty.displayName = "Empty";
 
 const EmptyHeader = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => {
-    return (
+  ({ className, ...props }, ref) => (
       <div
         ref={ref}
         data-slot="empty-header"
         className={cn("flex max-w-sm flex-col items-center gap-2 text-center", className)}
         {...props}
       />
-    );
-  },
+    ),
 );
 EmptyHeader.displayName = "EmptyHeader";
 
 const emptyMediaVariants = cva(
   "mb-2 flex shrink-0 items-center justify-center [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
+    defaultVariants: {
+      variant: "default",
+    },
     variants: {
       variant: {
         default: "bg-transparent",
         icon: "bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg [&_svg:not([class*='size-'])]:size-6",
       },
-    },
-    defaultVariants: {
-      variant: "default",
     },
   },
 );
@@ -52,8 +49,7 @@ const emptyMediaVariants = cva(
 const EmptyMedia = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & VariantProps<typeof emptyMediaVariants>
->(({ className, variant = "default", ...props }, ref) => {
-  return (
+>(({ className, variant = "default", ...props }, ref) => (
     <div
       ref={ref}
       data-slot="empty-icon"
@@ -61,27 +57,23 @@ const EmptyMedia = React.forwardRef<
       className={cn(emptyMediaVariants({ variant, className }))}
       {...props}
     />
-  );
-});
+  ));
 EmptyMedia.displayName = "EmptyMedia";
 
 const EmptyTitle = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => {
-    return (
+  ({ className, ...props }, ref) => (
       <div
         ref={ref}
         data-slot="empty-title"
         className={cn("text-lg font-medium tracking-tight", className)}
         {...props}
       />
-    );
-  },
+    ),
 );
 EmptyTitle.displayName = "EmptyTitle";
 
 const EmptyDescription = React.forwardRef<HTMLDivElement, React.ComponentProps<"p">>(
-  ({ className, ...props }, ref) => {
-    return (
+  ({ className, ...props }, ref) => (
       <div
         ref={ref}
         data-slot="empty-description"
@@ -91,14 +83,12 @@ const EmptyDescription = React.forwardRef<HTMLDivElement, React.ComponentProps<"
         )}
         {...props}
       />
-    );
-  },
+    ),
 );
 EmptyDescription.displayName = "EmptyDescription";
 
 const EmptyContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => {
-    return (
+  ({ className, ...props }, ref) => (
       <div
         ref={ref}
         data-slot="empty-content"
@@ -108,8 +98,7 @@ const EmptyContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"
         )}
         {...props}
       />
-    );
-  },
+    ),
 );
 EmptyContent.displayName = "EmptyContent";
 

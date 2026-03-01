@@ -11,7 +11,8 @@ export default function ArtistsPage() {
   const { data: artists, isLoading } = useArtists(filterGenre !== "ALL" ? filterGenre : undefined);
 
   const completeArtists = (artists ?? []).filter((artist) => {
-    const hasSpotify = Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
+    const hasSpotify =
+      Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
     const hasInstagram = Boolean(artist.instagram?.trim());
     return Boolean(artist.claimed) && hasSpotify && hasInstagram;
   });

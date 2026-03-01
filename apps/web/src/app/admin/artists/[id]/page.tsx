@@ -36,20 +36,20 @@ export default async function EditArtistPage({ params }: { params: Promise<{ id:
       </div>
       <ArtistForm
         initialData={{
-          name: artist.name,
-          slug: artist.slug,
           bio: artist.bio,
-          image: artist.image || undefined,
-          location: artist.location,
-          genre: artist.genre,
-          spotifyUrl: artist.spotifyUrl || undefined,
-          spotifyArtistId: artist.spotifyArtistId || undefined,
-          instagram: artist.instagram || undefined,
-          twitter: artist.twitter || undefined,
-          tiktok: artist.tiktok || undefined,
-          website: artist.website || undefined,
           email: artist.email || undefined,
+          genre: artist.genre,
+          image: artist.image || undefined,
+          instagram: artist.instagram || undefined,
+          location: artist.location,
+          name: artist.name,
           phoneNumber: artist.phoneNumber || undefined,
+          slug: artist.slug,
+          spotifyArtistId: artist.spotifyArtistId || undefined,
+          spotifyUrl: artist.spotifyUrl || undefined,
+          tiktok: artist.tiktok || undefined,
+          twitter: artist.twitter || undefined,
+          website: artist.website || undefined,
         }}
         onSubmit={updateArtist.bind(null, artistId)}
         cancelHref={"/admin/artists" as Route}

@@ -1,25 +1,21 @@
-import { describe, it, expect } from "vitest";
-import {
-  artistOnboardingSchema,
-  fanOnboardingSchema,
-  type ArtistOnboardingFormData,
-  type FanOnboardingFormData,
-} from "@/lib/validations/onboarding";
 
-describe("artistOnboardingSchema", () => {
+import { artistOnboardingSchema, fanOnboardingSchema } from '@/lib/validations/onboarding';
+import type { ArtistOnboardingFormData, FanOnboardingFormData } from '@/lib/validations/onboarding';
+
+describe(artistOnboardingSchema, () => {
   const validArtistData: ArtistOnboardingFormData = {
-    name: "Test Artist",
-    location: "Little Rock, AR",
-    genre: "EDM",
     bio: "This is a valid bio with more than 10 characters",
-    spotifyUrl: "https://open.spotify.com/artist/123",
-    spotifyArtistId: "123",
+    genre: "EDM",
     instagram: "https://instagram.com/testartist",
+    location: "Little Rock, AR",
+    name: "Test Artist",
+    spotifyArtistId: "123",
+    spotifyUrl: "https://open.spotify.com/artist/123",
   };
 
   it("should validate correct artist data", () => {
     const result = artistOnboardingSchema.safeParse(validArtistData);
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     if (result.success) {
       expect(result.data.name).toBe("Test Artist");
       expect(result.data.location).toBe("Little Rock, AR");
@@ -32,7 +28,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       name: "",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
     if (!result.success) {
       expect(result.error.issues[0].message).toContain("required");
     }
@@ -43,7 +39,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       location: "",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should require genre", () => {
@@ -51,7 +47,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       genre: undefined,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should require valid genre enum", () => {
@@ -59,7 +55,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       genre: "INVALID_GENRE",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should require bio with minimum 10 characters", () => {
@@ -67,7 +63,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       bio: "short",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
     if (!result.success) {
       expect(result.error.issues[0].message).toContain("at least 10");
     }
@@ -79,7 +75,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       bio: longBio,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
     if (!result.success) {
       expect(result.error.issues[0].message).toContain("less than 500");
     }
@@ -91,7 +87,7 @@ describe("artistOnboardingSchema", () => {
       twitter: "https://twitter.com/artist",
       website: "https://example.com",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
   });
 
   it("should reject invalid URLs", () => {
@@ -99,16 +95,16 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       spotifyUrl: "not-a-url",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should require spotifyUrl and instagram (empty string should fail)", () => {
     const result = artistOnboardingSchema.safeParse({
       ...validArtistData,
-      spotifyUrl: "",
       instagram: "",
+      spotifyUrl: "",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should normalize instagram handle input", () => {
@@ -116,7 +112,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       instagram: "@myhandle",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     if (result.success) {
       expect(result.data.instagram).toBe("https://instagram.com/myhandle");
     }
@@ -127,18 +123,16 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       instagram: "@my.handle_name",
     });
-    expect(dotted.success).toBe(true);
+    expect(dotted.success).toBeTruthy();
     if (dotted.success) {
-      expect(dotted.data.instagram).toBe(
-        "https://instagram.com/my.handle_name",
-      );
+      expect(dotted.data.instagram).toBe("https://instagram.com/my.handle_name");
     }
 
     const bare = artistOnboardingSchema.safeParse({
       ...validArtistData,
       instagram: "my.handle_name",
     });
-    expect(bare.success).toBe(true);
+    expect(bare.success).toBeTruthy();
     if (bare.success) {
       expect(bare.data.instagram).toBe("https://instagram.com/my.handle_name");
     }
@@ -149,7 +143,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       instagram: "https://www.instagram.com/myhandle/?utm_source=test",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     if (result.success) {
       expect(result.data.instagram).toBe("https://instagram.com/myhandle");
     }
@@ -160,7 +154,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       phoneNumber: "(501) 555-1212",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     if (result.success) {
       expect(result.data.phoneNumber).toBe("+15015551212");
     }
@@ -172,7 +166,7 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       name: longName,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should enforce location max length of 100 characters", () => {
@@ -181,32 +175,32 @@ describe("artistOnboardingSchema", () => {
       ...validArtistData,
       location: longLocation,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 });
 
-describe("fanOnboardingSchema", () => {
+describe(fanOnboardingSchema, () => {
   const validFanData: FanOnboardingFormData = {
     name: "Test Fan",
   };
 
   it("should validate correct fan data with only name", () => {
     const result = fanOnboardingSchema.safeParse(validFanData);
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
   });
 
   it("should require name", () => {
     const result = fanOnboardingSchema.safeParse({
       name: "",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should trim and validate name is not only whitespace", () => {
     const result = fanOnboardingSchema.safeParse({
       name: "   ",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
     if (!result.success) {
       expect(result.error.issues[0].message).toContain("whitespace");
     }
@@ -214,12 +208,12 @@ describe("fanOnboardingSchema", () => {
 
   it("should allow optional fields", () => {
     const result = fanOnboardingSchema.safeParse({
-      name: "Test Fan",
-      location: "Little Rock, AR",
-      genre: "EDM",
       bio: "Optional bio",
+      genre: "EDM",
+      location: "Little Rock, AR",
+      name: "Test Fan",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
   });
 
   it("should validate optional URL fields when provided", () => {
@@ -227,16 +221,16 @@ describe("fanOnboardingSchema", () => {
       name: "Test Fan",
       spotifyUrl: "not-a-url",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 
   it("should transform empty strings to undefined for optional fields", () => {
     const result = fanOnboardingSchema.safeParse({
+      location: "",
       name: "Test Fan",
       spotifyUrl: "",
-      location: "",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBeTruthy();
     if (result.success) {
       expect(result.data.spotifyUrl).toBeUndefined();
     }
@@ -247,6 +241,6 @@ describe("fanOnboardingSchema", () => {
     const result = fanOnboardingSchema.safeParse({
       name: longName,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBeFalsy();
   });
 });

@@ -11,12 +11,8 @@ import Image from "@tiptap/extension-image";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, ne, or } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
-import {
-  extractPermalinkDate,
-  isWordpressPostPermalink,
-  parseWordpressArticle,
-  type ParsedWordpressArticle,
-} from "./lib/wordpress-parser";
+import { extractPermalinkDate, isWordpressPostPermalink, parseWordpressArticle } from './lib/wordpress-parser';
+import type { ParsedWordpressArticle } from './lib/wordpress-parser';
 import { createImageMirror } from "./lib/image-mirror";
 
 const execFileAsync = promisify(execFile);
@@ -25,18 +21,18 @@ const DEFAULT_MAP_LIMIT = 500;
 const DEFAULT_CONCURRENCY = 4;
 const WORKSPACE_ROOT = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 
-type CliOptions = {
+interface CliOptions {
   ownerClerkId: string;
   limit: number | null;
   since: Date | null;
   concurrency: number;
   dryRun: boolean;
-};
+}
 
-type FirecrawlScrapeResponse = {
+interface FirecrawlScrapeResponse {
   html: string;
   metadata?: Record<string, unknown>;
-};
+}
 
 type PreparedImportRecord = ParsedWordpressArticle & {
   mirroredCoverImageUrl: string | null;
@@ -46,11 +42,11 @@ type PreparedImportRecord = ParsedWordpressArticle & {
   inlineMirrorFailedCount: number;
 };
 
-type ReportFailure = {
+interface ReportFailure {
   url: string;
   stage: "scrape" | "parse" | "cover_image" | "db";
   reason: string;
-};
+}
 
 function createDb(databaseUrl: string) {
   const client = neon(databaseUrl);
@@ -59,7 +55,7 @@ function createDb(databaseUrl: string) {
 
 type Database = ReturnType<typeof createDb>;
 
-type Report = {
+interface Report {
   startedAt: string;
   completedAt: string | null;
   options: {
@@ -83,7 +79,7 @@ type Report = {
   inlineImagesMirrored: number;
   inlineImagesMirrorFailed: number;
   failures: ReportFailure[];
-};
+}
 
 function parseCliArgs(argv: string[]): CliOptions {
   let ownerClerkId: string | null = null;
@@ -107,7 +103,7 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--limit") {
       const nextValue = argv[index + 1];
-      if (!nextValue) throw new Error("Missing value for --limit");
+      if (!nextValue) {throw new Error("Missing value for --limit");}
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new Error("--limit must be a positive integer");
@@ -119,10 +115,10 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--since") {
       const nextValue = argv[index + 1];
-      if (!nextValue) throw new Error("Missing value for --since");
+      if (!nextValue) {throw new Error("Missing value for --since");}
       const parsedDate = new Date(nextValue);
       if (Number.isNaN(parsedDate.valueOf())) {
-        throw new Error("--since must be a valid ISO date (e.g. 2025-01-01)");
+        throw new TypeError("--since must be a valid ISO date (e.g. 2025-01-01)");
       }
       since = parsedDate;
       index += 1;
@@ -131,7 +127,7 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--concurrency") {
       const nextValue = argv[index + 1];
-      if (!nextValue) throw new Error("Missing value for --concurrency");
+      if (!nextValue) {throw new Error("Missing value for --concurrency");}
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 20) {
         throw new Error("--concurrency must be an integer between 1 and 20");
@@ -154,11 +150,11 @@ function parseCliArgs(argv: string[]): CliOptions {
   }
 
   return {
-    ownerClerkId,
-    limit,
-    since,
     concurrency,
     dryRun,
+    limit,
+    ownerClerkId,
+    since,
   };
 }
 
@@ -173,7 +169,7 @@ function parseJsonFromOutput(rawOutput: string): unknown {
   } catch {
     const firstBrace = trimmed.indexOf("{");
     const lastBrace = trimmed.lastIndexOf("}");
-    if (firstBrace >= 0 && lastBrace > firstBrace) {
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
       return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
     }
     throw new Error("Unable to parse JSON from command output");
@@ -188,22 +184,22 @@ async function runFirecrawlJson(args: string[]): Promise<unknown> {
     return parseJsonFromOutput(stdout);
   } catch (error) {
     const details = error instanceof Error ? error.message : String(error);
-    throw new Error(`firecrawl ${args.join(" ")} failed: ${details}`);
+    throw new Error(`firecrawl ${args.join(" ")} failed: ${details}`, { cause: error });
   }
 }
 
 function extractMapLinks(payload: unknown): string[] {
-  if (!payload || typeof payload !== "object") return [];
+  if (!payload || typeof payload !== "object") {return [];}
 
-  const data = (payload as { data?: { links?: unknown[] } }).data;
-  if (!data || !Array.isArray(data.links)) return [];
+  const {data} = (payload as { data?: { links?: unknown[] } });
+  if (!data || !Array.isArray(data.links)) {return [];}
 
   return data.links
     .map((value) => {
-      if (typeof value === "string") return value;
+      if (typeof value === "string") {return value;}
       if (value && typeof value === "object") {
         const objectValue = value as { url?: unknown };
-        if (typeof objectValue.url === "string") return objectValue.url;
+        if (typeof objectValue.url === "string") {return objectValue.url;}
       }
       return null;
     })
@@ -244,13 +240,7 @@ function extractScrapeResponse(payload: unknown, sourceUrl: string): FirecrawlSc
 }
 
 async function scrapeWordpressUrl(sourceUrl: string): Promise<FirecrawlScrapeResponse> {
-  const payload = await runFirecrawlJson([
-    "scrape",
-    sourceUrl,
-    "--format",
-    "html",
-    "--json",
-  ]);
+  const payload = await runFirecrawlJson(["scrape", sourceUrl, "--format", "html", "--json"]);
 
   return extractScrapeResponse(payload, sourceUrl);
 }
@@ -261,7 +251,7 @@ function dedupeUrls(urls: string[]): string[] {
 
   for (const value of urls) {
     const normalized = value.endsWith("/") ? value : `${value}/`;
-    if (seen.has(normalized)) continue;
+    if (seen.has(normalized)) {continue;}
     seen.add(normalized);
     deduped.push(value.endsWith("/") ? value.slice(0, -1) : value);
   }
@@ -290,7 +280,7 @@ async function runWithConcurrency<T, R>(
   concurrency: number,
   worker: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
-  if (items.length === 0) return [];
+  if (items.length === 0) {return [];}
 
   const results = Array.from({ length: items.length }) as R[];
   let nextIndex = 0;
@@ -349,8 +339,13 @@ async function main() {
   const options = parseCliArgs(process.argv.slice(2));
 
   const report: Report = {
-    startedAt: new Date().toISOString(),
     completedAt: null,
+    discoveredPermalinkCount: 0,
+    failures: [],
+    importSourcesInserted: 0,
+    importSourcesUpdated: 0,
+    inlineImagesMirrorFailed: 0,
+    inlineImagesMirrored: 0,
     options: {
       ownerClerkId: options.ownerClerkId,
       limit: options.limit,
@@ -358,20 +353,15 @@ async function main() {
       concurrency: options.concurrency,
       dryRun: options.dryRun,
     },
-    discoveredPermalinkCount: 0,
-    selectedPermalinkCount: 0,
-    scrapedCount: 0,
-    preparedCount: 0,
-    skippedBySinceCount: 0,
     placeholderUsersCreated: 0,
     placeholderUsersUpdated: 0,
     postsInserted: 0,
     postsUpdated: 0,
-    importSourcesInserted: 0,
-    importSourcesUpdated: 0,
-    inlineImagesMirrored: 0,
-    inlineImagesMirrorFailed: 0,
-    failures: [],
+    preparedCount: 0,
+    scrapedCount: 0,
+    selectedPermalinkCount: 0,
+    skippedBySinceCount: 0,
+    startedAt: new Date().toISOString(),
   };
 
   try {
@@ -393,7 +383,7 @@ async function main() {
     if (options.since) {
       selectedUrls = selectedUrls.filter((url) => {
         const permalinkDate = extractPermalinkDate(url);
-        if (!permalinkDate) return false;
+        if (!permalinkDate) {return false;}
         return permalinkDate >= options.since!;
       });
       report.skippedBySinceCount = permalinkUrls.length - selectedUrls.length;
@@ -424,77 +414,81 @@ async function main() {
 
     console.log(`[backfill] Scraping ${selectedUrls.length} URLs...`);
 
-    const scrapeResults = await runWithConcurrency(selectedUrls, options.concurrency, async (
-      sourceUrl,
-      index,
-    ) => {
-      const prefix = `[backfill][${index + 1}/${selectedUrls.length}]`;
-      console.log(`${prefix} Scraping ${sourceUrl}`);
+    const scrapeResults = await runWithConcurrency(
+      selectedUrls,
+      options.concurrency,
+      async (sourceUrl, index) => {
+        const prefix = `[backfill][${index + 1}/${selectedUrls.length}]`;
+        console.log(`${prefix} Scraping ${sourceUrl}`);
 
-      try {
-        const scraped = await scrapeWordpressUrl(sourceUrl);
-        report.scrapedCount += 1;
-
-        let parsed: ParsedWordpressArticle;
         try {
-          parsed = parseWordpressArticle({
-            html: scraped.html,
-            metadata: scraped.metadata,
-            sourceUrl,
-          });
-        } catch (error) {
-          report.failures.push({
-            url: sourceUrl,
-            stage: "parse",
-            reason: error instanceof Error ? error.message : String(error),
-          });
-          return null;
-        }
+          const scraped = await scrapeWordpressUrl(sourceUrl);
+          report.scrapedCount += 1;
 
-        let mirroredCoverImageUrl: string | null = null;
-        if (parsed.coverImageUrl) {
+          let parsed: ParsedWordpressArticle;
           try {
-            mirroredCoverImageUrl = await imageMirror.mirrorImageUrl(parsed.coverImageUrl, "cover");
+            parsed = parseWordpressArticle({
+              html: scraped.html,
+              metadata: scraped.metadata,
+              sourceUrl,
+            });
           } catch (error) {
             report.failures.push({
-              url: sourceUrl,
-              stage: "cover_image",
               reason: error instanceof Error ? error.message : String(error),
+              stage: "parse",
+              url: sourceUrl,
             });
             return null;
           }
+
+          let mirroredCoverImageUrl: string | null = null;
+          if (parsed.coverImageUrl) {
+            try {
+              mirroredCoverImageUrl = await imageMirror.mirrorImageUrl(
+                parsed.coverImageUrl,
+                "cover",
+              );
+            } catch (error) {
+              report.failures.push({
+                reason: error instanceof Error ? error.message : String(error),
+                stage: "cover_image",
+                url: sourceUrl,
+              });
+              return null;
+            }
+          }
+
+          const inlineResult = await imageMirror.mirrorInlineImagesInHtml(
+            parsed.contentHtml,
+            parsed.sourceUrl,
+          );
+          const mirroredContentTiptapJson = JSON.stringify(
+            generateJSON(inlineResult.html, [StarterKit, Image]),
+          );
+
+          report.inlineImagesMirrored += inlineResult.replacedCount;
+          report.inlineImagesMirrorFailed += inlineResult.failedCount;
+
+          const preparedRecord: PreparedImportRecord = {
+            ...parsed,
+            inlineMirrorFailedCount: inlineResult.failedCount,
+            inlineMirrorReplacedCount: inlineResult.replacedCount,
+            mirroredContentHtml: inlineResult.html,
+            mirroredContentTiptapJson,
+            mirroredCoverImageUrl,
+          };
+
+          return preparedRecord;
+        } catch (error) {
+          report.failures.push({
+            reason: error instanceof Error ? error.message : String(error),
+            stage: "scrape",
+            url: sourceUrl,
+          });
+          return null;
         }
-
-        const inlineResult = await imageMirror.mirrorInlineImagesInHtml(
-          parsed.contentHtml,
-          parsed.sourceUrl,
-        );
-        const mirroredContentTiptapJson = JSON.stringify(
-          generateJSON(inlineResult.html, [StarterKit, Image]),
-        );
-
-        report.inlineImagesMirrored += inlineResult.replacedCount;
-        report.inlineImagesMirrorFailed += inlineResult.failedCount;
-
-        const preparedRecord: PreparedImportRecord = {
-          ...parsed,
-          mirroredCoverImageUrl,
-          mirroredContentHtml: inlineResult.html,
-          mirroredContentTiptapJson,
-          inlineMirrorReplacedCount: inlineResult.replacedCount,
-          inlineMirrorFailedCount: inlineResult.failedCount,
-        };
-
-        return preparedRecord;
-      } catch (error) {
-        report.failures.push({
-          url: sourceUrl,
-          stage: "scrape",
-          reason: error instanceof Error ? error.message : String(error),
-        });
-        return null;
-      }
-    });
+      },
+    );
 
     const preparedRecords = scrapeResults.filter((value): value is PreparedImportRecord =>
       Boolean(value),
@@ -537,13 +531,12 @@ async function main() {
           clerkId: placeholderClerkId,
           email: toPlaceholderEmail(authorSlug),
           firstName: nameParts.firstName,
-          lastName: nameParts.lastName,
           imageUrl: null,
-          role: "writer",
+          lastName: nameParts.lastName,
           onboardingComplete: true,
+          role: "writer",
         })
         .onConflictDoUpdate({
-          target: schema.users.clerkId,
           set: {
             email: toPlaceholderEmail(authorSlug),
             firstName: nameParts.firstName,
@@ -552,6 +545,7 @@ async function main() {
             onboardingComplete: true,
             updatedAt: new Date(),
           },
+          target: schema.users.clerkId,
         });
 
       if (existingUser.length > 0) {
@@ -565,8 +559,8 @@ async function main() {
       try {
         const existingSource = await db
           .select({
-            sourceId: schema.postImportSources.id,
             postId: schema.postImportSources.postId,
+            sourceId: schema.postImportSources.id,
           })
           .from(schema.postImportSources)
           .where(eq(schema.postImportSources.sourceUrl, record.sourceUrl))
@@ -582,14 +576,14 @@ async function main() {
           await db
             .update(schema.posts)
             .set({
-              title: record.title,
               category: record.category,
-              excerpt: record.excerpt,
               content: record.mirroredContentTiptapJson,
               coverImage: record.mirroredCoverImageUrl,
+              createdAt: record.sourcePublishedAt,
+              excerpt: record.excerpt,
               isCoverStory: false,
               publishedAt: record.sourcePublishedAt,
-              createdAt: record.sourcePublishedAt,
+              title: record.title,
               updatedAt: record.sourceModifiedAt ?? record.sourcePublishedAt,
             })
             .where(eq(schema.posts.id, targetPostId));
@@ -600,17 +594,17 @@ async function main() {
           const [insertedPost] = await db
             .insert(schema.posts)
             .values({
-              title: record.title,
-              slug: uniqueSlug,
+              authorId: options.ownerClerkId,
               category: record.category,
-              excerpt: record.excerpt,
               content: record.mirroredContentTiptapJson,
               coverImage: record.mirroredCoverImageUrl,
-              authorId: options.ownerClerkId,
-              status: "draft",
+              createdAt: record.sourcePublishedAt,
+              excerpt: record.excerpt,
               isCoverStory: false,
               publishedAt: record.sourcePublishedAt,
-              createdAt: record.sourcePublishedAt,
+              slug: uniqueSlug,
+              status: "draft",
+              title: record.title,
               updatedAt: record.sourceModifiedAt ?? record.sourcePublishedAt,
             })
             .returning({ id: schema.posts.id });
@@ -639,11 +633,11 @@ async function main() {
             .update(schema.postImportSources)
             .set({
               postId: targetPostId,
-              sourceUrl: record.sourceUrl,
               sourceAuthorSlug: record.authorSlug,
               sourceCategoriesJson: JSON.stringify(record.rawCategories),
-              sourcePublishedAt: record.sourcePublishedAt,
               sourceModifiedAt: record.sourceModifiedAt,
+              sourcePublishedAt: record.sourcePublishedAt,
+              sourceUrl: record.sourceUrl,
               updatedAt: new Date(),
             })
             .where(eq(schema.postImportSources.id, existingImportSource[0]!.id));
@@ -652,11 +646,11 @@ async function main() {
         } else {
           await db.insert(schema.postImportSources).values({
             postId: targetPostId,
-            sourceUrl: record.sourceUrl,
             sourceAuthorSlug: record.authorSlug,
             sourceCategoriesJson: JSON.stringify(record.rawCategories),
-            sourcePublishedAt: record.sourcePublishedAt,
             sourceModifiedAt: record.sourceModifiedAt,
+            sourcePublishedAt: record.sourcePublishedAt,
+            sourceUrl: record.sourceUrl,
             updatedAt: new Date(),
           });
 
@@ -664,9 +658,9 @@ async function main() {
         }
       } catch (error) {
         report.failures.push({
-          url: record.sourceUrl,
-          stage: "db",
           reason: error instanceof Error ? error.message : String(error),
+          stage: "db",
+          url: record.sourceUrl,
         });
       }
     }

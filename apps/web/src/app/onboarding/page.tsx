@@ -10,7 +10,7 @@ import posthog from "posthog-js";
 import type { Route } from "next";
 import { parseRole } from "@/lib/auth/role";
 
-type OnboardingProfilePayload = {
+interface OnboardingProfilePayload {
   role: "artist" | "fan" | "super_admin" | "writer";
   onboardingComplete: boolean;
   fan: {
@@ -30,13 +30,13 @@ type OnboardingProfilePayload = {
     image: string;
     phoneNumber: string;
   } | null;
-};
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
-  const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | undefined>(undefined);
+  const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | undefined>();
   const [profileData, setProfileData] = useState<OnboardingProfilePayload | null>(null);
 
   // Get role information
@@ -54,13 +54,19 @@ export default function OnboardingPage() {
 
   // Auto-select role from URL params if user has no existing role
   useEffect(() => {
-    if (isLoaded && user && !existingRole && roleFromUrl && (roleFromUrl === "fan" || roleFromUrl === "artist")) {
+    if (
+      isLoaded &&
+      user &&
+      !existingRole &&
+      roleFromUrl &&
+      (roleFromUrl === "fan" || roleFromUrl === "artist")
+    ) {
       setSelectedRole(roleFromUrl);
       // Track onboarding role selection from URL
       posthog.capture("onboarding_role_selected", {
         role: roleFromUrl,
-        user_id: user?.id,
         source: "url_param",
+        user_id: user?.id,
       });
     }
   }, [isLoaded, user, existingRole, roleFromUrl]);
@@ -70,13 +76,13 @@ export default function OnboardingPage() {
     if (isLoaded && user) {
       const onboardingComplete = user.publicMetadata?.onboardingComplete;
       const userRole = parseRole(user.publicMetadata?.role);
-      
+
       // Handle admin roles - redirect them immediately
       if (userRole === "super_admin" || userRole === "writer") {
         router.push("/admin");
         return;
       }
-      
+
       // If onboarding is complete, redirect to appropriate dashboard
       if (onboardingComplete) {
         if (userRole === "artist") {
@@ -89,19 +95,19 @@ export default function OnboardingPage() {
   }, [isLoaded, user, router]);
 
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded || !user) {return;}
     let cancelled = false;
 
     (async () => {
       try {
         const response = await fetch("/api/onboarding/profile", {
-          method: "GET",
-          headers: { Accept: "application/json" },
           cache: "no-store",
+          headers: { Accept: "application/json" },
+          method: "GET",
         });
-        if (!response.ok) return;
+        if (!response.ok) {return;}
         const payload = (await response.json()) as OnboardingProfilePayload;
-        if (cancelled) return;
+        if (cancelled) {return;}
         setProfileData(payload);
       } catch {
         // Prefill is best-effort; onboarding should still work without it.

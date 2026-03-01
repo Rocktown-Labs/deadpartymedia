@@ -2,9 +2,9 @@ export function generateSlug(title: string): string {
   return title
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, "") // Remove special characters
-    .replace(/[\s_-]+/g, "-") // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+    .replaceAll(/[^\w\s-]/g, "") // Remove special characters
+    .replaceAll(/[\s_-]+/g, "-") // Replace spaces and underscores with hyphens
+    .replaceAll(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
 }
 
 export async function ensureUniqueSlug(
@@ -21,7 +21,7 @@ export async function ensureUniqueSlug(
 
   // If table is specified, only check that table
   if (table) {
-    const tableSchema = table === "posts" ? posts : table === "events" ? events : artists;
+    const tableSchema = table === "posts" ? posts : (table === "events" ? events : artists);
     while (true) {
       const existing = await db
         .select()

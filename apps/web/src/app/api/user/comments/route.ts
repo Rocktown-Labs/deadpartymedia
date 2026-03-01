@@ -7,18 +7,18 @@ import { articleComments, posts } from "@/lib/db/schema";
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
-type ReplyRow = {
+interface ReplyRow {
   id: number;
   parentId: number | null;
   content: string;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) return fallback;
+  if (!value) {return fallback;}
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
   return parsed;
 }
 
@@ -67,18 +67,18 @@ export async function GET(request: Request) {
 
   const topLevelComments = await db
     .select({
-      id: articleComments.id,
-      postId: articleComments.postId,
-      content: articleComments.content,
-      parent: articleComments.parentId,
-      createdAt: articleComments.createdAt,
-      updatedAt: articleComments.updatedAt,
       article: {
         id: posts.id,
         slug: posts.slug,
         title: posts.title,
         coverImage: posts.coverImage,
       },
+      content: articleComments.content,
+      createdAt: articleComments.createdAt,
+      id: articleComments.id,
+      parent: articleComments.parentId,
+      postId: articleComments.postId,
+      updatedAt: articleComments.updatedAt,
     })
     .from(articleComments)
     .innerJoin(posts, eq(articleComments.postId, posts.id))
@@ -97,10 +97,10 @@ export async function GET(request: Request) {
   const replies = topLevelCommentIds.length
     ? await db
         .select({
-          id: articleComments.id,
-          parentId: articleComments.parentId,
           content: articleComments.content,
           createdAt: articleComments.createdAt,
+          id: articleComments.id,
+          parentId: articleComments.parentId,
           updatedAt: articleComments.updatedAt,
         })
         .from(articleComments)
@@ -110,8 +110,8 @@ export async function GET(request: Request) {
 
   const repliesByParent = new Map<number, ReplyRow[]>();
   for (const reply of replies) {
-    const parentId = reply.parentId;
-    if (!parentId) continue;
+    const {parentId} = reply;
+    if (!parentId) {continue;}
     const existing = repliesByParent.get(parentId) ?? [];
     existing.push(reply);
     repliesByParent.set(parentId, existing);
@@ -122,14 +122,9 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     count: totalComments,
-    next: hasNextPage
-      ? buildPaginationUrl(requestUrl, page + 1, pageSize)
-      : null,
-    previous: hasPreviousPage
-      ? buildPaginationUrl(requestUrl, page - 1, pageSize)
-      : null,
+    next: hasNextPage ? buildPaginationUrl(requestUrl, page + 1, pageSize) : null,
+    previous: hasPreviousPage ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
     results: topLevelComments.map((comment) => ({
-      id: comment.id,
       article: {
         id: comment.article.id,
         slug: comment.article.slug,
@@ -137,6 +132,8 @@ export async function GET(request: Request) {
         cover_image: comment.article.coverImage,
       },
       content: comment.content,
+      created_at: comment.createdAt.toISOString(),
+      id: comment.id,
       parent: comment.parent,
       replies: (repliesByParent.get(comment.id) ?? []).map((reply) => ({
         id: reply.id,
@@ -144,7 +141,6 @@ export async function GET(request: Request) {
         created_at: reply.createdAt.toISOString(),
         updated_at: reply.updatedAt.toISOString(),
       })),
-      created_at: comment.createdAt.toISOString(),
       updated_at: comment.updatedAt.toISOString(),
     })),
   });

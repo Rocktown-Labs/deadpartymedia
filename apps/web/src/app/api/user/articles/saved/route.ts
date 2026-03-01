@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -13,9 +14,9 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) return fallback;
+  if (!value) {return fallback;}
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
   return parsed;
 }
 
@@ -40,18 +41,18 @@ function serializeArticle(row: {
   createdAt: Date;
 }) {
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    cover_image: row.coverImage,
     author: {
       id: row.authorId,
       name: "",
     },
-    published_at: row.publishedAt?.toISOString() ?? null,
-    views: row.views,
+    cover_image: row.coverImage,
     created_at: row.createdAt.toISOString(),
+    excerpt: row.excerpt,
+    id: row.id,
+    published_at: row.publishedAt?.toISOString() ?? null,
+    slug: row.slug,
+    title: row.title,
+    views: row.views,
   };
 }
 
@@ -64,19 +65,13 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const page = parsePositiveInt(requestUrl.searchParams.get("page"), 1);
   const pageSize = Math.min(
-    parsePositiveInt(
-      requestUrl.searchParams.get("page_size"),
-      DEFAULT_PAGE_SIZE,
-    ),
+    parsePositiveInt(requestUrl.searchParams.get("page_size"), DEFAULT_PAGE_SIZE),
     MAX_PAGE_SIZE,
   );
   const offset = (page - 1) * pageSize;
 
   const items = await db
     .select({
-      id: userArticleSaves.id,
-      savedAt: userArticleSaves.savedAt,
-      totalSaves: sql<number>`count(*) over()`,
       article: {
         id: posts.id,
         slug: posts.slug,
@@ -88,15 +83,13 @@ export async function GET(request: Request) {
         views: posts.views,
         createdAt: posts.createdAt,
       },
+      id: userArticleSaves.id,
+      savedAt: userArticleSaves.savedAt,
+      totalSaves: sql<number>`count(*) over()`,
     })
     .from(userArticleSaves)
     .innerJoin(posts, eq(userArticleSaves.postId, posts.id))
-    .where(
-      and(
-        eq(userArticleSaves.clerkUserId, userId),
-        eq(posts.status, "published"),
-      ),
-    )
+    .where(and(eq(userArticleSaves.clerkUserId, userId), eq(posts.status, "published")))
     .orderBy(desc(userArticleSaves.savedAt))
     .limit(pageSize)
     .offset(offset);
@@ -106,12 +99,7 @@ export async function GET(request: Request) {
       .select({ total: count() })
       .from(userArticleSaves)
       .innerJoin(posts, eq(userArticleSaves.postId, posts.id))
-      .where(
-        and(
-          eq(userArticleSaves.clerkUserId, userId),
-          eq(posts.status, "published"),
-        ),
-      );
+      .where(and(eq(userArticleSaves.clerkUserId, userId), eq(posts.status, "published")));
 
     const totalSaves = Number(countResult?.total ?? 0);
     if (totalSaves === 0) {
@@ -126,8 +114,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       count: totalSaves,
       next: null,
-      previous:
-        page > 1 ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
+      previous: page > 1 ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
       results: [],
     });
   }
@@ -138,15 +125,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     count: totalSaves,
-    next: hasNextPage
-      ? buildPaginationUrl(requestUrl, page + 1, pageSize)
-      : null,
-    previous: hasPreviousPage
-      ? buildPaginationUrl(requestUrl, page - 1, pageSize)
-      : null,
+    next: hasNextPage ? buildPaginationUrl(requestUrl, page + 1, pageSize) : null,
+    previous: hasPreviousPage ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
     results: items.map((item) => ({
-      id: item.id,
       article: serializeArticle(item.article),
+      id: item.id,
       saved_at: item.savedAt.toISOString(),
     })),
   });
@@ -162,10 +145,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 
   const parsed = saveArticleSchema.safeParse(body);
@@ -178,15 +158,15 @@ export async function POST(request: NextRequest) {
 
   const [article] = await db
     .select({
+      authorId: posts.authorId,
+      coverImage: posts.coverImage,
+      createdAt: posts.createdAt,
+      excerpt: posts.excerpt,
       id: posts.id,
+      publishedAt: posts.publishedAt,
       slug: posts.slug,
       title: posts.title,
-      excerpt: posts.excerpt,
-      coverImage: posts.coverImage,
-      authorId: posts.authorId,
-      publishedAt: posts.publishedAt,
       views: posts.views,
-      createdAt: posts.createdAt,
     })
     .from(posts)
     .where(and(eq(posts.id, articleId), eq(posts.status, "published")))
@@ -204,8 +184,8 @@ export async function POST(request: NextRequest) {
       savedAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: [userArticleSaves.clerkUserId, userArticleSaves.postId],
       set: { savedAt: new Date() },
+      target: [userArticleSaves.clerkUserId, userArticleSaves.postId],
     })
     .returning({
       id: userArticleSaves.id,
@@ -213,8 +193,8 @@ export async function POST(request: NextRequest) {
     });
 
   return NextResponse.json({
-    id: saved.id,
     article: serializeArticle(article),
+    id: saved.id,
     saved_at: saved.savedAt.toISOString(),
   });
 }

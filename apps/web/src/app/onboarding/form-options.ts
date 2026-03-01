@@ -3,8 +3,7 @@ import { formOptions } from "@tanstack/react-form-nextjs";
 // Fan form options - minimal fields (name only)
 export const fanFormOptions = formOptions({
   defaultValues: {
-    name: "",
-    location: "",
+    bio: "",
     genre: undefined as
       | "COUNTRY"
       | "EDM"
@@ -12,38 +11,34 @@ export const fanFormOptions = formOptions({
       | "HIP-HOP & R&B"
       | "OTHER"
       | undefined,
-    bio: "",
-    spotifyUrl: "",
-    spotifyArtistId: "",
-    instagram: "",
-    twitter: "",
-    tiktok: "",
-    website: "",
     image: "",
+    instagram: "",
+    location: "",
+    name: "",
     phoneNumber: "",
+    spotifyArtistId: "",
+    spotifyUrl: "",
+    tiktok: "",
+    twitter: "",
+    website: "",
   },
 });
 
 // Artist form options - all fields
 export const artistFormOptions = formOptions({
   defaultValues: {
-    name: "",
-    location: "",
-    genre: "OTHER" as
-      | "COUNTRY"
-      | "EDM"
-      | "HARDCORE & ROCK"
-      | "HIP-HOP & R&B"
-      | "OTHER",
     bio: "",
-    spotifyUrl: "",
-    spotifyArtistId: "",
-    instagram: "",
-    twitter: "",
-    tiktok: "",
-    website: "",
+    genre: "OTHER" as "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER",
     image: "",
+    instagram: "",
+    location: "",
+    name: "",
     phoneNumber: "",
+    spotifyArtistId: "",
+    spotifyUrl: "",
+    tiktok: "",
+    twitter: "",
+    website: "",
   },
 });
 

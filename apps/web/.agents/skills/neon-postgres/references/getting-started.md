@@ -172,8 +172,8 @@ For detailed setup instructions, see `devtools.md`.
 
 ## Documentation Resources
 
-| Topic              | URL                                                 |
-| ------------------ | --------------------------------------------------- |
+| Topic              | URL                                                |
+| ------------------ | -------------------------------------------------- |
 | Getting Started    | https://neon.com/docs/get-started/signing-up       |
 | Connecting to Neon | https://neon.com/docs/connect/connect-intro        |
 | Connection String  | https://neon.com/docs/connect/connect-from-any-app |

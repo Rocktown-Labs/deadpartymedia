@@ -1,30 +1,30 @@
 // @ts-nocheck
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PostEditor } from "@/components/admin/post-editor";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 // Mock artists hook to avoid network calls and ensure predictable data
-vi.mock("@/lib/api/artists", () => ({
+vi.mock<typeof import('@/lib/api/artists')>(import('@/lib/api/artists'), () => ({
   useArtists: () => ({ data: [], isLoading: false }),
 }));
 
 // Sonner's toast implementation can rely on DOM APIs/timers that are flaky in JSDOM.
 // We only care that the upload fetch is attempted, so mock toast to no-ops.
-vi.mock("sonner", () => ({
+vi.mock<typeof import('sonner')>(import('sonner'), () => ({
   toast: {
+    dismiss: vi.fn(),
+    error: vi.fn(),
     loading: vi.fn(() => "toast-id"),
     success: vi.fn(),
-    error: vi.fn(),
-    dismiss: vi.fn(),
   },
 }));
 
 // JSDOM doesn't implement ResizeObserver; mock it for Radix/Tiptap components used in this suite.
 beforeAll(() => {
-  if (typeof global.ResizeObserver === "undefined") {
+  if (global.ResizeObserver === undefined) {
     class MockResizeObserver {
       observe() {}
       unobserve() {}
@@ -39,7 +39,7 @@ beforeAll(() => {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-describe("PostEditor Image Upload", () => {
+describe("postEditor Image Upload", () => {
   const mockOnSubmit = vi.fn();
   const mockOnCancel = vi.fn();
 
@@ -66,13 +66,13 @@ describe("PostEditor Image Upload", () => {
 
   it("should upload cover image when file is selected", async () => {
     const mockBlob = {
-      url: "https://example.com/blob/image.jpg",
       pathname: "posts/covers/123-test.jpg",
+      url: "https://example.com/blob/image.jpg",
     };
 
     mockFetch.mockResolvedValueOnce({
-      ok: true,
       json: async () => mockBlob,
+      ok: true,
     });
 
     renderWithProviders(<PostEditor onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
@@ -88,7 +88,7 @@ describe("PostEditor Image Upload", () => {
         expect.stringContaining("/api/upload/image?type=cover"),
         expect.objectContaining({
           method: "POST",
-        })
+        }),
       );
     });
   });

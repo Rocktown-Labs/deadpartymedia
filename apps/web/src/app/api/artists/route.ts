@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { artists, postArtists, eventArtists, posts, events } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -20,22 +21,6 @@ export async function GET(request: NextRequest) {
     // Query artists with counts
     const results = await db
       .select({
-        id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
-        bio: artists.bio,
-        image: artists.image,
-        location: artists.location,
-        genre: artists.genre,
-        spotify_url: artists.spotifyUrl,
-        spotify_artist_id: artists.spotifyArtistId,
-        instagram: artists.instagram,
-        twitter: artists.twitter,
-        tiktok: artists.tiktok,
-        website: artists.website,
-        claimed: artists.claimed,
-        profile_views: artists.profileViews,
-        created_at: artists.createdAt,
         article_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${postArtists}
@@ -43,6 +28,9 @@ export async function GET(request: NextRequest) {
           WHERE ${postArtists.artistId} = ${artists.id}
           AND ${posts.status} = 'published'
         )`.as("article_count"),
+        bio: artists.bio,
+        claimed: artists.claimed,
+        created_at: artists.createdAt,
         event_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${eventArtists}
@@ -50,30 +38,43 @@ export async function GET(request: NextRequest) {
           WHERE ${eventArtists.artistId} = ${artists.id}
           AND ${events.status} = 'published'
         )`.as("event_count"),
+        genre: artists.genre,
+        id: artists.id,
+        image: artists.image,
+        instagram: artists.instagram,
+        location: artists.location,
+        name: artists.name,
+        profile_views: artists.profileViews,
+        slug: artists.slug,
+        spotify_artist_id: artists.spotifyArtistId,
+        spotify_url: artists.spotifyUrl,
+        tiktok: artists.tiktok,
+        twitter: artists.twitter,
+        website: artists.website,
       })
       .from(artists)
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     // Transform to match existing Artist interface
     const artistList = results.map((artist) => ({
-      id: artist.id,
-      slug: artist.slug,
-      name: artist.name,
-      bio: artist.bio,
-      image: artist.image,
-      location: artist.location,
-      genre: artist.genre,
-      spotify_url: artist.spotify_url,
-      spotify_artist_id: artist.spotify_artist_id,
-      instagram: artist.instagram,
-      twitter: artist.twitter,
-      tiktok: artist.tiktok,
-      website: artist.website,
-      claimed: artist.claimed,
       article_count: artist.article_count || 0,
-      event_count: artist.event_count || 0,
-      profile_views: artist.profile_views,
+      bio: artist.bio,
+      claimed: artist.claimed,
       created_at: artist.created_at.toISOString(),
+      event_count: artist.event_count || 0,
+      genre: artist.genre,
+      id: artist.id,
+      image: artist.image,
+      instagram: artist.instagram,
+      location: artist.location,
+      name: artist.name,
+      profile_views: artist.profile_views,
+      slug: artist.slug,
+      spotify_artist_id: artist.spotify_artist_id,
+      spotify_url: artist.spotify_url,
+      tiktok: artist.tiktok,
+      twitter: artist.twitter,
+      website: artist.website,
     }));
 
     return NextResponse.json(artistList, {
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_artists" },
-      "Error fetching artists"
+      "Error fetching artists",
     );
     return NextResponse.json({ error: "Failed to fetch artists" }, { status: 500 });
   }

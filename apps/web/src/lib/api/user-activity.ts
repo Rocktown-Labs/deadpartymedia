@@ -44,7 +44,6 @@ export interface PaginatedResponse<T> {
 // Read Articles
 export function useReadArticles() {
   return useQuery<PaginatedResponse<ArticleRead>>({
-    queryKey: ["user", "read-articles"],
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/user/articles/read", { signal });
       if (!response.ok) {
@@ -52,6 +51,7 @@ export function useReadArticles() {
       }
       return response.json();
     },
+    queryKey: ["user", "read-articles"],
     retry: false,
   });
 }
@@ -62,11 +62,11 @@ export function useMarkArticleRead() {
   return useMutation({
     mutationFn: async (articleId: number) => {
       const response = await fetch("/api/user/articles/read", {
-        method: "POST",
+        body: JSON.stringify({ article_id: articleId }),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ article_id: articleId }),
+        method: "POST",
       });
       if (!response.ok) {
         throw new Error("Failed to mark article as read");
@@ -83,7 +83,6 @@ export function useMarkArticleRead() {
 // Saved Articles
 export function useSavedArticles() {
   return useQuery<PaginatedResponse<SavedArticle>>({
-    queryKey: ["user", "saved-articles"],
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/user/articles/saved", { signal });
       if (!response.ok) {
@@ -91,6 +90,7 @@ export function useSavedArticles() {
       }
       return response.json();
     },
+    queryKey: ["user", "saved-articles"],
     retry: false,
   });
 }
@@ -101,11 +101,11 @@ export function useSaveArticle() {
   return useMutation({
     mutationFn: async (articleId: number) => {
       const response = await fetch("/api/user/articles/saved", {
-        method: "POST",
+        body: JSON.stringify({ article_id: articleId }),
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ article_id: articleId }),
+        method: "POST",
       });
       if (!response.ok) {
         throw new Error("Failed to save article");
@@ -142,7 +142,6 @@ export function useUnsaveArticle() {
 // User Comments
 export function useUserComments() {
   return useQuery<PaginatedResponse<UserComment>>({
-    queryKey: ["user", "comments"],
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/user/comments", { signal });
       if (!response.ok) {
@@ -150,6 +149,7 @@ export function useUserComments() {
       }
       return response.json();
     },
+    queryKey: ["user", "comments"],
     retry: false,
   });
 }
@@ -157,7 +157,6 @@ export function useUserComments() {
 // Dashboard Stats
 export function useDashboardStats() {
   return useQuery<DashboardStats>({
-    queryKey: ["user", "stats"],
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/user/stats", { signal });
       if (!response.ok) {
@@ -165,6 +164,7 @@ export function useDashboardStats() {
       }
       return response.json();
     },
+    queryKey: ["user", "stats"],
     retry: false,
   });
 }

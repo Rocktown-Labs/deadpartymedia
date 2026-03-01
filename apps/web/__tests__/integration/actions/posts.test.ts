@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import {
   createPost,
   updatePost,
@@ -12,32 +12,28 @@ import { redirect } from "next/navigation";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 
 // Mock dependencies
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({
+vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
   redirect: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({
+vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
   revalidatePath: vi.fn(() => {}), // Mock to not throw
   revalidateTag: vi.fn(() => {}),
 }));
 
-vi.mock("@/lib/auth/access", () => ({
+vi.mock<typeof import('@/lib/auth/access')>(import('@/lib/auth/access'), () => ({
   canCreate: vi.fn(),
-  canEdit: vi.fn(),
   canDelete: vi.fn(),
+  canEdit: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/slug", () => ({
-  generateSlug: vi.fn((name: string) =>
-    name.toLowerCase().replace(/\s+/g, "-")
-  ),
-  ensureUniqueSlug: vi.fn(
-    async (slug: string, _id?: number, _table?: string) => slug
-  ),
+vi.mock<typeof import('@/lib/utils/slug')>(import('@/lib/utils/slug'), () => ({
+  ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, "-")),
 }));
 
 // Mock database - hoist variables to avoid initialization errors
@@ -52,8 +48,7 @@ const {
   mockWhere,
   mockFrom,
   mockLimit,
-} = vi.hoisted(() => {
-  return {
+} = vi.hoisted(() => ({
     mockInsert: vi.fn(),
     mockUpdate: vi.fn(),
     mockDelete: vi.fn(),
@@ -64,19 +59,18 @@ const {
     mockWhere: vi.fn(),
     mockFrom: vi.fn(),
     mockLimit: vi.fn(),
-  };
-});
+  }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: {
-    insert: mockInsert,
-    update: mockUpdate,
     delete: mockDelete,
+    insert: mockInsert,
     select: mockSelect,
+    update: mockUpdate,
   },
 }));
 
-describe("createPost", () => {
+describe(createPost, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
@@ -106,9 +100,7 @@ describe("createPost", () => {
     mockInsert.mockImplementation(() => {
       insertCallCount++;
       if (insertCallCount === 1) {
-        const mockPostReturning = vi
-          .fn()
-          .mockResolvedValue([{ id: 1, slug: "test-post" }]);
+        const mockPostReturning = vi.fn().mockResolvedValue([{ id: 1, slug: "test-post" }]);
         return {
           values: vi.fn().mockReturnValue({
             returning: mockPostReturning,
@@ -116,12 +108,12 @@ describe("createPost", () => {
         };
       }
       // Subsequent calls (postArtists) don't use returning()
-      return { values: vi.fn().mockResolvedValue(undefined) };
+      return { values: vi.fn().mockResolvedValue() };
     });
 
     await createPost(formData);
 
-    expect(mockInsert).toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalledWith();
     // Should insert postArtists relations
     expect(mockInsert).toHaveBeenCalledTimes(2); // Once for post, once for postArtists
   });
@@ -136,20 +128,16 @@ describe("createPost", () => {
     formData.append("status", "published");
     formData.append("isCoverStory", "false");
 
-    const mockPostInsert = vi
-      .fn()
-      .mockReturnValue({
-        values: vi
-          .fn()
-          .mockReturnValue({
-            returning: vi.fn().mockResolvedValue([{ id: 1 }]),
-          }),
-      });
+    const mockPostInsert = vi.fn().mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+      }),
+    });
     mockInsert.mockReturnValue(mockPostInsert());
 
     await createPost(formData);
 
-    expect(mockInsert).toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalledWith();
     // Should only insert post, not postArtists
   });
 
@@ -246,7 +234,7 @@ describe("createPost", () => {
   });
 });
 
-describe("updatePost", () => {
+describe(updatePost, () => {
   let selectCallCount = 0;
 
   beforeEach(() => {
@@ -263,12 +251,12 @@ describe("updatePost", () => {
         const firstWhere = vi.fn().mockReturnValue({
           limit: vi.fn().mockResolvedValue([
             {
-              id: 1,
-              title: "Existing Post",
               authorId: userId,
+              id: 1,
               isCoverStory: false,
               publishedAt: null,
               status: "published",
+              title: "Existing Post",
             },
           ]),
         });
@@ -304,19 +292,19 @@ describe("updatePost", () => {
     // Mock delete for postArtists
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue(undefined);
+    mockDeleteWhere.mockResolvedValue();
 
     // Mock insert for new postArtists
     const mockPostArtistsInsert = vi
       .fn()
-      .mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) });
+      .mockReturnValue({ values: vi.fn().mockResolvedValue() });
     mockInsert.mockReturnValue(mockPostArtistsInsert());
 
     await updatePost(1, formData);
 
-    expect(mockUpdate).toHaveBeenCalled();
-    expect(mockDelete).toHaveBeenCalled(); // Should delete old postArtists
-    expect(mockInsert).toHaveBeenCalled(); // Should insert new postArtists
+    expect(mockUpdate).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old postArtists
+    expect(mockInsert).toHaveBeenCalledWith(); // Should insert new postArtists
   });
 
   it("should remove all artists if empty artistIds", async () => {
@@ -332,11 +320,11 @@ describe("updatePost", () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue(undefined);
+    mockDeleteWhere.mockResolvedValue();
 
     await updatePost(1, formData);
 
-    expect(mockDelete).toHaveBeenCalled(); // Should delete old postArtists
+    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old postArtists
     expect(mockInsert).not.toHaveBeenCalled(); // Should not insert new postArtists
   });
 
@@ -377,7 +365,7 @@ describe("updatePost", () => {
   });
 });
 
-describe("deletePost", () => {
+describe(deletePost, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
@@ -404,13 +392,13 @@ describe("deletePost", () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue(undefined);
+    mockDeleteWhere.mockResolvedValue();
   });
 
   it("should delete post", async () => {
     await deletePost(1);
 
-    expect(mockDelete).toHaveBeenCalled();
+    expect(mockDelete).toHaveBeenCalledWith();
   });
 
   it("should redirect if not authenticated", async () => {
@@ -428,7 +416,7 @@ describe("deletePost", () => {
   });
 });
 
-describe("requestDeletePost", () => {
+describe(requestDeletePost, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
@@ -436,8 +424,8 @@ describe("requestDeletePost", () => {
 
     mockLimit.mockResolvedValue([
       {
-        id: 1,
         authorId: userId,
+        id: 1,
       },
     ]);
     mockFrom.mockReturnValue({ where: mockWhere });
@@ -454,11 +442,11 @@ describe("requestDeletePost", () => {
 
     await requestDeletePost(1);
 
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith();
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
         deleteRequested: true,
-      })
+      }),
     );
   });
 
@@ -468,11 +456,11 @@ describe("requestDeletePost", () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue(undefined);
+    mockDeleteWhere.mockResolvedValue();
 
     await requestDeletePost(1);
 
-    expect(mockDelete).toHaveBeenCalled(); // Should delete directly
+    expect(mockDelete).toHaveBeenCalledWith(); // Should delete directly
     expect(mockUpdate).not.toHaveBeenCalled(); // Should not request deletion
   });
 
@@ -485,8 +473,8 @@ describe("requestDeletePost", () => {
   it("should throw error if post not owned by writer", async () => {
     mockLimit.mockResolvedValue([
       {
-        id: 1,
         authorId: "other_user",
+        id: 1,
       },
     ]);
     vi.mocked(canEdit).mockResolvedValue(false); // Can't edit other's post
@@ -495,7 +483,7 @@ describe("requestDeletePost", () => {
   });
 });
 
-describe("approveDeletePost", () => {
+describe(approveDeletePost, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
@@ -504,13 +492,13 @@ describe("approveDeletePost", () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue(undefined);
+    mockDeleteWhere.mockResolvedValue();
   });
 
   it("should approve and delete post", async () => {
     await approveDeletePost(1);
 
-    expect(mockDelete).toHaveBeenCalled();
+    expect(mockDelete).toHaveBeenCalledWith();
   });
 
   it("should throw error if not super admin", async () => {
@@ -520,7 +508,7 @@ describe("approveDeletePost", () => {
   });
 });
 
-describe("denyDeletePost", () => {
+describe(denyDeletePost, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
@@ -534,12 +522,12 @@ describe("denyDeletePost", () => {
   it("should deny and clear delete request", async () => {
     await denyDeletePost(1);
 
-    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith();
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
         deleteRequested: false,
         deleteRequestedAt: null,
-      })
+      }),
     );
   });
 

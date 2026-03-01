@@ -24,7 +24,7 @@ export default function NotFoundScreen() {
               <Text
                 style={[
                   styles.link,
-                  { color: theme.primary, backgroundColor: `${theme.primary}1a` },
+                  { backgroundColor: `${theme.primary}1a`, color: theme.primary },
                 ]}
               >
                 Go to Home
@@ -51,18 +51,18 @@ const styles = StyleSheet.create({
     fontSize: 48,
     marginBottom: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
+  link: {
+    padding: 12,
   },
   subtitle: {
     fontSize: 14,
     textAlign: "center",
     marginBottom: 24,
   },
-  link: {
-    padding: 12,
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
   },
 });

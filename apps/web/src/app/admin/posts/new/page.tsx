@@ -8,10 +8,7 @@ import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { asc, inArray } from "drizzle-orm";
-import {
-  createArtistProfileStub,
-  createUserProfileStub,
-} from "@/app/admin/users/actions";
+import { createArtistProfileStub, createUserProfileStub } from "@/app/admin/users/actions";
 
 export default async function NewPostPage() {
   const { userId } = await auth();
@@ -28,9 +25,9 @@ export default async function NewPostPage() {
     ? await db
         .select({
           clerkId: users.clerkId,
+          email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          email: users.email,
           role: users.role,
         })
         .from(users)
@@ -39,11 +36,9 @@ export default async function NewPostPage() {
         .then((rows) =>
           rows.map((row) => ({
             clerkId: row.clerkId,
+            name: [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || row.email,
             role: row.role,
-            name:
-              [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
-              row.email,
-          }))
+          })),
         )
     : [];
 

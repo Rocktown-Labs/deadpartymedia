@@ -1,11 +1,9 @@
 import { put } from "@vercel/blob";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import {
-  validateImageFile,
-  generateImagePathname,
-  type UploadType,
-} from "@/lib/upload";
+import { validateImageFile, generateImagePathname } from '@/lib/upload';
+import type { UploadType } from '@/lib/upload';
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -23,10 +21,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate upload type
     if (!["cover", "content", "profile", "event"].includes(type)) {
-      return NextResponse.json(
-        { error: "Invalid upload type" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid upload type" }, { status: 400 });
     }
 
     // Get file from request body
@@ -47,7 +42,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const pathname = generateImagePathname(
       type,
       file.name,
-      type === "content" || type === "profile" || type === "event" // Add random suffix for content/profile/event images
+      type === "content" || type === "profile" || type === "event", // Add random suffix for content/profile/event images
     );
 
     // Upload to Vercel Blob
@@ -59,37 +54,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.info(
       {
         operation: "image_upload",
-        userId,
-        type,
         pathname: blob.pathname,
         size: file.size,
+        type,
+        userId,
       },
-      "Image uploaded successfully"
+      "Image uploaded successfully",
     );
 
     return NextResponse.json({
-      url: blob.url,
       pathname: blob.pathname,
+      url: blob.url,
     });
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "image_upload" },
-      "Error uploading image"
+      "Error uploading image",
     );
 
     // Handle specific Vercel Blob errors
     if (error instanceof Error) {
       if (error.message.includes("already exists")) {
-        return NextResponse.json(
-          { error: "File with this name already exists" },
-          { status: 409 }
-        );
+        return NextResponse.json({ error: "File with this name already exists" }, { status: 409 });
       }
     }
 
     return NextResponse.json(
       { error: "Failed to upload image. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -10,11 +10,11 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { icon: Home, label: "Home", href: "/" as Route },
-    { icon: Music, label: "Music", href: "/music" as Route },
-    { icon: Calendar, label: "Events", href: "/events" as Route },
-    { icon: ShoppingBag, label: "Merch", href: "/merch" as Route },
-    { icon: Mic2, label: "Artists", href: "/artists" as Route },
+    { href: "/" as Route, icon: Home, label: "Home" },
+    { href: "/music" as Route, icon: Music, label: "Music" },
+    { href: "/events" as Route, icon: Calendar, label: "Events" },
+    { href: "/merch" as Route, icon: ShoppingBag, label: "Merch" },
+    { href: "/artists" as Route, icon: Mic2, label: "Artists" },
   ];
 
   return (

@@ -4,12 +4,9 @@ import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
 
 // Next's generated RouteHandlerConfig types this as Promise-based params in this project.
-type WriterRouteContext = { params: Promise<{ id: string }> };
+interface WriterRouteContext { params: Promise<{ id: string }> }
 
-export async function GET(
-  _request: Request,
-  { params }: WriterRouteContext,
-) {
+export async function GET(_request: Request, { params }: WriterRouteContext) {
   const { id } = await params;
   const parsedId = Number.parseInt(id, 10);
 
@@ -19,22 +16,20 @@ export async function GET(
 
   const [writer] = await db
     .select({
-      id: users.id,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      imageUrl: users.imageUrl,
-      role: users.role,
       articleCount: sql<number>`(
         SELECT COUNT(*)::int
         FROM ${posts}
         WHERE ${posts.authorId} = ${users.clerkId}
         AND ${posts.status} = 'published'
       )`.as("articleCount"),
+      firstName: users.firstName,
+      id: users.id,
+      imageUrl: users.imageUrl,
+      lastName: users.lastName,
+      role: users.role,
     })
     .from(users)
-    .where(
-      and(eq(users.id, parsedId), inArray(users.role, ["writer", "super_admin"])),
-    )
+    .where(and(eq(users.id, parsedId), inArray(users.role, ["writer", "super_admin"])))
     .limit(1);
 
   if (!writer) {
@@ -42,13 +37,13 @@ export async function GET(
   }
 
   return NextResponse.json({
-    id: writer.id,
-    name: [writer.firstName, writer.lastName].filter(Boolean).join(" ").trim() || "Writer",
+    articleCount: writer.articleCount ?? 0,
     bio: "",
+    id: writer.id,
     image: writer.imageUrl ?? null,
+    instagram: null,
+    name: [writer.firstName, writer.lastName].filter(Boolean).join(" ").trim() || "Writer",
     role: writer.role,
     twitter: null,
-    instagram: null,
-    articleCount: writer.articleCount ?? 0,
   });
 }

@@ -14,21 +14,21 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
         hostname: "cdn.fourthwall.com",
         pathname: "/**",
+        protocol: "https",
       },
       // Add other image domains as needed (e.g., S3 for Django uploads)
       {
-        protocol: "https",
         hostname: "**.amazonaws.com",
         pathname: "/**",
+        protocol: "https",
       },
       // Vercel Blob storage for uploaded images
       {
-        protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",
         pathname: "/**",
+        protocol: "https",
       },
     ],
   },
@@ -36,12 +36,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/ingest/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
+        source: "/ingest/static/:path*",
       },
       {
-        source: "/ingest/:path*",
         destination: "https://us.i.posthog.com/:path*",
+        source: "/ingest/:path*",
       },
     ];
   },

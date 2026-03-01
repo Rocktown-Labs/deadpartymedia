@@ -1,14 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import {
-  artists,
-  postArtists,
-  eventArtists,
-  posts,
-  events,
-} from "@/lib/db/schema";
+import { artists, postArtists, eventArtists, posts, events } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -27,23 +22,6 @@ export async function GET(request: NextRequest) {
     // Query artist where claimedById matches user's Clerk ID
     const [artist] = await db
       .select({
-        id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
-        bio: artists.bio,
-        image: artists.image,
-        location: artists.location,
-        genre: artists.genre,
-        spotify_url: artists.spotifyUrl,
-        spotify_artist_id: artists.spotifyArtistId,
-        instagram: artists.instagram,
-        twitter: artists.twitter,
-        tiktok: artists.tiktok,
-        website: artists.website,
-        phone_number: artists.phoneNumber,
-        claimed: artists.claimed,
-        profile_views: artists.profileViews,
-        created_at: artists.createdAt,
         article_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${postArtists}
@@ -51,6 +29,9 @@ export async function GET(request: NextRequest) {
           WHERE ${postArtists.artistId} = ${artists.id}
           AND ${posts.status} = 'published'
         )`.as("article_count"),
+        bio: artists.bio,
+        claimed: artists.claimed,
+        created_at: artists.createdAt,
         event_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${eventArtists}
@@ -58,6 +39,20 @@ export async function GET(request: NextRequest) {
           WHERE ${eventArtists.artistId} = ${artists.id}
           AND ${events.status} = 'published'
         )`.as("event_count"),
+        genre: artists.genre,
+        id: artists.id,
+        image: artists.image,
+        instagram: artists.instagram,
+        location: artists.location,
+        name: artists.name,
+        phone_number: artists.phoneNumber,
+        profile_views: artists.profileViews,
+        slug: artists.slug,
+        spotify_artist_id: artists.spotifyArtistId,
+        spotify_url: artists.spotifyUrl,
+        tiktok: artists.tiktok,
+        twitter: artists.twitter,
+        website: artists.website,
       })
       .from(artists)
       .where(eq(artists.claimedById, userId))
@@ -69,25 +64,25 @@ export async function GET(request: NextRequest) {
 
     // Transform to match existing Artist interface
     const artistData = {
-      id: artist.id,
-      slug: artist.slug,
-      name: artist.name,
-      bio: artist.bio,
-      image: artist.image,
-      location: artist.location,
-      genre: artist.genre,
-      spotify_url: artist.spotify_url,
-      spotify_artist_id: artist.spotify_artist_id,
-      instagram: artist.instagram,
-      twitter: artist.twitter,
-      tiktok: artist.tiktok,
-      website: artist.website,
-      phone_number: artist.phone_number,
-      claimed: artist.claimed,
       article_count: artist.article_count || 0,
-      event_count: artist.event_count || 0,
-      profile_views: artist.profile_views,
+      bio: artist.bio,
+      claimed: artist.claimed,
       created_at: artist.created_at.toISOString(),
+      event_count: artist.event_count || 0,
+      genre: artist.genre,
+      id: artist.id,
+      image: artist.image,
+      instagram: artist.instagram,
+      location: artist.location,
+      name: artist.name,
+      phone_number: artist.phone_number,
+      profile_views: artist.profile_views,
+      slug: artist.slug,
+      spotify_artist_id: artist.spotify_artist_id,
+      spotify_url: artist.spotify_url,
+      tiktok: artist.tiktok,
+      twitter: artist.twitter,
+      website: artist.website,
     };
 
     return NextResponse.json(artistData);
@@ -96,10 +91,7 @@ export async function GET(request: NextRequest) {
       { error: sanitizeError(error), operation: "fetch_current_user_artist" },
       "Error fetching current user artist",
     );
-    return NextResponse.json(
-      { error: "Failed to fetch artist" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch artist" }, { status: 500 });
   }
 }
 
@@ -118,16 +110,12 @@ export async function PATCH(request: NextRequest) {
     const location = String(formData.get("location") ?? "");
     const genre = String(formData.get("genre") ?? "");
 
-    const spotifyUrl = String(
-      formData.get("spotifyUrl") ?? formData.get("spotify_url") ?? "",
-    );
+    const spotifyUrl = String(formData.get("spotifyUrl") ?? formData.get("spotify_url") ?? "");
     const instagram = String(formData.get("instagram") ?? "");
     const twitter = String(formData.get("twitter") ?? "");
     const tiktok = String(formData.get("tiktok") ?? "");
     const website = String(formData.get("website") ?? "");
-    const phoneNumber = String(
-      formData.get("phoneNumber") ?? formData.get("phone_number") ?? "",
-    );
+    const phoneNumber = String(formData.get("phoneNumber") ?? formData.get("phone_number") ?? "");
 
     // Image can be either a File or a URL string (or empty to clear)
     const imageField = formData.get("image");
@@ -151,17 +139,17 @@ export async function PATCH(request: NextRequest) {
     }
 
     const validationResult = artistUpdateSchema.safeParse({
-      name,
       bio,
-      location,
       genre,
-      spotifyUrl,
-      instagram,
-      twitter,
-      tiktok,
-      website,
       image: imageUrl ?? "",
+      instagram,
+      location,
+      name,
       phoneNumber,
+      spotifyUrl,
+      tiktok,
+      twitter,
+      website,
     });
 
     if (!validationResult.success) {
@@ -176,18 +164,18 @@ export async function PATCH(request: NextRequest) {
     const [updated] = await db
       .update(artists)
       .set({
-        name: validated.name,
         bio: validated.bio,
-        location: validated.location,
         genre: validated.genre,
-        spotifyUrl: validated.spotifyUrl ?? null,
-        instagram: validated.instagram ?? null,
-        twitter: validated.twitter ?? null,
-        tiktok: validated.tiktok ?? null,
-        website: validated.website ?? null,
         image: validated.image ?? null,
+        instagram: validated.instagram ?? null,
+        location: validated.location,
+        name: validated.name,
         phoneNumber: validated.phoneNumber ?? null,
+        spotifyUrl: validated.spotifyUrl ?? null,
+        tiktok: validated.tiktok ?? null,
+        twitter: validated.twitter ?? null,
         updatedAt: new Date(),
+        website: validated.website ?? null,
       })
       .where(eq(artists.claimedById, userId))
       .returning();
@@ -199,23 +187,6 @@ export async function PATCH(request: NextRequest) {
     // Re-fetch with computed counts to keep PATCH response consistent with GET
     const [artistWithCounts] = await db
       .select({
-        id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
-        bio: artists.bio,
-        image: artists.image,
-        location: artists.location,
-        genre: artists.genre,
-        spotify_url: artists.spotifyUrl,
-        spotify_artist_id: artists.spotifyArtistId,
-        instagram: artists.instagram,
-        twitter: artists.twitter,
-        tiktok: artists.tiktok,
-        website: artists.website,
-        phone_number: artists.phoneNumber,
-        claimed: artists.claimed,
-        profile_views: artists.profileViews,
-        created_at: artists.createdAt,
         article_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${postArtists}
@@ -223,6 +194,9 @@ export async function PATCH(request: NextRequest) {
           WHERE ${postArtists.artistId} = ${artists.id}
           AND ${posts.status} = 'published'
         )`.as("article_count"),
+        bio: artists.bio,
+        claimed: artists.claimed,
+        created_at: artists.createdAt,
         event_count: sql<number>`(
           SELECT COUNT(*)::int
           FROM ${eventArtists}
@@ -230,6 +204,20 @@ export async function PATCH(request: NextRequest) {
           WHERE ${eventArtists.artistId} = ${artists.id}
           AND ${events.status} = 'published'
         )`.as("event_count"),
+        genre: artists.genre,
+        id: artists.id,
+        image: artists.image,
+        instagram: artists.instagram,
+        location: artists.location,
+        name: artists.name,
+        phone_number: artists.phoneNumber,
+        profile_views: artists.profileViews,
+        slug: artists.slug,
+        spotify_artist_id: artists.spotifyArtistId,
+        spotify_url: artists.spotifyUrl,
+        tiktok: artists.tiktok,
+        twitter: artists.twitter,
+        website: artists.website,
       })
       .from(artists)
       .where(eq(artists.id, updated.id))
@@ -240,34 +228,31 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({
-      id: artistWithCounts.id,
-      slug: artistWithCounts.slug,
-      name: artistWithCounts.name,
-      bio: artistWithCounts.bio,
-      image: artistWithCounts.image,
-      location: artistWithCounts.location,
-      genre: artistWithCounts.genre,
-      spotify_url: artistWithCounts.spotify_url,
-      spotify_artist_id: artistWithCounts.spotify_artist_id,
-      instagram: artistWithCounts.instagram,
-      twitter: artistWithCounts.twitter,
-      tiktok: artistWithCounts.tiktok,
-      website: artistWithCounts.website,
-      phone_number: artistWithCounts.phone_number,
-      claimed: artistWithCounts.claimed,
-      profile_views: artistWithCounts.profile_views,
-      created_at: artistWithCounts.created_at.toISOString(),
       article_count: artistWithCounts.article_count || 0,
+      bio: artistWithCounts.bio,
+      claimed: artistWithCounts.claimed,
+      created_at: artistWithCounts.created_at.toISOString(),
       event_count: artistWithCounts.event_count || 0,
+      genre: artistWithCounts.genre,
+      id: artistWithCounts.id,
+      image: artistWithCounts.image,
+      instagram: artistWithCounts.instagram,
+      location: artistWithCounts.location,
+      name: artistWithCounts.name,
+      phone_number: artistWithCounts.phone_number,
+      profile_views: artistWithCounts.profile_views,
+      slug: artistWithCounts.slug,
+      spotify_artist_id: artistWithCounts.spotify_artist_id,
+      spotify_url: artistWithCounts.spotify_url,
+      tiktok: artistWithCounts.tiktok,
+      twitter: artistWithCounts.twitter,
+      website: artistWithCounts.website,
     });
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "update_current_user_artist" },
       "Error updating current user artist",
     );
-    return NextResponse.json(
-      { error: "Failed to update artist" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to update artist" }, { status: 500 });
   }
 }

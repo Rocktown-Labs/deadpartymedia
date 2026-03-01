@@ -2,11 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Music, Search, Loader2 } from "lucide-react";
-import {
-  useSearchSpotifyArtists,
-  useSpotifyArtistById,
-  type SpotifyArtist,
-} from "@/lib/api/artists";
+import { useSearchSpotifyArtists, useSpotifyArtistById } from '@/lib/api/artists';
+import type { SpotifyArtist } from '@/lib/api/artists';
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +17,7 @@ interface SpotifySearchProps {
  * Extracts Spotify Artist ID from a full Spotify URL or returns the ID if already provided.
  */
 function extractSpotifyId(input: string): string | null {
-  if (!input) return null;
+  if (!input) {return null;}
 
   // If it's already just an ID (alphanumeric, no slashes or dots)
   if (/^[a-zA-Z0-9]+$/.test(input.trim())) {
@@ -42,7 +39,7 @@ function extractSpotifyId(input: string): string | null {
  * Checks if the input string is a Spotify URL
  */
 function isSpotifyUrl(input: string): boolean {
-  if (!input) return false;
+  if (!input) {return false;}
   return (
     input.includes("spotify.com/artist/") ||
     input.includes("spotify:artist:") ||
@@ -305,9 +302,9 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
       <p className="text-xs text-gray-500 mt-2">
         {isQueryUrl
           ? "Paste detected. Loading artist..."
-          : searchQuery.length > 0 && searchQuery.length < 5
+          : (searchQuery.length > 0 && searchQuery.length < 5
             ? `Type at least ${5 - searchQuery.length} more character${5 - searchQuery.length === 1 ? "" : "s"} to search`
-            : "Search for your artist or paste a Spotify artist URL"}
+            : "Search for your artist or paste a Spotify artist URL")}
       </p>
     </div>
   );

@@ -43,29 +43,11 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
   content: {
     padding: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
-  statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statusIndicator: {
-    height: 8,
-    width: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 12,
+  scrollView: {
+    flex: 1,
   },
   statusCard: {
     marginBottom: 16,
@@ -75,5 +57,23 @@ const styles = StyleSheet.create({
   statusCardTitle: {
     marginBottom: 8,
     fontWeight: "bold",
+  },
+  statusIndicator: {
+    height: 8,
+    width: 8,
+    borderRadius: 4,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusText: {
+    fontSize: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
   },
 });

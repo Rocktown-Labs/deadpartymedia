@@ -162,13 +162,8 @@ try {
   await client.query("BEGIN");
   const {
     rows: [{ id }],
-  } = await client.query("INSERT INTO users(name) VALUES($1) RETURNING id", [
-    name,
-  ]);
-  await client.query("INSERT INTO profiles(user_id, bio) VALUES($1, $2)", [
-    id,
-    bio,
-  ]);
+  } = await client.query("INSERT INTO users(name) VALUES($1) RETURNING id", [name]);
+  await client.query("INSERT INTO profiles(user_id, bio) VALUES($1, $2)", [id, bio]);
   await client.query("COMMIT");
 } catch (err) {
   await client.query("ROLLBACK");

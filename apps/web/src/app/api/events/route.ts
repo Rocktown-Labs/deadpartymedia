@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events, eventArtists, artists } from "@/lib/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
@@ -39,22 +40,25 @@ export async function GET(request: NextRequest) {
 
     // Get artist relations for all events
     const eventIds = filteredResults.map((event) => event.id);
-    let artistRelations: Record<number, Array<{
-      eventId: number;
-      artistId: number;
-      artistSlug: string;
-      artistName: string;
-      artistImage: string | null;
-    }>> = {};
+    const artistRelations: Record<
+      number,
+      Array<{
+        eventId: number;
+        artistId: number;
+        artistSlug: string;
+        artistName: string;
+        artistImage: string | null;
+      }>
+    > = {};
 
     if (eventIds.length > 0) {
       const relations = await db
         .select({
-          eventId: eventArtists.eventId,
           artistId: artists.id,
-          artistSlug: artists.slug,
-          artistName: artists.name,
           artistImage: artists.image,
+          artistName: artists.name,
+          artistSlug: artists.slug,
+          eventId: eventArtists.eventId,
         })
         .from(eventArtists)
         .innerJoin(artists, eq(eventArtists.artistId, artists.id))
@@ -73,18 +77,6 @@ export async function GET(request: NextRequest) {
     const eventList = filteredResults.map((event) => {
       const eventArtistsData = artistRelations[event.id] || [];
       return {
-        id: event.id,
-        title: event.title,
-        slug: event.slug,
-        description: event.description,
-        image: event.image,
-        venue: event.venue,
-        location: event.location,
-        date: event.date,
-        time: event.time,
-        ticket_link: event.ticketLink,
-        price: event.price,
-        genre: event.genre,
         artists: eventArtistsData.map((a) => ({
           id: a.artistId,
           slug: a.artistSlug,
@@ -92,6 +84,18 @@ export async function GET(request: NextRequest) {
           image: a.artistImage,
         })),
         created_at: event.createdAt.toISOString(),
+        date: event.date,
+        description: event.description,
+        genre: event.genre,
+        id: event.id,
+        image: event.image,
+        location: event.location,
+        price: event.price,
+        slug: event.slug,
+        ticket_link: event.ticketLink,
+        time: event.time,
+        title: event.title,
+        venue: event.venue,
       };
     });
 
@@ -104,13 +108,10 @@ export async function GET(request: NextRequest) {
         headers: {
           "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
         },
-      }
+      },
     );
   } catch (error) {
-    log.error(
-      { error: sanitizeError(error), operation: "fetch_events" },
-      "Error fetching events"
-    );
+    log.error({ error: sanitizeError(error), operation: "fetch_events" }, "Error fetching events");
     return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
   }
 }

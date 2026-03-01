@@ -4,17 +4,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react";
 
-export type ProductState = {
-  [key: string]: string;
-} & {
+export type ProductState = Record<string, string> & {
   image?: string;
 };
 
-type ProductContextType = {
+interface ProductContextType {
   state: ProductState;
   updateOption: (name: string, value: string) => ProductState;
   updateImage: (index: string) => ProductState;
-};
+}
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
@@ -62,8 +60,8 @@ export function ProductProvider({
   const value = useMemo(
     () => ({
       state,
-      updateOption,
       updateImage,
+      updateOption,
     }),
     [state],
   );

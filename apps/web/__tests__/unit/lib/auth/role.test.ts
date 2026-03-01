@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+
 import { parseRole, roleOrDefault } from "@/lib/auth/role";
 
 describe("role parser", () => {
@@ -19,7 +19,7 @@ describe("role parser", () => {
     expect(parseRole({ role: "fan" })).toBeNull();
     expect(parseRole(["fan"])).toBeNull();
     expect(parseRole(null)).toBeNull();
-    expect(parseRole(undefined)).toBeNull();
+    expect(parseRole()).toBeNull();
   });
 
   it("falls back deterministically", () => {

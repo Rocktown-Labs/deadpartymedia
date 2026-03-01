@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
@@ -25,9 +26,9 @@ async function resolveSlug(params: RouteParams): Promise<string> {
 }
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) return fallback;
+  if (!value) {return fallback;}
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
   return parsed;
 }
 
@@ -48,10 +49,7 @@ async function getPublishedPostBySlug(slug: string) {
   return post ?? null;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: RouteParams },
-) {
+export async function GET(request: NextRequest, { params }: { params: RouteParams }) {
   const log = getRequestLogger(request);
   let slug = "unknown";
   try {
@@ -73,9 +71,7 @@ export async function GET(
     const [countResult] = await db
       .select({ total: count() })
       .from(articleComments)
-      .where(
-        and(eq(articleComments.postId, post.id), isNull(articleComments.parentId)),
-      );
+      .where(and(eq(articleComments.postId, post.id), isNull(articleComments.parentId)));
 
     const totalComments = Number(countResult?.total ?? 0);
     if (totalComments === 0) {
@@ -89,16 +85,14 @@ export async function GET(
 
     const topLevelComments = await db
       .select({
-        id: articleComments.id,
         content: articleComments.content,
-        user_name: articleComments.userName,
         created_at: articleComments.createdAt,
+        id: articleComments.id,
         updated_at: articleComments.updatedAt,
+        user_name: articleComments.userName,
       })
       .from(articleComments)
-      .where(
-        and(eq(articleComments.postId, post.id), isNull(articleComments.parentId)),
-      )
+      .where(and(eq(articleComments.postId, post.id), isNull(articleComments.parentId)))
       .orderBy(asc(articleComments.createdAt))
       .limit(pageSize)
       .offset(offset);
@@ -115,20 +109,15 @@ export async function GET(
     const parentIds = topLevelComments.map((comment) => comment.id);
     const replies = await db
       .select({
-        id: articleComments.id,
         content: articleComments.content,
-        user_name: articleComments.userName,
         created_at: articleComments.createdAt,
-        updated_at: articleComments.updatedAt,
+        id: articleComments.id,
         parent_id: articleComments.parentId,
+        updated_at: articleComments.updatedAt,
+        user_name: articleComments.userName,
       })
       .from(articleComments)
-      .where(
-        and(
-          eq(articleComments.postId, post.id),
-          inArray(articleComments.parentId, parentIds),
-        ),
-      )
+      .where(and(eq(articleComments.postId, post.id), inArray(articleComments.parentId, parentIds)))
       .orderBy(asc(articleComments.createdAt));
 
     const repliesByParentId = new Map<number, typeof replies>();
@@ -148,7 +137,6 @@ export async function GET(
     const response = topLevelComments.map((comment) => ({
       ...comment,
       created_at: comment.created_at.toISOString(),
-      updated_at: comment.updated_at.toISOString(),
       replies: (repliesByParentId.get(comment.id) ?? []).map((reply) => ({
         id: reply.id,
         content: reply.content,
@@ -156,14 +144,13 @@ export async function GET(
         created_at: reply.created_at.toISOString(),
         updated_at: reply.updated_at.toISOString(),
       })),
+      updated_at: comment.updated_at.toISOString(),
     }));
 
     return NextResponse.json({
       count: totalComments,
       next: hasNextPage ? buildPaginationUrl(requestUrl, page + 1, pageSize) : null,
-      previous: hasPreviousPage
-        ? buildPaginationUrl(requestUrl, page - 1, pageSize)
-        : null,
+      previous: hasPreviousPage ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
       results: response,
     });
   } catch (error) {
@@ -175,17 +162,11 @@ export async function GET(
       },
       "Error fetching article comments",
     );
-    return NextResponse.json(
-      { error: "Failed to fetch article comments" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch article comments" }, { status: 500 });
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: RouteParams },
-) {
+export async function POST(request: NextRequest, { params }: { params: RouteParams }) {
   const log = getRequestLogger(request);
   let slug = "unknown";
   try {
@@ -205,10 +186,7 @@ export async function POST(
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON payload" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
     const validationResult = createCommentSchema.safeParse(body);
@@ -216,8 +194,8 @@ export async function POST(
     if (!validationResult.success) {
       return NextResponse.json(
         {
-          error: "Validation failed",
           details: validationResult.error.issues.map((issue) => issue.message),
+          error: "Validation failed",
         },
         { status: 400 },
       );
@@ -239,15 +217,12 @@ export async function POST(
         .limit(1);
 
       if (!parentComment) {
-        return NextResponse.json(
-          { error: "Parent comment not found" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: "Parent comment not found" }, { status: 400 });
       }
     }
 
     const [dbUser] = await db
-      .select({ role: users.role, onboardingComplete: users.onboardingComplete })
+      .select({ onboardingComplete: users.onboardingComplete, role: users.role })
       .from(users)
       .where(eq(users.clerkId, userId))
       .limit(1);
@@ -255,8 +230,7 @@ export async function POST(
     const sessionRole = parseRole(sessionClaims?.metadata?.role);
     const role = sessionRole ?? dbUser?.role ?? "fan";
     const onboardingComplete =
-      sessionClaims?.metadata?.onboardingComplete === true ||
-      dbUser?.onboardingComplete === true;
+      sessionClaims?.metadata?.onboardingComplete === true || dbUser?.onboardingComplete === true;
 
     if (!onboardingComplete) {
       return NextResponse.json(
@@ -268,17 +242,16 @@ export async function POST(
     if (role === "artist") {
       const [artist] = await db
         .select({
-          spotifyUrl: artists.spotifyUrl,
-          spotifyArtistId: artists.spotifyArtistId,
           instagram: artists.instagram,
+          spotifyArtistId: artists.spotifyArtistId,
+          spotifyUrl: artists.spotifyUrl,
         })
         .from(artists)
         .where(eq(artists.claimedById, userId))
         .limit(1);
 
       const hasSpotify =
-        Boolean(artist?.spotifyArtistId?.trim()) &&
-        Boolean(artist?.spotifyUrl?.trim());
+        Boolean(artist?.spotifyArtistId?.trim()) && Boolean(artist?.spotifyUrl?.trim());
       const hasInstagram = Boolean(artist?.instagram?.trim());
 
       if (!hasSpotify || !hasInstagram) {
@@ -298,27 +271,27 @@ export async function POST(
     const [created] = await db
       .insert(articleComments)
       .values({
-        postId: post.id,
         clerkUserId: userId,
-        userName,
-        userEmail,
         content,
         parentId: parent ?? null,
+        postId: post.id,
+        userEmail,
+        userName,
       })
       .returning({
-        id: articleComments.id,
         content: articleComments.content,
-        user_name: articleComments.userName,
         created_at: articleComments.createdAt,
+        id: articleComments.id,
         updated_at: articleComments.updatedAt,
+        user_name: articleComments.userName,
       });
 
     return NextResponse.json(
       {
         ...created,
         created_at: created.created_at.toISOString(),
-        updated_at: created.updated_at.toISOString(),
         replies: [],
+        updated_at: created.updated_at.toISOString(),
       },
       { status: 201 },
     );
@@ -331,9 +304,6 @@ export async function POST(
       },
       "Error creating article comment",
     );
-    return NextResponse.json(
-      { error: "Failed to create comment" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
   }
 }

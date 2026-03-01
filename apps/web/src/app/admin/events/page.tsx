@@ -91,9 +91,9 @@ export default async function EventsPage() {
                       className={`px-2 py-1 rounded text-xs font-bold ${
                         event.status === "published"
                           ? "bg-green-500/20 text-green-400"
-                          : event.status === "draft"
+                          : (event.status === "draft"
                             ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-gray-500/20 text-gray-400"
+                            : "bg-gray-500/20 text-gray-400")
                       }`}
                     >
                       {event.status}

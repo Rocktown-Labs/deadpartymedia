@@ -13,7 +13,6 @@ export interface Writer {
 
 export function useWriters() {
   return useQuery<Writer[]>({
-    queryKey: ["writers"],
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/writers", { signal });
       if (!response.ok) {
@@ -21,12 +20,13 @@ export function useWriters() {
       }
       return response.json();
     },
+    queryKey: ["writers"],
   });
 }
 
 export function useWriter(id: number) {
   return useQuery<Writer>({
-    queryKey: ["writer", id],
+    enabled: !!id,
     queryFn: async ({ signal }) => {
       const response = await fetch(`/api/writers/${id}`, { signal });
       if (!response.ok) {
@@ -34,6 +34,6 @@ export function useWriter(id: number) {
       }
       return response.json();
     },
-    enabled: !!id,
+    queryKey: ["writer", id],
   });
 }

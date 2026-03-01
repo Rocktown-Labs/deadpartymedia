@@ -55,4 +55,3 @@ volumes:
   postgres_data:
   api_static:
   api_media:
-

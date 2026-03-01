@@ -7,16 +7,16 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { eq, inArray } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
 
-type CliOptions = {
+interface CliOptions {
   mapFile: string;
   dryRun: boolean;
   deletePlaceholders: boolean;
-};
+}
 
 type AuthorMap = Record<string, string>;
 const WORKSPACE_ROOT = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 
-type RemapReport = {
+interface RemapReport {
   startedAt: string;
   completedAt: string | null;
   mapFile: string;
@@ -29,7 +29,7 @@ type RemapReport = {
     authorSlug: string;
     reason: string;
   }>;
-};
+}
 
 function createDb(databaseUrl: string) {
   const client = neon(databaseUrl);
@@ -72,9 +72,9 @@ function parseCliArgs(argv: string[]): CliOptions {
   }
 
   return {
-    mapFile,
-    dryRun,
     deletePlaceholders,
+    dryRun,
+    mapFile,
   };
 }
 
@@ -109,15 +109,15 @@ async function main() {
   const options = parseCliArgs(process.argv.slice(2));
 
   const report: RemapReport = {
-    startedAt: new Date().toISOString(),
     completedAt: null,
-    mapFile: options.mapFile,
-    dryRun: options.dryRun,
     deletePlaceholders: options.deletePlaceholders,
-    mappingsProcessed: 0,
-    postsUpdated: 0,
-    placeholderUsersDeleted: 0,
+    dryRun: options.dryRun,
     failures: [],
+    mapFile: options.mapFile,
+    mappingsProcessed: 0,
+    placeholderUsersDeleted: 0,
+    postsUpdated: 0,
+    startedAt: new Date().toISOString(),
   };
 
   try {

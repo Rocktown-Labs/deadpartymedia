@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+
 import {
   isValidImageType,
   isValidFileSize,
@@ -8,60 +8,49 @@ import {
   ALLOWED_IMAGE_TYPES,
 } from "@/lib/upload";
 
-describe("Upload utilities", () => {
-  describe("isValidImageType", () => {
+describe("upload utilities", () => {
+  describe(isValidImageType, () => {
     it("should return true for valid image types", () => {
-      const validTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-      ];
+      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
 
       validTypes.forEach((type) => {
         const file = new File([], "test.jpg", { type });
-        expect(isValidImageType(file)).toBe(true);
+        expect(isValidImageType(file)).toBeTruthy();
       });
     });
 
     it("should return false for invalid image types", () => {
-      const invalidTypes = [
-        "text/plain",
-        "application/pdf",
-        "image/svg+xml",
-        "video/mp4",
-      ];
+      const invalidTypes = ["text/plain", "application/pdf", "image/svg+xml", "video/mp4"];
 
       invalidTypes.forEach((type) => {
         const file = new File([], "test.txt", { type });
-        expect(isValidImageType(file)).toBe(false);
+        expect(isValidImageType(file)).toBeFalsy();
       });
     });
   });
 
-  describe("isValidFileSize", () => {
+  describe(isValidFileSize, () => {
     it("should return true for files within size limit", () => {
       const file = new File([new ArrayBuffer(1024 * 1024)], "test.jpg", {
         type: "image/jpeg",
       }); // 1MB
-      expect(isValidFileSize(file)).toBe(true);
+      expect(isValidFileSize(file)).toBeTruthy();
     });
 
     it("should return false for files exceeding size limit", () => {
       const largeBuffer = new ArrayBuffer(MAX_FILE_SIZE + 1);
       const file = new File([largeBuffer], "test.jpg", { type: "image/jpeg" });
-      expect(isValidFileSize(file)).toBe(false);
+      expect(isValidFileSize(file)).toBeFalsy();
     });
 
     it("should return true for files at exact size limit", () => {
       const buffer = new ArrayBuffer(MAX_FILE_SIZE);
       const file = new File([buffer], "test.jpg", { type: "image/jpeg" });
-      expect(isValidFileSize(file)).toBe(true);
+      expect(isValidFileSize(file)).toBeTruthy();
     });
   });
 
-  describe("generateImagePathname", () => {
+  describe(generateImagePathname, () => {
     it("should generate pathname for cover images", () => {
       const pathname = generateImagePathname("cover", "test-image.jpg");
       expect(pathname).toMatch(/^posts\/covers\/\d+-test-image\.jpg$/);
@@ -92,13 +81,13 @@ describe("Upload utilities", () => {
     });
   });
 
-  describe("validateImageFile", () => {
+  describe(validateImageFile, () => {
     it("should return valid for valid image file", () => {
       const file = new File([new ArrayBuffer(1024)], "test.jpg", {
         type: "image/jpeg",
       });
       const result = validateImageFile(file);
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBeTruthy();
       expect(result.error).toBeUndefined();
     });
 
@@ -107,7 +96,7 @@ describe("Upload utilities", () => {
         type: "text/plain",
       });
       const result = validateImageFile(file);
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBeFalsy();
       expect(result.error).toContain("Invalid file type");
     });
 
@@ -115,7 +104,7 @@ describe("Upload utilities", () => {
       const largeBuffer = new ArrayBuffer(MAX_FILE_SIZE + 1);
       const file = new File([largeBuffer], "test.jpg", { type: "image/jpeg" });
       const result = validateImageFile(file);
-      expect(result.valid).toBe(false);
+      expect(result.valid).toBeFalsy();
       expect(result.error).toContain("File size exceeds");
     });
 

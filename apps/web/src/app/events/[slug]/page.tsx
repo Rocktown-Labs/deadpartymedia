@@ -7,16 +7,14 @@ interface EventPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: EventPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEvent(slug);
 
   if (!event) {
     return {
-      title: "Event Not Found | Dead Party Media",
       description: "The event you're looking for could not be found.",
+      title: "Event Not Found | Dead Party Media",
     };
   }
 

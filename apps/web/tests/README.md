@@ -82,14 +82,14 @@ End-to-end tests are located in `e2e/` and test complete user flows:
 ### Unit Test Example
 
 ```typescript
-import { describe, it, expect } from 'vitest'
-import { generateSlug } from '@/lib/utils/slug'
+import { describe, it, expect } from "vitest";
+import { generateSlug } from "@/lib/utils/slug";
 
-describe('generateSlug', () => {
-  it('should convert title to lowercase slug', () => {
-    expect(generateSlug('Test Artist Name')).toBe('test-artist-name')
-  })
-})
+describe("generateSlug", () => {
+  it("should convert title to lowercase slug", () => {
+    expect(generateSlug("Test Artist Name")).toBe("test-artist-name");
+  });
+});
 ```
 
 ### Component Test Example
@@ -109,42 +109,42 @@ describe('MyComponent', () => {
 ### E2E Test Example
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import { test, expect } from "@playwright/test";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
-test('should navigate to about page', async ({ page }) => {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await page.click('text=About')
-  await expect(page).toHaveURL('/about')
-})
+test("should navigate to about page", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/");
+  await page.click("text=About");
+  await expect(page).toHaveURL("/about");
+});
 ```
 
 ### Authenticated E2E Test Example
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright'
+import { test, expect } from "@playwright/test";
+import { setupClerkTestingToken, clerk } from "@clerk/testing/playwright";
 
-test('should access protected page when authenticated', async ({ page }) => {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.loaded({ page })
-  
+test("should access protected page when authenticated", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/");
+  await clerk.loaded({ page });
+
   // Sign in programmatically
   await clerk.signIn({
     page,
     signInParams: {
-      strategy: 'password',
+      strategy: "password",
       identifier: process.env.E2E_CLERK_USER_USERNAME!,
       password: process.env.E2E_CLERK_USER_PASSWORD!,
     },
-  })
-  
+  });
+
   // Access protected route
-  await page.goto('/dashboard')
-  await expect(page).not.toHaveURL(/sign-in/)
-})
+  await page.goto("/dashboard");
+  await expect(page).not.toHaveURL(/sign-in/);
+});
 ```
 
 **Note**: For tests that match patterns in `playwright.config.ts` projects, authenticated state is automatically loaded from `playwright/.clerk/*.json` files created during global setup.
@@ -175,6 +175,7 @@ test('should access protected page when authenticated', async ({ page }) => {
 ## CI/CD
 
 Tests run automatically on:
+
 - Pull requests
 - Before merging to main
 - On deployment

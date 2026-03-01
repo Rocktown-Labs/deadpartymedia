@@ -11,7 +11,7 @@ export async function logDbOperation<T>(
   operation: string,
   entityType: string,
   entityId?: string | number,
-  fn?: () => Promise<T>
+  fn?: () => Promise<T>,
 ): Promise<T | undefined> {
   const startTime = Date.now();
   const log = withOperationContext(logger, operation, entityType, entityId);
@@ -23,33 +23,33 @@ export async function logDbOperation<T>(
 
       if (duration > SLOW_QUERY_THRESHOLD_MS) {
         log.warn(
-          { duration, operation, entityType, entityId },
-          `Slow database operation: ${operation} took ${duration}ms`
+          { duration, entityId, entityType, operation },
+          `Slow database operation: ${operation} took ${duration}ms`,
         );
       } else {
         log.info(
-          { duration, operation, entityType, entityId },
-          `Database operation completed: ${operation}`
+          { duration, entityId, entityType, operation },
+          `Database operation completed: ${operation}`,
         );
       }
 
       return result;
-    } else {
+    }
       // Just log the operation without executing
       log.info({ operation, entityType, entityId }, `Database operation: ${operation}`);
       return undefined;
-    }
+    
   } catch (error) {
     const duration = Date.now() - startTime;
     log.error(
       {
-        error: sanitizeError(error),
         duration,
-        operation,
-        entityType,
         entityId,
+        entityType,
+        error: sanitizeError(error),
+        operation,
       },
-      `Database operation failed: ${operation}`
+      `Database operation failed: ${operation}`,
     );
     throw error;
   }
@@ -58,10 +58,7 @@ export async function logDbOperation<T>(
 /**
  * Helper to log database create operations
  */
-export async function logDbCreate<T>(
-  entityType: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function logDbCreate<T>(entityType: string, fn: () => Promise<T>): Promise<T> {
   return logDbOperation("create", entityType, undefined, fn) as Promise<T>;
 }
 
@@ -71,7 +68,7 @@ export async function logDbCreate<T>(
 export async function logDbUpdate<T>(
   entityType: string,
   entityId: string | number,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   return logDbOperation("update", entityType, entityId, fn) as Promise<T>;
 }
@@ -82,7 +79,7 @@ export async function logDbUpdate<T>(
 export async function logDbDelete<T>(
   entityType: string,
   entityId: string | number,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<T> {
   return logDbOperation("delete", entityType, entityId, fn) as Promise<T>;
 }

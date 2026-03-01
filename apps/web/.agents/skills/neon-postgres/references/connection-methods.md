@@ -18,8 +18,8 @@ Follow this flow to determine the right connection approach:
 
 For non-TypeScript languages, connect from a secure backend server using your language's native Postgres driver with connection pooling enabled.
 
-| Language/Framework  | Documentation                               |
-| ------------------- | ------------------------------------------- |
+| Language/Framework  | Documentation                              |
+| ------------------- | ------------------------------------------ |
 | Django (Python)     | https://neon.com/docs/guides/django        |
 | SQLAlchemy (Python) | https://neon.com/docs/guides/sqlalchemy    |
 | Elixir Ecto         | https://neon.com/docs/guides/elixir-ecto   |
@@ -123,8 +123,8 @@ Fall back to the decision in step 5 based on transaction requirements.
 
 Popular TypeScript/JavaScript ORMs all work with Neon:
 
-| ORM     | Drivers Supported                               | Documentation                         |
-| ------- | ----------------------------------------------- | ------------------------------------- |
+| ORM     | Drivers Supported                               | Documentation                        |
+| ------- | ----------------------------------------------- | ------------------------------------ |
 | Drizzle | `pg`, `postgres.js`, `@neondatabase/serverless` | https://neon.com/docs/guides/drizzle |
 | Kysely  | `pg`, `postgres.js`, `@neondatabase/serverless` | https://neon.com/docs/guides/kysely  |
 | Prisma  | `pg`, `@neondatabase/serverless`                | https://neon.com/docs/guides/prisma  |
@@ -184,8 +184,8 @@ Then provide:
 
 ## Documentation Resources
 
-| Topic                      | URL                                                     |
-| -------------------------- | ------------------------------------------------------- |
+| Topic                      | URL                                                    |
+| -------------------------- | ------------------------------------------------------ |
 | Choosing Connection Method | https://neon.com/docs/connect/choose-connection        |
 | Serverless Driver          | https://neon.com/docs/serverless/serverless-driver     |
 | JavaScript SDK             | https://neon.com/docs/reference/javascript-sdk         |

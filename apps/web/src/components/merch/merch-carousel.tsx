@@ -22,7 +22,7 @@ function formatPriceRange(product: Product) {
   const min = product.priceRange.minVariantPrice.amount;
   const max = product.priceRange.maxVariantPrice.amount;
 
-  if (min === max) return `$${min}`;
+  if (min === max) {return `$${min}`;}
   return `$${min} - $${max}`;
 }
 
@@ -36,16 +36,18 @@ export function MerchCarousel({
   hasError: hasErrorProp,
 }: MerchCarouselProps) {
   const hasProvidedProducts = Array.isArray(products);
-  const { data: fetchedProducts, isLoading: isQueryLoading, error } = useProducts({
+  const {
+    data: fetchedProducts,
+    isLoading: isQueryLoading,
+    error,
+  } = useProducts({
     enabled: !hasProvidedProducts,
   });
   const isLoading = isLoadingProp ?? (!hasProvidedProducts && isQueryLoading);
   const hasError = hasErrorProp ?? (!hasProvidedProducts && Boolean(error));
 
   const sourceProducts = (hasProvidedProducts ? products : fetchedProducts) || [];
-  const visibleProducts = sourceProducts
-    .filter((product) => product?.handle)
-    .slice(0, limit);
+  const visibleProducts = sourceProducts.filter((product) => product?.handle).slice(0, limit);
 
   return (
     <section className="py-20 px-6 border-t border-gray-800">
@@ -81,15 +83,15 @@ export function MerchCarousel({
               </div>
             ))}
           </div>
-        ) : visibleProducts.length > 0 ? (
+        ) : (visibleProducts.length > 0 ? (
           <div className="flex overflow-x-auto gap-8 pb-4 scrollbar-hide -mx-6 px-6">
             {visibleProducts.map((product) => (
-          <Link
-            key={product.id}
-            href={`/merch/${product.handle}` as Route}
-            prefetch={false}
-            className="shrink-0 min-w-[300px] max-w-[300px]"
-          >
+              <Link
+                key={product.id}
+                href={`/merch/${product.handle}` as Route}
+                prefetch={false}
+                className="shrink-0 min-w-[300px] max-w-[300px]"
+              >
                 <div className="group cursor-pointer">
                   <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
                     <Image
@@ -126,7 +128,7 @@ export function MerchCarousel({
               {hasError ? "Merch is temporarily unavailable." : "Check back soon for new merch!"}
             </p>
           </div>
-        )}
+        ))}
       </div>
     </section>
   );

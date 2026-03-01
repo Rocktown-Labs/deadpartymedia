@@ -54,18 +54,18 @@ export default function SignUpPage() {
             fallbackRedirectUrl={getRedirectUrl()}
             appearance={{
               elements: {
-                rootBox: "mx-auto",
                 card: "bg-[#111111] border border-gray-800",
-                headerTitle: "text-white",
-                headerSubtitle: "text-gray-400",
-                socialButtonsBlockButton:
-                  "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
+                footerActionLink: "text-[#7CFC00]",
                 formButtonPrimary: "bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black",
                 formFieldInput: "bg-[#0A0A0A] border-gray-800 text-white",
                 formFieldLabel: "text-gray-300",
-                footerActionLink: "text-[#7CFC00]",
-                identityPreviewText: "text-gray-300",
+                headerSubtitle: "text-gray-400",
+                headerTitle: "text-white",
                 identityPreviewEditButton: "text-[#7CFC00]",
+                identityPreviewText: "text-gray-300",
+                rootBox: "mx-auto",
+                socialButtonsBlockButton:
+                  "bg-[#0A0A0A] border-gray-800 text-white hover:bg-[#1A1A1A]",
               },
             }}
           />

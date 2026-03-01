@@ -79,7 +79,7 @@ export default function HistoryPage() {
 
           <div className="space-y-4">
             {articles.map((item) => {
-              const article = item.article;
+              const {article} = item;
               return (
                 <Link
                   key={item.id}

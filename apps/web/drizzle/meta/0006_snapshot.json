@@ -138,12 +138,8 @@
           "name": "article_comments_post_id_posts_id_fk",
           "tableFrom": "article_comments",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -151,12 +147,8 @@
           "name": "article_comments_parent_id_article_comments_id_fk",
           "tableFrom": "article_comments",
           "tableTo": "article_comments",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -304,9 +296,7 @@
         "artists_slug_unique": {
           "name": "artists_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -336,12 +326,8 @@
           "name": "event_artists_event_id_events_id_fk",
           "tableFrom": "event_artists",
           "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -349,12 +335,8 @@
           "name": "event_artists_artist_id_artists_id_fk",
           "tableFrom": "event_artists",
           "tableTo": "artists",
-          "columnsFrom": [
-            "artist_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["artist_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -478,9 +460,7 @@
         "events_slug_unique": {
           "name": "events_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -510,12 +490,8 @@
           "name": "post_artists_post_id_posts_id_fk",
           "tableFrom": "post_artists",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -523,12 +499,8 @@
           "name": "post_artists_artist_id_artists_id_fk",
           "tableFrom": "post_artists",
           "tableTo": "artists",
-          "columnsFrom": [
-            "artist_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["artist_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -655,9 +627,7 @@
         "posts_slug_unique": {
           "name": "posts_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -737,12 +707,8 @@
           "name": "user_article_reads_post_id_posts_id_fk",
           "tableFrom": "user_article_reads",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -826,12 +792,8 @@
           "name": "user_article_saves_post_id_posts_id_fk",
           "tableFrom": "user_article_saves",
           "tableTo": "posts",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -919,9 +881,7 @@
         "users_clerk_id_unique": {
           "name": "users_clerk_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "clerk_id"
-          ]
+          "columns": ["clerk_id"]
         }
       },
       "policies": {},
@@ -933,52 +893,27 @@
     "public.category": {
       "name": "category",
       "schema": "public",
-      "values": [
-        "COUNTRY",
-        "EDM",
-        "HARDCORE & ROCK",
-        "HIP-HOP & R&B",
-        "OTHER"
-      ]
+      "values": ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]
     },
     "public.event_status": {
       "name": "event_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published",
-        "past"
-      ]
+      "values": ["draft", "published", "past"]
     },
     "public.genre": {
       "name": "genre",
       "schema": "public",
-      "values": [
-        "COUNTRY",
-        "EDM",
-        "HARDCORE & ROCK",
-        "HIP-HOP & R&B",
-        "OTHER"
-      ]
+      "values": ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]
     },
     "public.post_status": {
       "name": "post_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published",
-        "archived"
-      ]
+      "values": ["draft", "published", "archived"]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": [
-        "artist",
-        "fan",
-        "super_admin",
-        "writer"
-      ]
+      "values": ["artist", "fan", "super_admin", "writer"]
     }
   },
   "schemas": {},

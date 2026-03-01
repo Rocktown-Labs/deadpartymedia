@@ -30,7 +30,7 @@ export default function MerchPage() {
     loadProducts();
   }, []);
 
-  const categories = ["All", ...Array.from(new Set(products.map((p) => p.title.split(" ")[0])))];
+  const categories = ["All", ...[...new Set(products.map((p) => p.title.split(' ')[0]))]];
 
   const filteredItems =
     selectedCategory === "All"
@@ -118,7 +118,7 @@ export default function MerchPage() {
                         <div
                           className="text-sm text-gray-400 mb-4 line-clamp-2"
                           dangerouslySetInnerHTML={{
-                            __html: (product.descriptionHtml || product.description || "").replace(
+                            __html: (product.descriptionHtml || product.description || "").replaceAll(
                               /<[^>]*>/g,
                               "",
                             ),

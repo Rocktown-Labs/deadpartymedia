@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateRoleAction } from "./update-role-action";
-import { type Roles } from "@/types/globals";
+import type { Roles } from "@/types/globals";
 
 export function RoleSelectForm({ userId, currentRole }: { userId: string; currentRole: string }) {
   const [role, setRole] = useState<Roles>(currentRole as Roles);

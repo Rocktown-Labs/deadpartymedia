@@ -19,7 +19,7 @@ declare global {
 }
 
 async function runStartupSchemaSanityCheck() {
-  if (globalThis.__dbSanityCheckStarted) return;
+  if (globalThis.__dbSanityCheckStarted) {return;}
   globalThis.__dbSanityCheckStarted = true;
 
   const result = (await db.execute(sql`
@@ -28,23 +28,19 @@ async function runStartupSchemaSanityCheck() {
     WHERE table_schema = 'public'
       AND table_name = 'users'
       AND column_name IN ('role', 'onboarding_complete')
-  `)) as { rows?: Array<{ column_name: string }> };
+  `)) as { rows?: { column_name: string }[] };
 
-  const foundColumns = new Set(
-    (result.rows ?? []).map((row) => row.column_name),
-  );
+  const foundColumns = new Set((result.rows ?? []).map((row) => row.column_name));
 
   const requiredColumns = ["role", "onboarding_complete"] as const;
-  const missingColumns = requiredColumns.filter(
-    (column) => !foundColumns.has(column),
-  );
+  const missingColumns = requiredColumns.filter((column) => !foundColumns.has(column));
 
   if (missingColumns.length > 0) {
     logger.error(
       {
+        missingColumns,
         operation: "startup_schema_sanity_check",
         table: "users",
-        missingColumns,
       },
       "Database schema is out of sync. Run migrations before serving traffic.",
     );
@@ -70,14 +66,13 @@ const shouldRunSchemaSanityCheck =
 
 if (shouldRunSchemaSanityCheck) {
   void runStartupSchemaSanityCheck().catch((error) => {
-    const normalizedError =
-      error instanceof Error ? error : new Error(String(error));
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
     globalThis.__dbSanityCheckError = normalizedError;
 
     logger.error(
       {
-        operation: "startup_schema_sanity_check",
         error: normalizedError.message,
+        operation: "startup_schema_sanity_check",
       },
       "Startup schema sanity check failed",
     );
@@ -90,10 +85,7 @@ if (shouldRunSchemaSanityCheck) {
         "Failing fast because startup schema sanity check failed in CI",
       );
 
-      if (
-        typeof process !== "undefined" &&
-        typeof process.exit === "function"
-      ) {
+      if (typeof process !== "undefined" && typeof process.exit === "function") {
         process.exit(1);
       }
     }

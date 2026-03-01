@@ -26,12 +26,12 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
   // Track artist profile viewed event - using ref to prevent duplicate tracking
   if (artist && artistViewedRef.current !== artist.slug) {
     posthog.capture("artist_profile_viewed", {
-      artist_id: artist.id,
-      artist_slug: artist.slug,
-      artist_name: artist.name,
-      artist_genre: artist.genre,
-      artist_location: artist.location,
       article_count: artist.article_count,
+      artist_genre: artist.genre,
+      artist_id: artist.id,
+      artist_location: artist.location,
+      artist_name: artist.name,
+      artist_slug: artist.slug,
       event_count: artist.event_count,
     });
     artistViewedRef.current = artist.slug;
@@ -41,8 +41,8 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
   const handleSocialClick = (platform: string, url: string) => {
     posthog.capture("artist_social_clicked", {
       artist_id: artist?.id,
-      artist_slug: artist?.slug,
       artist_name: artist?.name,
+      artist_slug: artist?.slug,
       platform,
       url,
     });
@@ -247,10 +247,10 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         </h3>
                         <p className="text-sm text-gray-400">
                           {new Date(event.date).toLocaleDateString("en-US", {
+                            day: "numeric",
+                            month: "short",
                             weekday: "short",
                             year: "numeric",
-                            month: "short",
-                            day: "numeric",
                           })}
                         </p>
                         <div className="mt-2 space-y-1 text-sm text-gray-500">
@@ -272,4 +272,3 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
     </>
   );
 }
-

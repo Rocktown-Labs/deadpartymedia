@@ -132,10 +132,10 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                       <div>
                         <p className="font-medium">
                           {eventDate.toLocaleDateString("en-US", {
+                            day: "numeric",
+                            month: "long",
                             weekday: "long",
                             year: "numeric",
-                            month: "long",
-                            day: "numeric",
                           })}
                         </p>
                       </div>
@@ -175,14 +175,14 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                     onClick={() => {
                       // Track event ticket clicked (conversion event)
                       posthog.capture("event_ticket_clicked", {
+                        event_date: event.date,
+                        event_genre: event.genre,
                         event_id: event.id,
+                        event_location: event.location,
+                        event_price: event.price,
                         event_slug: event.slug,
                         event_title: event.title,
-                        event_date: event.date,
                         event_venue: event.venue,
-                        event_location: event.location,
-                        event_genre: event.genre,
-                        event_price: event.price,
                         ticket_link: event.ticket_link,
                       });
                     }}
@@ -201,4 +201,3 @@ export function EventPageClient({ slug }: EventPageClientProps) {
     </>
   );
 }
-

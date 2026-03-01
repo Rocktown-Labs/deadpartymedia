@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events, eventArtists, artists } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const log = getRequestLogger(request);
   try {
     const { slug } = await params;
@@ -27,9 +25,9 @@ export async function GET(
     const eventArtistsData = await db
       .select({
         id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
         image: artists.image,
+        name: artists.name,
+        slug: artists.slug,
       })
       .from(eventArtists)
       .innerJoin(artists, eq(eventArtists.artistId, artists.id))
@@ -37,28 +35,28 @@ export async function GET(
 
     // Transform to match existing Event interface
     const eventData = {
-      id: event.id,
-      title: event.title,
-      slug: event.slug,
-      description: event.description,
-      image: event.image,
-      venue: event.venue,
-      location: event.location,
-      date: event.date,
-      time: event.time,
-      ticket_link: event.ticketLink,
-      price: event.price,
-      genre: event.genre,
       artists: eventArtistsData,
       created_at: event.createdAt.toISOString(),
+      date: event.date,
+      description: event.description,
+      genre: event.genre,
+      id: event.id,
+      image: event.image,
+      location: event.location,
+      price: event.price,
+      slug: event.slug,
+      ticket_link: event.ticketLink,
+      time: event.time,
+      title: event.title,
       updated_at: event.updatedAt.toISOString(),
+      venue: event.venue,
     };
 
     return NextResponse.json(eventData);
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_event", slug: (await params).slug },
-      "Error fetching event"
+      "Error fetching event",
     );
     return NextResponse.json({ error: "Failed to fetch event" }, { status: 500 });
   }

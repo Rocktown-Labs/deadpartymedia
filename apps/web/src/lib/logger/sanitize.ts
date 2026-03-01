@@ -23,7 +23,7 @@ const SENSITIVE_FIELDS = new Set([
 export function sanitizeObject<T extends Record<string, unknown>>(
   obj: T,
   depth = 0,
-  maxDepth = 5
+  maxDepth = 5,
 ): Partial<T> {
   if (depth > maxDepth) {
     return {} as Partial<T>;
@@ -45,14 +45,14 @@ export function sanitizeObject<T extends Record<string, unknown>>(
       sanitized[key as keyof T] = sanitizeObject(
         value as Record<string, unknown>,
         depth + 1,
-        maxDepth
+        maxDepth,
       ) as T[keyof T];
     } else if (Array.isArray(value)) {
       // Sanitize array elements
       sanitized[key as keyof T] = value.map((item) =>
         typeof item === "object" && item !== null
           ? sanitizeObject(item as Record<string, unknown>, depth + 1, maxDepth)
-          : item
+          : item,
       ) as T[keyof T];
     } else {
       sanitized[key as keyof T] = value as T[keyof T];
@@ -122,10 +122,10 @@ export function sanitizeRequestData(data: {
   query?: Record<string, unknown>;
 } {
   return {
-    method: data.method,
-    url: data.url,
-    headers: data.headers ? sanitizeObject(data.headers as Record<string, unknown>) : undefined,
     body: data.body ? sanitizeObject(data.body as Record<string, unknown>) : undefined,
+    headers: data.headers ? sanitizeObject(data.headers as Record<string, unknown>) : undefined,
+    method: data.method,
     query: data.query ? sanitizeObject(data.query as Record<string, unknown>) : undefined,
+    url: data.url,
   };
 }

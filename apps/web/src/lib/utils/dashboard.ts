@@ -5,13 +5,16 @@ import { roleOrDefault } from "@/lib/auth/role";
 function mapRoleToDashboardRoute(role: Roles): Route {
   switch (role) {
     case "super_admin":
-    case "writer":
+    case "writer": {
       return "/admin" as Route;
-    case "artist":
+    }
+    case "artist": {
       return "/artist-dashboard" as Route;
+    }
     case "fan":
-    default:
+    default: {
       return "/dashboard" as Route;
+    }
   }
 }
 

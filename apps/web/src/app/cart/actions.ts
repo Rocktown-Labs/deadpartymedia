@@ -99,10 +99,10 @@ export async function updateItemQuantity(
     }
 
     revalidatePath("/");
-  } catch (e) {
+  } catch (error) {
     logger.error(
-      { error: sanitizeError(e), operation: "update_cart_item_quantity" },
-      "Error updating item quantity"
+      { error: sanitizeError(error), operation: "update_cart_item_quantity" },
+      "Error updating item quantity",
     );
     return "Error updating item quantity";
   }
@@ -118,20 +118,14 @@ export async function redirectToCheckout(_currency: string): Promise<void> {
   }
 
   if (!CHECKOUT_URL) {
-    logger.error(
-      { operation: "redirect_to_checkout" },
-      "Missing checkout URL configuration"
-    );
+    logger.error({ operation: "redirect_to_checkout" }, "Missing checkout URL configuration");
     return;
   }
 
   const cart = await getCart(cartId, "USD");
 
   if (!cart) {
-    logger.error(
-      { operation: "redirect_to_checkout", cartId },
-      "Error fetching cart"
-    );
+    logger.error({ cartId, operation: "redirect_to_checkout" }, "Error fetching cart");
     return;
   }
 

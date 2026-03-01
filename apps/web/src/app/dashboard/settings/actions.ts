@@ -4,10 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { userUpdateSchema, passwordChangeSchema } from "@/lib/validations/user";
-import type {
-  UserUpdateInput,
-  PasswordChangeInput,
-} from "@/lib/validations/user";
+import type { UserUpdateInput, PasswordChangeInput } from "@/lib/validations/user";
 import { logger } from "@/lib/logger";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -23,8 +20,8 @@ export async function updateUserProfile(data: UserUpdateInput) {
   const validationResult = userUpdateSchema.safeParse(data);
   if (!validationResult.success) {
     return {
-      success: false,
       error: validationResult.error.issues.map((e) => e.message).join(", "),
+      success: false,
     };
   }
 
@@ -45,18 +42,16 @@ export async function updateUserProfile(data: UserUpdateInput) {
   } catch (error: any) {
     log.error(
       { error: sanitizeError(error), operation: "update_user_profile" },
-      "Error updating user profile"
+      "Error updating user profile",
     );
     return {
-      success: false,
       error: error.errors?.[0]?.longMessage || "Failed to update profile",
+      success: false,
     };
   }
 }
 
-export async function changeUserPassword(
-  data: Omit<PasswordChangeInput, "confirm_password">
-) {
+export async function changeUserPassword(data: Omit<PasswordChangeInput, "confirm_password">) {
   const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in" as Route);
@@ -69,8 +64,8 @@ export async function changeUserPassword(
   });
   if (!validationResult.success) {
     return {
-      success: false,
       error: validationResult.error.issues.map((e) => e.message).join(", "),
+      success: false,
     };
   }
 
@@ -84,8 +79,8 @@ export async function changeUserPassword(
   // The best approach is to redirect users to Clerk's UserProfile component for password changes
 
   return {
-    success: false,
     error:
       "Password changes should be done through your account settings. Please use the account management menu.",
+    success: false,
   };
 }

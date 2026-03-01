@@ -42,14 +42,13 @@ export interface OnboardArtistData {
 export interface SpotifyArtist {
   id: string;
   name: string;
-  images: Array<{ url: string; height: number; width: number }>;
+  images: { url: string; height: number; width: number }[];
   external_urls: { spotify: string };
   genres?: string[];
 }
 
 export function useArtists(genre?: string) {
   return useQuery<Artist[]>({
-    queryKey: ["artists", genre],
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
       const response = await fetch(`/api/artists${params}`);
@@ -58,12 +57,13 @@ export function useArtists(genre?: string) {
       }
       return response.json();
     },
+    queryKey: ["artists", genre],
   });
 }
 
 export function useArtist(slug: string) {
   return useQuery<Artist>({
-    queryKey: ["artist", slug],
+    enabled: !!slug,
     queryFn: async () => {
       const response = await fetch(`/api/artists/${slug}`);
       if (!response.ok) {
@@ -71,13 +71,13 @@ export function useArtist(slug: string) {
       }
       return response.json();
     },
-    enabled: !!slug,
+    queryKey: ["artist", slug],
   });
 }
 
 export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
-    queryKey: ["artist-articles", slug],
+    enabled: !!slug,
     queryFn: async () => {
       const response = await fetch(`/api/artists/${slug}/articles`);
       if (!response.ok) {
@@ -85,13 +85,13 @@ export function useArtistArticles(slug: string) {
       }
       return response.json();
     },
-    enabled: !!slug,
+    queryKey: ["artist-articles", slug],
   });
 }
 
 export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
-    queryKey: ["artist-events", slug],
+    enabled: !!slug,
     queryFn: async () => {
       const response = await fetch(`/api/artists/${slug}/events`);
       if (!response.ok) {
@@ -99,13 +99,12 @@ export function useArtistEvents(slug: string) {
       }
       return response.json();
     },
-    enabled: !!slug,
+    queryKey: ["artist-events", slug],
   });
 }
 
 export function useCurrentUserArtist() {
   return useQuery<Artist | null>({
-    queryKey: ["current-user-artist"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/artists/me");
@@ -120,6 +119,7 @@ export function useCurrentUserArtist() {
         return null;
       }
     },
+    queryKey: ["current-user-artist"],
     retry: false,
   });
 }
@@ -161,14 +161,12 @@ export function useUpdateArtist() {
       }
 
       const response = await fetch("/api/artists/me", {
-        method: "PATCH",
         body: formData,
+        method: "PATCH",
       });
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Update failed" }));
+        const errorData = await response.json().catch(() => ({ error: "Update failed" }));
         throw new Error(errorData.error || "Failed to update artist");
       }
 
@@ -184,17 +182,11 @@ export function useSearchSpotifyArtists(query: string) {
   return useQuery<SpotifyArtist[]>({
     queryKey: ["spotify-search", query],
     queryFn: async () => {
-      if (!query || query.length < 5) return [];
-      const response = await fetch(
-        `/api/spotify/search?q=${encodeURIComponent(query)}`,
-      );
+      if (!query || query.length < 5) {return [];}
+      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: response.statusText }));
-        throw new Error(
-          errorData.error || `Failed to search Spotify (${response.status})`,
-        );
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Failed to search Spotify (${response.status})`);
       }
       return response.json();
     },
@@ -208,10 +200,8 @@ export function useSpotifyArtistById(id: string | null) {
   return useQuery<SpotifyArtist | null>({
     queryKey: ["spotify-artist", id],
     queryFn: async () => {
-      if (!id) return null;
-      const response = await fetch(
-        `/api/spotify/artist/${encodeURIComponent(id)}`,
-      );
+      if (!id) {return null;}
+      const response = await fetch(`/api/spotify/artist/${encodeURIComponent(id)}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Artist not found");

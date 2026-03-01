@@ -1,4 +1,4 @@
-import { type Roles } from "@/types/globals";
+import type { Roles } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
 import { parseRole } from "./role";
 

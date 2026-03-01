@@ -1,12 +1,12 @@
-type ClerkEmailAddress = {
+interface ClerkEmailAddress {
   id: string;
   emailAddress: string;
-};
+}
 
-type ClerkUserWithEmails = {
+interface ClerkUserWithEmails {
   emailAddresses: ClerkEmailAddress[];
   primaryEmailAddressId: string | null;
-};
+}
 
 export function getPrimaryEmail(user: ClerkUserWithEmails): string | null {
   const primaryEmail = user.emailAddresses.find(

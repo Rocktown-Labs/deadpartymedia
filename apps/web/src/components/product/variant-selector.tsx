@@ -5,11 +5,11 @@ import { useProduct, useUpdateURL } from "./product-context";
 import type { ProductOption, ProductVariant } from "@/lib/types";
 import posthog from "posthog-js";
 
-type Combination = {
+interface Combination {
   id: string;
   availableForSale: boolean;
   [key: string]: string | boolean;
-};
+}
 
 export function VariantSelector({
   options,
@@ -28,8 +28,8 @@ export function VariantSelector({
   }
 
   const combinations: Combination[] = variants.map((variant) => ({
-    id: variant.id,
     availableForSale: variant.availableForSale,
+    id: variant.id,
     ...variant.selectedOptions.reduce(
       (accumulator, option) => ({ ...accumulator, [option.name.toLowerCase()]: option.value }),
       {},
@@ -68,9 +68,9 @@ export function VariantSelector({
 
                   // Track product variant selection
                   posthog.capture("product_variant_selected", {
+                    is_available: !!isAvailableForSale,
                     option_name: option.name,
                     option_value: value,
-                    is_available: !!isAvailableForSale,
                   });
                 }}
                 key={value}

@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import { generateRequestId, withRequestContext } from "./context";
 import { logger } from "../logger";
 
-type RequestLike = {
+interface RequestLike {
   headers: Headers;
   nextUrl: { pathname: string };
   method: string;
-};
+}
 
 /**
  * Add request ID to response headers for correlation

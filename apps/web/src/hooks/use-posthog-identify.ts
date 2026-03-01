@@ -17,8 +17,8 @@ export function usePostHogIdentify() {
     posthog.identify(user.id, {
       email: user.primaryEmailAddress?.emailAddress,
       name: user.fullName || user.firstName || undefined,
-      username: user.username || undefined,
       role: user.publicMetadata?.role || "fan",
+      username: user.username || undefined,
     });
     identifiedRef.current = user.id;
   }

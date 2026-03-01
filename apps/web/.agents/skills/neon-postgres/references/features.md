@@ -138,8 +138,8 @@ For setup, see `neon-auth.md`. For auth + data API, see `neon-js.md`.
 
 ## Feature Documentation Reference
 
-| Feature             | Documentation                                           | Resource       |
-| ------------------- | ------------------------------------------------------- | -------------- |
+| Feature             | Documentation                                          | Resource       |
+| ------------------- | ------------------------------------------------------ | -------------- |
 | Branching           | https://neon.com/docs/introduction/branching           | -              |
 | Autoscaling         | https://neon.com/docs/introduction/autoscaling         | -              |
 | Scale to Zero       | https://neon.com/docs/introduction/scale-to-zero       | -              |

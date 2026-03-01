@@ -70,7 +70,7 @@ export function ArtistForm({
     setIsSaving(true);
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("slug", slug || name.toLowerCase().replace(/\s+/g, "-"));
+    formData.append("slug", slug || name.toLowerCase().replaceAll(/\s+/g, "-"));
     formData.append("bio", bio);
     formData.append("image", image);
     formData.append("location", location);

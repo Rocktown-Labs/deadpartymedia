@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+
 import {
   extractPermalinkDate,
   extractPermalinkSlug,
@@ -39,13 +39,13 @@ describe("wordpress-parser", () => {
   it("parses a WordPress post into import-ready shape", () => {
     const parsed = parseWordpressArticle({
       html: SAMPLE_HTML,
-      sourceUrl:
-        "https://deadpartymedia.wordpress.com/2026/02/02/learning-to-let-go-welcome-to-the-hours-devour-us/",
       metadata: {
         description: "Metadata excerpt from WordPress",
         "article:published_time": "2026-02-03T00:14:28+00:00",
         "article:modified_time": "2026-02-11T14:28:09+00:00",
       },
+      sourceUrl:
+        "https://deadpartymedia.wordpress.com/2026/02/02/learning-to-let-go-welcome-to-the-hours-devour-us/",
     });
 
     expect(parsed.slug).toBe("learning-to-let-go-welcome-to-the-hours-devour-us");
@@ -58,7 +58,7 @@ describe("wordpress-parser", () => {
     expect(parsed.contentHtml).not.toContain("jp-post-flair");
     expect(parsed.authorSlug).toBe("pettyvandalism");
     expect(parsed.category).toBe("COUNTRY");
-    expect(parsed.rawCategories).toEqual(["Country", "indie"]);
+    expect(parsed.rawCategories).toStrictEqual(["Country", "indie"]);
     expect(parsed.sourcePublishedAt.toISOString()).toBe("2026-02-03T00:14:28.000Z");
     expect(parsed.sourceModifiedAt?.toISOString()).toBe("2026-02-11T14:28:09.000Z");
   });
@@ -72,7 +72,7 @@ describe("wordpress-parser", () => {
     const url =
       "https://deadpartymedia.wordpress.com/2025/10/22/faucette-festivals-mixing-family-fun-with-edm/";
 
-    expect(isWordpressPostPermalink(url)).toBe(true);
+    expect(isWordpressPostPermalink(url)).toBeTruthy();
     expect(extractPermalinkSlug(url)).toBe("faucette-festivals-mixing-family-fun-with-edm");
     expect(extractPermalinkDate(url)?.toISOString()).toBe("2025-10-22T00:00:00.000Z");
     expect(normalizeAuthorSlug("J.L. Jones")).toBe("jl-jones");

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import {
   getAbsoluteUrl,
   getImageUrl,
@@ -9,7 +9,7 @@ import {
   getSiteDefaults,
 } from "@/lib/seo";
 
-describe("SEO helpers", () => {
+describe("sEO helpers", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -17,70 +17,60 @@ describe("SEO helpers", () => {
     process.env = { ...originalEnv };
   });
 
-  describe("getAbsoluteUrl", () => {
+  describe(getAbsoluteUrl, () => {
     it("should return absolute URL for relative paths", () => {
-      expect(getAbsoluteUrl("/article/test")).toBe(
-        "https://www.deadpartymedia.com/article/test"
-      );
+      expect(getAbsoluteUrl("/article/test")).toBe("https://www.deadpartymedia.com/article/test");
     });
 
     it("should return absolute URL for paths without leading slash", () => {
-      expect(getAbsoluteUrl("article/test")).toBe(
-        "https://www.deadpartymedia.com/article/test"
-      );
+      expect(getAbsoluteUrl("article/test")).toBe("https://www.deadpartymedia.com/article/test");
     });
 
     it("should return absolute URL as-is", () => {
-      expect(getAbsoluteUrl("https://example.com/path")).toBe(
-        "https://example.com/path"
-      );
+      expect(getAbsoluteUrl("https://example.com/path")).toBe("https://example.com/path");
     });
 
     it("should return absolute URL for http URLs", () => {
-      expect(getAbsoluteUrl("http://example.com/path")).toBe(
-        "http://example.com/path"
-      );
+      expect(getAbsoluteUrl("http://example.com/path")).toBe("http://example.com/path");
     });
   });
 
-  describe("getImageUrl", () => {
+  describe(getImageUrl, () => {
     it("should return default OG image for null/undefined", () => {
       expect(getImageUrl(null)).toBe(
-        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg"
+        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg",
       );
-      expect(getImageUrl(undefined)).toBe(
-        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg"
+      expect(getImageUrl()).toBe(
+        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg",
       );
     });
 
     it("should return absolute URL for relative paths", () => {
       expect(getImageUrl("/images/test.jpg")).toBe(
-        "https://www.deadpartymedia.com/images/test.jpg"
+        "https://www.deadpartymedia.com/images/test.jpg",
       );
     });
 
     it("should return absolute URL as-is", () => {
-      expect(getImageUrl("https://example.com/image.jpg")).toBe(
-        "https://example.com/image.jpg"
-      );
+      expect(getImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
     });
 
     it("should handle media URLs with NEXT_PUBLIC_MEDIA_URL", () => {
       process.env.NEXT_PUBLIC_MEDIA_URL = "https://media.example.com";
       expect(getImageUrl("/media/articles/image.jpg")).toBe(
-        "https://media.example.com/media/articles/image.jpg"
+        "https://media.example.com/media/articles/image.jpg",
       );
     });
 
     it("should handle media URLs without NEXT_PUBLIC_MEDIA_URL", () => {
       delete process.env.NEXT_PUBLIC_MEDIA_URL;
       expect(getImageUrl("/media/articles/image.jpg")).toBe(
-        "https://www.deadpartymedia.com/media/articles/image.jpg"
+        "https://www.deadpartymedia.com/media/articles/image.jpg",
       );
     });
   });
 
-  describe("stripHtml", () => {
+  describe(stripHtml, () => {
     it("should remove HTML tags", () => {
       expect(stripHtml("<p>Hello World</p>")).toBe("Hello World");
     });
@@ -93,7 +83,7 @@ describe("SEO helpers", () => {
 
     it("should handle null/undefined", () => {
       expect(stripHtml(null)).toBe("");
-      expect(stripHtml(undefined)).toBe("");
+      expect(stripHtml()).toBe("");
     });
 
     it("should trim whitespace", () => {
@@ -101,12 +91,12 @@ describe("SEO helpers", () => {
     });
   });
 
-  describe("truncateText", () => {
+  describe(truncateText, () => {
     it("should truncate text longer than maxLength", () => {
       const longText = "a".repeat(200);
       const result = truncateText(longText, 160);
-      expect(result.length).toBe(160);
-      expect(result.endsWith("...")).toBe(true);
+      expect(result).toHaveLength(160);
+      expect(result.endsWith("...")).toBeTruthy();
     });
 
     it("should not truncate text shorter than maxLength", () => {
@@ -119,12 +109,12 @@ describe("SEO helpers", () => {
     });
   });
 
-  describe("sanitizeDescription", () => {
+  describe(sanitizeDescription, () => {
     it("should sanitize HTML and truncate", () => {
       const html = "<p>" + "a".repeat(200) + "</p>";
       const result = sanitizeDescription(html, "fallback", 160);
-      expect(result.length).toBe(160);
-      expect(result.endsWith("...")).toBe(true);
+      expect(result).toHaveLength(160);
+      expect(result.endsWith("...")).toBeTruthy();
       expect(result).not.toContain("<p>");
     });
 
@@ -138,36 +128,36 @@ describe("SEO helpers", () => {
     });
   });
 
-  describe("getOgImageUrl", () => {
+  describe(getOgImageUrl, () => {
     it("should generate OG image URL for article", () => {
       expect(getOgImageUrl("article", "test-slug")).toBe(
-        "https://www.deadpartymedia.com/api/og/article/test-slug"
+        "https://www.deadpartymedia.com/api/og/article/test-slug",
       );
     });
 
     it("should generate OG image URL for event", () => {
       expect(getOgImageUrl("event", "test-slug")).toBe(
-        "https://www.deadpartymedia.com/api/og/event/test-slug"
+        "https://www.deadpartymedia.com/api/og/event/test-slug",
       );
     });
 
     it("should generate OG image URL for artist", () => {
       expect(getOgImageUrl("artist", "test-slug")).toBe(
-        "https://www.deadpartymedia.com/api/og/artist/test-slug"
+        "https://www.deadpartymedia.com/api/og/artist/test-slug",
       );
     });
   });
 
-  describe("getSiteDefaults", () => {
+  describe(getSiteDefaults, () => {
     it("should return site defaults", () => {
       const defaults = getSiteDefaults();
       expect(defaults.siteUrl).toBe("https://www.deadpartymedia.com");
       expect(defaults.siteName).toBe("Dead Party Media");
       expect(defaults.defaultDescription).toBe(
-        "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews."
+        "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
       );
       expect(defaults.defaultOgImage).toBe(
-        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg"
+        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg",
       );
     });
   });

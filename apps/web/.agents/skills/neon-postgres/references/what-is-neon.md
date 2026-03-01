@@ -31,8 +31,8 @@ Understanding Neon's resource hierarchy is essential for working with the platfo
 
 ## Documentation Resources
 
-| Topic                  | Documentation URL                                         |
-| ---------------------- | --------------------------------------------------------- |
+| Topic                  | Documentation URL                                        |
+| ---------------------- | -------------------------------------------------------- |
 | Introduction           | https://neon.com/docs/introduction                       |
 | Architecture           | https://neon.com/docs/introduction/architecture-overview |
 | Plans & Billing        | https://neon.com/docs/introduction/about-billing         |

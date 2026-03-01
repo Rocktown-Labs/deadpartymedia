@@ -37,24 +37,20 @@ export async function GET() {
   const clerkUser = await client.users.getUser(userId);
 
   const primaryEmail =
-    clerkUser.emailAddresses.find(
-      (email) => email.id === clerkUser.primaryEmailAddressId,
-    )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
+    clerkUser.emailAddresses.find((email) => email.id === clerkUser.primaryEmailAddressId)
+      ?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
 
   if (!primaryEmail) {
-    return NextResponse.json(
-      { error: "No email available for current user" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "No email available for current user" }, { status: 400 });
   }
 
   const metadataRole = parseRole(sessionClaims?.metadata?.role);
   const dbUser = await db
     .select({
-      role: users.role,
-      onboardingComplete: users.onboardingComplete,
       firstName: users.firstName,
       lastName: users.lastName,
+      onboardingComplete: users.onboardingComplete,
+      role: users.role,
     })
     .from(users)
     .where(eq(users.clerkId, userId))
@@ -63,8 +59,7 @@ export async function GET() {
 
   const role: Roles = metadataRole ?? dbUser?.role ?? "fan";
   const onboardingComplete =
-    sessionClaims?.metadata?.onboardingComplete === true ||
-    dbUser?.onboardingComplete === true;
+    sessionClaims?.metadata?.onboardingComplete === true || dbUser?.onboardingComplete === true;
 
   // Keep DB role/onboarding in sync with Clerk/session whenever this endpoint is used.
   try {
@@ -72,14 +67,14 @@ export async function GET() {
       clerkId: userId,
       email: primaryEmail,
       firstName: clerkUser.firstName,
-      lastName: clerkUser.lastName,
       imageUrl: clerkUser.imageUrl,
-      role: roleOrDefault(role, "fan"),
+      lastName: clerkUser.lastName,
       onboardingComplete,
+      role: roleOrDefault(role, "fan"),
     });
   } catch (error) {
     logger.warn(
-      { error: sanitizeError(error), userId, operation: "sync_user_on_profile_read" },
+      { error: sanitizeError(error), operation: "sync_user_on_profile_read", userId },
       "Failed to sync user auth state during onboarding profile fetch",
     );
   }
@@ -90,21 +85,21 @@ export async function GET() {
 
   let artistProfile = await db
     .select({
-      id: artists.id,
-      slug: artists.slug,
-      name: artists.name,
       bio: artists.bio,
-      location: artists.location,
-      genre: artists.genre,
-      spotifyUrl: artists.spotifyUrl,
-      spotifyArtistId: artists.spotifyArtistId,
-      instagram: artists.instagram,
-      twitter: artists.twitter,
-      tiktok: artists.tiktok,
-      website: artists.website,
-      image: artists.image,
-      phoneNumber: artists.phoneNumber,
       claimedById: artists.claimedById,
+      genre: artists.genre,
+      id: artists.id,
+      image: artists.image,
+      instagram: artists.instagram,
+      location: artists.location,
+      name: artists.name,
+      phoneNumber: artists.phoneNumber,
+      slug: artists.slug,
+      spotifyArtistId: artists.spotifyArtistId,
+      spotifyUrl: artists.spotifyUrl,
+      tiktok: artists.tiktok,
+      twitter: artists.twitter,
+      website: artists.website,
     })
     .from(artists)
     .where(eq(artists.claimedById, userId))
@@ -114,21 +109,21 @@ export async function GET() {
   if (!artistProfile && metadataArtistId !== null) {
     artistProfile = await db
       .select({
-        id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
         bio: artists.bio,
-        location: artists.location,
-        genre: artists.genre,
-        spotifyUrl: artists.spotifyUrl,
-        spotifyArtistId: artists.spotifyArtistId,
-        instagram: artists.instagram,
-        twitter: artists.twitter,
-        tiktok: artists.tiktok,
-        website: artists.website,
-        image: artists.image,
-        phoneNumber: artists.phoneNumber,
         claimedById: artists.claimedById,
+        genre: artists.genre,
+        id: artists.id,
+        image: artists.image,
+        instagram: artists.instagram,
+        location: artists.location,
+        name: artists.name,
+        phoneNumber: artists.phoneNumber,
+        slug: artists.slug,
+        spotifyArtistId: artists.spotifyArtistId,
+        spotifyUrl: artists.spotifyUrl,
+        tiktok: artists.tiktok,
+        twitter: artists.twitter,
+        website: artists.website,
       })
       .from(artists)
       .where(and(eq(artists.id, metadataArtistId), eq(artists.claimed, false)))
@@ -137,11 +132,6 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    role,
-    onboardingComplete,
-    fan: {
-      name: clerkUser.firstName ?? dbUser?.firstName ?? "",
-    },
     artist: artistProfile
       ? {
           id: artistProfile.id,
@@ -159,5 +149,10 @@ export async function GET() {
           phoneNumber: artistProfile.phoneNumber ?? "",
         }
       : null,
+    fan: {
+      name: clerkUser.firstName ?? dbUser?.firstName ?? "",
+    },
+    onboardingComplete,
+    role,
   });
 }

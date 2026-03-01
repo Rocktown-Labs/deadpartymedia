@@ -6,10 +6,7 @@
       "@/*": ["../src/*"]
     },
     "noEmit": true,
-    "types": [
-      "vitest/globals",
-      "node"
-    ],
+    "types": ["vitest/globals", "node"],
     "strictNullChecks": true
   },
   "include": ["./**/*.ts", "./**/*.tsx", "../src/**/*.ts", "../src/**/*.tsx"]

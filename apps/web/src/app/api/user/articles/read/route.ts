@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -13,9 +14,9 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) return fallback;
+  if (!value) {return fallback;}
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
   return parsed;
 }
 
@@ -38,18 +39,18 @@ function serializeArticle(row: {
   createdAt: Date;
 }) {
   return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    cover_image: row.coverImage,
     author: {
       id: row.authorId,
       name: "",
     },
-    published_at: row.publishedAt?.toISOString() ?? null,
-    views: row.views,
+    cover_image: row.coverImage,
     created_at: row.createdAt.toISOString(),
+    excerpt: row.excerpt,
+    id: row.id,
+    published_at: row.publishedAt?.toISOString() ?? null,
+    slug: row.slug,
+    title: row.title,
+    views: row.views,
   };
 }
 
@@ -85,8 +86,6 @@ export async function GET(request: Request) {
 
   const items = await db
     .select({
-      id: userArticleReads.id,
-      readAt: userArticleReads.readAt,
       article: {
         id: posts.id,
         slug: posts.slug,
@@ -98,6 +97,8 @@ export async function GET(request: Request) {
         views: posts.views,
         createdAt: posts.createdAt,
       },
+      id: userArticleReads.id,
+      readAt: userArticleReads.readAt,
     })
     .from(userArticleReads)
     .innerJoin(posts, eq(userArticleReads.postId, posts.id))
@@ -114,8 +115,8 @@ export async function GET(request: Request) {
     next: hasNextPage ? buildPaginationUrl(requestUrl, page + 1, pageSize) : null,
     previous: hasPreviousPage ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
     results: items.map((item) => ({
-      id: item.id,
       article: serializeArticle(item.article),
+      id: item.id,
       read_at: item.readAt.toISOString(),
     })),
   });
@@ -131,10 +132,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
   }
 
   const parsed = markReadSchema.safeParse(body);
@@ -147,15 +145,15 @@ export async function POST(request: NextRequest) {
 
   const [article] = await db
     .select({
+      authorId: posts.authorId,
+      coverImage: posts.coverImage,
+      createdAt: posts.createdAt,
+      excerpt: posts.excerpt,
       id: posts.id,
+      publishedAt: posts.publishedAt,
       slug: posts.slug,
       title: posts.title,
-      excerpt: posts.excerpt,
-      coverImage: posts.coverImage,
-      authorId: posts.authorId,
-      publishedAt: posts.publishedAt,
       views: posts.views,
-      createdAt: posts.createdAt,
     })
     .from(posts)
     .where(and(eq(posts.id, articleId), eq(posts.status, "published")))
@@ -173,8 +171,8 @@ export async function POST(request: NextRequest) {
       readAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: [userArticleReads.clerkUserId, userArticleReads.postId],
       set: { readAt: new Date() },
+      target: [userArticleReads.clerkUserId, userArticleReads.postId],
     })
     .returning({
       id: userArticleReads.id,
@@ -182,8 +180,8 @@ export async function POST(request: NextRequest) {
     });
 
   return NextResponse.json({
-    id: saved.id,
     article: serializeArticle(article),
+    id: saved.id,
     read_at: saved.readAt.toISOString(),
   });
 }

@@ -31,9 +31,7 @@ export default function ContactPage() {
           </Link>
 
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">
-              Get in Touch
-            </h1>
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">Get in Touch</h1>
             <div className="w-24 h-1 bg-[#7CFC00] mx-auto mb-8"></div>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
               Have a comment, question, or submission? We'd love to hear from you!

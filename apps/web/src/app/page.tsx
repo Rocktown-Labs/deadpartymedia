@@ -18,7 +18,6 @@ export default function DeadPartyMedia() {
   // Transform articles to match homepage-client expected format
   const transformedArticles = articlesArray.map((article: any) => ({
     ...article,
-    image: article.cover_image || article.image || "/placeholder.svg",
     author: typeof article.author === "string" ? article.author : article.author?.name || "Unknown",
     date: article.published_at
       ? new Date(article.published_at).toLocaleDateString("en-US", {
@@ -31,6 +30,7 @@ export default function DeadPartyMedia() {
           day: "numeric",
           year: "numeric",
         }),
+    image: article.cover_image || article.image || "/placeholder.svg",
   }));
 
   // Transform data for homepage
@@ -48,14 +48,14 @@ export default function DeadPartyMedia() {
     })
     .slice(0, 3)
     .map((event) => ({
+      artist: (event.artists || []).map((a: any) => a.name).join(" & ") || "Various Artists",
       date: {
         month: new Date(event.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
         day: new Date(event.date).getDate().toString(),
       },
-      artist: (event.artists || []).map((a: any) => a.name).join(" & ") || "Various Artists",
-      venue: `${event.venue} - ${event.location}`,
-      ticketUrl: event.ticket_link || "#",
       image: event.image,
+      ticketUrl: event.ticket_link || "#",
+      venue: `${event.venue} - ${event.location}`,
     }));
 
   // Ensure products is an array

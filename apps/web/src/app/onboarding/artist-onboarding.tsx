@@ -22,9 +22,9 @@ import { normalizeInstagramInput } from "./validation";
 import type { ArtistFormData } from "./form-options";
 
 type OnboardingStep = 1 | 2 | 3;
-type ArtistOnboardingProps = {
+interface ArtistOnboardingProps {
   initialValues?: Partial<ArtistFormData> | null;
-};
+}
 
 export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const router = useRouter();
@@ -47,9 +47,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
 
   useEffect(() => {
-    if (!initialValues || hasAppliedPrefill.current) return;
+    if (!initialValues || hasAppliedPrefill.current) {return;}
 
-    const fields: Array<keyof ArtistFormData> = [
+    const fields: (keyof ArtistFormData)[] = [
       "name",
       "location",
       "genre",
@@ -86,7 +86,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   }, [state, user, router]);
 
   const handleProfileImageUpload = async (file: File | null) => {
-    if (!file) return;
+    if (!file) {return;}
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
@@ -103,8 +103,8 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
       formData.append("file", file);
 
       const response = await fetch("/api/upload/image?type=profile", {
-        method: "POST",
         body: formData,
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -125,11 +125,11 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   };
 
   const handleNext = async () => {
-    if (currentStep >= 3) return;
+    if (currentStep >= 3) {return;}
 
     // Validate required fields for current step before proceeding
     const formState = form.state;
-    const values = formState.values;
+    const {values} = formState;
 
     if (currentStep === 1) {
       // Step 1: name, location, and genre are required
@@ -214,27 +214,30 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
 
           {/* Form */}
           <div className="bg-[#111111] border border-gray-800 rounded-lg p-8 mb-8">
-            <form action={action as never} onSubmit={(e) => {
-              e.preventDefault();
-              
-              // Get current form state
-              const formState = form.state;
-              
-              // Create FormData from form values
-              const formData = new FormData();
-              const values = formState.values;
-              
-              // Add all form fields to FormData
-              Object.entries(values).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== "") {
-                  formData.append(key, String(value));
-                }
-              });
-              
-              // `action` is called imperatively (not via native `<form action={...}>` submit),
-              // so wrap in a transition to keep React state updates consistent.
-              startTransition(() => action(formData));
-            }}>
+            <form
+              action={action as never}
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                // Get current form state
+                const formState = form.state;
+
+                // Create FormData from form values
+                const formData = new FormData();
+                const {values} = formState;
+
+                // Add all form fields to FormData
+                Object.entries(values).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== "") {
+                    formData.append(key, String(value));
+                  }
+                });
+
+                // `action` is called imperatively (not via native `<form action={...}>` submit),
+                // so wrap in a transition to keep React state updates consistent.
+                startTransition(() => action(formData));
+              }}
+            >
               {/* Form Errors */}
               {formErrors.length > 0 && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
@@ -303,7 +306,6 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                           value={field.state.value}
                           readOnly
                           aria-readonly="true"
-
                           className="w-full px-4 py-3 bg-[#0A0A0A] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00]"
                           placeholder="Select your Spotify artist above"
                         />
@@ -433,7 +435,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                         if (value.length > 500) {
                           return "Bio must be less than 500 characters";
                         }
-                        return undefined;
+                        return;
                       },
                     }}
                   >
@@ -476,7 +478,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                                 const spotifyImage = selectedSpotifyArtist?.images?.[0]?.url;
                                 if (!spotifyImage) {
                                   toast.error(
-                                    "No Spotify profile image found for this artist. Please upload an image instead."
+                                    "No Spotify profile image found for this artist. Please upload an image instead.",
                                   );
                                   setUseSpotifyProfileImage(false);
                                   return;
@@ -579,8 +581,8 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                     validators={{
                       onChange: ({ value }) => {
                         const normalized = normalizeInstagramInput(String(value ?? ""));
-                        if (!normalized) return "Instagram username is required";
-                        return undefined;
+                        if (!normalized) {return "Instagram username is required";}
+                        return;
                       },
                     }}
                   >
@@ -620,7 +622,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                       Boolean(String(values.twitter ?? "").trim()) ||
                       Boolean(String(values.tiktok ?? "").trim()) ||
                       Boolean(String(values.website ?? "").trim());
-                    if (hasOptionalSocial) return null;
+                    if (hasOptionalSocial) {return null;}
                     return (
                       <div className="p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg">
                         <p className="text-sm text-gray-300 font-bold">

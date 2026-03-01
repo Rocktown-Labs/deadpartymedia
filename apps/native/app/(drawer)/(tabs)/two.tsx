@@ -23,19 +23,19 @@ export default function TabTwo() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingVertical: 16,
+  },
   scrollView: {
     flex: 1,
     padding: 16,
   },
-  content: {
-    paddingVertical: 16,
+  subtitle: {
+    fontSize: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
   },
 });

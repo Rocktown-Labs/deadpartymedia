@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 
 type ProfileAction = (formData: FormData) => void | Promise<void>;
 
-type CreateProfilePanelProps = {
+interface CreateProfilePanelProps {
   action: ProfileAction;
-};
+}
 
 const PROFILE_TYPES = ["user", "artist"] as const;
 const USER_ROLES = ["writer", "super_admin", "fan"] as const;
@@ -27,9 +27,7 @@ export function CreateProfilePanel({ action }: CreateProfilePanelProps) {
   const [profileType, setProfileType] = useState<(typeof PROFILE_TYPES)[number]>("user");
   const [error, setError] = useState<string | null>(null);
 
-  const submitLabel = useMemo(() => {
-    return profileType === "artist" ? "Create Artist" : "Create User";
-  }, [profileType]);
+  const submitLabel = useMemo(() => profileType === "artist" ? "Create Artist" : "Create User", [profileType]);
 
   return (
     <Card className="border-gray-800 bg-[#111111]">
@@ -82,7 +80,10 @@ export function CreateProfilePanel({ action }: CreateProfilePanelProps) {
                 return;
               }
 
-              if (nextProfileType === "user" && !USER_ROLES.includes(role as (typeof USER_ROLES)[number])) {
+              if (
+                nextProfileType === "user" &&
+                !USER_ROLES.includes(role as (typeof USER_ROLES)[number])
+              ) {
                 event.preventDefault();
                 setError("Pick a valid role for a user profile.");
                 return;
@@ -107,7 +108,9 @@ export function CreateProfilePanel({ action }: CreateProfilePanelProps) {
               <select
                 name="profileType"
                 value={profileType}
-                onChange={(event) => setProfileType(event.target.value as (typeof PROFILE_TYPES)[number])}
+                onChange={(event) =>
+                  setProfileType(event.target.value as (typeof PROFILE_TYPES)[number])
+                }
                 className={selectInputClassName}
                 required
               >
@@ -155,7 +158,12 @@ export function CreateProfilePanel({ action }: CreateProfilePanelProps) {
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Genre
                   </label>
-                  <select name="genre" defaultValue="OTHER" className={selectInputClassName} required>
+                  <select
+                    name="genre"
+                    defaultValue="OTHER"
+                    className={selectInputClassName}
+                    required
+                  >
                     <option value="OTHER">OTHER</option>
                     <option value="COUNTRY">COUNTRY</option>
                     <option value="EDM">EDM</option>

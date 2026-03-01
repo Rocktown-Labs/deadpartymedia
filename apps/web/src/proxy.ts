@@ -1,10 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import {
-  getRequestLogger,
-  addRequestIdHeader,
-  getRequestId,
-} from "@/lib/logger/middleware";
+import { getRequestLogger, addRequestIdHeader, getRequestId } from "@/lib/logger/middleware";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { parseRole } from "@/lib/auth/role";
@@ -60,11 +56,11 @@ export default clerkMiddleware(async (auth, req) => {
   if (isRscRequest) {
     log.info(
       {
+        method: req.method,
+        middlewarePrefetch: req.headers.get("x-middleware-prefetch"),
         operation: "rsc_request",
         path: req.nextUrl.pathname,
-        method: req.method,
         purpose: req.headers.get("purpose"),
-        middlewarePrefetch: req.headers.get("x-middleware-prefetch"),
       },
       "RSC request observed",
     );
@@ -107,10 +103,10 @@ export default clerkMiddleware(async (auth, req) => {
     if (parsedRole === null && rawRole != null) {
       log.warn(
         {
-          userId,
+          operation: "invalid_role_metadata",
           rawRole,
           rawRoleType: typeof rawRole,
-          operation: "invalid_role_metadata",
+          userId,
         },
         "Unexpected role value in session metadata; applying fan fallback",
       );
@@ -118,7 +114,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     const userLog = withUserContext(log, userId, role);
     userLog.debug(
-      { path: req.nextUrl.pathname, role, onboardingComplete },
+      { onboardingComplete, path: req.nextUrl.pathname, role },
       "Authenticated request",
     );
   }
@@ -133,10 +129,7 @@ export default clerkMiddleware(async (auth, req) => {
     }
     // Redirect to onboarding if not completed
     if (userId) {
-      log.info(
-        { userId, operation: "onboarding_redirect" },
-        "Redirecting to onboarding",
-      );
+      log.info({ operation: "onboarding_redirect", userId }, "Redirecting to onboarding");
     }
     response = NextResponse.redirect(new URL("/onboarding", req.url));
     addRequestIdHeader(response, requestId);
@@ -158,21 +151,17 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Redirect to correct dashboard based on role
-    if (
-      isAdminRoute(req) ||
-      isArtistDashboardRoute(req) ||
-      isDashboardRoute(req)
-    ) {
+    if (isAdminRoute(req) || isArtistDashboardRoute(req) || isDashboardRoute(req)) {
       const targetPath =
         role === "super_admin" || role === "writer"
           ? "/admin"
-          : role === "artist"
+          : (role === "artist"
             ? "/artist-dashboard"
-            : "/dashboard";
+            : "/dashboard");
 
       if (userId) {
         log.info(
-          { userId, role, operation: "role_based_redirect", targetPath },
+          { operation: "role_based_redirect", role, targetPath, userId },
           "Redirecting to role-appropriate dashboard",
         );
       }

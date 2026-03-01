@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { GET } from "@/app/api/auth/me/route";
 
@@ -8,11 +8,11 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: mockDb,
 }));
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
@@ -33,32 +33,32 @@ function mockClerkUser(
     firstName: string | null;
     imageUrl: string | null;
     primaryEmailAddressId: string | null;
-    emailAddresses: Array<{ id: string; emailAddress: string }>;
+    emailAddresses: { id: string; emailAddress: string }[];
   }> = {},
 ) {
   vi.mocked(clerkClient).mockResolvedValue({
     users: {
       getUser: vi.fn().mockResolvedValue({
-        fullName: "Test User",
+        emailAddresses: [{ id: "email_1", emailAddress: "user@example.com" }],
         firstName: "Test",
+        fullName: "Test User",
         imageUrl: "https://example.com/avatar.png",
         primaryEmailAddressId: "email_1",
-        emailAddresses: [{ id: "email_1", emailAddress: "user@example.com" }],
         ...user,
       }),
     },
   } as any);
 }
 
-describe("GET /api/auth/me", () => {
+describe("gET /api/auth/me", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("returns 401 when unauthenticated", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: null,
       sessionClaims: null,
+      userId: null,
     } as any);
 
     const response = await GET();
@@ -70,8 +70,8 @@ describe("GET /api/auth/me", () => {
 
   it("prefers role from session claims over DB role", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "artist" } },
+      userId: "user_123",
     } as any);
     mockUserRoleQuery([{ role: "fan" }]);
     mockClerkUser();
@@ -82,21 +82,21 @@ describe("GET /api/auth/me", () => {
     expect(response.status).toBe(200);
     expect(data.role).toBe("artist");
     expect(data).toMatchObject({
-      id: "user_123",
       email: "user@example.com",
+      id: "user_123",
       name: "Test User",
     });
   });
 
   it("falls back to DB role when session claim role is unknown", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "legacy_role" } },
+      userId: "user_123",
     } as any);
     mockUserRoleQuery([{ role: "writer" }]);
     mockClerkUser({
-      fullName: null,
       firstName: "Writer",
+      fullName: null,
       imageUrl: null,
     });
 
@@ -111,15 +111,15 @@ describe("GET /api/auth/me", () => {
 
   it('falls back to "fan" when neither session nor DB role is valid', async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "legacy_role" } },
+      userId: "user_123",
     } as any);
     mockUserRoleQuery([]);
     mockClerkUser({
-      primaryEmailAddressId: "missing_primary",
       emailAddresses: [{ id: "email_2", emailAddress: "fallback@example.com" }],
-      fullName: null,
       firstName: null,
+      fullName: null,
+      primaryEmailAddressId: "missing_primary",
     });
 
     const response = await GET();

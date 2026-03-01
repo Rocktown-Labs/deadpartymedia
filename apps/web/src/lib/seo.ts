@@ -27,18 +27,18 @@ export function getAbsoluteUrl(path: string): string {
  * Strip HTML tags and decode HTML entities from a string
  */
 export function stripHtml(html: string | null | undefined): string {
-  if (!html) return "";
+  if (!html) {return "";}
   // Remove HTML tags
-  const text = html.replace(/<[^>]*>/g, "");
+  const text = html.replaceAll(/<[^>]*>/g, "");
   // Decode common HTML entities
   return text
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
+    .replaceAll(/&nbsp;/g, " ")
+    .replaceAll(/&amp;/g, "&")
+    .replaceAll(/&lt;/g, "<")
+    .replaceAll(/&gt;/g, ">")
+    .replaceAll(/&quot;/g, '"')
+    .replaceAll(/&#39;/g, "'")
+    .replaceAll(/&apos;/g, "'")
     .trim();
 }
 
@@ -46,7 +46,7 @@ export function stripHtml(html: string | null | undefined): string {
  * Truncate text to a maximum length, adding ellipsis if truncated
  */
 export function truncateText(text: string, maxLength: number = 160): string {
-  if (!text || text.length <= maxLength) return text;
+  if (!text || text.length <= maxLength) {return text;}
   return text.slice(0, maxLength - 3).trim() + "...";
 }
 
@@ -56,11 +56,11 @@ export function truncateText(text: string, maxLength: number = 160): string {
 export function sanitizeDescription(
   description: string | null | undefined,
   fallback: string = DEFAULT_DESCRIPTION,
-  maxLength: number = 160
+  maxLength: number = 160,
 ): string {
-  if (!description) return fallback;
+  if (!description) {return fallback;}
   const cleaned = stripHtml(description);
-  if (!cleaned) return fallback;
+  if (!cleaned) {return fallback;}
   return truncateText(cleaned, maxLength);
 }
 
@@ -76,10 +76,10 @@ export function getOgImageUrl(type: "article" | "event" | "artist", slug: string
  */
 export function getSiteDefaults() {
   return {
-    siteUrl: SITE_URL,
-    siteName: SITE_NAME,
     defaultDescription: DEFAULT_DESCRIPTION,
     defaultOgImage: DEFAULT_OG_IMAGE,
+    siteName: SITE_NAME,
+    siteUrl: SITE_URL,
   };
 }
 
@@ -128,7 +128,7 @@ export function generateArticleMetadata(article: Article): Metadata {
   const title = `${article.title} | ${SITE_NAME}`;
   const description = sanitizeDescription(
     article.excerpt,
-    `Read about ${article.title} on ${SITE_NAME}`
+    `Read about ${article.title} on ${SITE_NAME}`,
   );
   // Use dynamic OG image, fallback to cover image or default
   const ogImageUrl = getOgImageUrl("article", article.slug);
@@ -136,7 +136,9 @@ export function generateArticleMetadata(article: Article): Metadata {
   const url = getAbsoluteUrl(`/article/${article.slug}`);
 
   return {
-    title,
+    alternates: {
+      canonical: url,
+    },
     description,
     openGraph: {
       title,
@@ -162,14 +164,12 @@ export function generateArticleMetadata(article: Article): Metadata {
       publishedTime: article.published_at || undefined,
       authors: article.author?.name ? [article.author.name] : undefined,
     },
+    title,
     twitter: {
       card: "summary_large_image",
       title,
       description,
       images: [ogImageUrl, fallbackImage],
-    },
-    alternates: {
-      canonical: url,
     },
   };
 }
@@ -188,7 +188,9 @@ export function generateEventMetadata(event: Event): Metadata {
   const url = getAbsoluteUrl(`/events/${event.slug}`);
 
   return {
-    title,
+    alternates: {
+      canonical: url,
+    },
     description,
     openGraph: {
       title,
@@ -212,14 +214,12 @@ export function generateEventMetadata(event: Event): Metadata {
       locale: "en_US",
       type: "website",
     },
+    title,
     twitter: {
       card: "summary_large_image",
       title,
       description,
       images: [ogImageUrl, fallbackImage],
-    },
-    alternates: {
-      canonical: url,
     },
   };
 }
@@ -231,7 +231,7 @@ export function generateArtistMetadata(artist: Artist): Metadata {
   const title = `${artist.name} | ${SITE_NAME}`;
   const description = sanitizeDescription(
     artist.bio,
-    `Learn more about ${artist.name} on ${SITE_NAME}`
+    `Learn more about ${artist.name} on ${SITE_NAME}`,
   );
   // Use dynamic OG image, fallback to artist image or default
   const ogImageUrl = getOgImageUrl("artist", artist.slug);
@@ -239,7 +239,9 @@ export function generateArtistMetadata(artist: Artist): Metadata {
   const url = getAbsoluteUrl(`/artists/${artist.slug}`);
 
   return {
-    title,
+    alternates: {
+      canonical: url,
+    },
     description,
     openGraph: {
       title,
@@ -263,14 +265,12 @@ export function generateArtistMetadata(artist: Artist): Metadata {
       locale: "en_US",
       type: "profile",
     },
+    title,
     twitter: {
       card: "summary_large_image",
       title,
       description,
       images: [ogImageUrl, fallbackImage],
-    },
-    alternates: {
-      canonical: url,
     },
   };
 }

@@ -101,7 +101,7 @@ export default function HomepageClient({
                   </div>
                 </div>
               </div>
-            ) : featuredArticles.length > 0 ? (
+            ) : (featuredArticles.length > 0 ? (
               <div className="lg:col-span-8">
                 <Link href={`/article/${featuredArticles[0]?.slug}`} prefetch={false}>
                   <div className="relative group cursor-pointer h-full">
@@ -184,7 +184,7 @@ export default function HomepageClient({
                   </div>
                 </div>
               </div>
-            )}
+            ))}
 
             {/* Sidebar - In This Issue */}
             <div className="lg:col-span-4 flex flex-col gap-6">
@@ -242,7 +242,7 @@ export default function HomepageClient({
                         <Skeleton className="h-4 w-2/3" />
                       </div>
                     </>
-                  ) : featuredArticles.length > 1 ? (
+                  ) : (featuredArticles.length > 1 ? (
                     featuredArticles.slice(1, 3).map((article, index) => (
                       <Link
                         key={article.id || index}
@@ -276,7 +276,7 @@ export default function HomepageClient({
                     ))
                   ) : (
                     <p className="text-gray-400 text-sm">More articles coming soon...</p>
-                  )}
+                  ))}
                 </div>
               </div>
 
@@ -355,7 +355,7 @@ export default function HomepageClient({
                 </div>
               ))}
             </div>
-          ) : articlesData.length > 3 ? (
+          ) : (articlesData.length > 3 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {articlesData.slice(3, visibleArticles).map((article) => (
                 <Link key={article.id} href={`/article/${article.slug}`} prefetch={false}>
@@ -413,10 +413,12 @@ export default function HomepageClient({
           ) : (
             <div className="text-center py-16">
               <p className="text-gray-400 text-lg">
-                {hasArticlesError ? "Stories are temporarily unavailable." : "More articles coming soon..."}
+                {hasArticlesError
+                  ? "Stories are temporarily unavailable."
+                  : "More articles coming soon..."}
               </p>
             </div>
-          )}
+          ))}
 
           {articlesData.length > 3 && visibleArticles < articlesData.length && (
             <div className="text-center mt-16">
@@ -470,7 +472,7 @@ export default function HomepageClient({
                 </div>
               ))}
             </div>
-          ) : upcomingEvents.length > 0 ? (
+          ) : (upcomingEvents.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               {upcomingEvents.map((event, index) => (
                 <div key={index} className="group cursor-pointer">
@@ -511,7 +513,7 @@ export default function HomepageClient({
                   : "No upcoming events right now."}
               </p>
             </div>
-          )}
+          ))}
         </div>
       </section>
 

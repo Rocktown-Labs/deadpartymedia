@@ -27,11 +27,11 @@ export async function getUserStats(userId: string): Promise<UserStats> {
         WHERE ${articleComments.clerkUserId} = ${userId}
       ) AS comments_count
   `)) as {
-    rows?: Array<{
+    rows?: {
       articles_read_count: number | string | null;
       articles_saved_count: number | string | null;
       comments_count: number | string | null;
-    }>;
+    }[];
   };
 
   const row = result.rows?.[0];

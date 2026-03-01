@@ -1,14 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, postArtists, artists, articleComments, users } from "@/lib/db/schema";
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
-function resolveAuthorName(firstName: string | null, lastName: string | null, email: string | null) {
+function resolveAuthorName(
+  firstName: string | null,
+  lastName: string | null,
+  email: string | null,
+) {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  if (fullName.length > 0) return fullName;
-  if (typeof email === "string" && email.trim().length > 0) return email;
+  if (fullName.length > 0) {return fullName;}
+  if (typeof email === "string" && email.trim().length > 0) {return email;}
   return "Unknown";
 }
 
@@ -32,22 +37,22 @@ export async function GET(request: NextRequest) {
 
     const results = await db
       .select({
-        id: posts.id,
-        title: posts.title,
-        slug: posts.slug,
-        category: posts.category,
-        excerpt: posts.excerpt,
-        coverImage: posts.coverImage,
+        authorEmail: users.email,
+        authorFirstName: users.firstName,
         authorId: posts.authorId,
-        status: posts.status,
+        authorLastName: users.lastName,
+        category: posts.category,
+        coverImage: posts.coverImage,
+        createdAt: posts.createdAt,
+        excerpt: posts.excerpt,
+        id: posts.id,
         isCoverStory: posts.isCoverStory,
         publishedAt: posts.publishedAt,
-        createdAt: posts.createdAt,
+        slug: posts.slug,
+        status: posts.status,
+        title: posts.title,
         updatedAt: posts.updatedAt,
         views: posts.views,
-        authorFirstName: users.firstName,
-        authorLastName: users.lastName,
-        authorEmail: users.email,
       })
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.clerkId))
@@ -58,23 +63,26 @@ export async function GET(request: NextRequest) {
 
     // Get artist relations for all posts
     const postIds = results.map((post) => post.id);
-    let artistRelations: Record<number, Array<{
-      postId: number;
-      artistId: number;
-      artistSlug: string;
-      artistName: string;
-      artistImage: string | null;
-    }>> = {};
+    const artistRelations: Record<
+      number,
+      Array<{
+        postId: number;
+        artistId: number;
+        artistSlug: string;
+        artistName: string;
+        artistImage: string | null;
+      }>
+    > = {};
     const commentCountByPostId = new Map<number, number>();
 
     if (postIds.length > 0) {
       const relations = await db
         .select({
-          postId: postArtists.postId,
           artistId: artists.id,
-          artistSlug: artists.slug,
-          artistName: artists.name,
           artistImage: artists.image,
+          artistName: artists.name,
+          artistSlug: artists.slug,
+          postId: postArtists.postId,
         })
         .from(postArtists)
         .innerJoin(artists, eq(postArtists.artistId, artists.id))
@@ -90,8 +98,8 @@ export async function GET(request: NextRequest) {
 
       const commentCounts = await db
         .select({
-          postId: articleComments.postId,
           count: sql<number>`count(*)::int`.as("count"),
+          postId: articleComments.postId,
         })
         .from(articleComments)
         .where(inArray(articleComments.postId, postIds))
@@ -106,27 +114,27 @@ export async function GET(request: NextRequest) {
     const articles = results.map((post) => {
       const postArtistsData = artistRelations[post.id] || [];
       return {
-        id: post.id,
-        title: post.title,
-        slug: post.slug,
-        category: post.category,
-        excerpt: post.excerpt,
-        cover_image: post.coverImage,
-        author: {
-          id: post.authorId,
-          name: resolveAuthorName(post.authorFirstName, post.authorLastName, post.authorEmail),
-        },
         artists: postArtistsData.map((a) => ({
           id: a.artistId,
           slug: a.artistSlug,
           name: a.artistName,
           image: a.artistImage,
         })),
-        published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
-        views: post.views,
+        author: {
+          id: post.authorId,
+          name: resolveAuthorName(post.authorFirstName, post.authorLastName, post.authorEmail),
+        },
+        category: post.category,
         comment_count: commentCountByPostId.get(post.id) ?? 0,
-        is_cover_story: post.isCoverStory,
+        cover_image: post.coverImage,
         created_at: post.createdAt.toISOString(),
+        excerpt: post.excerpt,
+        id: post.id,
+        is_cover_story: post.isCoverStory,
+        published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
+        slug: post.slug,
+        title: post.title,
+        views: post.views,
       };
     });
 
@@ -139,13 +147,10 @@ export async function GET(request: NextRequest) {
         headers: {
           "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
         },
-      }
+      },
     );
   } catch (error) {
-    log.error(
-      { error: sanitizeError(error), operation: "fetch_posts" },
-      "Error fetching posts"
-    );
+    log.error({ error: sanitizeError(error), operation: "fetch_posts" }, "Error fetching posts");
     return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
   }
 }

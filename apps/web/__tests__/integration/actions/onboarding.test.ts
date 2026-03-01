@@ -1,42 +1,35 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  fanOnboardingAction,
-  artistOnboardingAction,
-} from "@/app/onboarding/actions";
+
+import { fanOnboardingAction, artistOnboardingAction } from "@/app/onboarding/actions";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 // Mock dependencies
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
-vi.mock("next/navigation", () => ({
+vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
   redirect: vi.fn(),
 }));
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: {
-    select: vi.fn(),
     insert: vi.fn(),
+    select: vi.fn(),
     update: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/auth/user-state", () => ({
-  upsertUserAuthState: vi.fn().mockResolvedValue(undefined),
+vi.mock<typeof import('@/lib/auth/user-state')>(import('@/lib/auth/user-state'), () => ({
+  upsertUserAuthState: vi.fn().mockResolvedValue(),
 }));
 
-vi.mock("@/lib/utils/slug", () => ({
-  generateSlug: vi.fn((name: string) =>
-    name.toLowerCase().replace(/\s+/g, "-"),
-  ),
-  ensureUniqueSlug: vi.fn(
-    async (slug: string, _id?: number, _table?: string) => slug,
-  ),
+vi.mock<typeof import('@/lib/utils/slug')>(import('@/lib/utils/slug'), () => ({
+  ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, "-")),
 }));
 
-describe("fanOnboardingAction", () => {
+describe(fanOnboardingAction, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -59,11 +52,11 @@ describe("fanOnboardingAction", () => {
     const mockClient = {
       users: {
         getUser: vi.fn().mockResolvedValue({
-          publicMetadata: {},
           emailAddresses: [{ id: "email_1", emailAddress: "fan@example.com" }],
-          primaryEmailAddressId: "email_1",
-          lastName: null,
           imageUrl: null,
+          lastName: null,
+          primaryEmailAddressId: "email_1",
+          publicMetadata: {},
         }),
         updateUser: vi.fn(),
         updateUserMetadata: vi.fn(),
@@ -81,11 +74,11 @@ describe("fanOnboardingAction", () => {
     });
     expect(mockClient.users.updateUserMetadata).toHaveBeenCalledWith(userId, {
       publicMetadata: {
-        role: "fan",
         onboardingComplete: true,
+        role: "fan",
       },
     });
-    expect((result as any).success).toBe(true);
+    expect((result as any).success).toBeTruthy();
   });
 
   it("should return validation errors for invalid data", async () => {
@@ -102,7 +95,7 @@ describe("fanOnboardingAction", () => {
   });
 });
 
-describe("artistOnboardingAction", () => {
+describe(artistOnboardingAction, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -128,26 +121,26 @@ describe("artistOnboardingAction", () => {
     const userId = "user_test123";
     vi.mocked(auth).mockResolvedValue({ userId } as any);
 
-    const mockUpdateUserMetadata = vi.fn().mockResolvedValue(undefined);
+    const mockUpdateUserMetadata = vi.fn().mockResolvedValue();
     const mockGetUser = vi.fn().mockResolvedValue({
-      id: userId,
-      publicMetadata: {},
       emailAddresses: [{ id: "email_1", emailAddress: "artist@example.com" }],
-      primaryEmailAddressId: "email_1",
-      lastName: null,
+      id: userId,
       imageUrl: null,
+      lastName: null,
+      primaryEmailAddressId: "email_1",
+      publicMetadata: {},
     });
     const mockClient = {
       users: {
         getUser: mockGetUser,
-        updateUser: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn().mockResolvedValue(),
         updateUserMetadata: mockUpdateUserMetadata,
       },
     };
     vi.mocked(clerkClient).mockResolvedValue(mockClient as any);
 
     // Mock database operations - db.insert(table).values(...) resolves a promise
-    const mockValues = vi.fn().mockResolvedValue(undefined);
+    const mockValues = vi.fn().mockResolvedValue();
     vi.mocked(db.insert).mockReturnValue({
       values: mockValues,
     } as any);
@@ -164,13 +157,13 @@ describe("artistOnboardingAction", () => {
     const result = await artistOnboardingAction(null, formData);
 
     // Check that the action completed successfully
-    expect((result as any).success).toBe(true);
+    expect((result as any).success).toBeTruthy();
 
     // Verify updateUserMetadata was called with correct arguments
     expect(mockUpdateUserMetadata).toHaveBeenCalledWith(userId, {
       publicMetadata: {
-        role: "artist",
         onboardingComplete: true,
+        role: "artist",
       },
     });
   });
@@ -183,15 +176,15 @@ describe("artistOnboardingAction", () => {
     const mockClient = {
       users: {
         getUser: vi.fn().mockResolvedValue({
+          emailAddresses: [{ id: "email_1", emailAddress: "artist2@example.com" }],
+          imageUrl: null,
+          lastName: null,
+          primaryEmailAddressId: "email_1",
           publicMetadata: {
             artistId: artistId.toString(),
           },
-          emailAddresses: [{ id: "email_1", emailAddress: "artist2@example.com" }],
-          primaryEmailAddressId: "email_1",
-          lastName: null,
-          imageUrl: null,
         }),
-        updateUser: vi.fn().mockResolvedValue(undefined),
+        updateUser: vi.fn().mockResolvedValue(),
         updateUserMetadata: vi.fn(),
       },
     };
@@ -203,9 +196,9 @@ describe("artistOnboardingAction", () => {
     const mockWhere = vi.fn().mockReturnThis();
     const mockLimit = vi.fn().mockResolvedValue([
       {
+        claimed: false,
         id: artistId,
         name: "Existing Artist",
-        claimed: false,
       },
     ]);
     vi.mocked(db.select).mockReturnValue({
@@ -238,8 +231,8 @@ describe("artistOnboardingAction", () => {
 
     const result = await artistOnboardingAction(null, formData);
 
-    expect(mockClient.users.updateUserMetadata).toHaveBeenCalled();
-    expect((result as any).success).toBe(true);
+    expect(mockClient.users.updateUserMetadata).toHaveBeenCalledWith();
+    expect((result as any).success).toBeTruthy();
   });
 
   it("should return error if artist profile already claimed", async () => {
@@ -264,9 +257,9 @@ describe("artistOnboardingAction", () => {
     const mockWhere = vi.fn().mockReturnThis();
     const mockLimit = vi.fn().mockResolvedValue([
       {
+        claimed: true,
         id: artistId,
         name: "Existing Artist",
-        claimed: true,
       },
     ]);
     vi.mocked(db.select).mockReturnValue({

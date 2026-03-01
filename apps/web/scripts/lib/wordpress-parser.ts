@@ -1,19 +1,14 @@
 import { JSDOM } from "jsdom";
 
-export type AppCategory =
-  | "COUNTRY"
-  | "EDM"
-  | "HARDCORE & ROCK"
-  | "HIP-HOP & R&B"
-  | "OTHER";
+export type AppCategory = "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
 
-export type FirecrawlScrapePayload = {
+export interface FirecrawlScrapePayload {
   html: string;
   metadata?: Record<string, unknown>;
   sourceUrl?: string;
-};
+}
 
-export type ParsedWordpressArticle = {
+export interface ParsedWordpressArticle {
   sourceUrl: string;
   slug: string;
   title: string;
@@ -27,7 +22,7 @@ export type ParsedWordpressArticle = {
   category: AppCategory;
   sourcePublishedAt: Date;
   sourceModifiedAt: Date | null;
-};
+}
 
 const WORDPRESS_POST_URL_PATTERN =
   /^https:\/\/deadpartymedia\.wordpress\.com\/(\d{4})\/(\d{2})\/(\d{2})\/([^/]+)\/?$/;
@@ -51,13 +46,13 @@ export function isWordpressPostPermalink(url: string): boolean {
 
 export function extractPermalinkSlug(url: string): string | null {
   const match = url.match(WORDPRESS_POST_URL_PATTERN);
-  if (!match) return null;
+  if (!match) {return null;}
   return match[4] || null;
 }
 
 export function extractPermalinkDate(url: string): Date | null {
   const match = url.match(WORDPRESS_POST_URL_PATTERN);
-  if (!match) return null;
+  if (!match) {return null;}
 
   const [_, year, month, day] = match;
   const value = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
@@ -68,23 +63,18 @@ export function normalizeAuthorSlug(input: string): string {
   return input
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replaceAll(/[^a-z0-9\s-]/g, "")
+    .replaceAll(/[\s_-]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "")
     .slice(0, 120);
 }
 
 export function mapWordpressCategory(rawCategories: string[]): AppCategory {
-  const normalized = rawCategories.map((value) =>
-    value
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " "),
-  );
+  const normalized = rawCategories.map((value) => value.trim().toLowerCase().replaceAll(/\s+/g, " "));
 
   for (const category of normalized) {
-    if (category === "country") return "COUNTRY";
-    if (category === "edm") return "EDM";
+    if (category === "country") {return "COUNTRY";}
+    if (category === "edm") {return "EDM";}
     if (
       category === "hardcore & rock" ||
       category === "hardcore-rock" ||
@@ -107,19 +97,16 @@ export function mapWordpressCategory(rawCategories: string[]): AppCategory {
 }
 
 function cleanText(value: string): string {
-  return value.replace(/\s+/g, " ").trim();
+  return value.replaceAll(/\s+/g, " ").trim();
 }
 
 function truncateExcerpt(value: string, maxLength: number): string {
   const cleaned = cleanText(value);
-  if (cleaned.length <= maxLength) return cleaned;
+  if (cleaned.length <= maxLength) {return cleaned;}
   return `${cleaned.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
-function getMetadataString(
-  metadata: Record<string, unknown>,
-  keys: string[],
-): string | null {
+function getMetadataString(metadata: Record<string, unknown>, keys: string[]): string | null {
   for (const key of keys) {
     const value = metadata[key];
     if (typeof value === "string" && value.trim().length > 0) {
@@ -133,8 +120,7 @@ function getMetadataString(
 function parseSourceUrl(payload: FirecrawlScrapePayload): string {
   const metadata = payload.metadata ?? {};
   const candidate =
-    getMetadataString(metadata, ["sourceURL", "url", "og:url", "ogUrl"]) ??
-    payload.sourceUrl;
+    getMetadataString(metadata, ["sourceURL", "url", "og:url", "ogUrl"]) ?? payload.sourceUrl;
 
   if (!candidate) {
     throw new Error("Missing source URL in Firecrawl payload");
@@ -143,14 +129,8 @@ function parseSourceUrl(payload: FirecrawlScrapePayload): string {
   return candidate;
 }
 
-function parsePublishedAt(
-  metadata: Record<string, unknown>,
-  rootDocument: Document,
-): Date {
-  const metadataValue = getMetadataString(metadata, [
-    "article:published_time",
-    "publishedTime",
-  ]);
+function parsePublishedAt(metadata: Record<string, unknown>, rootDocument: Document): Date {
+  const metadataValue = getMetadataString(metadata, ["article:published_time", "publishedTime"]);
 
   if (metadataValue) {
     const published = new Date(metadataValue);
@@ -159,9 +139,7 @@ function parsePublishedAt(
     }
   }
 
-  const datetime = rootDocument
-    .querySelector(".wp-block-post-date time")
-    ?.getAttribute("datetime");
+  const datetime = rootDocument.querySelector(".wp-block-post-date time")?.getAttribute("datetime");
 
   if (datetime) {
     const published = new Date(datetime);
@@ -182,11 +160,8 @@ function parsePublishedAt(
 }
 
 function parseModifiedAt(metadata: Record<string, unknown>): Date | null {
-  const metadataValue = getMetadataString(metadata, [
-    "article:modified_time",
-    "modifiedTime",
-  ]);
-  if (!metadataValue) return null;
+  const metadataValue = getMetadataString(metadata, ["article:modified_time", "modifiedTime"]);
+  if (!metadataValue) {return null;}
 
   const modified = new Date(metadataValue);
   return Number.isNaN(modified.valueOf()) ? null : modified;
@@ -234,15 +209,13 @@ function collectRawCategories(rootDocument: Document): string[] {
 
   for (const link of categoryLinks) {
     const text = cleanText(link.textContent ?? "");
-    if (text) categories.add(text);
+    if (text) {categories.add(text);}
   }
 
-  return Array.from(categories);
+  return [...categories];
 }
 
-export function parseWordpressArticle(
-  payload: FirecrawlScrapePayload,
-): ParsedWordpressArticle {
+export function parseWordpressArticle(payload: FirecrawlScrapePayload): ParsedWordpressArticle {
   const sourceUrl = parseSourceUrl(payload);
   if (!isWordpressPostPermalink(sourceUrl)) {
     throw new Error(`Not a supported WordPress post URL: ${sourceUrl}`);
@@ -272,7 +245,7 @@ export function parseWordpressArticle(
     ? absolutizeUrl(coverImageNode.getAttribute("src") ?? "", sourceUrl)
     : null;
 
-  const inlineImageUrls = Array.from(entryContent.querySelectorAll("img[src]"))
+  const inlineImageUrls = [...entryContent.querySelectorAll('img[src]')]
     .map((node) => node.getAttribute("src") ?? "")
     .map((value) => absolutizeUrl(value, sourceUrl))
     .filter((value) => value.length > 0);
@@ -295,18 +268,18 @@ export function parseWordpressArticle(
   const excerpt = parseExcerpt(metadata, entryContent);
 
   return {
-    sourceUrl,
-    slug,
-    title,
-    excerpt,
-    contentHtml,
-    coverImageUrl,
-    inlineImageUrls,
     authorName,
     authorSlug,
-    rawCategories,
     category,
-    sourcePublishedAt,
+    contentHtml,
+    coverImageUrl,
+    excerpt,
+    inlineImageUrls,
+    rawCategories,
+    slug,
     sourceModifiedAt,
+    sourcePublishedAt,
+    sourceUrl,
+    title,
   };
 }

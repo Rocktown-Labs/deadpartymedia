@@ -28,8 +28,8 @@ function SignUp() {
 
     await authClient.signUp.email(
       {
-        name,
         email,
+        name,
         password,
       },
       {
@@ -37,13 +37,13 @@ function SignUp() {
           setError(getErrorMessage(error) ?? "Failed to sign up");
           setIsLoading(false);
         },
+        onFinished() {
+          setIsLoading(false);
+        },
         onSuccess() {
           setName("");
           setEmail("");
           setPassword("");
-        },
-        onFinished() {
-          setIsLoading(false);
         },
       },
     );
@@ -62,7 +62,7 @@ function SignUp() {
       <TextInput
         style={[
           styles.input,
-          { color: theme.text, borderColor: theme.border, backgroundColor: theme.background },
+          { backgroundColor: theme.background, borderColor: theme.border, color: theme.text },
         ]}
         placeholder="Name"
         placeholderTextColor={theme.text}
@@ -73,7 +73,7 @@ function SignUp() {
       <TextInput
         style={[
           styles.input,
-          { color: theme.text, borderColor: theme.border, backgroundColor: theme.background },
+          { backgroundColor: theme.background, borderColor: theme.border, color: theme.text },
         ]}
         placeholder="Email"
         placeholderTextColor={theme.text}
@@ -86,7 +86,7 @@ function SignUp() {
       <TextInput
         style={[
           styles.input,
-          { color: theme.text, borderColor: theme.border, backgroundColor: theme.background },
+          { backgroundColor: theme.background, borderColor: theme.border, color: theme.text },
         ]}
         placeholder="Password"
         placeholderTextColor={theme.text}
@@ -111,15 +111,19 @@ function SignUp() {
 }
 
 const styles = StyleSheet.create({
+  button: {
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "#ffffff",
+    fontSize: 16,
+  },
   card: {
     marginTop: 16,
     padding: 16,
     borderWidth: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
   },
   errorContainer: {
     marginBottom: 12,
@@ -134,14 +138,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 12,
   },
-  button: {
-    padding: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: 16,
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
   },
 });
 

@@ -47,6 +47,7 @@ USE_S3=False
 ```
 
 **Generate SECRET_KEY:**
+
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(50))"
 ```
@@ -56,6 +57,7 @@ python -c "import secrets; print(secrets.token_urlsafe(50))"
 **Location:** `apps/web/.env.local` (create this file - it's gitignored)
 
 **To create:**
+
 ```bash
 cp apps/web/.env.example apps/web/.env.local
 ```
@@ -73,6 +75,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 #### Vercel (recommended)
 
 If you're deploying the web app to Vercel, set `DATABASE_URL` in **Vercel → Project → Settings → Environment Variables**:
+
 - **Production**: point to Neon **main** branch connection string
 - **Preview**: point to Neon **dev** branch connection string
 
@@ -116,6 +119,7 @@ pnpm dev
 ```
 
 This will start:
+
 - **Frontend**: http://localhost:3001
 - **Backend**: http://localhost:8000
 - **Django Admin**: http://localhost:8000/admin/
@@ -219,6 +223,7 @@ uv run python manage.py runserver 8001
 ### CORS Errors
 
 If you see CORS errors, check:
+
 1. `CORS_ALLOWED_ORIGINS` in `apps/server/config/settings/base.py`
 2. Frontend URL matches (default: http://localhost:3001)
 
@@ -255,4 +260,3 @@ uv run python manage.py makemigrations   # Create migrations
 uv run python manage.py migrate          # Apply migrations
 uv run python manage.py runserver        # Run dev server
 ```
-

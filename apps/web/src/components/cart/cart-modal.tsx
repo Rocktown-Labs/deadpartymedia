@@ -133,12 +133,12 @@ export default function CartModal() {
 
                             // Track cart item removed event
                             posthog.capture("cart_item_removed", {
+                              price: item.cost.totalAmount.amount,
                               product_id: item.merchandise.product.id,
                               product_title: item.merchandise.product.title,
+                              quantity: item.quantity,
                               variant_id: item.merchandise.id,
                               variant_title: item.merchandise.title,
-                              quantity: item.quantity,
-                              price: item.cost.totalAmount.amount,
                             });
                           }}
                           className="p-2 hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
@@ -188,11 +188,11 @@ export default function CartModal() {
                     currency: cart.currency,
                     item_count: cart.totalQuantity,
                     items: cart.lines.map((item) => ({
+                      price: item.cost.totalAmount.amount,
                       product_id: item.merchandise.product.id,
                       product_title: item.merchandise.product.title,
-                      variant_id: item.merchandise.id,
                       quantity: item.quantity,
-                      price: item.cost.totalAmount.amount,
+                      variant_id: item.merchandise.id,
                     })),
                   });
 

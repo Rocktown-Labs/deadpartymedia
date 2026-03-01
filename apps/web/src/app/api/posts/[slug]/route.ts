@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, postArtists, artists, articleComments, users } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -9,40 +10,41 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
-function resolveAuthorName(firstName: string | null, lastName: string | null, email: string | null) {
+function resolveAuthorName(
+  firstName: string | null,
+  lastName: string | null,
+  email: string | null,
+) {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  if (fullName.length > 0) return fullName;
-  if (typeof email === "string" && email.trim().length > 0) return email;
+  if (fullName.length > 0) {return fullName;}
+  if (typeof email === "string" && email.trim().length > 0) {return email;}
   return "Unknown";
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const log = getRequestLogger(request);
   try {
     const { slug } = await params;
 
     const [row] = await db
       .select({
-        id: posts.id,
-        title: posts.title,
-        slug: posts.slug,
+        authorEmail: users.email,
+        authorFirstName: users.firstName,
+        authorId: posts.authorId,
+        authorLastName: users.lastName,
         category: posts.category,
-        excerpt: posts.excerpt,
         content: posts.content,
         coverImage: posts.coverImage,
-        authorId: posts.authorId,
-        status: posts.status,
+        createdAt: posts.createdAt,
+        excerpt: posts.excerpt,
+        id: posts.id,
         isCoverStory: posts.isCoverStory,
         publishedAt: posts.publishedAt,
-        createdAt: posts.createdAt,
+        slug: posts.slug,
+        status: posts.status,
+        title: posts.title,
         updatedAt: posts.updatedAt,
         views: posts.views,
-        authorFirstName: users.firstName,
-        authorLastName: users.lastName,
-        authorEmail: users.email,
       })
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.clerkId))
@@ -58,9 +60,9 @@ export async function GET(
     const postArtistsData = await db
       .select({
         id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
         image: artists.image,
+        name: artists.name,
+        slug: artists.slug,
       })
       .from(postArtists)
       .innerJoin(artists, eq(postArtists.artistId, artists.id))
@@ -79,31 +81,31 @@ export async function GET(
 
     // Transform to match existing Article interface
     const article = {
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      category: post.category,
-      excerpt: post.excerpt,
-      content,
-      cover_image: post.coverImage,
+      artists: postArtistsData,
       author: {
         id: post.authorId,
         name: resolveAuthorName(post.authorFirstName, post.authorLastName, post.authorEmail),
       },
-      artists: postArtistsData,
-      published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
-      views: post.views,
+      category: post.category,
       comment_count: commentCountResult?.count ?? 0,
-      is_cover_story: post.isCoverStory,
+      content,
+      cover_image: post.coverImage,
       created_at: post.createdAt.toISOString(),
+      excerpt: post.excerpt,
+      id: post.id,
+      is_cover_story: post.isCoverStory,
+      published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
+      slug: post.slug,
+      title: post.title,
       updated_at: post.updatedAt.toISOString(),
+      views: post.views,
     };
 
     return NextResponse.json(article);
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_post", slug: (await params).slug },
-      "Error fetching post"
+      "Error fetching post",
     );
     return NextResponse.json({ error: "Failed to fetch post" }, { status: 500 });
   }

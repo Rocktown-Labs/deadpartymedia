@@ -10,40 +10,40 @@ import { Spotify } from "@/components/ui/svgs/spotify";
 import { Threads } from "@/components/ui/svgs/threads";
 import { Youtube } from "@/components/ui/svgs/youtube";
 
-type SocialLink = {
+interface SocialLink {
   name: string;
   href: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
-};
+}
 
 const SOCIAL_LINKS: SocialLink[] = [
-  { name: "Instagram", href: "https://www.instagram.com/deadpartyy", Icon: InstagramIcon },
-  { name: "Facebook", href: "https://www.facebook.com/deadpartymedia", Icon: FacebookIcon },
-  { name: "Threads", href: "https://www.threads.com/@deadpartyy", Icon: Threads },
-  { name: "YouTube", href: "https://www.youtube.com/@DeadPartyMedia", Icon: Youtube },
-  { name: "Reddit", href: "https://www.reddit.com/r/ArkansasMusic", Icon: Reddit },
+  { Icon: InstagramIcon, href: "https://www.instagram.com/deadpartyy", name: "Instagram" },
+  { Icon: FacebookIcon, href: "https://www.facebook.com/deadpartymedia", name: "Facebook" },
+  { Icon: Threads, href: "https://www.threads.com/@deadpartyy", name: "Threads" },
+  { Icon: Youtube, href: "https://www.youtube.com/@DeadPartyMedia", name: "YouTube" },
+  { Icon: Reddit, href: "https://www.reddit.com/r/ArkansasMusic", name: "Reddit" },
   {
-    name: "Spotify",
-    href: "https://open.spotify.com/user/e7jciehecnifykwzhvjpkdtj0?si=1fdb6a6a5a274ee8&nd=1&dlsi=af196eeb88cb4e0b",
     Icon: Spotify,
+    href: "https://open.spotify.com/user/e7jciehecnifykwzhvjpkdtj0?si=1fdb6a6a5a274ee8&nd=1&dlsi=af196eeb88cb4e0b",
+    name: "Spotify",
   },
   {
-    name: "Apple Music",
-    href: "https://music.apple.com/us/playlist/the-dead-party-monthly-playlist/pl.u-4Jomaj3CJ8Mr348",
     Icon: AppleMusicIcon,
+    href: "https://music.apple.com/us/playlist/the-dead-party-monthly-playlist/pl.u-4Jomaj3CJ8Mr348",
+    name: "Apple Music",
   },
-  { name: "All Links", href: "https://linktr.ee/deadpartyy", Icon: ExternalLink },
+  { Icon: ExternalLink, href: "https://linktr.ee/deadpartyy", name: "All Links" },
 ];
 
-const FOOTER_NAV_LINKS: Array<{ label: string; href: Route }> = [
-  { label: "About", href: "/about" },
-  { label: "Meet Our Writers", href: "/writers" },
-  { label: "Contact", href: "/contact" },
+const FOOTER_NAV_LINKS: { label: string; href: Route }[] = [
+  { href: "/about", label: "About" },
+  { href: "/writers", label: "Meet Our Writers" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const EXTERNAL_LINK_PROPS = {
-  target: "_blank",
   rel: "noopener noreferrer",
+  target: "_blank",
 } as const;
 
 export default function Footer() {

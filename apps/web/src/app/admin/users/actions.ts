@@ -4,7 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { canManageUsers } from "@/lib/auth/access";
-import { type Roles } from "@/types/globals";
+import type { Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 import { inviteUserSchema } from "@/lib/validations/user";
 import { upsertUserAuthState } from "@/lib/auth/user-state";
@@ -15,13 +15,10 @@ import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
 const LOCAL_PLACEHOLDER_PREFIX = "local_placeholder:";
-const VALID_INVITE_ROLES: Roles[] = ["writer", "super_admin", "artist"];
+const VALID_INVITE_ROLES: Roles[] = new Set(["writer", "super_admin", "artist"]);
 
 function normalizeName(input: string): string {
-  return input
-    .trim()
-    .replace(/\s+/g, " ")
-    .slice(0, 150);
+  return input.trim().replace(/\s+/g, " ").slice(0, 150);
 }
 
 function parseNameParts(displayName: string): { firstName: string; lastName: string | null } {
@@ -77,7 +74,7 @@ export async function inviteUser(
   email: string,
   role: Roles,
   redirectUrl?: string,
-  localUserProfileId?: number
+  localUserProfileId?: number,
 ) {
   const { userId } = await auth();
   if (!userId) {
@@ -92,9 +89,7 @@ export async function inviteUser(
   const validationResult = inviteUserSchema.safeParse({ email, role });
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
@@ -120,10 +115,7 @@ export async function inviteUser(
       publicMetadata.localUserProfileId = String(localUserProfileId);
     }
 
-    if (
-      validatedData.role === "super_admin" ||
-      validatedData.role === "writer"
-    ) {
+    if (validatedData.role === "super_admin" || validatedData.role === "writer") {
       publicMetadata.onboardingComplete = true;
     }
 
@@ -217,7 +209,8 @@ export async function createArtistProfileStub(formData: FormData) {
       ? genreRaw
       : "OTHER";
 
-  const emailRaw = typeof formData.get("email") === "string" ? (formData.get("email") as string) : null;
+  const emailRaw =
+    typeof formData.get("email") === "string" ? (formData.get("email") as string) : null;
   const email = normalizeEmailOrNull(emailRaw);
   const slug = await ensureUniqueSlug(generateSlug(name), undefined, "artists");
 
@@ -348,13 +341,13 @@ export async function inviteUserProfile(formData: FormData) {
   }
 
   const role = profile.role as Roles;
-  if (!VALID_INVITE_ROLES.includes(role)) {
-    return { success: false, error: "Only writer/admin/artist profiles can be invited" };
+  if (!VALID_INVITE_ROLES.has(role)) {
+    return { error: "Only writer/admin/artist profiles can be invited", success: false };
   }
 
   const email = profile.email.trim().toLowerCase();
   if (!normalizeEmailOrNull(email) || isPlaceholderEmail(email)) {
-    return { success: false, error: "Set a real email before sending invite" };
+    return { error: "Set a real email before sending invite", success: false };
   }
 
   const invitationResult = await inviteUser(email, role, getInviteRedirectUrl(role), profile.id);
@@ -374,37 +367,37 @@ export async function inviteArtistProfile(formData: FormData) {
   const idRaw = formData.get("id");
   const id = typeof idRaw === "string" ? Number.parseInt(idRaw, 10) : Number.NaN;
   if (!Number.isInteger(id) || id <= 0) {
-    return { success: false, error: "Invalid artist id" };
+    return { error: "Invalid artist id", success: false };
   }
 
   const [artist] = await db
-    .select({ id: artists.id, email: artists.email })
+    .select({ email: artists.email, id: artists.id })
     .from(artists)
     .where(eq(artists.id, id))
     .limit(1);
 
   if (!artist) {
-    return { success: false, error: "Artist not found" };
+    return { error: "Artist not found", success: false };
   }
   if (!artist.email || isPlaceholderEmail(artist.email)) {
-    return { success: false, error: "Set a real email before sending invite" };
+    return { error: "Set a real email before sending invite", success: false };
   }
 
   const client = await clerkClient();
   try {
     await client.invitations.createInvitation({
       emailAddress: artist.email,
-      redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
       publicMetadata: {
         role: "artist",
         artistId: String(artist.id),
       },
+      redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
     });
     revalidatePath("/admin/users");
     revalidatePath("/admin/artists");
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { error: error.message, success: false };
   }
 }
 
@@ -420,17 +413,17 @@ export async function deleteLocalUserProfile(formData: FormData) {
   const idRaw = formData.get("id");
   const id = typeof idRaw === "string" ? Number.parseInt(idRaw, 10) : Number.NaN;
   if (!Number.isInteger(id) || id <= 0) {
-    return { success: false, error: "Invalid profile id" };
+    return { error: "Invalid profile id", success: false };
   }
 
   const [profile] = await db
-    .select({ id: users.id, clerkId: users.clerkId })
+    .select({ clerkId: users.clerkId, id: users.id })
     .from(users)
     .where(eq(users.id, id))
     .limit(1);
 
   if (!profile) {
-    return { success: false, error: "Profile not found" };
+    return { error: "Profile not found", success: false };
   }
 
   // Local placeholders can be removed directly from DB.
@@ -462,7 +455,7 @@ export async function revokeInvitation(invitationId: string) {
     revalidatePath("/admin/users");
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { error: error.message, success: false };
   }
 }
 
@@ -509,8 +502,8 @@ export async function updateUserRole(userId: string, role: Roles) {
     });
 
     const primaryEmail =
-      user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
-        ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
+      user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
+      user.emailAddresses[0]?.emailAddress;
 
     if (!primaryEmail) {
       throw new Error("User has no email address");
@@ -520,16 +513,16 @@ export async function updateUserRole(userId: string, role: Roles) {
       clerkId: user.id,
       email: primaryEmail,
       firstName: user.firstName,
-      lastName: user.lastName,
       imageUrl: user.imageUrl,
-      role,
+      lastName: user.lastName,
       onboardingComplete: Boolean(publicMetadata.onboardingComplete),
+      role,
     });
 
     revalidatePath("/admin/users");
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { error: error.message, success: false };
   }
 }
 
@@ -552,14 +545,14 @@ export async function updateLocalUserRole(formData: FormData) {
       : null;
 
   if (!Number.isInteger(id) || id <= 0 || !role) {
-    return { success: false, error: "Invalid role update payload" };
+    return { error: "Invalid role update payload", success: false };
   }
 
   await db
     .update(users)
     .set({
-      role,
       onboardingComplete: role === "writer" || role === "super_admin",
+      role,
       updatedAt: new Date(),
     })
     .where(eq(users.id, id));
@@ -585,6 +578,6 @@ export async function deleteUser(userId: string) {
     revalidatePath("/admin/users");
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { error: error.message, success: false };
   }
 }

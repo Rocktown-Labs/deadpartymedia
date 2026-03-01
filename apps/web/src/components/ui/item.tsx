@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from 'class-variance-authority';
+import type { VariantProps } from 'class-variance-authority';
 
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +31,10 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
 const itemVariants = cva(
   "group/item [a&]:hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-ring/50 flex flex-wrap items-center rounded-md border border-transparent text-sm outline-none transition-colors duration-100 focus-visible:ring-[3px] [a&]:transition-colors",
   {
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
     variants: {
       variant: {
         default: "bg-transparent",
@@ -40,10 +45,6 @@ const itemVariants = cva(
         default: "gap-4 p-4 ",
         sm: "gap-2.5 px-4 py-3",
       },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
     },
   },
 );
@@ -61,7 +62,7 @@ function Item({
       data-slot="item"
       data-variant={variant}
       data-size={size}
-      className={cn(itemVariants({ variant, size, className }))}
+      className={cn(itemVariants({ className, size, variant }))}
       {...props}
     />
   );
@@ -70,15 +71,15 @@ function Item({
 const itemMediaVariants = cva(
   "flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none",
   {
+    defaultVariants: {
+      variant: "default",
+    },
     variants: {
       variant: {
         default: "bg-transparent",
         icon: "bg-muted size-8 rounded-sm border [&_svg:not([class*='size-'])]:size-4",
         image: "size-10 overflow-hidden rounded-sm [&_img]:size-full [&_img]:object-cover",
       },
-    },
-    defaultVariants: {
-      variant: "default",
     },
   },
 );
@@ -92,7 +93,7 @@ function ItemMedia({
     <div
       data-slot="item-media"
       data-variant={variant}
-      className={cn(itemMediaVariants({ variant, className }))}
+      className={cn(itemMediaVariants({ className, variant }))}
       {...props}
     />
   );

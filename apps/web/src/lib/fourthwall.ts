@@ -6,18 +6,17 @@ import { logger } from "./logger";
 import { sanitizeError } from "./logger/sanitize";
 
 const FOURTHWALL_API_URL =
-  process.env.NEXT_PUBLIC_FW_API_URL ||
-  "https://storefront-api.fourthwall.com/v1";
+  process.env.NEXT_PUBLIC_FW_API_URL || "https://storefront-api.fourthwall.com/v1";
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_FW_STOREFRONT_TOKEN;
 
 if (!STOREFRONT_TOKEN) {
   logger.warn(
     { operation: "fourthwall_config" },
-    "NEXT_PUBLIC_FW_STOREFRONT_TOKEN is not set. Fourthwall API calls will fail."
+    "NEXT_PUBLIC_FW_STOREFRONT_TOKEN is not set. Fourthwall API calls will fail.",
   );
 }
 
-type FourthwallProduct = {
+interface FourthwallProduct {
   id: string;
   name: string;
   slug: string;
@@ -42,9 +41,9 @@ type FourthwallProduct = {
     stock: { type: "LIMITED" | "UNLIMITED"; inStock?: number };
     images: Array<{ url: string; transformedUrl: string }>;
   }>;
-};
+}
 
-type FourthwallCart = {
+interface FourthwallCart {
   id: string;
   items: Array<{
     variant: {
@@ -66,7 +65,7 @@ type FourthwallCart = {
     };
     quantity: number;
   }>;
-};
+}
 
 async function fourthwallFetch<T>({
   path,
@@ -82,20 +81,17 @@ async function fourthwallFetch<T>({
     const baseUrl = FOURTHWALL_API_URL.endsWith("/")
       ? FOURTHWALL_API_URL
       : `${FOURTHWALL_API_URL}/`;
-    const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    logger.debug(
-      { operation: "fourthwall_fetch", url },
-      "Fetching from Fourthwall"
-    );
+    logger.debug({ operation: "fourthwall_fetch", url }, "Fetching from Fourthwall");
 
     const result = await fetch(url, {
-      method: "GET",
+      cache,
       headers: {
         "Content-Type": "application/json",
       },
-      cache,
+      method: "GET",
       ...(tags && { next: { tags } }),
     });
 
@@ -103,19 +99,19 @@ async function fourthwallFetch<T>({
       const errorText = await result.text();
       logger.error(
         { operation: "fourthwall_fetch", status: result.status, url },
-        "Fourthwall API error"
+        "Fourthwall API error",
       );
       throw new Error(`HTTP ${result.status}: ${errorText}`);
     }
 
     const body = await result.json();
     return body;
-  } catch (e) {
+  } catch (error) {
     logger.error(
-      { error: sanitizeError(e), operation: "fourthwall_fetch" },
-      "Fourthwall fetch error"
+      { error: sanitizeError(error), operation: "fourthwall_fetch" },
+      "Fourthwall fetch error",
     );
-    throw e;
+    throw error;
   }
 }
 
@@ -132,21 +128,18 @@ async function fourthwallMutate<T>({
     const baseUrl = FOURTHWALL_API_URL.endsWith("/")
       ? FOURTHWALL_API_URL
       : `${FOURTHWALL_API_URL}/`;
-    const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+    const cleanPath = path.startsWith("/") ? path.slice(1) : path;
     const url = `${baseUrl}${cleanPath}`;
 
-    logger.debug(
-      { operation: "fourthwall_mutate", url, method },
-      "Mutating Fourthwall"
-    );
+    logger.debug({ method, operation: "fourthwall_mutate", url }, "Mutating Fourthwall");
 
     const result = await fetch(url, {
-      method,
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },
-      body: body ? JSON.stringify(body) : undefined,
-      cache: "no-store",
+      method,
     });
 
     const responseBody = await result.json();
@@ -156,8 +149,8 @@ async function fourthwallMutate<T>({
     }
 
     return responseBody;
-  } catch (e) {
-    throw new Error(`Fourthwall API error: ${e}`);
+  } catch (error) {
+    throw new Error(`Fourthwall API error: ${error}`, { cause: e });
   }
 }
 
@@ -168,18 +161,16 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
       operation: "transform_product",
       product_id: fwProduct.id,
       variants: fwProduct.variants.map((v) => ({
-        id: v.id,
-        stock_type: v.stock.type,
-        in_stock: v.stock.inStock,
         available: v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0,
+        id: v.id,
+        in_stock: v.stock.inStock,
+        stock_type: v.stock.type,
       })),
     },
-    "Transforming product with stock data"
+    "Transforming product with stock data",
   );
 
-  const prices = fwProduct.variants.map((v) =>
-    Number.parseFloat(v.unitPrice.value.toString())
-  );
+  const prices = fwProduct.variants.map((v) => Number.parseFloat(v.unitPrice.value.toString()));
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const currency = fwProduct.variants[0]?.unitPrice.currency || "USD";
@@ -188,50 +179,58 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
   const optionsMap = new Map<string, Set<string>>();
   fwProduct.variants.forEach((variant) => {
     if (variant.attributes.color) {
-      if (!optionsMap.has("Color")) optionsMap.set("Color", new Set());
+      if (!optionsMap.has("Color")) {optionsMap.set("Color", new Set());}
       optionsMap.get("Color")?.add(variant.attributes.color.name);
     }
     if (variant.attributes.size) {
-      if (!optionsMap.has("Size")) optionsMap.set("Size", new Set());
+      if (!optionsMap.has("Size")) {optionsMap.set("Size", new Set());}
       optionsMap.get("Size")?.add(variant.attributes.size.name);
     }
   });
 
-  const options: ProductOption[] = Array.from(optionsMap.entries()).map(
-    ([name, values]) => ({
-      id: name.toLowerCase(),
-      name,
-      values: Array.from(values),
-    })
-  );
+  const options: ProductOption[] = [...optionsMap.entries()].map(([name, values]) => ({
+    id: name.toLowerCase(),
+    name,
+    values: [...values],
+  }));
 
   return {
-    id: fwProduct.id,
-    title: fwProduct.name,
-    handle: fwProduct.slug,
+    availableForSale: fwProduct.variants.some(
+      (v) => v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0,
+    ),
     description: fwProduct.description,
     descriptionHtml: fwProduct.description,
-    availableForSale: fwProduct.variants.some(
-      (v) => v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0
-    ),
     featuredImage: {
-      url:
-        fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
+      url: fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
       altText: fwProduct.name,
       width: fwProduct.images[0]?.width || 800,
       height: fwProduct.images[0]?.height || 800,
     },
+    handle: fwProduct.slug,
+    id: fwProduct.id,
     images: fwProduct.images.map((img) => ({
       url: img.transformedUrl || img.url,
       altText: fwProduct.name,
       width: img.width,
       height: img.height,
     })),
+    options,
+    priceRange: {
+      minVariantPrice: {
+        amount: minPrice.toString(),
+        currencyCode: currency,
+      },
+      maxVariantPrice: {
+        amount: maxPrice.toString(),
+        currencyCode: currency,
+      },
+    },
+    tags: [],
+    title: fwProduct.name,
     variants: fwProduct.variants.map((v) => {
       // Determine availability: UNLIMITED stock is always available
       // LIMITED stock is available if inStock > 0
-      const availableForSale =
-        v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0;
+      const availableForSale = v.stock.type === "UNLIMITED" || (v.stock.inStock || 0) > 0;
 
       const selectedOptions = [
         {
@@ -243,9 +242,7 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
           value: v.attributes.color?.name,
         },
       ]
-        .filter((opt): opt is { name: string; value: string } =>
-          Boolean(opt.value)
-        )
+        .filter((opt): opt is { name: string; value: string } => Boolean(opt.value))
         .map((opt) => ({ name: opt.name, value: opt.value }));
 
       return {
@@ -265,18 +262,6 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
         })),
       };
     }),
-    options,
-    priceRange: {
-      minVariantPrice: {
-        amount: minPrice.toString(),
-        currencyCode: currency,
-      },
-      maxVariantPrice: {
-        amount: maxPrice.toString(),
-        currencyCode: currency,
-      },
-    },
-    tags: [],
   };
 }
 
@@ -284,14 +269,13 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
   const lines = fwCart.items.map((item) => {
     const totalAmount = item.variant.unitPrice.value * item.quantity;
     return {
-      id: `${item.variant.id}-${fwCart.id}`,
-      quantity: item.quantity,
       cost: {
         totalAmount: {
           amount: totalAmount.toString(),
           currencyCode: currency,
         },
       },
+      id: `${item.variant.id}-${fwCart.id}`,
       merchandise: {
         id: item.variant.id,
         title: item.variant.name,
@@ -308,30 +292,24 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
           handle: item.variant.product.slug,
           title: item.variant.product.name,
           featuredImage: {
-            url:
-              item.variant.images[0]?.transformedUrl ||
-              item.variant.images[0]?.url ||
-              "",
+            url: item.variant.images[0]?.transformedUrl || item.variant.images[0]?.url || "",
             altText: item.variant.product.name,
             width: 800,
             height: 800,
           },
         },
       },
+      quantity: item.quantity,
     };
   });
 
   const totalAmount = lines.reduce(
     (sum, line) => sum + Number.parseFloat(line.cost.totalAmount.amount),
-    0
+    0,
   );
   const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0);
 
   return {
-    id: fwCart.id,
-    totalQuantity,
-    lines,
-    currency,
     cost: {
       subtotalAmount: {
         amount: totalAmount.toString(),
@@ -342,6 +320,10 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
         currencyCode: currency,
       },
     },
+    currency,
+    id: fwCart.id,
+    lines,
+    totalQuantity,
   };
 }
 
@@ -349,49 +331,37 @@ export async function getProducts(currency = "USD"): Promise<Product[]> {
   try {
     // Get products from collections/all endpoint
     const data = await fourthwallFetch<{ results: FourthwallProduct[] }>({
+      cache: "no-store",
       path: `collections/all/products?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}&size=100`,
       tags: [TAGS.products],
-      cache: "no-store",
     });
 
-    logger.info(
-      { operation: "get_products", count: data.results.length },
-      "Found products"
-    );
+    logger.info({ count: data.results.length, operation: "get_products" }, "Found products");
     return data.results.map(transformProduct);
-  } catch (e) {
-    logger.error(
-      { error: sanitizeError(e), operation: "get_products" },
-      "Error fetching products"
-    );
+  } catch (error) {
+    logger.error({ error: sanitizeError(error), operation: "get_products" }, "Error fetching products");
     return [];
   }
 }
 
-export async function getProduct(
-  slug: string,
-  currency = "USD"
-): Promise<Product | undefined> {
+export async function getProduct(slug: string, currency = "USD"): Promise<Product | undefined> {
   if (!slug || slug === "undefined") {
-    logger.warn(
-      { operation: "get_product", slug },
-      "getProduct called with invalid slug"
-    );
+    logger.warn({ operation: "get_product", slug }, "getProduct called with invalid slug");
     return undefined;
   }
 
   try {
     const data = await fourthwallFetch<FourthwallProduct>({
+      cache: "no-store",
       path: `products/${slug}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
       tags: [TAGS.products],
-      cache: "no-store",
     });
 
     return transformProduct(data);
-  } catch (e) {
+  } catch (error) {
     logger.error(
-      { error: sanitizeError(e), operation: "get_product", slug },
-      "Error fetching product"
+      { error: sanitizeError(error), operation: "get_product", slug },
+      "Error fetching product",
     );
     return undefined;
   }
@@ -399,8 +369,8 @@ export async function getProduct(
 
 export async function createCart(): Promise<Cart> {
   const data = await fourthwallMutate<FourthwallCart>({
-    path: `carts?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
     body: { items: [] },
+    path: `carts?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
   });
 
   return transformCart(data, "USD");
@@ -408,7 +378,7 @@ export async function createCart(): Promise<Cart> {
 
 export async function getCart(
   cartId: string | undefined,
-  currency = "USD"
+  currency = "USD",
 ): Promise<Cart | undefined> {
   if (!cartId) {
     return undefined;
@@ -416,9 +386,9 @@ export async function getCart(
 
   try {
     const data = await fourthwallFetch<FourthwallCart>({
+      cache: "no-store",
       path: `carts/${cartId}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
       tags: [TAGS.cart],
-      cache: "no-store",
     });
 
     return transformCart(data, currency);
@@ -429,16 +399,16 @@ export async function getCart(
 
 export async function addToCart(
   cartId: string,
-  lines: Array<{ merchandiseId: string; quantity: number }>
+  lines: { merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
   const data = await fourthwallMutate<FourthwallCart>({
-    path: `carts/${cartId}/add?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
     body: {
       items: lines.map((line) => ({
         variantId: line.merchandiseId,
         quantity: line.quantity,
       })),
     },
+    path: `carts/${cartId}/add?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
   });
 
   return transformCart(data, "USD");
@@ -446,25 +416,22 @@ export async function addToCart(
 
 export async function updateCart(
   cartId: string,
-  lines: Array<{ id: string; merchandiseId: string; quantity: number }>
+  lines: { id: string; merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
   const data = await fourthwallMutate<FourthwallCart>({
-    path: `carts/${cartId}/change?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
     body: {
       items: lines.map((line) => ({
         variantId: line.merchandiseId,
         quantity: line.quantity,
       })),
     },
+    path: `carts/${cartId}/change?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
   });
 
   return transformCart(data, "USD");
 }
 
-export async function removeFromCart(
-  cartId: string,
-  lineIds: string[]
-): Promise<Cart> {
+export async function removeFromCart(cartId: string, lineIds: string[]): Promise<Cart> {
   // Extract variant IDs from line IDs (format: variantId-cartId)
   const items = lineIds.map((lineId) => {
     const variantId = lineId.split("-")[0];
@@ -472,8 +439,8 @@ export async function removeFromCart(
   });
 
   const data = await fourthwallMutate<FourthwallCart>({
-    path: `carts/${cartId}/remove?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
     body: { items },
+    path: `carts/${cartId}/remove?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
   });
 
   return transformCart(data, "USD");

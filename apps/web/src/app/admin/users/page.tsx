@@ -111,29 +111,29 @@ export default async function UsersPage({
   const [localUsers, localArtists] = await Promise.all([
     db
       .select({
-        id: users.id,
         clerkId: users.clerkId,
+        createdAt: users.createdAt,
         email: users.email,
         firstName: users.firstName,
+        id: users.id,
         lastName: users.lastName,
-        role: users.role,
         onboardingComplete: users.onboardingComplete,
-        createdAt: users.createdAt,
+        role: users.role,
       })
       .from(users)
       .where(userConditions)
       .orderBy(desc(users.createdAt)),
     db
       .select({
-        id: artists.id,
-        slug: artists.slug,
-        name: artists.name,
-        email: artists.email,
-        genre: artists.genre,
-        location: artists.location,
         claimed: artists.claimed,
         claimedById: artists.claimedById,
         createdAt: artists.createdAt,
+        email: artists.email,
+        genre: artists.genre,
+        id: artists.id,
+        location: artists.location,
+        name: artists.name,
+        slug: artists.slug,
       })
       .from(artists)
       .where(artistConditions)
@@ -148,7 +148,8 @@ export default async function UsersPage({
       <div className="space-y-2">
         <h1 className="text-3xl font-black">User Management</h1>
         <p className="text-sm text-gray-400">
-          Manage local user and artist profiles, then send production invites when records are ready.
+          Manage local user and artist profiles, then send production invites when records are
+          ready.
         </p>
       </div>
 
@@ -238,7 +239,10 @@ export default async function UsersPage({
                         </TableCell>
                         <TableCell className="text-sm text-gray-300">{profile.email}</TableCell>
                         <TableCell>
-                          <form action={updateLocalUserRoleAction} className="flex flex-wrap items-center gap-2">
+                          <form
+                            action={updateLocalUserRoleAction}
+                            className="flex flex-wrap items-center gap-2"
+                          >
                             <input type="hidden" name="id" value={profile.id} />
                             <select
                               name="role"
@@ -257,12 +261,17 @@ export default async function UsersPage({
                         </TableCell>
                         <TableCell className="text-xs text-gray-400">
                           <div>{placeholder ? "Local Placeholder" : "Clerk Linked"}</div>
-                          <div className="mt-1 truncate text-[11px] text-gray-500">{profile.clerkId}</div>
+                          <div className="mt-1 truncate text-[11px] text-gray-500">
+                            {profile.clerkId}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
                             {placeholderEmail ? (
-                              <form action={updateLocalUserEmailAction} className="flex flex-wrap items-center gap-2">
+                              <form
+                                action={updateLocalUserEmailAction}
+                                className="flex flex-wrap items-center gap-2"
+                              >
                                 <input type="hidden" name="id" value={profile.id} />
                                 <Input
                                   name="email"
@@ -334,14 +343,25 @@ export default async function UsersPage({
                     const canInvite = hasInviteEmail && !artistProfile.claimed;
 
                     return (
-                      <TableRow key={artistProfile.id} className="border-gray-800 hover:bg-[#0F0F0F]">
+                      <TableRow
+                        key={artistProfile.id}
+                        className="border-gray-800 hover:bg-[#0F0F0F]"
+                      >
                         <TableCell className="font-medium">{artistProfile.name}</TableCell>
-                        <TableCell className="text-sm text-gray-300">{artistProfile.genre}</TableCell>
-                        <TableCell className="text-sm text-gray-300">{artistProfile.email || "—"}</TableCell>
+                        <TableCell className="text-sm text-gray-300">
+                          {artistProfile.genre}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-300">
+                          {artistProfile.email || "—"}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={artistProfile.claimed ? "border-emerald-700 text-emerald-300" : "border-gray-700 text-gray-300"}
+                            className={
+                              artistProfile.claimed
+                                ? "border-emerald-700 text-emerald-300"
+                                : "border-gray-700 text-gray-300"
+                            }
                           >
                             {artistProfile.claimed ? "Claimed" : "Unclaimed"}
                           </Badge>
@@ -349,7 +369,10 @@ export default async function UsersPage({
                         <TableCell>
                           <div className="space-y-2">
                             {!hasInviteEmail ? (
-                              <form action={updateArtistEmailAction} className="flex flex-wrap items-center gap-2">
+                              <form
+                                action={updateArtistEmailAction}
+                                className="flex flex-wrap items-center gap-2"
+                              >
                                 <input type="hidden" name="id" value={artistProfile.id} />
                                 <Input
                                   name="email"

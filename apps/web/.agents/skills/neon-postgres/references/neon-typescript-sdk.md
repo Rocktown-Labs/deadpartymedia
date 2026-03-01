@@ -44,10 +44,7 @@ console.log("Projects:", response.data.projects);
 const response = await apiClient.createProject({
   project: { name: "my-project", pg_version: 17, region_id: "aws-us-east-2" },
 });
-console.log(
-  "Connection URI:",
-  response.data.connection_uris[0]?.connection_uri,
-);
+console.log("Connection URI:", response.data.connection_uris[0]?.connection_uri);
 ```
 
 ### Get Project
@@ -136,20 +133,13 @@ await apiClient.createProjectBranchDatabase("your-project-id", "br-xxx", {
 ### List Databases
 
 ```typescript
-const response = await apiClient.listProjectBranchDatabases(
-  "your-project-id",
-  "br-xxx",
-);
+const response = await apiClient.listProjectBranchDatabases("your-project-id", "br-xxx");
 ```
 
 ### Delete Database
 
 ```typescript
-await apiClient.deleteProjectBranchDatabase(
-  "your-project-id",
-  "br-xxx",
-  "my-app-db",
-);
+await apiClient.deleteProjectBranchDatabase("your-project-id", "br-xxx", "my-app-db");
 ```
 
 ## Roles
@@ -157,33 +147,22 @@ await apiClient.deleteProjectBranchDatabase(
 ### Create Role
 
 ```typescript
-const response = await apiClient.createProjectBranchRole(
-  "your-project-id",
-  "br-xxx",
-  {
-    role: { name: "app_user" },
-  },
-);
+const response = await apiClient.createProjectBranchRole("your-project-id", "br-xxx", {
+  role: { name: "app_user" },
+});
 console.log("Password:", response.data.role.password);
 ```
 
 ### List Roles
 
 ```typescript
-const response = await apiClient.listProjectBranchRoles(
-  "your-project-id",
-  "br-xxx",
-);
+const response = await apiClient.listProjectBranchRoles("your-project-id", "br-xxx");
 ```
 
 ### Delete Role
 
 ```typescript
-await apiClient.deleteProjectBranchRole(
-  "your-project-id",
-  "br-xxx",
-  "app_user",
-);
+await apiClient.deleteProjectBranchRole("your-project-id", "br-xxx", "app_user");
 ```
 
 ## Endpoints
@@ -265,10 +244,7 @@ const response = await apiClient.listProjectOperations({
 ### Get Operation
 
 ```typescript
-const response = await apiClient.getProjectOperation(
-  "your-project-id",
-  "op-xxx",
-);
+const response = await apiClient.getProjectOperation("your-project-id", "op-xxx");
 ```
 
 ## Organizations

@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { auth } from "@clerk/nextjs/server";
 import { getUserStats } from "@/lib/user/stats";
 import { GET } from "@/app/api/user/stats/route";
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock("@/lib/user/stats", () => ({
+vi.mock<typeof import('@/lib/user/stats')>(import('@/lib/user/stats'), () => ({
   getUserStats: vi.fn(),
 }));
 
-describe("GET /api/user/stats", () => {
+describe("gET /api/user/stats", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -23,7 +23,7 @@ describe("GET /api/user/stats", () => {
     const data = await response.json();
 
     expect(response.status).toBe(401);
-    expect(data).toEqual({ error: "Unauthorized" });
+    expect(data).toStrictEqual({ error: "Unauthorized" });
     expect(getUserStats).not.toHaveBeenCalled();
   });
 
@@ -40,7 +40,7 @@ describe("GET /api/user/stats", () => {
 
     expect(response.status).toBe(200);
     expect(getUserStats).toHaveBeenCalledWith("user_123");
-    expect(data).toEqual({
+    expect(data).toStrictEqual({
       articles_read_count: 3,
       articles_saved_count: 2,
       comments_count: 5,
@@ -57,6 +57,6 @@ describe("GET /api/user/stats", () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data).toEqual({ error: "Failed to fetch user stats" });
+    expect(data).toStrictEqual({ error: "Failed to fetch user stats" });
   });
 });

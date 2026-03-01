@@ -46,11 +46,11 @@
     "typescript": "catalog:",
     "ultracite": "7.2.4"
   },
+  "packageManager": "pnpm@10.19.0",
   "pnpm": {
     "overrides": {
       "@types/react": "^19.2.7",
       "@types/react-dom": "^19.2.3"
     }
-  },
-  "packageManager": "pnpm@10.19.0"
+  }
 }

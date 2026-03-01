@@ -9,12 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
-import {
-  deletePost,
-  requestDeletePost,
-  approveDeletePost,
-  denyDeletePost,
-} from "./actions";
+import { deletePost, requestDeletePost, approveDeletePost, denyDeletePost } from "./actions";
 
 export default async function PostsPage() {
   const { userId } = await auth();
@@ -93,9 +88,9 @@ export default async function PostsPage() {
                         className={`px-2 py-1 rounded text-xs font-bold ${
                           post.status === "published"
                             ? "bg-green-500/20 text-green-400"
-                            : post.status === "draft"
+                            : (post.status === "draft"
                               ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-gray-500/20 text-gray-400"
+                              : "bg-gray-500/20 text-gray-400")
                         }`}
                       >
                         {post.status}
@@ -127,18 +122,12 @@ export default async function PostsPage() {
                       </Link>
                       {post.deleteRequested && isSuperAdmin ? (
                         <>
-                          <form
-                            action={approveDeletePost.bind(null, post.id)}
-                            className="inline"
-                          >
+                          <form action={approveDeletePost.bind(null, post.id)} className="inline">
                             <Button type="submit" variant="destructive" size="sm">
                               Approve Delete
                             </Button>
                           </form>
-                          <form
-                            action={denyDeletePost.bind(null, post.id)}
-                            className="inline"
-                          >
+                          <form action={denyDeletePost.bind(null, post.id)} className="inline">
                             <Button type="submit" variant="outline" size="sm">
                               Deny
                             </Button>
@@ -151,10 +140,7 @@ export default async function PostsPage() {
                           description={`Are you sure you want to delete "${post.title}"? This action cannot be undone.`}
                         />
                       ) : post.authorId === userId && !post.deleteRequested ? (
-                        <form
-                          action={requestDeletePost.bind(null, post.id)}
-                          className="inline"
-                        >
+                        <form action={requestDeletePost.bind(null, post.id)} className="inline">
                           <Button type="submit" variant="outline" size="sm">
                             Request Delete
                           </Button>

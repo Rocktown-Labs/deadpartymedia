@@ -26,12 +26,8 @@ async function serverFetch<T>(endpoint: string): Promise<T> {
     if (response.status === 404) {
       return null as T;
     }
-    const error = await response
-      .json()
-      .catch(() => ({ error: response.statusText }));
-    throw new Error(
-      error.error || error.detail || `HTTP error! status: ${response.status}`
-    );
+    const error = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(error.error || error.detail || `HTTP error! status: ${response.status}`);
   }
 
   return response.json();
@@ -46,7 +42,7 @@ export async function getArticle(slug: string): Promise<Article | null> {
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_article", slug },
-      "Error fetching article"
+      "Error fetching article",
     );
     return null;
   }
@@ -61,7 +57,7 @@ export async function getEvent(slug: string): Promise<Event | null> {
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_event", slug },
-      "Error fetching event"
+      "Error fetching event",
     );
     return null;
   }
@@ -76,7 +72,7 @@ export async function getArtist(slug: string): Promise<Artist | null> {
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_artist", slug },
-      "Error fetching artist"
+      "Error fetching artist",
     );
     return null;
   }

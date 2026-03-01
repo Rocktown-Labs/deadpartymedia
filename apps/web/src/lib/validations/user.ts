@@ -10,16 +10,16 @@ export const inviteUserSchema = z.object({
 export type InviteUserFormData = z.infer<typeof inviteUserSchema>;
 
 export const userUpdateSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
   first_name: z.string().min(1, "First name is required").max(150, "First name is too long"),
   last_name: z.string().min(1, "Last name is required").max(150, "Last name is too long"),
-  email: z.string().min(1, "Email is required").email("Invalid email address"),
 });
 
 export const passwordChangeSchema = z
   .object({
+    confirm_password: z.string().min(1, "Please confirm your password"),
     current_password: z.string().min(1, "Current password is required"),
     new_password: z.string().min(8, "Password must be at least 8 characters"),
-    confirm_password: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.new_password === data.confirm_password, {
     message: "Passwords do not match",

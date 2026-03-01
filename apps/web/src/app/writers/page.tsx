@@ -6,18 +6,18 @@ import Link from "next/link";
 export default function WritersPage() {
   const writers = [
     {
-      name: "J.L. Jones",
-      category: "Country",
       bio: "Hey, my name is J.L. Jones! I'm a musician, singer and songwriter from Central Arkansas. I love alternative music of all kinds but I'm especially excited about highlighting artists in the alternative Country and Folk genre!",
       cashTag: "$JLJones6",
+      category: "Country",
       instagram: "Find me on Instagram →",
+      name: "J.L. Jones",
     },
     {
-      name: "Gretchen",
-      category: "EDM",
       bio: "Hey! My name is Gretchen and I am currently in college studying to become a Journalist with an online emphasis. I want to use my degree to uplift our local music scene and give an unbiased look into the EDM community in Arkansas! I'll be keeping you up-to-date with local shows and artists that you need to keep an eye out for! You can also catch me as rave ref at a rave near you!",
       cashTag: "$GretchenBullinger",
+      category: "EDM",
       instagram: "Find me on Instagram →",
+      name: "Gretchen",
     },
   ];
 

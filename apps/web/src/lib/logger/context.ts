@@ -12,11 +12,11 @@ export function generateRequestId(): string {
   crypto.getRandomValues(bytes);
 
   // Set version (4) and variant bits
-  bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant 10
+  bytes[6] = (bytes[6] & 0x0F) | 0x40; // Version 4
+  bytes[8] = (bytes[8] & 0x3F) | 0x80; // Variant 10
 
   // Convert to UUID string format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-  const hex = Array.from(bytes)
+  const hex = [...bytes]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
@@ -35,7 +35,7 @@ export function generateRequestId(): string {
 export function withRequestContext(
   logger: Logger,
   requestId: string,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): Logger {
   return createChildLogger({
     requestId,
@@ -50,7 +50,7 @@ export function withUserContext(
   logger: Logger,
   userId: string,
   role?: string,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): Logger {
   return createChildLogger({
     userId,
@@ -67,7 +67,7 @@ export function withOperationContext(
   operation: string,
   entityType?: string,
   entityId?: string | number,
-  additionalContext?: Record<string, unknown>
+  additionalContext?: Record<string, unknown>,
 ): Logger {
   return createChildLogger({
     operation,

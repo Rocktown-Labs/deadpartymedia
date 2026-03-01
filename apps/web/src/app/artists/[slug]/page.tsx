@@ -7,16 +7,14 @@ interface ArtistPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: ArtistPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
   const { slug } = await params;
   const artist = await getArtist(slug);
 
   if (!artist) {
     return {
-      title: "Artist Not Found | Dead Party Media",
       description: "The artist you're looking for could not be found.",
+      title: "Artist Not Found | Dead Party Media",
     };
   }
 

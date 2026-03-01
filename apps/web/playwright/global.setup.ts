@@ -1,7 +1,8 @@
 import { clerk, clerkSetup, setupClerkTestingToken } from "@clerk/testing/playwright";
-import { chromium, type FullConfig } from "@playwright/test";
-import fs from "fs/promises";
-import path from "path";
+import { chromium } from '@playwright/test';
+import type { FullConfig } from '@playwright/test';
+import fs from "node:fs/promises";
+import path from "node:path";
 
 async function signInAndSaveState(args: {
   baseUrl: string;
@@ -20,9 +21,9 @@ async function signInAndSaveState(args: {
     await clerk.signIn({
       page,
       signInParams: {
-        strategy: "password",
         identifier: args.identifier,
         password: args.password,
+        strategy: "password",
       },
     });
 
@@ -37,7 +38,8 @@ async function signInAndSaveState(args: {
 export default async function globalSetup(config: FullConfig) {
   await clerkSetup();
 
-  const baseUrl = (config.projects[0]?.use?.baseURL as string | undefined) || "http://localhost:3001";
+  const baseUrl =
+    (config.projects[0]?.use?.baseURL as string | undefined) || "http://localhost:3001";
 
   const clerkDir = path.join(__dirname, ".clerk");
   await fs.mkdir(clerkDir, { recursive: true });
@@ -65,30 +67,30 @@ export default async function globalSetup(config: FullConfig) {
   if (fanIdentifier && fanPassword) {
     await signInAndSaveState({
       baseUrl,
-      storagePath: fanStorage,
-      verifyPath: "/dashboard",
       identifier: fanIdentifier,
       password: fanPassword,
+      storagePath: fanStorage,
+      verifyPath: "/dashboard",
     });
   }
 
   if (artistIdentifier && artistPassword) {
     await signInAndSaveState({
       baseUrl,
-      storagePath: artistStorage,
-      verifyPath: "/artist-dashboard",
       identifier: artistIdentifier,
       password: artistPassword,
+      storagePath: artistStorage,
+      verifyPath: "/artist-dashboard",
     });
   }
 
   if (adminIdentifier && adminPassword) {
     await signInAndSaveState({
       baseUrl,
-      storagePath: adminStorage,
-      verifyPath: "/admin",
       identifier: adminIdentifier,
       password: adminPassword,
+      storagePath: adminStorage,
+      verifyPath: "/admin",
     });
   }
 }

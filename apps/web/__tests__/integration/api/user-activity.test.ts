@@ -1,23 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { auth } from "@clerk/nextjs/server";
-import { GET as getReadArticles, POST as postReadArticle } from "@/app/api/user/articles/read/route";
-import { GET as getSavedArticles, POST as postSavedArticle } from "@/app/api/user/articles/saved/route";
+import {
+  GET as getReadArticles,
+  POST as postReadArticle,
+} from "@/app/api/user/articles/read/route";
+import {
+  GET as getSavedArticles,
+  POST as postSavedArticle,
+} from "@/app/api/user/articles/saved/route";
 import { DELETE as deleteSavedArticle } from "@/app/api/user/articles/saved/[id]/route";
 import { GET as getUserComments } from "@/app/api/user/comments/route";
 
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
-    select: vi.fn(),
-    insert: vi.fn(),
     delete: vi.fn(),
+    insert: vi.fn(),
+    select: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: mockDb,
 }));
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
 }));
 
@@ -67,7 +73,7 @@ function mockDeleteReturning(rows: unknown[]) {
   mockDb.delete.mockReturnValueOnce({ where });
 }
 
-describe("API /api/user activity endpoints", () => {
+describe("aPI /api/user activity endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -94,7 +100,7 @@ describe("API /api/user activity endpoints", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({
+    expect(data).toStrictEqual({
       count: 0,
       next: null,
       previous: null,
@@ -108,8 +114,6 @@ describe("API /api/user activity endpoints", () => {
     mockSelectCount(2);
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 4,
-        readAt: new Date("2026-01-03T00:00:00.000Z"),
         article: {
           id: 11,
           slug: "test-post",
@@ -121,6 +125,8 @@ describe("API /api/user activity endpoints", () => {
           views: 12,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 4,
+        readAt: new Date("2026-01-03T00:00:00.000Z"),
       },
     ]);
 
@@ -145,8 +151,6 @@ describe("API /api/user activity endpoints", () => {
     mockSelectCount(2);
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 6,
-        readAt: new Date("2026-01-04T00:00:00.000Z"),
         article: {
           id: 22,
           slug: "page-two-post",
@@ -158,6 +162,8 @@ describe("API /api/user activity endpoints", () => {
           views: 2,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 6,
+        readAt: new Date("2026-01-04T00:00:00.000Z"),
       },
     ]);
 
@@ -178,9 +184,9 @@ describe("API /api/user activity endpoints", () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as any);
 
     const request = new Request("http://localhost:3001/api/user/articles/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ article_id: 11 }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postReadArticle(request as any);
@@ -194,9 +200,9 @@ describe("API /api/user activity endpoints", () => {
     vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
 
     const request = new Request("http://localhost:3001/api/user/articles/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ article_id: "invalid" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postReadArticle(request as any);
@@ -210,9 +216,9 @@ describe("API /api/user activity endpoints", () => {
     vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
 
     const request = new Request("http://localhost:3001/api/user/articles/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: "{",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postReadArticle(request as any);
@@ -227,9 +233,9 @@ describe("API /api/user activity endpoints", () => {
     mockSelectWithLimit([]);
 
     const request = new Request("http://localhost:3001/api/user/articles/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ article_id: 999 }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postReadArticle(request as any);
@@ -244,15 +250,15 @@ describe("API /api/user activity endpoints", () => {
 
     mockSelectWithLimit([
       {
+        authorId: "author_1",
+        coverImage: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        excerpt: "Excerpt",
         id: 11,
+        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
         slug: "test-post",
         title: "Test Post",
-        excerpt: "Excerpt",
-        coverImage: null,
-        authorId: "author_1",
-        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
         views: 12,
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
       },
     ]);
 
@@ -261,22 +267,22 @@ describe("API /api/user activity endpoints", () => {
     ]);
 
     const request = new Request("http://localhost:3001/api/user/articles/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ article_id: 11 }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postReadArticle(request as any);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
+    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
     expect(onConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        target: expect.any(Array),
         set: expect.objectContaining({
           readAt: expect.any(Date),
         }),
+        target: expect.any(Array),
       }),
     );
     expect(data.id).toBe(5);
@@ -295,7 +301,7 @@ describe("API /api/user activity endpoints", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({
+    expect(data).toStrictEqual({
       count: 0,
       next: null,
       previous: null,
@@ -308,9 +314,6 @@ describe("API /api/user activity endpoints", () => {
 
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 9,
-        savedAt: new Date("2026-01-03T00:00:00.000Z"),
-        totalSaves: 2,
         article: {
           id: 22,
           slug: "saved-post",
@@ -322,6 +325,9 @@ describe("API /api/user activity endpoints", () => {
           views: 2,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 9,
+        savedAt: new Date("2026-01-03T00:00:00.000Z"),
+        totalSaves: 2,
       },
     ]);
 
@@ -345,9 +351,6 @@ describe("API /api/user activity endpoints", () => {
 
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 10,
-        savedAt: new Date("2026-01-04T00:00:00.000Z"),
-        totalSaves: 2,
         article: {
           id: 23,
           slug: "saved-page-two",
@@ -359,6 +362,9 @@ describe("API /api/user activity endpoints", () => {
           views: 3,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 10,
+        savedAt: new Date("2026-01-04T00:00:00.000Z"),
+        totalSaves: 2,
       },
     ]);
 
@@ -380,9 +386,6 @@ describe("API /api/user activity endpoints", () => {
 
     const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 11,
-        savedAt: new Date("2026-01-05T00:00:00.000Z"),
-        totalSaves: 25,
         article: {
           id: 24,
           slug: "saved-fallback",
@@ -394,6 +397,9 @@ describe("API /api/user activity endpoints", () => {
           views: 4,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 11,
+        savedAt: new Date("2026-01-05T00:00:00.000Z"),
+        totalSaves: 25,
       },
     ]);
 
@@ -415,9 +421,6 @@ describe("API /api/user activity endpoints", () => {
 
     const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 12,
-        savedAt: new Date("2026-01-06T00:00:00.000Z"),
-        totalSaves: 101,
         article: {
           id: 25,
           slug: "saved-clamped",
@@ -429,6 +432,9 @@ describe("API /api/user activity endpoints", () => {
           views: 5,
           createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
+        id: 12,
+        savedAt: new Date("2026-01-06T00:00:00.000Z"),
+        totalSaves: 101,
       },
     ]);
 
@@ -450,15 +456,15 @@ describe("API /api/user activity endpoints", () => {
 
     mockSelectWithLimit([
       {
+        authorId: "author_3",
+        coverImage: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        excerpt: "Savable excerpt",
         id: 33,
+        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
         slug: "savable-post",
         title: "Savable Post",
-        excerpt: "Savable excerpt",
-        coverImage: null,
-        authorId: "author_3",
-        publishedAt: new Date("2026-01-01T00:00:00.000Z"),
         views: 4,
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
       },
     ]);
 
@@ -467,16 +473,16 @@ describe("API /api/user activity endpoints", () => {
     ]);
 
     const request = new Request("http://localhost:3001/api/user/articles/saved", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ article_id: 33 }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postSavedArticle(request as any);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
+    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
     expect(data.id).toBe(17);
     expect(data.saved_at).toBeTypeOf("string");
   });
@@ -485,9 +491,9 @@ describe("API /api/user activity endpoints", () => {
     vi.mocked(auth).mockResolvedValue({ userId: "user_1" } as any);
 
     const request = new Request("http://localhost:3001/api/user/articles/saved", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: "{",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await postSavedArticle(request as any);
@@ -530,9 +536,7 @@ describe("API /api/user activity endpoints", () => {
   it("returns 401 on user-comments GET when unauthenticated", async () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as any);
 
-    const response = await getUserComments(
-      new Request("http://localhost:3001/api/user/comments"),
-    );
+    const response = await getUserComments(new Request("http://localhost:3001/api/user/comments"));
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -545,34 +549,32 @@ describe("API /api/user activity endpoints", () => {
     mockSelectCount(1);
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 101,
-        postId: 12,
-        content: "Top level",
-        parent: null,
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
         article: {
           id: 12,
           slug: "post-12",
           title: "Post 12",
           coverImage: null,
         },
+        content: "Top level",
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        id: 101,
+        parent: null,
+        postId: 12,
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
       },
     ]);
 
     mockSelectWithWhereOrderBy([
       {
-        id: 202,
-        parentId: 101,
         content: "Reply",
         createdAt: new Date("2026-01-02T00:00:00.000Z"),
+        id: 202,
+        parentId: 101,
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
 
-    const response = await getUserComments(
-      new Request("http://localhost:3001/api/user/comments"),
-    );
+    const response = await getUserComments(new Request("http://localhost:3001/api/user/comments"));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -590,27 +592,27 @@ describe("API /api/user activity endpoints", () => {
     mockSelectCount(2);
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
-        id: 101,
-        postId: 12,
-        content: "Top level",
-        parent: null,
-        createdAt: new Date("2026-01-01T00:00:00.000Z"),
-        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
         article: {
           id: 12,
           slug: "post-12",
           title: "Post 12",
           coverImage: null,
         },
+        content: "Top level",
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        id: 101,
+        parent: null,
+        postId: 12,
+        updatedAt: new Date("2026-01-01T00:00:00.000Z"),
       },
     ]);
 
     mockSelectWithWhereOrderBy([
       {
-        id: 202,
-        parentId: 101,
         content: "Reply",
         createdAt: new Date("2026-01-02T00:00:00.000Z"),
+        id: 202,
+        parentId: 101,
         updatedAt: new Date("2026-01-02T00:00:00.000Z"),
       },
     ]);
@@ -643,7 +645,7 @@ describe("API /api/user activity endpoints", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+    expect(data.success).toBeTruthy();
   });
 
   it("returns 404 when deleting a saved article that does not belong to the user", async () => {

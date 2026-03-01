@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { getUserStats } from "@/lib/user/stats";
 
 const { mockDb } = vi.hoisted(() => ({
@@ -7,11 +7,11 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: mockDb,
 }));
 
-describe("getUserStats", () => {
+describe(getUserStats, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -29,7 +29,7 @@ describe("getUserStats", () => {
 
     const result = await getUserStats("user_1");
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       articles_read_count: 4,
       articles_saved_count: 2,
       comments_count: 7,
@@ -41,7 +41,7 @@ describe("getUserStats", () => {
 
     const firstResult = await getUserStats("user_1");
 
-    expect(firstResult).toEqual({
+    expect(firstResult).toStrictEqual({
       articles_read_count: 0,
       articles_saved_count: 0,
       comments_count: 0,
@@ -59,7 +59,7 @@ describe("getUserStats", () => {
 
     const secondResult = await getUserStats("user_1");
 
-    expect(secondResult).toEqual({
+    expect(secondResult).toStrictEqual({
       articles_read_count: 0,
       articles_saved_count: 0,
       comments_count: 0,

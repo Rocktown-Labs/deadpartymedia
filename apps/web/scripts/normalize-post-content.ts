@@ -6,25 +6,23 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { desc, eq } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
-import {
-  normalizeStoredPostContent,
-  type NormalizedPostContentKind,
-} from "../src/lib/content/post-content";
+import { normalizeStoredPostContent } from '../src/lib/content/post-content';
+import type { NormalizedPostContentKind } from '../src/lib/content/post-content';
 
-type CliOptions = {
+interface CliOptions {
   apply: boolean;
   limit: number | null;
   importedOnly: boolean;
-};
+}
 
-type ReportEntry = {
+interface ReportEntry {
   postId: number;
   slug: string;
   kind: NormalizedPostContentKind;
   changed: boolean;
-};
+}
 
-type Report = {
+interface Report {
   startedAt: string;
   completedAt: string | null;
   options: {
@@ -37,7 +35,7 @@ type Report = {
   updatedCount: number;
   byKind: Record<NormalizedPostContentKind, number>;
   sample: ReportEntry[];
-};
+}
 
 const WORKSPACE_ROOT = path.resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 
@@ -61,7 +59,7 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--limit") {
       const nextValue = argv[index + 1];
-      if (!nextValue) throw new Error("Missing value for --limit");
+      if (!nextValue) {throw new Error("Missing value for --limit");}
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new Error("--limit must be a positive integer");
@@ -79,7 +77,7 @@ function parseCliArgs(argv: string[]): CliOptions {
     throw new Error(`Unknown argument: ${value}`);
   }
 
-  return { apply, limit, importedOnly };
+  return { apply, importedOnly, limit };
 }
 
 async function writeReport(report: Report): Promise<void> {
@@ -99,37 +97,34 @@ async function main() {
   const db = createDb(process.env.DATABASE_URL);
 
   const report: Report = {
-    startedAt: new Date().toISOString(),
-    completedAt: null,
-    options,
-    scannedCount: 0,
-    malformedCount: 0,
-    updatedCount: 0,
     byKind: {
       tiptap_json: 0,
       nested_tiptap_json: 0,
       stringified_tiptap_json: 0,
       html_or_text: 0,
     },
+    completedAt: null,
+    malformedCount: 0,
+    options,
     sample: [],
+    scannedCount: 0,
+    startedAt: new Date().toISOString(),
+    updatedCount: 0,
   };
 
   try {
     const baseSelect = {
+      content: schema.posts.content,
       id: schema.posts.id,
       slug: schema.posts.slug,
-      content: schema.posts.content,
     };
 
-    let rows: Array<{ id: number; slug: string; content: string }>;
+    let rows: { id: number; slug: string; content: string }[];
     if (options.importedOnly) {
       const query = db
         .select(baseSelect)
         .from(schema.posts)
-        .innerJoin(
-          schema.postImportSources,
-          eq(schema.postImportSources.postId, schema.posts.id),
-        )
+        .innerJoin(schema.postImportSources, eq(schema.postImportSources.postId, schema.posts.id))
         .orderBy(desc(schema.posts.id));
       rows = options.limit ? await query.limit(options.limit) : await query;
     } else {
@@ -147,12 +142,15 @@ async function main() {
         report.malformedCount += 1;
       }
 
-      if (report.sample.length < 100 && (normalized.changed || normalized.kind !== "html_or_text")) {
+      if (
+        report.sample.length < 100 &&
+        (normalized.changed || normalized.kind !== "html_or_text")
+      ) {
         report.sample.push({
+          changed: normalized.changed,
+          kind: normalized.kind,
           postId: row.id,
           slug: row.slug,
-          kind: normalized.kind,
-          changed: normalized.changed,
         });
       }
 

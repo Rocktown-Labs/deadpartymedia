@@ -35,6 +35,7 @@ E2E_CLERK_ADMIN_PASSWORD=test-password-123
 ```
 
 **Important Notes:**
+
 - Use a **development instance** of Clerk (not production)
 - Create test users with **username/password** authentication enabled
 - Test users should have appropriate roles set in Clerk Dashboard
@@ -43,6 +44,7 @@ E2E_CLERK_ADMIN_PASSWORD=test-password-123
 ### 3. Global Setup
 
 The `playwright/global.setup.ts` file:
+
 - Calls `clerkSetup()` to configure Playwright with Clerk
 - Authenticates test users for different roles (fan, artist, admin)
 - Saves authenticated state to `playwright/.clerk/*.json` files
@@ -54,6 +56,7 @@ These auth state files are reused across tests, eliminating the need to sign in 
 ### Authentication State Storage
 
 When you run E2E tests, the global setup:
+
 1. Authenticates a fan user → saves to `playwright/.clerk/user.json`
 2. Authenticates an artist user → saves to `playwright/.clerk/artist.json`
 3. Authenticates an admin user → saves to `playwright/.clerk/admin.json`
@@ -74,12 +77,12 @@ The `playwright.config.ts` defines different test projects that automatically lo
 Call this at the start of each test to bypass Clerk's bot detection:
 
 ```typescript
-import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
-test('my test', async ({ page }) => {
-  await setupClerkTestingToken({ page })
+test("my test", async ({ page }) => {
+  await setupClerkTestingToken({ page });
   // ... rest of test
-})
+});
 ```
 
 #### `clerk.signIn({ page, signInParams })`
@@ -87,16 +90,16 @@ test('my test', async ({ page }) => {
 Sign in programmatically (useful for tests that need to test sign-in flow):
 
 ```typescript
-import { clerk } from '@clerk/testing/playwright'
+import { clerk } from "@clerk/testing/playwright";
 
 await clerk.signIn({
   page,
   signInParams: {
-    strategy: 'password',
-    identifier: 'test@example.com',
-    password: 'password123',
+    strategy: "password",
+    identifier: "test@example.com",
+    password: "password123",
   },
-})
+});
 ```
 
 #### `clerk.signOut({ page })`
@@ -104,7 +107,7 @@ await clerk.signIn({
 Sign out programmatically:
 
 ```typescript
-await clerk.signOut({ page })
+await clerk.signOut({ page });
 ```
 
 #### `clerk.loaded({ page })`
@@ -112,7 +115,7 @@ await clerk.signOut({ page })
 Assert that Clerk has loaded:
 
 ```typescript
-await clerk.loaded({ page })
+await clerk.loaded({ page });
 ```
 
 ## Writing Tests
@@ -122,14 +125,14 @@ await clerk.loaded({ page })
 For tests that don't require authentication (public pages):
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import { test, expect } from "@playwright/test";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
-test('should show homepage', async ({ page }) => {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await expect(page).toHaveTitle(/dead party media/i)
-})
+test("should show homepage", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/");
+  await expect(page).toHaveTitle(/dead party media/i);
+});
 ```
 
 ### Authenticated Tests (Automatic)
@@ -137,15 +140,15 @@ test('should show homepage', async ({ page }) => {
 For tests that match project patterns in `playwright.config.ts`, auth state is automatically loaded:
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import { setupClerkTestingToken } from '@clerk/testing/playwright'
+import { test, expect } from "@playwright/test";
+import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 // This test automatically uses fan user auth state
-test('should access dashboard', async ({ page }) => {
-  await setupClerkTestingToken({ page })
-  await page.goto('/dashboard')
-  await expect(page).not.toHaveURL(/sign-in/)
-})
+test("should access dashboard", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/dashboard");
+  await expect(page).not.toHaveURL(/sign-in/);
+});
 ```
 
 ### Authenticated Tests (Manual)
@@ -153,31 +156,32 @@ test('should access dashboard', async ({ page }) => {
 For tests that need to sign in manually:
 
 ```typescript
-import { test, expect } from '@playwright/test'
-import { clerk, setupClerkTestingToken } from '@clerk/testing/playwright'
+import { test, expect } from "@playwright/test";
+import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 
-test('should sign in and access dashboard', async ({ page }) => {
-  await setupClerkTestingToken({ page })
-  await page.goto('/')
-  await clerk.loaded({ page })
-  
+test("should sign in and access dashboard", async ({ page }) => {
+  await setupClerkTestingToken({ page });
+  await page.goto("/");
+  await clerk.loaded({ page });
+
   await clerk.signIn({
     page,
     signInParams: {
-      strategy: 'password',
+      strategy: "password",
       identifier: process.env.E2E_CLERK_USER_USERNAME!,
       password: process.env.E2E_CLERK_USER_PASSWORD!,
     },
-  })
-  
-  await page.goto('/dashboard')
-  await expect(page).not.toHaveURL(/sign-in/)
-})
+  });
+
+  await page.goto("/dashboard");
+  await expect(page).not.toHaveURL(/sign-in/);
+});
 ```
 
 ## Supported Sign-In Strategies
 
 The `clerk.signIn()` helper supports:
+
 - `password` - Username/email + password
 - `phone_code` - Phone number (only in development, requires test phone like `+15555550100`)
 - `email_code` - Email code (only in development, requires test email like `your_email+clerk_test@example.com`)

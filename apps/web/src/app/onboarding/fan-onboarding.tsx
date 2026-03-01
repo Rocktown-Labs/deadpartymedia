@@ -15,9 +15,9 @@ import { fanOnboardingAction } from "./actions";
 import { fanFormOptions } from "./form-options";
 import { toast } from "sonner";
 
-type FanOnboardingProps = {
+interface FanOnboardingProps {
   initialName?: string;
-};
+}
 
 export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const router = useRouter();
@@ -32,9 +32,9 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const formErrors = useStore(form.store, (formState) => formState.errors);
 
   useEffect(() => {
-    if (!initialName || initialName.trim().length === 0) return;
+    if (!initialName || initialName.trim().length === 0) {return;}
     const currentName = String(form.getFieldValue("name") ?? "");
-    if (currentName.trim().length > 0) return;
+    if (currentName.trim().length > 0) {return;}
     form.setFieldValue("name", initialName.trim());
   }, [form, initialName]);
 
@@ -68,27 +68,30 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
 
           {/* Form */}
           <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
-            <form action={action as never} onSubmit={(e) => {
-              e.preventDefault();
-              
-              // Get current form state
-              const formState = form.state;
-              
-              // Create FormData from form values
-              const formData = new FormData();
-              const values = formState.values;
-              
-              // Add all form fields to FormData
-              Object.entries(values).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== "") {
-                  formData.append(key, String(value));
-                }
-              });
-              
-              // `action` is called imperatively (not via native `<form action={...}>` submit),
-              // so wrap in a transition to keep React state updates consistent.
-              startTransition(() => action(formData));
-            }}>
+            <form
+              action={action as never}
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                // Get current form state
+                const formState = form.state;
+
+                // Create FormData from form values
+                const formData = new FormData();
+                const {values} = formState;
+
+                // Add all form fields to FormData
+                Object.entries(values).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== "") {
+                    formData.append(key, String(value));
+                  }
+                });
+
+                // `action` is called imperatively (not via native `<form action={...}>` submit),
+                // so wrap in a transition to keep React state updates consistent.
+                startTransition(() => action(formData));
+              }}
+            >
               {/* Form Errors */}
               {formErrors.length > 0 && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
@@ -104,9 +107,9 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
               <form.Field
                 name="name"
                 validators={{
-                  onChange: ({ value }) =>
-                    !value || value.trim() === "" ? "Name is required" : undefined,
                   onBlur: ({ value }) =>
+                    !value || value.trim() === "" ? "Name is required" : undefined,
+                  onChange: ({ value }) =>
                     !value || value.trim() === "" ? "Name is required" : undefined,
                 }}
               >

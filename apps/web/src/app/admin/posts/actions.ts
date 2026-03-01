@@ -14,20 +14,20 @@ import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
 function normalizeArtistIds(ids: number[]) {
-  return Array.from(new Set(ids)).sort((a, b) => a - b);
+  return [...new Set(ids)].toSorted((a, b) => a - b);
 }
 
 function haveDifferentArtistIds(a: number[], b: number[]) {
-  if (a.length !== b.length) return true;
+  if (a.length !== b.length) {return true;}
   for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return true;
+    if (a[i] !== b[i]) {return true;}
   }
   return false;
 }
 
 async function resolveAuthorIdForPost(
   formData: FormData,
-  fallbackAuthorId: string
+  fallbackAuthorId: string,
 ): Promise<string> {
   const selectedAuthorId = formData.get("authorId");
   if (typeof selectedAuthorId !== "string" || selectedAuthorId.trim().length === 0) {
@@ -43,12 +43,7 @@ async function resolveAuthorIdForPost(
   const [author] = await db
     .select({ clerkId: users.clerkId })
     .from(users)
-    .where(
-      and(
-        eq(users.clerkId, authorId),
-        inArray(users.role, ["writer", "super_admin"])
-      )
-    )
+    .where(and(eq(users.clerkId, authorId), inArray(users.role, ["writer", "super_admin"])))
     .limit(1);
 
   return author?.clerkId ?? fallbackAuthorId;
@@ -60,36 +55,29 @@ export async function createPost(formData: FormData) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info({ userId, operation: "create_post" }, "Starting post creation");
+  logger.info({ operation: "create_post", userId }, "Starting post creation");
 
   if (!(await canCreate())) {
-    logger.warn(
-      { userId, operation: "create_post" },
-      "Unauthorized post creation attempt"
-    );
+    logger.warn({ operation: "create_post", userId }, "Unauthorized post creation attempt");
     throw new Error("Unauthorized: You don't have permission to create posts");
   }
 
   // Validate form data - convert null to empty string for required fields
   const rawData = {
-    title: (formData.get("title") as string) || "",
-    slug: (formData.get("slug") as string) || "",
     category: (formData.get("category") as string) || "",
-    excerpt: (formData.get("excerpt") as string) || "",
     content: (formData.get("content") as string) || "",
     coverImage: (formData.get("coverImage") as string | null) || undefined,
+    excerpt: (formData.get("excerpt") as string) || "",
+    isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
+    slug: (formData.get("slug") as string) || "",
     status: (formData.get("status") as string) || "",
-    isCoverStory:
-      formData.get("isCoverStory") === "true" ||
-      formData.get("isCoverStory") === "on",
+    title: (formData.get("title") as string) || "",
   };
 
   const validationResult = postSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
@@ -99,15 +87,12 @@ export async function createPost(formData: FormData) {
   const slug = await ensureUniqueSlug(
     slugInput || generateSlug(validatedData.title),
     undefined,
-    "posts"
+    "posts",
   );
 
   // If setting as cover story, unset previous cover story
   if (validatedData.isCoverStory) {
-    await db
-      .update(posts)
-      .set({ isCoverStory: false })
-      .where(eq(posts.isCoverStory, true));
+    await db.update(posts).set({ isCoverStory: false }).where(eq(posts.isCoverStory, true));
   }
 
   const publishedAt = validatedData.status === "published" ? new Date() : null;
@@ -117,32 +102,32 @@ export async function createPost(formData: FormData) {
     [post] = await db
       .insert(posts)
       .values({
-        title: validatedData.title,
-        slug,
+        authorId: resolvedAuthorId,
         category: validatedData.category as any,
-        excerpt: validatedData.excerpt,
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
-        authorId: resolvedAuthorId,
-        status: validatedData.status as any,
+        excerpt: validatedData.excerpt,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,
+        slug,
+        status: validatedData.status as any,
+        title: validatedData.title,
       })
       .returning();
 
     logger.info(
-      { userId, operation: "create_post", postId: post.id, slug: post.slug },
-      "Post created successfully"
+      { operation: "create_post", postId: post.id, slug: post.slug, userId },
+      "Post created successfully",
     );
   } catch (error) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "create_post",
         title: validatedData.title,
+        userId,
       },
-      "Failed to create post"
+      "Failed to create post",
     );
     throw error;
   }
@@ -155,31 +140,31 @@ export async function createPost(formData: FormData) {
       artistIdsStr
         .split(",")
         .map((id) => Number.parseInt(id.trim(), 10))
-        .filter((id) => !Number.isNaN(id) && id > 0)
+        .filter((id) => !Number.isNaN(id) && id > 0),
     );
 
     if (artistIds.length > 0) {
       try {
         await db.insert(postArtists).values(
           artistIds.map((artistId) => ({
-            postId: post.id,
             artistId,
-          }))
+            postId: post.id,
+          })),
         );
         logger.debug(
-          { userId, operation: "create_post", postId: post.id, artistIds },
-          "Post artist relations created"
+          { artistIds, operation: "create_post", postId: post.id, userId },
+          "Post artist relations created",
         );
       } catch (error) {
         logger.error(
           {
+            artistIds,
             error: sanitizeError(error),
-            userId,
             operation: "create_post",
             postId: post.id,
-            artistIds,
+            userId,
           },
-          "Failed to create post artist relations"
+          "Failed to create post artist relations",
         );
         // Don't throw - post is already created, relations can be added later
       }
@@ -206,10 +191,7 @@ export async function updatePost(id: number, formData: FormData) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info(
-    { userId, operation: "update_post", postId: id },
-    "Starting post update"
-  );
+  logger.info({ operation: "update_post", postId: id, userId }, "Starting post update");
 
   // Get the post to check ownership
   let post;
@@ -219,64 +201,51 @@ export async function updatePost(id: number, formData: FormData) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "update_post",
         postId: id,
+        userId,
       },
-      "Failed to fetch post for update"
+      "Failed to fetch post for update",
     );
     throw error;
   }
 
   if (!post) {
-    logger.warn(
-      { userId, operation: "update_post", postId: id },
-      "Post not found"
-    );
+    logger.warn({ operation: "update_post", postId: id, userId }, "Post not found");
     throw new Error("Post not found");
   }
 
   if (!(await canEdit(post.authorId))) {
     logger.warn(
-      { userId, operation: "update_post", postId: id, authorId: post.authorId },
-      "Unauthorized post update attempt"
+      { authorId: post.authorId, operation: "update_post", postId: id, userId },
+      "Unauthorized post update attempt",
     );
-    throw new Error(
-      "Unauthorized: You don't have permission to edit this post"
-    );
+    throw new Error("Unauthorized: You don't have permission to edit this post");
   }
 
   // Validate form data - convert null to empty string for required fields
   const rawData = {
-    title: (formData.get("title") as string) || "",
-    slug: (formData.get("slug") as string) || "",
     category: (formData.get("category") as string) || "",
-    excerpt: (formData.get("excerpt") as string) || "",
     content: (formData.get("content") as string) || "",
     coverImage: (formData.get("coverImage") as string | null) || undefined,
+    excerpt: (formData.get("excerpt") as string) || "",
+    isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
+    slug: (formData.get("slug") as string) || "",
     status: (formData.get("status") as string) || "",
-    isCoverStory:
-      formData.get("isCoverStory") === "true" ||
-      formData.get("isCoverStory") === "on",
+    title: (formData.get("title") as string) || "",
   };
 
   const validationResult = postSchema.safeParse(rawData);
 
   if (!validationResult.success) {
-    throw new Error(
-      validationResult.error.issues.map((e) => e.message).join(", ")
-    );
+    throw new Error(validationResult.error.issues.map((e) => e.message).join(", "));
   }
 
   const validatedData = validationResult.data;
   const slugInput = validatedData.slug;
   const resolvedAuthorId = await resolveAuthorIdForPost(formData, post.authorId);
 
-  const slug = await ensureUniqueSlug(
-    slugInput || generateSlug(validatedData.title),
-    id,
-    "posts"
-  );
+  const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.title), id, "posts");
 
   // If setting as cover story, unset previous cover story
   if (validatedData.isCoverStory && !post.isCoverStory) {
@@ -287,41 +256,39 @@ export async function updatePost(id: number, formData: FormData) {
   }
 
   const publishedAt =
-    validatedData.status === "published" && !post.publishedAt
-      ? new Date()
-      : post.publishedAt;
+    validatedData.status === "published" && !post.publishedAt ? new Date() : post.publishedAt;
 
   try {
     await db
       .update(posts)
       .set({
-        title: validatedData.title,
-        slug,
+        authorId: resolvedAuthorId,
         category: validatedData.category as any,
-        excerpt: validatedData.excerpt,
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
-        authorId: resolvedAuthorId,
-        status: validatedData.status as any,
+        excerpt: validatedData.excerpt,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,
+        slug,
+        status: validatedData.status as any,
+        title: validatedData.title,
         updatedAt: new Date(),
       })
       .where(eq(posts.id, id));
 
     logger.info(
-      { userId, operation: "update_post", postId: id, slug },
-      "Post updated successfully"
+      { operation: "update_post", postId: id, slug, userId },
+      "Post updated successfully",
     );
   } catch (error) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "update_post",
         postId: id,
+        userId,
       },
-      "Failed to update post"
+      "Failed to update post",
     );
     throw error;
   }
@@ -333,48 +300,40 @@ export async function updatePost(id: number, formData: FormData) {
       .from(postArtists)
       .where(eq(postArtists.postId, id));
     const existingArtistIds = normalizeArtistIds(
-      existingArtistRelations.map((rel) => rel.artistId)
+      existingArtistRelations.map((rel) => rel.artistId),
     );
 
     await db.delete(postArtists).where(eq(postArtists.postId, id));
 
     let newArtistIds: number[] = [];
     const artistIdsStr = formData.get("artistIds");
-    if (
-      artistIdsStr &&
-      typeof artistIdsStr === "string" &&
-      artistIdsStr.trim()
-    ) {
+    if (artistIdsStr && typeof artistIdsStr === "string" && artistIdsStr.trim()) {
       newArtistIds = normalizeArtistIds(
         artistIdsStr
           .split(",")
           .map((id) => Number.parseInt(id.trim(), 10))
-          .filter((id) => !Number.isNaN(id) && id > 0)
+          .filter((id) => !Number.isNaN(id) && id > 0),
       );
 
       if (newArtistIds.length > 0) {
         await db.insert(postArtists).values(
           newArtistIds.map((artistId) => ({
-            postId: id,
             artistId,
-          }))
+            postId: id,
+          })),
         );
         logger.debug(
-          { userId, operation: "update_post", postId: id, artistIds: newArtistIds },
-          "Post artist relations updated"
+          { artistIds: newArtistIds, operation: "update_post", postId: id, userId },
+          "Post artist relations updated",
         );
       }
     }
 
     const wasPublished = post.status === "published";
     const isPublished = validatedData.status === "published";
-    const artistIdsChanged = haveDifferentArtistIds(
-      existingArtistIds,
-      newArtistIds
-    );
+    const artistIdsChanged = haveDifferentArtistIds(existingArtistIds, newArtistIds);
     const publicationChanged = wasPublished !== isPublished;
-    const hasAnyArtistIds =
-      existingArtistIds.length > 0 || newArtistIds.length > 0;
+    const hasAnyArtistIds = existingArtistIds.length > 0 || newArtistIds.length > 0;
     if (wasPublished || isPublished) {
       revalidateTag("posts", "max");
       revalidateTag("stats-monthly", "max");
@@ -386,11 +345,11 @@ export async function updatePost(id: number, formData: FormData) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "update_post",
         postId: id,
+        userId,
       },
-      "Failed to update post artist relations"
+      "Failed to update post artist relations",
     );
     // Don't throw - post is already updated, relations can be fixed later
   }
@@ -407,10 +366,7 @@ export async function requestDeletePost(id: number) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info(
-    { userId, operation: "request_delete_post", postId: id },
-    "Starting delete request"
-  );
+  logger.info({ operation: "request_delete_post", postId: id, userId }, "Starting delete request");
 
   // Get the post to check ownership
   let post;
@@ -420,20 +376,17 @@ export async function requestDeletePost(id: number) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "request_delete_post",
         postId: id,
+        userId,
       },
-      "Failed to fetch post for delete request"
+      "Failed to fetch post for delete request",
     );
     throw error;
   }
 
   if (!post) {
-    logger.warn(
-      { userId, operation: "request_delete_post", postId: id },
-      "Post not found"
-    );
+    logger.warn({ operation: "request_delete_post", postId: id, userId }, "Post not found");
     throw new Error("Post not found");
   }
 
@@ -441,16 +394,14 @@ export async function requestDeletePost(id: number) {
   if (!(await canEdit(post.authorId))) {
     logger.warn(
       {
-        userId,
+        authorId: post.authorId,
         operation: "request_delete_post",
         postId: id,
-        authorId: post.authorId,
+        userId,
       },
-      "Unauthorized delete request attempt"
+      "Unauthorized delete request attempt",
     );
-    throw new Error(
-      "Unauthorized: You can only request deletion of your own posts"
-    );
+    throw new Error("Unauthorized: You can only request deletion of your own posts");
   }
 
   // Check if user is super_admin - they can delete directly
@@ -460,18 +411,18 @@ export async function requestDeletePost(id: number) {
     try {
       await db.delete(posts).where(eq(posts.id, id));
       logger.info(
-        { userId, operation: "request_delete_post", postId: id },
-        "Post deleted directly by super admin"
+        { operation: "request_delete_post", postId: id, userId },
+        "Post deleted directly by super admin",
       );
     } catch (error) {
       logger.error(
         {
           error: sanitizeError(error),
-          userId,
           operation: "request_delete_post",
           postId: id,
+          userId,
         },
-        "Failed to delete post"
+        "Failed to delete post",
       );
       throw error;
     }
@@ -500,18 +451,18 @@ export async function requestDeletePost(id: number) {
       })
       .where(eq(posts.id, id));
     logger.info(
-      { userId, operation: "request_delete_post", postId: id },
-      "Delete request submitted"
+      { operation: "request_delete_post", postId: id, userId },
+      "Delete request submitted",
     );
   } catch (error) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "request_delete_post",
         postId: id,
+        userId,
       },
-      "Failed to submit delete request"
+      "Failed to submit delete request",
     );
     throw error;
   }
@@ -525,19 +476,14 @@ export async function approveDeletePost(id: number) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info(
-    { userId, operation: "approve_delete_post", postId: id },
-    "Approving post deletion"
-  );
+  logger.info({ operation: "approve_delete_post", postId: id, userId }, "Approving post deletion");
 
   if (!(await canDelete())) {
     logger.warn(
-      { userId, operation: "approve_delete_post", postId: id },
-      "Unauthorized approve delete attempt"
+      { operation: "approve_delete_post", postId: id, userId },
+      "Unauthorized approve delete attempt",
     );
-    throw new Error(
-      "Unauthorized: Only super admins can approve post deletions"
-    );
+    throw new Error("Unauthorized: Only super admins can approve post deletions");
   }
 
   try {
@@ -552,10 +498,7 @@ export async function approveDeletePost(id: number) {
       .where(eq(postArtists.postId, id));
 
     await db.delete(posts).where(eq(posts.id, id));
-    logger.info(
-      { userId, operation: "approve_delete_post", postId: id },
-      "Post deletion approved"
-    );
+    logger.info({ operation: "approve_delete_post", postId: id, userId }, "Post deletion approved");
     if (post?.status === "published") {
       revalidateTag("posts", "max");
       revalidateTag("stats-monthly", "max");
@@ -567,11 +510,11 @@ export async function approveDeletePost(id: number) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "approve_delete_post",
         postId: id,
+        userId,
       },
-      "Failed to approve post deletion"
+      "Failed to approve post deletion",
     );
     throw error;
   }
@@ -585,19 +528,14 @@ export async function denyDeletePost(id: number) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info(
-    { userId, operation: "deny_delete_post", postId: id },
-    "Denying post deletion"
-  );
+  logger.info({ operation: "deny_delete_post", postId: id, userId }, "Denying post deletion");
 
   if (!(await canDelete())) {
     logger.warn(
-      { userId, operation: "deny_delete_post", postId: id },
-      "Unauthorized deny delete attempt"
+      { operation: "deny_delete_post", postId: id, userId },
+      "Unauthorized deny delete attempt",
     );
-    throw new Error(
-      "Unauthorized: Only super admins can deny post deletion requests"
-    );
+    throw new Error("Unauthorized: Only super admins can deny post deletion requests");
   }
 
   try {
@@ -608,19 +546,16 @@ export async function denyDeletePost(id: number) {
         deleteRequestedAt: null,
       })
       .where(eq(posts.id, id));
-    logger.info(
-      { userId, operation: "deny_delete_post", postId: id },
-      "Post deletion denied"
-    );
+    logger.info({ operation: "deny_delete_post", postId: id, userId }, "Post deletion denied");
   } catch (error) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "deny_delete_post",
         postId: id,
+        userId,
       },
-      "Failed to deny post deletion"
+      "Failed to deny post deletion",
     );
     throw error;
   }
@@ -634,16 +569,10 @@ export async function deletePost(id: number) {
     redirect("/sign-in" as Route);
   }
 
-  logger.info(
-    { userId, operation: "delete_post", postId: id },
-    "Deleting post"
-  );
+  logger.info({ operation: "delete_post", postId: id, userId }, "Deleting post");
 
   if (!(await canDelete())) {
-    logger.warn(
-      { userId, operation: "delete_post", postId: id },
-      "Unauthorized delete attempt"
-    );
+    logger.warn({ operation: "delete_post", postId: id, userId }, "Unauthorized delete attempt");
     throw new Error("Unauthorized: Only super admins can delete posts");
   }
 
@@ -659,10 +588,7 @@ export async function deletePost(id: number) {
       .where(eq(postArtists.postId, id));
 
     await db.delete(posts).where(eq(posts.id, id));
-    logger.info(
-      { userId, operation: "delete_post", postId: id },
-      "Post deleted successfully"
-    );
+    logger.info({ operation: "delete_post", postId: id, userId }, "Post deleted successfully");
     if (post?.status === "published") {
       revalidateTag("posts", "max");
       revalidateTag("stats-monthly", "max");
@@ -674,11 +600,11 @@ export async function deletePost(id: number) {
     logger.error(
       {
         error: sanitizeError(error),
-        userId,
         operation: "delete_post",
         postId: id,
+        userId,
       },
-      "Failed to delete post"
+      "Failed to delete post",
     );
     throw error;
   }

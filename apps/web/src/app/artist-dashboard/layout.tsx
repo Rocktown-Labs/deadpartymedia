@@ -6,11 +6,7 @@ import { useEffect } from "react";
 import type { Route } from "next";
 import { parseRole } from "@/lib/auth/role";
 
-export default function ArtistDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ArtistDashboardLayout({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
@@ -23,27 +19,26 @@ export default function ArtistDashboardLayout({
   }, [isLoaded, isSignedIn, role, router]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || role !== "artist") return;
+    if (!isLoaded || !isSignedIn || role !== "artist") {return;}
 
     let cancelled = false;
     (async () => {
       try {
         const response = await fetch("/api/artists/me", { cache: "no-store" });
         if (!response.ok) {
-          if (!cancelled) router.push("/onboarding");
+          if (!cancelled) {router.push("/onboarding");}
           return;
         }
 
         const artist = await response.json();
-        const hasSpotify =
-          Boolean(artist?.spotify_artist_id) && Boolean(artist?.spotify_url);
+        const hasSpotify = Boolean(artist?.spotify_artist_id) && Boolean(artist?.spotify_url);
         const hasInstagram = Boolean(artist?.instagram);
 
         if (!hasSpotify || !hasInstagram) {
-          if (!cancelled) router.push("/onboarding");
+          if (!cancelled) {router.push("/onboarding");}
         }
       } catch {
-        if (!cancelled) router.push("/onboarding");
+        if (!cancelled) {router.push("/onboarding");}
       }
     })();
 

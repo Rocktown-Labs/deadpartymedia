@@ -16,15 +16,16 @@ export default async function OnboardingLayout({ children }: { children: React.R
     if (role === "artist" && userId) {
       const [artist] = await db
         .select({
-          spotifyUrl: artists.spotifyUrl,
-          spotifyArtistId: artists.spotifyArtistId,
           instagram: artists.instagram,
+          spotifyArtistId: artists.spotifyArtistId,
+          spotifyUrl: artists.spotifyUrl,
         })
         .from(artists)
         .where(eq(artists.claimedById, userId))
         .limit(1);
 
-      const hasSpotify = Boolean(artist?.spotifyArtistId?.trim()) && Boolean(artist?.spotifyUrl?.trim());
+      const hasSpotify =
+        Boolean(artist?.spotifyArtistId?.trim()) && Boolean(artist?.spotifyUrl?.trim());
       const hasInstagram = Boolean(artist?.instagram?.trim());
 
       if (!hasSpotify || !hasInstagram) {

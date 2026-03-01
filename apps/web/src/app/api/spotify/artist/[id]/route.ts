@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -6,10 +7,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
  * Get artist details by Spotify ID using the Spotify Web API
  * Uses Client Credentials flow (no user authentication required)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const log = getRequestLogger(request);
   try {
     const { id } = await params;
@@ -29,20 +27,20 @@ export async function GET(
 
     // Get access token using Client Credentials flow
     const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+      }),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
       },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-      }),
+      method: "POST",
     });
 
     if (!tokenResponse.ok) {
       log.error(
         { operation: "spotify_auth", status: tokenResponse.status },
-        "Failed to get Spotify access token"
+        "Failed to get Spotify access token",
       );
       return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
     }
@@ -71,8 +69,8 @@ export async function GET(
         );
       }
       log.error(
-        { operation: "spotify_artist_fetch", status: artistResponse.status, artistId: id },
-        "Spotify artist fetch failed"
+        { artistId: id, operation: "spotify_artist_fetch", status: artistResponse.status },
+        "Spotify artist fetch failed",
       );
       return NextResponse.json({ error: "Failed to fetch artist from Spotify" }, { status: 500 });
     }
@@ -81,20 +79,24 @@ export async function GET(
 
     // Transform to match our SpotifyArtist interface
     const formattedArtist = {
-      id: artistData.id,
-      name: artistData.name,
-      images: artistData.images || [],
       external_urls: artistData.external_urls || {
         spotify: `https://open.spotify.com/artist/${artistData.id}`,
       },
       genres: artistData.genres || [],
+      id: artistData.id,
+      images: artistData.images || [],
+      name: artistData.name,
     };
 
     return NextResponse.json(formattedArtist);
   } catch (error) {
     log.error(
-      { error: sanitizeError(error), operation: "spotify_artist_fetch", artistId: (await params).id },
-      "Error fetching Spotify artist"
+      {
+        artistId: (await params).id,
+        error: sanitizeError(error),
+        operation: "spotify_artist_fetch",
+      },
+      "Error fetching Spotify artist",
     );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -12,10 +12,7 @@ import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
-import {
-  fanOnboardingSchema,
-  artistOnboardingSchema,
-} from "@/lib/validations/onboarding";
+import { fanOnboardingSchema, artistOnboardingSchema } from "@/lib/validations/onboarding";
 import { fanFormOptions, artistFormOptions } from "./form-options";
 import { logger } from "@/lib/logger";
 import { withUserContext } from "@/lib/logger/context";
@@ -27,9 +24,7 @@ import { getPrimaryEmail } from "@/lib/auth/clerk";
 function validateWithZod<T>(schema: any, data: T): string | undefined {
   const result = schema.safeParse(data);
   if (!result.success) {
-    return result.error.issues
-      .map((e: { message: string }) => e.message)
-      .join(", ");
+    return result.error.issues.map((e: { message: string }) => e.message).join(", ");
   }
   return undefined;
 }
@@ -72,8 +67,8 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         ...user.publicMetadata,
-        role: "fan",
         onboardingComplete: true,
+        role: "fan",
       },
     });
 
@@ -86,10 +81,10 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
       clerkId: userId,
       email: primaryEmail,
       firstName: validatedData.name,
-      lastName: user.lastName,
       imageUrl: user.imageUrl,
-      role: "fan",
+      lastName: user.lastName,
       onboardingComplete: true,
+      role: "fan",
     });
 
     // Return success in a way that TanStack Form can handle
@@ -98,22 +93,18 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
       ...initialFormState,
       success: true,
     } as any;
-  } catch (e) {
-    if (e instanceof ServerValidateError) {
-      return e.formState;
+  } catch (error) {
+    if (error instanceof ServerValidateError) {
+      return error.formState;
     }
     // Handle operational errors (database, Clerk API) gracefully
     log.error(
-      { error: sanitizeError(e), operation: "fan_onboarding" },
+      { error: sanitizeError(error), operation: "fan_onboarding" },
       "Error completing onboarding",
     );
     return {
       ...initialFormState,
-      errors: [
-        e instanceof Error
-          ? e.message
-          : "Failed to complete onboarding. Please try again.",
-      ],
+      errors: [error instanceof Error ? error.message : "Failed to complete onboarding. Please try again."],
     } as any;
   }
 }
@@ -134,10 +125,7 @@ const artistServerValidate = createServerValidate({
   },
 });
 
-export async function artistOnboardingAction(
-  prev: unknown,
-  formData: FormData,
-) {
+export async function artistOnboardingAction(prev: unknown, formData: FormData) {
   const { userId } = await auth();
   const log = userId ? withUserContext(logger, userId, "artist") : logger;
   try {
@@ -160,11 +148,7 @@ export async function artistOnboardingAction(
 
     // If user is an artist and has an artistId, claim the existing artist profile
     if (artistId) {
-      const [artist] = await db
-        .select()
-        .from(artists)
-        .where(eq(artists.id, artistId))
-        .limit(1);
+      const [artist] = await db.select().from(artists).where(eq(artists.id, artistId)).limit(1);
 
       if (!artist) {
         return {
@@ -180,58 +164,50 @@ export async function artistOnboardingAction(
         } as any;
       }
 
-      artistSlug = await ensureUniqueSlug(
-        generateSlug(validatedData.name),
-        artistId,
-        "artists",
-      );
+      artistSlug = await ensureUniqueSlug(generateSlug(validatedData.name), artistId, "artists");
 
       // Update artist profile with user's information
       await db
         .update(artists)
         .set({
-          slug: artistSlug,
-          name: validatedData.name,
           bio: validatedData.bio,
-          location: validatedData.location,
-          genre: validatedData.genre as any,
-          spotifyUrl: validatedData.spotifyUrl,
-          spotifyArtistId: validatedData.spotifyArtistId,
-          instagram: validatedData.instagram,
-          twitter: validatedData.twitter || null,
-          tiktok: validatedData.tiktok || null,
-          website: validatedData.website || null,
-          image: validatedData.image || null,
-          phoneNumber: validatedData.phoneNumber || null,
           claimed: true,
           claimedById: userId,
+          genre: validatedData.genre as any,
+          image: validatedData.image || null,
+          instagram: validatedData.instagram,
+          location: validatedData.location,
+          name: validatedData.name,
+          phoneNumber: validatedData.phoneNumber || null,
+          slug: artistSlug,
+          spotifyArtistId: validatedData.spotifyArtistId,
+          spotifyUrl: validatedData.spotifyUrl,
+          tiktok: validatedData.tiktok || null,
+          twitter: validatedData.twitter || null,
           updatedAt: new Date(),
+          website: validatedData.website || null,
         })
         .where(eq(artists.id, artistId));
     } else {
       // If user is an artist but doesn't have an artistId, create a new artist profile
-      artistSlug = await ensureUniqueSlug(
-        generateSlug(validatedData.name),
-        undefined,
-        "artists",
-      );
+      artistSlug = await ensureUniqueSlug(generateSlug(validatedData.name), undefined, "artists");
 
       await db.insert(artists).values({
-        name: validatedData.name,
-        slug: artistSlug,
         bio: validatedData.bio,
-        location: validatedData.location,
-        genre: validatedData.genre as any,
-        spotifyUrl: validatedData.spotifyUrl,
-        spotifyArtistId: validatedData.spotifyArtistId,
-        instagram: validatedData.instagram,
-        twitter: validatedData.twitter || null,
-        tiktok: validatedData.tiktok || null,
-        website: validatedData.website || null,
-        image: validatedData.image || null,
-        phoneNumber: validatedData.phoneNumber || null,
         claimed: true,
         claimedById: userId,
+        genre: validatedData.genre as any,
+        image: validatedData.image || null,
+        instagram: validatedData.instagram,
+        location: validatedData.location,
+        name: validatedData.name,
+        phoneNumber: validatedData.phoneNumber || null,
+        slug: artistSlug,
+        spotifyArtistId: validatedData.spotifyArtistId,
+        spotifyUrl: validatedData.spotifyUrl,
+        tiktok: validatedData.tiktok || null,
+        twitter: validatedData.twitter || null,
+        website: validatedData.website || null,
       });
     }
 
@@ -243,9 +219,9 @@ export async function artistOnboardingAction(
         firstName: validatedData.name,
         username: usernameCandidate,
       });
-    } catch (e) {
+    } catch (error) {
       log.warn(
-        { error: sanitizeError(e), operation: "artist_onboarding_update_user" },
+        { error: sanitizeError(error), operation: "artist_onboarding_update_user" },
         "Unable to update Clerk user profile during artist onboarding",
       );
     }
@@ -254,8 +230,8 @@ export async function artistOnboardingAction(
     await client.users.updateUserMetadata(userId, {
       publicMetadata: {
         ...user.publicMetadata,
-        role: "artist",
         onboardingComplete: true,
+        role: "artist",
       },
     });
 
@@ -268,10 +244,10 @@ export async function artistOnboardingAction(
       clerkId: userId,
       email: primaryEmail,
       firstName: validatedData.name,
-      lastName: user.lastName,
       imageUrl: user.imageUrl,
-      role: "artist",
+      lastName: user.lastName,
       onboardingComplete: true,
+      role: "artist",
     });
 
     // Return success in a way that TanStack Form can handle
@@ -279,22 +255,18 @@ export async function artistOnboardingAction(
       ...initialFormState,
       success: true,
     } as any;
-  } catch (e) {
-    if (e instanceof ServerValidateError) {
-      return e.formState;
+  } catch (error) {
+    if (error instanceof ServerValidateError) {
+      return error.formState;
     }
     // Handle operational errors (database, Clerk API) gracefully
     log.error(
-      { error: sanitizeError(e), operation: "artist_onboarding" },
+      { error: sanitizeError(error), operation: "artist_onboarding" },
       "Error completing onboarding",
     );
     return {
       ...initialFormState,
-      errors: [
-        e instanceof Error
-          ? e.message
-          : "Failed to complete onboarding. Please try again.",
-      ],
+      errors: [error instanceof Error ? error.message : "Failed to complete onboarding. Please try again."],
     } as any;
   }
 }

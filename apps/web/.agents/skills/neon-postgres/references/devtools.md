@@ -113,8 +113,8 @@ curl -H "Accept: text/markdown" https://neon.com/docs/ai/neon-mcp-server
 
 ## Documentation Resources
 
-| Topic              | URL                                           |
-| ------------------ | --------------------------------------------- |
+| Topic              | URL                                          |
+| ------------------ | -------------------------------------------- |
 | CLI Init Command   | https://neon.com/docs/reference/cli-init     |
 | VSCode Extension   | https://neon.com/docs/local/vscode-extension |
 | MCP Server         | https://neon.com/docs/ai/neon-mcp-server     |

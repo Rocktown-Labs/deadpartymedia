@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+
 import { createImageMirror } from "../../../scripts/lib/image-mirror";
 
 describe("image-mirror", () => {
@@ -12,8 +12,8 @@ describe("image-mirror", () => {
 
     const mirror = createImageMirror({
       downloadImage,
-      uploadImage,
       dryRun: false,
+      uploadImage,
     });
 
     const first = await mirror.mirrorImageUrl(
@@ -27,15 +27,13 @@ describe("image-mirror", () => {
 
     expect(first).toBe("https://blob.example.com/posts/content/mock.png");
     expect(second).toBe("https://blob.example.com/posts/content/mock.png");
-    expect(downloadImage).toHaveBeenCalledTimes(1);
-    expect(uploadImage).toHaveBeenCalledTimes(1);
+    expect(downloadImage).toHaveBeenCalledOnce();
+    expect(uploadImage).toHaveBeenCalledOnce();
   });
 
   it("keeps original inline URL when mirroring fails", async () => {
     const onWarn = vi.fn();
     const mirror = createImageMirror({
-      dryRun: false,
-      onWarn,
       downloadImage: async (sourceUrl) => {
         if (sourceUrl.includes("fail")) {
           throw new Error("download failure");
@@ -43,6 +41,8 @@ describe("image-mirror", () => {
 
         return { bytes: new ArrayBuffer(4), contentType: "image/jpeg" };
       },
+      dryRun: false,
+      onWarn,
       uploadImage: async ({ pathname }) => `https://blob.example.com/${pathname}`,
     });
 
@@ -55,6 +55,6 @@ describe("image-mirror", () => {
     expect(result.failedCount).toBe(1);
     expect(result.html).toContain("https://blob.example.com/");
     expect(result.html).toContain("https://example.com/fail.jpg");
-    expect(onWarn).toHaveBeenCalledTimes(1);
+    expect(onWarn).toHaveBeenCalledOnce();
   });
 });

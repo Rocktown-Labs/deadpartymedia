@@ -13,17 +13,19 @@ Your #1 outlet for Arkansas music.
 ### Setup
 
 1. **Install dependencies:**
+
    ```bash
    pnpm install
    ```
 
 2. **Set up environment variables:**
+
    ```bash
    # Backend - create .env file (gitignored)
    cp apps/server/.env.example apps/server/.env
    # Edit apps/server/.env with your settings
    # Defaults work with Docker PostgreSQL (see docker-compose.yml)
-   
+
    # Frontend - create .env.local file (gitignored)
    cp apps/web/.env.example apps/web/.env.local
    # Edit apps/web/.env.local with your settings
@@ -32,11 +34,13 @@ Your #1 outlet for Arkansas music.
    ```
 
 3. **Start PostgreSQL (Docker):**
+
    ```bash
    docker-compose up -d
    ```
 
 4. **Set up Django database:**
+
    ```bash
    cd apps/server
    uv run python manage.py makemigrations
@@ -45,12 +49,14 @@ Your #1 outlet for Arkansas music.
    ```
 
 5. **Run the application:**
+
    ```bash
    # From root directory - runs both frontend and backend
    pnpm dev
    ```
 
    Or run individually:
+
    ```bash
    pnpm dev:web      # Frontend: http://localhost:3001
    pnpm dev:server   # Backend: http://localhost:8000
@@ -59,6 +65,7 @@ Your #1 outlet for Arkansas music.
 ## Project Structure
 
 See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed documentation on:
+
 - Directory structure
 - Environment variables
 - Configuration files
@@ -69,6 +76,7 @@ See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed document
 ## Tech Stack
 
 ### Frontend
+
 - Next.js 16 (App Router)
 - React 19
 - TanStack Query
@@ -76,6 +84,7 @@ See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed document
 - Shadcn UI
 
 ### Backend
+
 - Django 5.2
 - Django REST Framework
 - Django Admin (Jazzmin)
@@ -99,6 +108,7 @@ pnpm dev:server   # Django backend
 ### Database
 
 Local development uses Docker PostgreSQL:
+
 ```bash
 docker-compose up -d    # Start
 docker-compose down     # Stop
@@ -113,6 +123,7 @@ docker-compose logs     # View logs
 ## Environment Variables
 
 ### Backend (`apps/server/.env`)
+
 **Location:** `apps/server/.env` (create from `.env.example`)
 
 - `SECRET_KEY` - Django secret key (generate with: `python -c "import secrets; print(secrets.token_urlsafe(50))"`)
@@ -122,6 +133,7 @@ docker-compose logs     # View logs
 - `AWS_*` - S3 credentials (only needed if USE_S3=True)
 
 ### Frontend (`apps/web/.env.local`)
+
 **Location:** `apps/web/.env.local` (create from `.env.example`)
 
 - `NEXT_PUBLIC_API_URL` - Django API URL (default: http://localhost:8000/api)
@@ -137,6 +149,7 @@ This repo expects `DATABASE_URL` to be set in the Vercel Project Environment Var
 - **Preview**: set `DATABASE_URL` to the Neon **dev** branch pooler URL (host like `ep-autumn-lab-...-pooler...`).
 
 Optional (nice for catching migration drift in Preview/CI):
+
 - Set `DB_SCHEMA_SANITY_CHECK=1` for **Preview** (and/or **Development**).
 
 ## Database Migrations (GitHub Actions)
@@ -145,11 +158,11 @@ This repo includes a workflow that runs Drizzle migrations against the Neon **ma
 
 - Workflow: `.github/workflows/web-db-migrate.yml`
 - Required repo variable:
-   - `NEON_PROJECT_ID` (Neon project id, e.g. `cold-mud-71328663`)
+  - `NEON_PROJECT_ID` (Neon project id, e.g. `cold-mud-71328663`)
 
 - Required repo secrets:
-   - `NEON_DATABASE_URL_MAIN` (set this to the Neon **main** branch pooled connection string)
-   - `NEON_API_KEY` (Neon API key used to create/delete a temporary branch for a migration dry-run)
+  - `NEON_DATABASE_URL_MAIN` (set this to the Neon **main** branch pooled connection string)
+  - `NEON_API_KEY` (Neon API key used to create/delete a temporary branch for a migration dry-run)
 
 ## Production
 
@@ -177,6 +190,7 @@ For production deployment to AWS Lightsail:
 - **IAM Policies**: [apps/server/IAM_POLICIES.md](./apps/server/IAM_POLICIES.md)
 
 The deployment uses GitHub Actions for CI/CD. Ensure you have:
+
 1. GitHub Secrets configured (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
 2. IAM user with required permissions (see IAM_POLICIES.md)
 3. AWS Secrets Manager configured with application secrets

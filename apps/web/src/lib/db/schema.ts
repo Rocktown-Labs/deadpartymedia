@@ -1,16 +1,5 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  integer,
-  boolean,
-  date,
-  pgEnum,
-  serial,
-  type AnyPgColumn,
-  index,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, boolean, date, pgEnum, serial, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from "drizzle-orm";
 
 // Enums
@@ -30,24 +19,11 @@ export const genreEnum = pgEnum("genre", [
   "OTHER",
 ]);
 
-export const postStatusEnum = pgEnum("post_status", [
-  "draft",
-  "published",
-  "archived",
-]);
+export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
 
-export const eventStatusEnum = pgEnum("event_status", [
-  "draft",
-  "published",
-  "past",
-]);
+export const eventStatusEnum = pgEnum("event_status", ["draft", "published", "past"]);
 
-export const roleEnum = pgEnum("role", [
-  "artist",
-  "fan",
-  "super_admin",
-  "writer",
-]);
+export const roleEnum = pgEnum("role", ["artist", "fan", "super_admin", "writer"]);
 
 // Users Table (synced from Clerk)
 export const users = pgTable("users", {
@@ -87,30 +63,28 @@ export const posts = pgTable("posts", {
 export const articleComments = pgTable(
   "article_comments",
   {
-    id: serial("id").primaryKey(),
-    postId: integer("post_id")
-      .notNull()
-      .references(() => posts.id, { onDelete: "cascade" }),
     clerkUserId: text("clerk_user_id").notNull(),
-    userName: text("user_name"),
-    userEmail: text("user_email"),
     content: text("content").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    id: serial("id").primaryKey(),
     parentId: integer("parent_id").references((): AnyPgColumn => articleComments.id, {
       onDelete: "cascade",
     }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    userEmail: text("user_email"),
+    userName: text("user_name"),
   },
   (table) => ({
-    postIdIdx: index("article_comments_post_id_idx").on(table.postId),
-    parentIdIdx: index("article_comments_parent_id_idx").on(table.parentId),
-    clerkUserIdIdx: index("article_comments_clerk_user_id_idx").on(
-      table.clerkUserId,
-    ),
     clerkUserCreatedAtIdx: index("article_comments_user_created_at_idx").on(
       table.clerkUserId,
       table.createdAt,
     ),
+    clerkUserIdIdx: index("article_comments_clerk_user_id_idx").on(table.clerkUserId),
+    parentIdIdx: index("article_comments_parent_id_idx").on(table.parentId),
+    postIdIdx: index("article_comments_post_id_idx").on(table.postId),
   }),
 );
 
@@ -118,8 +92,8 @@ export const articleComments = pgTable(
 export const userArticleReads = pgTable(
   "user_article_reads",
   {
-    id: serial("id").primaryKey(),
     clerkUserId: text("clerk_user_id").notNull(),
+    id: serial("id").primaryKey(),
     postId: integer("post_id")
       .notNull()
       .references(() => posts.id, { onDelete: "cascade" }),
@@ -138,8 +112,8 @@ export const userArticleReads = pgTable(
 export const userArticleSaves = pgTable(
   "user_article_saves",
   {
-    id: serial("id").primaryKey(),
     clerkUserId: text("clerk_user_id").notNull(),
+    id: serial("id").primaryKey(),
     postId: integer("post_id")
       .notNull()
       .references(() => posts.id, { onDelete: "cascade" }),
@@ -200,22 +174,22 @@ export const artists = pgTable("artists", {
 
 // Post-Artist Relations Table (many-to-many)
 export const postArtists = pgTable("post_artists", {
-  postId: integer("post_id")
-    .notNull()
-    .references(() => posts.id, { onDelete: "cascade" }),
   artistId: integer("artist_id")
     .notNull()
     .references(() => artists.id, { onDelete: "cascade" }),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id, { onDelete: "cascade" }),
 });
 
 // Event-Artist Relations Table (many-to-many)
 export const eventArtists = pgTable("event_artists", {
-  eventId: integer("event_id")
-    .notNull()
-    .references(() => events.id, { onDelete: "cascade" }),
   artistId: integer("artist_id")
     .notNull()
     .references(() => artists.id, { onDelete: "cascade" }),
+  eventId: integer("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
 });
 
 // Post Import Source Metadata (WordPress backfill traceability)
@@ -223,35 +197,33 @@ export const postImportSources = pgTable(
   "post_import_sources",
   {
     id: serial("id").primaryKey(),
+    importedAt: timestamp("imported_at").notNull().defaultNow(),
     postId: integer("post_id")
       .notNull()
       .references(() => posts.id, { onDelete: "cascade" }),
-    sourceUrl: text("source_url").notNull(),
     sourceAuthorSlug: text("source_author_slug").notNull(),
     sourceCategoriesJson: text("source_categories_json").notNull(),
-    sourcePublishedAt: timestamp("source_published_at").notNull(),
     sourceModifiedAt: timestamp("source_modified_at"),
-    importedAt: timestamp("imported_at").notNull().defaultNow(),
+    sourcePublishedAt: timestamp("source_published_at").notNull(),
+    sourceUrl: text("source_url").notNull(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
     postIdUnique: uniqueIndex("post_import_sources_post_id_unique").on(table.postId),
-    sourceUrlUnique: uniqueIndex("post_import_sources_source_url_unique").on(
-      table.sourceUrl,
-    ),
     sourceAuthorSlugIdx: index("post_import_sources_source_author_slug_idx").on(
       table.sourceAuthorSlug,
     ),
+    sourceUrlUnique: uniqueIndex("post_import_sources_source_url_unique").on(table.sourceUrl),
   }),
 );
 
 // Relations
 export const postsRelations = relations(posts, ({ many }) => ({
-  postArtists: many(postArtists),
   comments: many(articleComments),
+  importSources: many(postImportSources),
+  postArtists: many(postArtists),
   reads: many(userArticleReads),
   saves: many(userArticleSaves),
-  importSources: many(postImportSources),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -259,30 +231,30 @@ export const eventsRelations = relations(events, ({ many }) => ({
 }));
 
 export const artistsRelations = relations(artists, ({ many }) => ({
-  postArtists: many(postArtists),
   eventArtists: many(eventArtists),
+  postArtists: many(postArtists),
 }));
 
 export const postArtistsRelations = relations(postArtists, ({ one }) => ({
-  post: one(posts, {
-    fields: [postArtists.postId],
-    references: [posts.id],
-  }),
   artist: one(artists, {
     fields: [postArtists.artistId],
     references: [artists.id],
   }),
+  post: one(posts, {
+    fields: [postArtists.postId],
+    references: [posts.id],
+  }),
 }));
 
 export const articleCommentsRelations = relations(articleComments, ({ one, many }) => ({
-  post: one(posts, {
-    fields: [articleComments.postId],
-    references: [posts.id],
-  }),
   parent: one(articleComments, {
     fields: [articleComments.parentId],
     references: [articleComments.id],
     relationName: "comment_replies",
+  }),
+  post: one(posts, {
+    fields: [articleComments.postId],
+    references: [posts.id],
   }),
   replies: many(articleComments, {
     relationName: "comment_replies",
@@ -304,13 +276,13 @@ export const userArticleSavesRelations = relations(userArticleSaves, ({ one }) =
 }));
 
 export const eventArtistsRelations = relations(eventArtists, ({ one }) => ({
-  event: one(events, {
-    fields: [eventArtists.eventId],
-    references: [events.id],
-  }),
   artist: one(artists, {
     fields: [eventArtists.artistId],
     references: [artists.id],
+  }),
+  event: one(events, {
+    fields: [eventArtists.eventId],
+    references: [events.id],
   }),
 }));
 

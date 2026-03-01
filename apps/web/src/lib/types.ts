@@ -1,36 +1,36 @@
-export type Money = {
+export interface Money {
   amount: string;
   currencyCode: string;
-};
+}
 
-export type Image = {
+export interface Image {
   url: string;
   altText: string;
   width: number;
   height: number;
-};
+}
 
-export type ProductOption = {
+export interface ProductOption {
   id: string;
   name: string;
   values: string[];
-};
+}
 
-export type SelectedOption = {
+export interface SelectedOption {
   name: string;
   value: string;
-};
+}
 
-export type ProductVariant = {
+export interface ProductVariant {
   id: string;
   title: string;
   availableForSale: boolean;
   selectedOptions: SelectedOption[];
   price: Money;
   images?: Image[];
-};
+}
 
-export type Product = {
+export interface Product {
   id: string;
   handle: string;
   title: string;
@@ -46,9 +46,9 @@ export type Product = {
     minVariantPrice: Money;
     maxVariantPrice: Money;
   };
-};
+}
 
-export type CartItem = {
+export interface CartItem {
   id: string;
   quantity: number;
   cost: {
@@ -65,9 +65,9 @@ export type CartItem = {
       featuredImage: Image;
     };
   };
-};
+}
 
-export type Cart = {
+export interface Cart {
   id: string | undefined;
   totalQuantity: number;
   lines: CartItem[];
@@ -76,4 +76,4 @@ export type Cart = {
     subtotalAmount: Money;
     totalAmount: Money;
   };
-};
+}

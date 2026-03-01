@@ -3,9 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { logger } from "../logger";
 import { withUserContext } from "../logger/context";
 
-export const canViewAll = async (): Promise<boolean> => {
-  return checkRole("super_admin");
-};
+export const canViewAll = async (): Promise<boolean> => checkRole("super_admin");
 
 export const canEdit = async (resourceAuthorId: string): Promise<boolean> => {
   const { userId } = await auth();
@@ -18,7 +16,7 @@ export const canEdit = async (resourceAuthorId: string): Promise<boolean> => {
   if (isSuperAdmin) {
     withUserContext(logger, userId).debug(
       { operation: "can_edit", resourceAuthorId, result: true },
-      "Super admin edit permission granted"
+      "Super admin edit permission granted",
     );
     return true;
   }
@@ -27,7 +25,7 @@ export const canEdit = async (resourceAuthorId: string): Promise<boolean> => {
   const canEditOwn = userId === resourceAuthorId;
   withUserContext(logger, userId).debug(
     { operation: "can_edit", resourceAuthorId, result: canEditOwn },
-    canEditOwn ? "Edit permission granted" : "Edit permission denied"
+    canEditOwn ? "Edit permission granted" : "Edit permission denied",
   );
   return canEditOwn;
 };
@@ -39,7 +37,7 @@ export const canDelete = async (): Promise<boolean> => {
   if (userId) {
     withUserContext(logger, userId).debug(
       { operation: "can_delete", result: canDeleteResource },
-      canDeleteResource ? "Delete permission granted" : "Delete permission denied"
+      canDeleteResource ? "Delete permission granted" : "Delete permission denied",
     );
   } else {
     logger.warn({ operation: "can_delete" }, "Unauthenticated delete attempt");
@@ -56,8 +54,8 @@ export const canCreate = async (): Promise<boolean> => {
 
   if (userId) {
     withUserContext(logger, userId).debug(
-      { operation: "can_create", result: canCreateResource, isSuperAdmin, isWriter },
-      canCreateResource ? "Create permission granted" : "Create permission denied"
+      { isSuperAdmin, isWriter, operation: "can_create", result: canCreateResource },
+      canCreateResource ? "Create permission granted" : "Create permission denied",
     );
   } else {
     logger.warn({ operation: "can_create" }, "Unauthenticated create attempt");
@@ -66,10 +64,6 @@ export const canCreate = async (): Promise<boolean> => {
   return canCreateResource;
 };
 
-export const canInviteWriters = async (): Promise<boolean> => {
-  return checkRole("super_admin");
-};
+export const canInviteWriters = async (): Promise<boolean> => checkRole("super_admin");
 
-export const canManageUsers = async (): Promise<boolean> => {
-  return checkRole("super_admin");
-};
+export const canManageUsers = async (): Promise<boolean> => checkRole("super_admin");

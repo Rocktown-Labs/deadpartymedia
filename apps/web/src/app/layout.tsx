@@ -12,27 +12,25 @@ import Footer from "@/components/footer";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 
 const inter = Inter({
-  variable: "--font-geist-sans",
   subsets: ["latin"],
+  variable: "--font-geist-sans",
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
 
 export const metadata: Metadata = {
-  title: {
-    default: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
-    template: "%s | Dead Party Media",
+  alternates: {
+    canonical: SITE_URL,
   },
   description:
     "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
 
-  metadataBase: new URL(SITE_URL),
   icons: {
     icon: [
       { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
@@ -42,6 +40,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -59,15 +58,16 @@ export const metadata: Metadata = {
       },
     ],
   },
+  title: {
+    default: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
+    template: "%s | Dead Party Media",
+  },
   twitter: {
     card: "summary_large_image",
     title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
     description:
       "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [DEFAULT_OG_IMAGE],
-  },
-  alternates: {
-    canonical: SITE_URL,
   },
 };
 

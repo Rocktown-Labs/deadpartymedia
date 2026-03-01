@@ -18,12 +18,12 @@ import { getDashboardRoute } from "@/lib/utils/dashboard";
 import { Button } from "@/components/ui/button";
 
 function getInitials(name: string): string {
-  if (!name) return "U";
+  if (!name) {return "U";}
   const parts = name.trim().split(" ");
   if (parts.length === 1) {
     return parts[0].charAt(0).toUpperCase();
   }
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  return (parts[0].charAt(0) + parts.at(-1).charAt(0)).toUpperCase();
 }
 
 export function UserAvatarMenu() {

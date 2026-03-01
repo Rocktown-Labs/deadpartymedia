@@ -187,12 +187,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
 ```tsx
 import { Routes, Route, useParams } from "react-router-dom";
-import {
-  AuthView,
-  UserButton,
-  SignedIn,
-  SignedOut,
-} from "@neondatabase/auth/react/ui";
+import { AuthView, UserButton, SignedIn, SignedOut } from "@neondatabase/auth/react/ui";
 
 // Auth page - handles /auth/sign-in, /auth/sign-up, etc.
 function AuthPage() {

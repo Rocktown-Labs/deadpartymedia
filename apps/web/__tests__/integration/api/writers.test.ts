@@ -1,21 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { GET } from "@/app/api/writers/route";
 
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
-    select: vi.fn(),
     from: vi.fn(),
-    leftJoin: vi.fn(),
     groupBy: vi.fn(),
+    leftJoin: vi.fn(),
+    select: vi.fn(),
     where: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: mockDb,
 }));
 
-describe("GET /api/writers", () => {
+describe("gET /api/writers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDb.select.mockReturnValue({ from: mockDb.from });
@@ -28,20 +28,20 @@ describe("GET /api/writers", () => {
   it("returns mapped writers/admins with articleCount", async () => {
     mockDb.where.mockResolvedValue([
       {
-        id: 1,
-        firstName: "Jane",
-        lastName: "Writer",
-        imageUrl: "https://example.com/jane.png",
-        role: "writer",
         articleCount: 7,
+        firstName: "Jane",
+        id: 1,
+        imageUrl: "https://example.com/jane.png",
+        lastName: "Writer",
+        role: "writer",
       },
       {
-        id: 2,
-        firstName: "Sam",
-        lastName: "Admin",
-        imageUrl: null,
-        role: "super_admin",
         articleCount: 3,
+        firstName: "Sam",
+        id: 2,
+        imageUrl: null,
+        lastName: "Admin",
+        role: "super_admin",
       },
     ]);
 
@@ -49,18 +49,18 @@ describe("GET /api/writers", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(data)).toBe(true);
+    expect(Array.isArray(data)).toBeTruthy();
     expect(data).toHaveLength(2);
-    expect(mockDb.where).toHaveBeenCalledTimes(1);
-    expect(data[0]).toEqual({
-      id: 1,
-      name: "Jane Writer",
+    expect(mockDb.where).toHaveBeenCalledOnce();
+    expect(data[0]).toStrictEqual({
+      articleCount: 7,
       bio: "",
+      id: 1,
       image: "https://example.com/jane.png",
+      instagram: null,
+      name: "Jane Writer",
       role: "writer",
       twitter: null,
-      instagram: null,
-      articleCount: 7,
     });
     expect(data[1].role).toBe("super_admin");
     expect(data[1].articleCount).toBe(3);
@@ -69,12 +69,12 @@ describe("GET /api/writers", () => {
   it("defaults name and articleCount when source values are missing", async () => {
     mockDb.where.mockResolvedValue([
       {
-        id: 5,
-        firstName: null,
-        lastName: null,
-        imageUrl: null,
-        role: "writer",
         articleCount: null,
+        firstName: null,
+        id: 5,
+        imageUrl: null,
+        lastName: null,
+        role: "writer",
       },
     ]);
 
@@ -94,6 +94,6 @@ describe("GET /api/writers", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual([]);
+    expect(data).toStrictEqual([]);
   });
 });

@@ -1,11 +1,6 @@
 import type { Roles } from "@/types/globals";
 
-const VALID_ROLES: ReadonlySet<Roles> = new Set([
-  "super_admin",
-  "writer",
-  "artist",
-  "fan",
-]);
+const VALID_ROLES: ReadonlySet<Roles> = new Set(["super_admin", "writer", "artist", "fan"]);
 
 const LEGACY_ROLE_ALIASES: Readonly<Record<string, Roles>> = {
   admin: "super_admin",
@@ -17,9 +12,7 @@ export function parseRole(value: unknown): Roles | null {
   }
 
   const normalizedValue = LEGACY_ROLE_ALIASES[value] ?? value;
-  return VALID_ROLES.has(normalizedValue as Roles)
-    ? (normalizedValue as Roles)
-    : null;
+  return VALID_ROLES.has(normalizedValue as Roles) ? (normalizedValue as Roles) : null;
 }
 
 export function roleOrDefault(value: unknown, fallback: Roles = "fan"): Roles {

@@ -14,31 +14,31 @@ export type UploadImageFn = (params: {
   addRandomSuffix: boolean;
 }) => Promise<string>;
 
-export type ImageMirrorOptions = {
+export interface ImageMirrorOptions {
   dryRun?: boolean;
   onWarn?: (message: string, error?: unknown) => void;
   downloadImage?: DownloadImageFn;
   uploadImage?: UploadImageFn;
-};
+}
 
-export type MirrorInlineHtmlResult = {
+export interface MirrorInlineHtmlResult {
   html: string;
   replacedCount: number;
   failedCount: number;
-};
+}
 
 const IMAGE_EXTENSION_FROM_CONTENT_TYPE: Record<string, string> = {
+  "image/gif": ".gif",
   "image/jpeg": ".jpg",
   "image/jpg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
-  "image/gif": ".gif",
 };
 
 function sanitizeFilename(input: string): string {
   const fallback = "image";
   const basename = input.trim().length > 0 ? input : fallback;
-  return basename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || fallback;
+  return basename.replaceAll(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || fallback;
 }
 
 function extractFileNameFromUrl(sourceUrl: string): string {
@@ -53,13 +53,13 @@ function extractFileNameFromUrl(sourceUrl: string): string {
 
 function ensureImageExtension(filename: string, contentType: string | null): string {
   const hasKnownExtension = /\.(jpg|jpeg|png|webp|gif)$/i.test(filename);
-  if (hasKnownExtension) return filename;
+  if (hasKnownExtension) {return filename;}
 
   const mappedExtension = contentType
     ? IMAGE_EXTENSION_FROM_CONTENT_TYPE[contentType.toLowerCase()]
     : undefined;
 
-  if (mappedExtension) return `${filename}${mappedExtension}`;
+  if (mappedExtension) {return `${filename}${mappedExtension}`;}
   return `${filename}.jpg`;
 }
 
@@ -97,7 +97,10 @@ const defaultUploadImage: UploadImageFn = async ({
   return blob.url;
 };
 
-function buildPathname(kind: MirrorKind, sourceUrl: string): {
+function buildPathname(
+  kind: MirrorKind,
+  sourceUrl: string,
+): {
   pathname: string;
   addRandomSuffix: boolean;
 } {
@@ -107,33 +110,33 @@ function buildPathname(kind: MirrorKind, sourceUrl: string): {
   const addRandomSuffix = kind === "content";
 
   return {
-    pathname: `${folder}/${now}-${filename}`,
     addRandomSuffix,
+    pathname: `${folder}/${now}-${filename}`,
   };
 }
 
 export function createImageMirror(options: ImageMirrorOptions = {}) {
   const dryRun = options.dryRun === true;
-  const onWarn = options.onWarn ?? (() => undefined);
+  const onWarn = options.onWarn ?? (() => {});
   const downloadImage = options.downloadImage ?? defaultDownloadImage;
   const uploadImage = options.uploadImage ?? defaultUploadImage;
   const cache = new Map<string, string>();
 
   async function mirrorImageUrl(sourceUrl: string, kind: MirrorKind): Promise<string> {
-    if (dryRun) return sourceUrl;
+    if (dryRun) {return sourceUrl;}
 
     const cached = cache.get(sourceUrl);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const download = await downloadImage(sourceUrl);
     const { pathname, addRandomSuffix } = buildPathname(kind, sourceUrl);
     const finalPathname = ensureImageExtension(pathname, download.contentType);
 
     const mirroredUrl = await uploadImage({
-      pathname: finalPathname,
+      addRandomSuffix,
       bytes: download.bytes,
       contentType: download.contentType,
-      addRandomSuffix,
+      pathname: finalPathname,
     });
 
     cache.set(sourceUrl, mirroredUrl);
@@ -145,21 +148,21 @@ export function createImageMirror(options: ImageMirrorOptions = {}) {
     baseUrl: string,
   ): Promise<MirrorInlineHtmlResult> {
     if (!html.trim()) {
-      return { html, replacedCount: 0, failedCount: 0 };
+      return { failedCount: 0, html, replacedCount: 0 };
     }
 
     const dom = new JSDOM(`<body>${html}</body>`);
     const doc = dom.window.document;
-    const imageNodes = Array.from(doc.querySelectorAll("img[src]"));
+    const imageNodes = [...doc.querySelectorAll('img[src]')];
     let replacedCount = 0;
     let failedCount = 0;
 
     for (const node of imageNodes) {
       const currentSrc = node.getAttribute("src");
-      if (!currentSrc) continue;
+      if (!currentSrc) {continue;}
 
       const sourceUrl = resolveAbsoluteUrl(currentSrc, baseUrl);
-      if (!/^https?:\/\//i.test(sourceUrl)) continue;
+      if (!/^https?:\/\//i.test(sourceUrl)) {continue;}
 
       try {
         const mirroredUrl = await mirrorImageUrl(sourceUrl, "content");
@@ -172,9 +175,9 @@ export function createImageMirror(options: ImageMirrorOptions = {}) {
     }
 
     return {
+      failedCount,
       html: doc.body.innerHTML,
       replacedCount,
-      failedCount,
     };
   }
 

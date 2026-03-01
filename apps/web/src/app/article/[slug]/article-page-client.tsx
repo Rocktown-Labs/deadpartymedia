@@ -39,10 +39,10 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   // Track article viewed event (top of content funnel) - using ref to prevent duplicate tracking
   if (article && articleViewedRef.current !== article.slug) {
     posthog.capture("article_viewed", {
+      article_category: article.category,
       article_id: article.id,
       article_slug: article.slug,
       article_title: article.title,
-      article_category: article.category,
       author_name: article.author?.name,
       is_signed_in: isSignedIn,
     });
@@ -51,19 +51,19 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
 
   const handleLikeClick = () => {
     posthog.capture("article_liked", {
+      article_category: article?.category,
       article_id: article?.id,
       article_slug: slug,
       article_title: article?.title,
-      article_category: article?.category,
     });
   };
 
   const handleShareClick = () => {
     posthog.capture("article_shared", {
+      article_category: article?.category,
       article_id: article?.id,
       article_slug: slug,
       article_title: article?.title,
-      article_category: article?.category,
     });
   };
 
@@ -181,4 +181,3 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
     </>
   );
 }
-

@@ -1,8 +1,7 @@
 import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 
-const POSTHOG_HOST =
-  process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com";
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com";
 
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: POSTHOG_HOST,
@@ -31,7 +30,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
 
   // Define how likely Replay events are sampled when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
+  replaysOnErrorSampleRate: 1,
 
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii

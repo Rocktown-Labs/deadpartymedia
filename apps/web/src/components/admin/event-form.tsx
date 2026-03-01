@@ -13,11 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +70,7 @@ export function EventForm({
     initialData?.status || "draft",
   );
   const [selectedArtistIds, setSelectedArtistIds] = useState<number[]>(
-    initialData?.artistIds || []
+    initialData?.artistIds || [],
   );
   const [artistPopoverOpen, setArtistPopoverOpen] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
@@ -86,9 +82,7 @@ export function EventForm({
 
   const handleArtistToggle = (artistId: number) => {
     setSelectedArtistIds((prev) =>
-      prev.includes(artistId)
-        ? prev.filter((id) => id !== artistId)
-        : [...prev, artistId]
+      prev.includes(artistId) ? prev.filter((id) => id !== artistId) : [...prev, artistId],
     );
   };
 
@@ -97,7 +91,7 @@ export function EventForm({
   };
 
   const handleEventImageUpload = async (file: File | null) => {
-    if (!file) return;
+    if (!file) {return;}
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
@@ -113,8 +107,8 @@ export function EventForm({
       formData.append("file", file);
 
       const response = await fetch("/api/upload/image?type=event", {
-        method: "POST",
         body: formData,
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -139,7 +133,7 @@ export function EventForm({
     setIsSaving(true);
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("slug", slug || title.toLowerCase().replace(/\s+/g, "-"));
+    formData.append("slug", slug || title.toLowerCase().replaceAll(/\s+/g, "-"));
     formData.append("description", description);
     formData.append("image", image);
     formData.append("venue", venue);
@@ -167,9 +161,7 @@ export function EventForm({
     }
   };
 
-  const selectedArtists = artists.filter((artist) =>
-    selectedArtistIds.includes(artist.id)
-  );
+  const selectedArtists = artists.filter((artist) => selectedArtistIds.includes(artist.id));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -260,12 +252,7 @@ export function EventForm({
                 {imageUploading ? "Uploading..." : "Upload Image"}
               </Button>
               {image && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setImage("")}
-                >
+                <Button type="button" variant="ghost" size="sm" onClick={() => setImage("")}>
                   <X className="w-4 h-4" />
                 </Button>
               )}
@@ -398,17 +385,15 @@ export function EventForm({
               >
                 {artistsLoading
                   ? "Loading artists..."
-                  : selectedArtists.length > 0
+                  : (selectedArtists.length > 0
                     ? `${selectedArtists.length} artist(s) selected`
-                    : "Select artists"}
+                    : "Select artists")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
               <div className="max-h-[300px] overflow-y-auto p-2">
                 {artists.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-400">
-                    No artists available
-                  </div>
+                  <div className="p-4 text-center text-sm text-gray-400">No artists available</div>
                 ) : (
                   <div className="space-y-2">
                     {artists.map((artist) => (
@@ -437,11 +422,7 @@ export function EventForm({
           {selectedArtists.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedArtists.map((artist) => (
-                <Badge
-                  key={artist.id}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
+                <Badge key={artist.id} variant="secondary" className="flex items-center gap-1">
                   {artist.name}
                   <button
                     type="button"
@@ -461,9 +442,9 @@ export function EventForm({
         <Button type="submit" disabled={isSubmitting || isSaving || imageUploading}>
           {imageUploading
             ? "Uploading image..."
-            : isSubmitting || isSaving
+            : (isSubmitting || isSaving
               ? "Saving..."
-              : "Save Event"}
+              : "Save Event")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

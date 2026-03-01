@@ -3,7 +3,7 @@ import { users } from "@/lib/db/schema";
 import type { Roles } from "@/types/globals";
 import { roleOrDefault } from "./role";
 
-type UpsertUserAuthStateInput = {
+interface UpsertUserAuthStateInput {
   clerkId: string;
   email: string;
   firstName?: string | null;
@@ -11,7 +11,7 @@ type UpsertUserAuthStateInput = {
   imageUrl?: string | null;
   role?: unknown;
   onboardingComplete?: boolean;
-};
+}
 
 export async function upsertUserAuthState({
   clerkId,
@@ -30,13 +30,12 @@ export async function upsertUserAuthState({
       clerkId,
       email,
       firstName: firstName ?? null,
-      lastName: lastName ?? null,
       imageUrl: imageUrl ?? null,
-      role: normalizedRole,
+      lastName: lastName ?? null,
       onboardingComplete,
+      role: normalizedRole,
     })
     .onConflictDoUpdate({
-      target: users.clerkId,
       set: {
         email,
         firstName: firstName ?? null,
@@ -46,5 +45,6 @@ export async function upsertUserAuthState({
         onboardingComplete,
         updatedAt: new Date(),
       },
+      target: users.clerkId,
     });
 }

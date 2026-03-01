@@ -9,14 +9,14 @@ export const authClient = {
       console.warn("Native auth not yet implemented - using Django REST API");
     },
   },
+  signOut: async () => {
+    // TODO: Implement Django auth sign out
+    console.warn("Native auth not yet implemented - using Django REST API");
+  },
   signUp: {
     email: async (_params: { name: string; email: string; password: string }, _callbacks?: any) => {
       // TODO: Implement Django auth sign up
       console.warn("Native auth not yet implemented - using Django REST API");
     },
-  },
-  signOut: async () => {
-    // TODO: Implement Django auth sign out
-    console.warn("Native auth not yet implemented - using Django REST API");
   },
 };

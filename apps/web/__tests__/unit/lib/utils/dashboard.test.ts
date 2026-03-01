@@ -1,8 +1,5 @@
-import { describe, expect, it } from "vitest";
-import {
-  getDashboardRoute,
-  getDashboardRouteFromMetadata,
-} from "@/lib/utils/dashboard";
+
+import { getDashboardRoute, getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
 describe("dashboard route resolution", () => {
   it("maps valid roles to expected routes", () => {
@@ -19,15 +16,13 @@ describe("dashboard route resolution", () => {
 
   it("falls back to fan dashboard for nullish typed input", () => {
     expect(getDashboardRoute(null)).toBe("/dashboard");
-    expect(getDashboardRoute(undefined)).toBe("/dashboard");
+    expect(getDashboardRoute()).toBe("/dashboard");
   });
 
   it("handles untyped metadata safely", () => {
     expect(getDashboardRouteFromMetadata("artist")).toBe("/artist-dashboard");
     expect(getDashboardRouteFromMetadata("admin")).toBe("/admin");
     expect(getDashboardRouteFromMetadata(123)).toBe("/dashboard");
-    expect(getDashboardRouteFromMetadata({ role: "writer" })).toBe(
-      "/dashboard",
-    );
+    expect(getDashboardRouteFromMetadata({ role: "writer" })).toBe("/dashboard");
   });
 });

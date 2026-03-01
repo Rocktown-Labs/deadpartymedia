@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, events, postArtists, eventArtists } from "@/lib/db/schema";
 import { eq, and, gte, lt, sql, isNotNull } from "drizzle-orm";
@@ -19,9 +20,7 @@ export async function GET(request: NextRequest) {
 
     // For date columns (events.date): use date-only strings (YYYY-MM-DD)
     const monthStartDateOnly = monthStartTimestamp.toISOString().split("T")[0];
-    const nextMonthStartDateOnly = nextMonthStartTimestamp
-      .toISOString()
-      .split("T")[0];
+    const nextMonthStartDateOnly = nextMonthStartTimestamp.toISOString().split("T")[0];
 
     // New Articles: published posts with publishedAt in this month
     // publishedAt is a timestamp column, so use Date objects
@@ -33,8 +32,8 @@ export async function GET(request: NextRequest) {
           eq(posts.status, "published"),
           isNotNull(posts.publishedAt),
           gte(posts.publishedAt, monthStartTimestamp),
-          lt(posts.publishedAt, nextMonthStartTimestamp)
-        )
+          lt(posts.publishedAt, nextMonthStartTimestamp),
+        ),
       );
 
     const newArticlesCount = newArticlesResult[0]?.count ?? 0;
@@ -48,8 +47,8 @@ export async function GET(request: NextRequest) {
         and(
           eq(events.status, "published"),
           gte(events.date, monthStartDateOnly),
-          lt(events.date, nextMonthStartDateOnly)
-        )
+          lt(events.date, nextMonthStartDateOnly),
+        ),
       );
 
     const liveEventsCount = liveEventsResult[0]?.count ?? 0;
@@ -65,8 +64,8 @@ export async function GET(request: NextRequest) {
           eq(posts.status, "published"),
           isNotNull(posts.publishedAt),
           gte(posts.publishedAt, monthStartTimestamp),
-          lt(posts.publishedAt, nextMonthStartTimestamp)
-        )
+          lt(posts.publishedAt, nextMonthStartTimestamp),
+        ),
       );
 
     const artistsFromEvents = await db
@@ -77,8 +76,8 @@ export async function GET(request: NextRequest) {
         and(
           eq(events.status, "published"),
           gte(events.date, monthStartDateOnly),
-          lt(events.date, nextMonthStartDateOnly)
-        )
+          lt(events.date, nextMonthStartDateOnly),
+        ),
       );
 
     // Count unique artist IDs across both sources
@@ -89,28 +88,23 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        monthStart: monthStartDateOnly,
-        monthEnd: new Date(nextMonthStartTimestamp.getTime() - 1)
-          .toISOString()
-          .split("T")[0],
         featuredArtistsCount,
         liveEventsCount,
+        monthEnd: new Date(nextMonthStartTimestamp.getTime() - 1).toISOString().split("T")[0],
+        monthStart: monthStartDateOnly,
         newArticlesCount,
       },
       {
         headers: {
           "Cache-Control": "public, max-age=0, s-maxage=1800, stale-while-revalidate=1800",
         },
-      }
+      },
     );
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "fetch_monthly_stats" },
-      "Error fetching monthly stats"
+      "Error fetching monthly stats",
     );
-    return NextResponse.json(
-      { error: "Failed to fetch monthly stats" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch monthly stats" }, { status: 500 });
   }
 }

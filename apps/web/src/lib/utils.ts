@@ -1,4 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx } from 'clsx';
+import type { ClassValue } from 'clsx';
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -8,8 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatPrice(amount: string | number, currency = "USD") {
   const numAmount = typeof amount === "string" ? Number.parseFloat(amount) : amount;
   return new Intl.NumberFormat("en-US", {
-    style: "currency",
     currency,
+    style: "currency",
   }).format(numAmount);
 }
 

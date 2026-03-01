@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useDashboardStats, type DashboardStats } from "@/lib/api/user-activity";
+import { useDashboardStats } from '@/lib/api/user-activity';
+import type { DashboardStats } from '@/lib/api/user-activity';
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -39,15 +40,15 @@ export default function DashboardPage() {
     if (error) {
       // Log to Sentry for error monitoring
       Sentry.captureException(error, {
-        tags: {
-          component: "dashboard",
-          route: "fan-dashboard",
-        },
         extra: {
           userId: user?.id,
           userRole: user?.publicMetadata?.role,
           errorMessage: error.message,
           errorStack: error.stack,
+        },
+        tags: {
+          component: "dashboard",
+          route: "fan-dashboard",
         },
       });
 
@@ -55,15 +56,15 @@ export default function DashboardPage() {
       posthog.capture("dashboard_stats_error", {
         error_message: error.message,
         error_type: error.name || "Unknown",
-        user_role: user?.publicMetadata?.role || "unknown",
         user_id: user?.id,
+        user_role: user?.publicMetadata?.role || "unknown",
       });
     } else if (!stats && !isLoading) {
       // Track new user scenario (not an error, but useful for analytics)
       posthog.capture("dashboard_stats_empty", {
-        user_role: user?.publicMetadata?.role || "unknown",
         is_new_user: true,
         user_id: user?.id,
+        user_role: user?.publicMetadata?.role || "unknown",
       });
     } else if (stats) {
       // Track successful dashboard load
@@ -136,59 +137,59 @@ export default function DashboardPage() {
     return null; // This shouldn't happen, but fallback
   }
 
-  const statsCards: Array<{
+  const statsCards: {
     title: string;
     value: number;
     icon: typeof BookOpen;
     href: Route;
     color: string;
-  }> = [
+  }[] = [
     {
+      color: "text-[#7CFC00]",
+      href: "/dashboard/history" as Route,
+      icon: BookOpen,
       title: "Articles Read",
       value: displayStats.articles_read_count,
-      icon: BookOpen,
-      href: "/dashboard/history" as Route,
-      color: "text-[#7CFC00]",
     },
     {
+      color: "text-[#9400D3]",
+      href: "/dashboard/saved" as Route,
+      icon: Bookmark,
       title: "Articles Saved",
       value: displayStats.articles_saved_count,
-      icon: Bookmark,
-      href: "/dashboard/saved" as Route,
-      color: "text-[#9400D3]",
     },
     {
+      color: "text-[#7CFC00]",
+      href: "/dashboard/comments" as Route,
+      icon: MessageSquare,
       title: "Comments Made",
       value: displayStats.comments_count,
-      icon: MessageSquare,
-      href: "/dashboard/comments" as Route,
-      color: "text-[#7CFC00]",
     },
   ];
 
-  const actionButtons: Array<{
+  const actionButtons: {
     title: string;
     description: string;
     icon: typeof History;
     href: Route;
-  }> = [
+  }[] = [
     {
-      title: "Reading History",
       description: "View articles you've read",
-      icon: History,
       href: "/dashboard/history" as Route,
+      icon: History,
+      title: "Reading History",
     },
     {
-      title: "Saved Articles",
       description: "Access your saved articles",
-      icon: Bookmark,
       href: "/dashboard/saved" as Route,
+      icon: Bookmark,
+      title: "Saved Articles",
     },
     {
-      title: "My Comments",
       description: "View your comments and replies",
-      icon: MessageSquare,
       href: "/dashboard/comments" as Route,
+      icon: MessageSquare,
+      title: "My Comments",
     },
   ];
 

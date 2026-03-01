@@ -13,45 +13,45 @@ const DrawerLayout = () => {
   return (
     <Drawer
       screenOptions={{
-        headerStyle: {
-          backgroundColor: theme.background,
-        },
-        headerTitleStyle: {
-          color: theme.text,
-        },
-        headerTintColor: theme.text,
-        drawerStyle: {
-          backgroundColor: theme.background,
-        },
+        drawerInactiveTintColor: theme.text,
         drawerLabelStyle: {
           color: theme.text,
         },
-        drawerInactiveTintColor: theme.text,
+        drawerStyle: {
+          backgroundColor: theme.background,
+        },
+        headerStyle: {
+          backgroundColor: theme.background,
+        },
+        headerTintColor: theme.text,
+        headerTitleStyle: {
+          color: theme.text,
+        },
       }}
     >
       <Drawer.Screen
         name="index"
         options={{
-          headerTitle: "Home",
-          drawerLabel: "Home",
           drawerIcon: ({ size, color }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
+          drawerLabel: "Home",
+          headerTitle: "Home",
         }}
       />
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Tabs",
-          drawerLabel: "Tabs",
           drawerIcon: ({ size, color }) => (
             <MaterialIcons name="border-bottom" size={size} color={color} />
           ),
+          drawerLabel: "Tabs",
           headerRight: () => (
             <Link href="/modal" asChild>
               <HeaderButton />
             </Link>
           ),
+          headerTitle: "Tabs",
         }}
       />
     </Drawer>

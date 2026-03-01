@@ -3,6 +3,7 @@
 This document outlines the structure of the Dead Party Media application and where to find and configure different components.
 
 **Quick Links:**
+
 - [Environment Variables](#environment-variables) - Where to put `.env` files
 - [Database Setup](#database-setup) - Docker PostgreSQL for local dev
 - [Running the Application](#running-the-application) - Scripts to run frontend and backend
@@ -12,6 +13,7 @@ This document outlines the structure of the Dead Party Media application and whe
 ## Project Overview
 
 Dead Party Media is a monorepo containing:
+
 - **Next.js Frontend** (`apps/web`) - Public-facing website
 - **Django Backend** (`apps/server`) - Content management and API
 - **React Native App** (`apps/native`) - Mobile app (future)
@@ -126,6 +128,7 @@ AWS_S3_REGION_NAME=us-east-1
 ```
 
 **For Production:**
+
 - Set `DEBUG=False`
 - Set `USE_S3=True` and configure AWS credentials
 - Update `ALLOWED_HOSTS` with your domain
@@ -146,10 +149,12 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
 ```
 
 Tip: Example templates for Neon branch switching live in:
+
 - `apps/web/.env.development.local.example` (Neon `dev` branch)
 - `apps/web/.env.production.local.example` (Neon `main` branch)
 
 **For Production:**
+
 - Set to your production Django API URL (e.g., `https://api.deadpartymedia.com/api`)
 
 ## Database Setup
@@ -159,19 +164,21 @@ Tip: Example templates for Neon branch switching live in:
 The application is configured to use PostgreSQL in Docker for local development.
 
 1. **Start PostgreSQL:**
+
    ```bash
    # From root directory
    docker-compose up -d
    ```
-   
+
    This starts PostgreSQL on `localhost:5432` with:
    - Database: `deadpartymedia`
    - User: `postgres`
    - Password: `postgres`
-   
+
    These match the defaults in `apps/server/.env.example`
 
 2. **Run Django migrations:**
+
    ```bash
    cd apps/server
    uv run python manage.py makemigrations
@@ -186,6 +193,7 @@ The application is configured to use PostgreSQL in Docker for local development.
 ### Production
 
 For production, update `apps/server/.env` with your production PostgreSQL connection:
+
 - `DB_HOST` - Your production database host (e.g., `your-db.railway.app` or `your-db.rds.amazonaws.com`)
 - `DB_NAME` - Your production database name
 - `DB_USER` - Your production database user
@@ -206,6 +214,7 @@ pnpm dev
 ```
 
 This uses `concurrently` to run:
+
 - **Frontend**: http://localhost:3001 (Next.js)
 - **Backend**: http://localhost:8000 (Django)
 - **Django Admin**: http://localhost:8000/admin/
@@ -216,7 +225,7 @@ This uses `concurrently` to run:
 # Frontend only
 pnpm dev:web
 
-# Backend only  
+# Backend only
 pnpm dev:server
 ```
 
@@ -244,6 +253,7 @@ pnpm dev:native
 - **`production.py`** - Production overrides (DEBUG=False, S3 enabled, security)
 
 **Important Settings:**
+
 - `AUTH_USER_MODEL = "users.User"` - Custom user model
 - `CORS_ALLOWED_ORIGINS` - Configure allowed frontend origins (defaults include localhost:3001)
 - `USE_S3` - Toggle S3 storage (False in development.py, True in production.py)
@@ -267,6 +277,7 @@ pnpm dev:native
 **Location:** `apps/server/content/api/` and `apps/server/users/api.py`
 
 **Public Endpoints:**
+
 - `GET /api/articles/` - List articles (filter by category)
 - `GET /api/articles/{slug}/` - Get article by slug
 - `GET /api/articles/{slug}/comments/` - Get article comments
@@ -280,6 +291,7 @@ pnpm dev:native
 - `GET /api/writers/` - List writers
 
 **Auth Endpoints:**
+
 - `POST /api/auth/register/` - Register new user
 - `POST /api/auth/login/` - Login
 - `POST /api/auth/logout/` - Logout
@@ -302,6 +314,7 @@ pnpm dev:native
 **Location:** `apps/server/content/models.py`
 
 **Models:**
+
 - `Article` - Blog posts/articles with categories
 - `Event` - Music events/shows
 - `Artist` - Music artists
@@ -356,6 +369,7 @@ All content is created through **Django Admin** at http://localhost:8000/admin/
 ### User Registration
 
 Users register via `/sign-up` page:
+
 - Select "Music Fan" or "Artist"
 - If "Artist", redirected to `/onboarding` after registration
 - Onboarding creates Artist profile and links to user account
@@ -383,12 +397,14 @@ Users register via `/sign-up` page:
 ### Changing Admin Permissions
 
 Edit `apps/server/content/admin.py`:
+
 - Override `has_add_permission()`, `has_change_permission()`, `has_delete_permission()`
 - Override `get_queryset()` to filter by ownership
 
 ### Updating Frontend Routes
 
 All public routes are in `apps/web/src/app/(site)/`:
+
 - Pages use TanStack Query hooks from `apps/web/src/lib/api/`
 - No static JSON imports - all data comes from Django API
 
@@ -421,18 +437,19 @@ All public routes are in `apps/web/src/app/(site)/`:
 ### Environment Variables
 
 1. **Backend (`apps/server/.env`):**
+
    ```env
    SECRET_KEY=your-production-secret-key
    DEBUG=False
    ALLOWED_HOSTS=yourdomain.com,api.yourdomain.com
-   
+
    # Production Database
    DB_NAME=deadpartymedia_prod
    DB_USER=your_db_user
    DB_PASSWORD=your_db_password
    DB_HOST=your-db-host.com
    DB_PORT=5432
-   
+
    # S3 Storage (required)
    USE_S3=True
    AWS_ACCESS_KEY_ID=your-aws-key
@@ -470,4 +487,3 @@ All public routes are in `apps/web/src/app/(site)/`:
    - Configure IAM user with S3 permissions
    - Set bucket CORS policy for image access
    - Configure bucket for public read access (or use CloudFront CDN)
-

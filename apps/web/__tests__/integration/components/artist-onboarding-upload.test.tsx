@@ -1,27 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+
 import { screen } from "@testing-library/react";
 import { ArtistOnboarding } from "@/app/onboarding/artist-onboarding";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 // Mock Clerk
-vi.mock("@clerk/nextjs", () => ({
+vi.mock<typeof import('@clerk/nextjs')>(import('@clerk/nextjs'), () => ({
   useUser: () => ({
-    user: { id: "test-user-id", reload: vi.fn().mockResolvedValue(undefined) },
+    user: { id: "test-user-id", reload: vi.fn().mockResolvedValue() },
   }),
 }));
 
 // Mock router
-vi.mock("next/navigation", () => ({
+vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
 }));
 
 // Mock database
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: {
-    select: vi.fn(),
     insert: vi.fn(),
+    select: vi.fn(),
     update: vi.fn(),
   },
 }));
@@ -29,7 +29,7 @@ vi.mock("@/lib/db", () => ({
 // Mock the upload API
 global.fetch = vi.fn();
 
-describe("Artist Onboarding Profile Image Upload", () => {
+describe("artist Onboarding Profile Image Upload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (global.fetch as any).mockClear();

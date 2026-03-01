@@ -22,7 +22,11 @@ export default function SavedPage() {
   const { data: savedArticles, isLoading } = useSavedArticles();
   const unsaveArticle = useUnsaveArticle();
 
-  const handleUnsave = async (e: React.MouseEvent, savedId: number, article: { id: number; slug: string; title: string }) => {
+  const handleUnsave = async (
+    e: React.MouseEvent,
+    savedId: number,
+    article: { id: number; slug: string; title: string },
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     try {
@@ -104,7 +108,7 @@ export default function SavedPage() {
 
           <div className="space-y-4">
             {articles.map((item) => {
-              const article = item.article;
+              const {article} = item;
               return (
                 <div
                   key={item.id}

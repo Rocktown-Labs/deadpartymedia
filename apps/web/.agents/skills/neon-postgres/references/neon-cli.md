@@ -142,8 +142,8 @@ Example GitHub Actions workflow:
 
 ## Documentation Resources
 
-| Topic          | URL                                                    |
-| -------------- | ------------------------------------------------------ |
+| Topic          | URL                                                   |
+| -------------- | ----------------------------------------------------- |
 | CLI Reference  | https://neon.com/docs/reference/neon-cli              |
 | CLI Install    | https://neon.com/docs/reference/cli-install           |
 | CLI Auth       | https://neon.com/docs/reference/cli-auth              |

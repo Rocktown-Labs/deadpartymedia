@@ -17,12 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useArtists, type Artist } from "@/lib/api/artists";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useArtists } from '@/lib/api/artists';
+import type { Artist } from '@/lib/api/artists';
 import { Badge } from "@/components/ui/badge";
 import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -32,13 +29,13 @@ import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
-type AuthorOption = {
+interface AuthorOption {
   clerkId: string;
   name: string;
   role: string;
-};
+}
 
-type CreateAuthorStubResult = {
+interface CreateAuthorStubResult {
   success: boolean;
   error?: string;
   profile?: {
@@ -48,9 +45,9 @@ type CreateAuthorStubResult = {
     email: string;
     role: string;
   };
-};
+}
 
-type CreateArtistStubResult = {
+interface CreateArtistStubResult {
   success: boolean;
   error?: string;
   artist?: {
@@ -60,7 +57,7 @@ type CreateArtistStubResult = {
     location: string;
     email: string | null;
   };
-};
+}
 
 interface PostEditorProps {
   initialData?: {
@@ -109,12 +106,12 @@ export function PostEditor({
   );
   const [isCoverStory, setIsCoverStory] = useState(initialData?.isCoverStory || false);
   const [selectedArtistIds, setSelectedArtistIds] = useState<number[]>(
-    initialData?.artistIds || []
+    initialData?.artistIds || [],
   );
   const [selectedAuthorId, setSelectedAuthorId] = useState(
     initialData?.authorId && authorOptions.some((author) => author.clerkId === initialData.authorId)
       ? initialData.authorId
-      : authorOptions[0]?.clerkId || initialData?.authorId || ""
+      : authorOptions[0]?.clerkId || initialData?.authorId || "",
   );
   const [availableAuthors, setAvailableAuthors] = useState<AuthorOption[]>(authorOptions);
   const [createdArtists, setCreatedArtists] = useState<Artist[]>([]);
@@ -138,12 +135,18 @@ export function PostEditor({
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
   const allArtists = useMemo(() => {
     const deduped = new Map<number, Artist>();
-    for (const artist of artists) deduped.set(artist.id, artist);
-    for (const artist of createdArtists) deduped.set(artist.id, artist);
-    return Array.from(deduped.values());
+    for (const artist of artists) {deduped.set(artist.id, artist);}
+    for (const artist of createdArtists) {deduped.set(artist.id, artist);}
+    return [...deduped.values()];
   }, [artists, createdArtists]);
 
   const editor = useEditor({
+    content: normalizedInitialContent.editorValue,
+    editorProps: {
+      attributes: {
+        class: "prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none",
+      },
+    },
     extensions: [
       StarterKit,
       Image,
@@ -154,31 +157,23 @@ export function PostEditor({
         },
         onPaste: (editor, files, _htmlContent) => {
           // Only handle image files, let other content be handled by default paste handler
-          const imageFiles = Array.from(files).filter((file) =>
-            file.type.startsWith("image/")
-          );
+          const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
           if (imageFiles.length > 0) {
             handleImageUpload(imageFiles, editor);
           }
         },
       }),
     ],
-    content: normalizedInitialContent.editorValue,
-    editorProps: {
-      attributes: {
-        class: "prose prose-invert max-w-none min-h-[400px] p-4 focus:outline-none",
-      },
-    },
   });
 
   const handleImageUpload = async (
     files: File[],
     editorInstance: typeof editor,
-    position?: number
+    position?: number,
   ) => {
-    if (!editorInstance) return;
+    if (!editorInstance) {return;}
 
-    const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    const imageFiles = [...files].filter((file) => file.type.startsWith("image/"));
 
     for (const file of imageFiles) {
       const validation = validateImageFile(file);
@@ -195,8 +190,8 @@ export function PostEditor({
         formData.append("file", file);
 
         const response = await fetch("/api/upload/image?type=content", {
-          method: "POST",
           body: formData,
+          method: "POST",
         });
 
         if (!response.ok) {
@@ -222,7 +217,7 @@ export function PostEditor({
   };
 
   const handleCoverImageUpload = async (file: File | null) => {
-    if (!file) return;
+    if (!file) {return;}
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
@@ -238,8 +233,8 @@ export function PostEditor({
       formData.append("file", file);
 
       const response = await fetch("/api/upload/image?type=cover", {
-        method: "POST",
         body: formData,
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -261,9 +256,7 @@ export function PostEditor({
 
   const handleArtistToggle = (artistId: number) => {
     setSelectedArtistIds((prev) =>
-      prev.includes(artistId)
-        ? prev.filter((id) => id !== artistId)
-        : [...prev, artistId]
+      prev.includes(artistId) ? prev.filter((id) => id !== artistId) : [...prev, artistId],
     );
   };
 
@@ -272,7 +265,7 @@ export function PostEditor({
   };
 
   const handleCreateAuthorStub = async () => {
-    if (!onCreateAuthorStub) return;
+    if (!onCreateAuthorStub) {return;}
 
     const displayName = newAuthorName.trim();
     if (!displayName) {
@@ -290,15 +283,14 @@ export function PostEditor({
       }
 
       const result = await onCreateAuthorStub(formData);
-      const profile = result.profile;
+      const {profile} = result;
       if (!result.success || !profile) {
         toast.error(result.error || "Failed to create author");
         return;
       }
 
       const name =
-        [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() ||
-        profile.email;
+        [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim() || profile.email;
 
       setAvailableAuthors((previous) => {
         const next = [...previous];
@@ -323,7 +315,7 @@ export function PostEditor({
   };
 
   const handleCreateArtistStub = async () => {
-    if (!onCreateArtistStub) return;
+    if (!onCreateArtistStub) {return;}
 
     const displayName = newArtistName.trim();
     if (!displayName) {
@@ -341,7 +333,7 @@ export function PostEditor({
       }
 
       const result = await onCreateArtistStub(formData);
-      const artist = result.artist;
+      const {artist} = result;
       if (!result.success || !artist) {
         toast.error(result.error || "Failed to create artist");
         return;
@@ -352,30 +344,30 @@ export function PostEditor({
           return previous;
         }
         const createdArtist: Artist = {
-          id: artist.id,
-          slug: "",
-          name: artist.name,
-          bio: "Profile pending update.",
-          image: null,
-          location: artist.location,
-          genre: artist.genre as Artist["genre"],
-          spotify_url: null,
-          spotify_artist_id: null,
-          instagram: null,
-          twitter: null,
-          tiktok: null,
-          website: null,
-          claimed: false,
           article_count: 0,
-          event_count: 0,
-          profile_views: 0,
+          bio: "Profile pending update.",
+          claimed: false,
           created_at: new Date().toISOString(),
+          event_count: 0,
+          genre: artist.genre as Artist["genre"],
+          id: artist.id,
+          image: null,
+          instagram: null,
+          location: artist.location,
+          name: artist.name,
+          profile_views: 0,
+          slug: "",
+          spotify_artist_id: null,
+          spotify_url: null,
+          tiktok: null,
+          twitter: null,
+          website: null,
         };
         return [...previous, createdArtist];
       });
 
       setSelectedArtistIds((previous) =>
-        previous.includes(artist.id) ? previous : [...previous, artist.id]
+        previous.includes(artist.id) ? previous : [...previous, artist.id],
       );
       setNewArtistName("");
       setNewArtistLocation("");
@@ -393,7 +385,7 @@ export function PostEditor({
     setIsSaving(true);
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("slug", slug || title.toLowerCase().replace(/\s+/g, "-"));
+    formData.append("slug", slug || title.toLowerCase().replaceAll(/\s+/g, "-"));
     formData.append("category", category);
     formData.append("excerpt", excerpt);
     formData.append("content", JSON.stringify(editor?.getJSON() || {}));
@@ -420,9 +412,7 @@ export function PostEditor({
     }
   };
 
-  const selectedArtists = allArtists.filter((artist) =>
-    selectedArtistIds.includes(artist.id)
-  );
+  const selectedArtists = allArtists.filter((artist) => selectedArtistIds.includes(artist.id));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -593,12 +583,7 @@ export function PostEditor({
             </div>
             {coverImage && (
               <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                <NextImage
-                  src={coverImage}
-                  alt="Cover preview"
-                  fill
-                  className="object-cover"
-                />
+                <NextImage src={coverImage} alt="Cover preview" fill className="object-cover" />
               </div>
             )}
           </div>
@@ -653,17 +638,15 @@ export function PostEditor({
               >
                 {artistsLoading
                   ? "Loading artists..."
-                  : selectedArtists.length > 0
+                  : (selectedArtists.length > 0
                     ? `${selectedArtists.length} artist(s) selected`
-                    : "Select artists"}
+                    : "Select artists")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
               <div className="max-h-[300px] overflow-y-auto p-2">
                 {allArtists.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-400">
-                    No artists available
-                  </div>
+                  <div className="p-4 text-center text-sm text-gray-400">No artists available</div>
                 ) : (
                   <div className="space-y-2">
                     {allArtists.map((artist) => (
@@ -692,11 +675,7 @@ export function PostEditor({
           {selectedArtists.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedArtists.map((artist) => (
-                <Badge
-                  key={artist.id}
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
+                <Badge key={artist.id} variant="secondary" className="flex items-center gap-1">
                   {artist.name}
                   <button
                     type="button"
@@ -750,9 +729,9 @@ export function PostEditor({
         <Button type="submit" disabled={isSubmitting || isSaving || coverImageUploading}>
           {coverImageUploading
             ? "Uploading cover..."
-            : isSubmitting || isSaving
+            : (isSubmitting || isSaving
               ? "Saving..."
-              : "Save Post"}
+              : "Save Post")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

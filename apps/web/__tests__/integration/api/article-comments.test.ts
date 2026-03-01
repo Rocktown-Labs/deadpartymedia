@@ -1,28 +1,28 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { GET, POST } from "@/app/api/articles/[slug]/comments/route";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
-    select: vi.fn(),
     insert: vi.fn(),
+    select: vi.fn(),
   },
 }));
 
-vi.mock("@/lib/db", () => ({
+vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   db: mockDb,
 }));
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
 
-vi.mock("@/lib/logger/middleware", () => ({
+vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middleware'), () => ({
   getRequestLogger: vi.fn(() => ({
+    debug: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
-    debug: vi.fn(),
     warn: vi.fn(),
   })),
 }));
@@ -69,7 +69,7 @@ function mockSelectWithOrderByLimitOffset(rows: unknown[]) {
   });
 }
 
-describe("API /api/articles/[slug]/comments", () => {
+describe("aPI /api/articles/[slug]/comments", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -78,9 +78,9 @@ describe("API /api/articles/[slug]/comments", () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as any);
 
     const request = new Request("http://localhost:3001/api/articles/test-post/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: "hello" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await POST(request as any, {
@@ -94,17 +94,17 @@ describe("API /api/articles/[slug]/comments", () => {
 
   it("returns 403 when onboarding is incomplete", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "fan", onboardingComplete: false } },
+      userId: "user_123",
     } as any);
 
     mockSelectWithLimit([{ id: 10 }]);
-    mockSelectWithLimit([{ role: "fan", onboardingComplete: false }]);
+    mockSelectWithLimit([{ onboardingComplete: false, role: "fan" }]);
 
     const request = new Request("http://localhost:3001/api/articles/test-post/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: "blocked comment" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await POST(request as any, {
@@ -118,16 +118,16 @@ describe("API /api/articles/[slug]/comments", () => {
 
   it("returns 400 when comment payload is malformed JSON", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "fan", onboardingComplete: true } },
+      userId: "user_123",
     } as any);
 
     mockSelectWithLimit([{ id: 10 }]);
 
     const request = new Request("http://localhost:3001/api/articles/test-post/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: "{",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await POST(request as any, {
@@ -141,12 +141,12 @@ describe("API /api/articles/[slug]/comments", () => {
 
   it("creates a comment for an onboarded user", async () => {
     vi.mocked(auth).mockResolvedValue({
-      userId: "user_123",
       sessionClaims: { metadata: { role: "fan", onboardingComplete: true } },
+      userId: "user_123",
     } as any);
 
     mockSelectWithLimit([{ id: 10 }]);
-    mockSelectWithLimit([{ role: "fan", onboardingComplete: true }]);
+    mockSelectWithLimit([{ onboardingComplete: true, role: "fan" }]);
 
     const createdAt = new Date();
     const updatedAt = new Date();
@@ -154,12 +154,12 @@ describe("API /api/articles/[slug]/comments", () => {
       values: vi.fn().mockReturnValue({
         returning: vi.fn().mockResolvedValue([
           {
-            id: 99,
             content: "created",
-            user_name: "Test User",
-            user_email: "test@example.com",
             created_at: createdAt,
+            id: 99,
             updated_at: updatedAt,
+            user_email: "test@example.com",
+            user_name: "Test User",
           },
         ]),
       }),
@@ -168,19 +168,19 @@ describe("API /api/articles/[slug]/comments", () => {
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
         getUser: vi.fn().mockResolvedValue({
-          fullName: "Test User",
+          emailAddresses: [{ id: "email_1", emailAddress: "test@example.com" }],
           firstName: "Test",
+          fullName: "Test User",
           lastName: "User",
           primaryEmailAddressId: "email_1",
-          emailAddresses: [{ id: "email_1", emailAddress: "test@example.com" }],
         }),
       },
     } as any);
 
     const request = new Request("http://localhost:3001/api/articles/test-post/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: "created" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
 
     const response = await POST(request as any, {
@@ -191,7 +191,7 @@ describe("API /api/articles/[slug]/comments", () => {
     expect(response.status).toBe(201);
     expect(data.id).toBe(99);
     expect(data.content).toBe("created");
-    expect(data.replies).toEqual([]);
+    expect(data.replies).toStrictEqual([]);
   });
 
   it("returns comments and nested replies shape", async () => {
@@ -199,23 +199,23 @@ describe("API /api/articles/[slug]/comments", () => {
     mockSelectCount(1);
     mockSelectWithOrderByLimitOffset([
       {
-        id: 1,
         content: "top-level",
-        user_name: "User A",
-        user_email: "a@example.com",
         created_at: new Date("2026-01-01T00:00:00.000Z"),
+        id: 1,
         updated_at: new Date("2026-01-01T00:00:00.000Z"),
+        user_email: "a@example.com",
+        user_name: "User A",
       },
     ]);
     mockSelectWithOrderBy([
       {
-        id: 2,
         content: "reply",
-        user_name: "User B",
-        user_email: "b@example.com",
-        parent_id: 1,
         created_at: new Date("2026-01-02T00:00:00.000Z"),
+        id: 2,
+        parent_id: 1,
         updated_at: new Date("2026-01-02T00:00:00.000Z"),
+        user_email: "b@example.com",
+        user_name: "User B",
       },
     ]);
 
@@ -229,7 +229,7 @@ describe("API /api/articles/[slug]/comments", () => {
     expect(data.count).toBe(1);
     expect(data.next).toBeNull();
     expect(data.previous).toBeNull();
-    expect(Array.isArray(data.results)).toBe(true);
+    expect(Array.isArray(data.results)).toBeTruthy();
     expect(data.results).toHaveLength(1);
     expect(data.results[0].content).toBe("top-level");
     expect(data.results[0].replies).toHaveLength(1);
@@ -241,17 +241,19 @@ describe("API /api/articles/[slug]/comments", () => {
     mockSelectCount(2);
     mockSelectWithOrderByLimitOffset([
       {
-        id: 1,
         content: "top-level",
-        user_name: "User A",
-        user_email: "a@example.com",
         created_at: new Date("2026-01-01T00:00:00.000Z"),
+        id: 1,
         updated_at: new Date("2026-01-01T00:00:00.000Z"),
+        user_email: "a@example.com",
+        user_name: "User A",
       },
     ]);
     mockSelectWithOrderBy([]);
 
-    const request = new Request("http://localhost:3001/api/articles/test-post/comments?page=1&page_size=1");
+    const request = new Request(
+      "http://localhost:3001/api/articles/test-post/comments?page=1&page_size=1",
+    );
     const response = await GET(request as any, {
       params: Promise.resolve({ slug: "test-post" }),
     });

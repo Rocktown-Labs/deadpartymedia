@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -8,11 +9,10 @@ import { sanitizeError } from "@/lib/logger/sanitize";
  */
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
-  const searchParams = request.nextUrl.searchParams;
+  const {searchParams} = request.nextUrl;
   const query = searchParams.get("q");
 
   try {
-
     if (!query || query.length < 5) {
       return NextResponse.json({ error: "Query must be at least 5 characters" }, { status: 400 });
     }
@@ -28,21 +28,21 @@ export async function GET(request: NextRequest) {
 
     // Get access token using Client Credentials flow
     const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+      }),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
       },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-      }),
+      method: "POST",
     });
 
     if (!tokenResponse.ok) {
       await tokenResponse.text(); // Consume response body
       log.error(
         { operation: "spotify_auth", status: tokenResponse.status },
-        "Failed to get Spotify access token"
+        "Failed to get Spotify access token",
       );
       return NextResponse.json({ error: "Failed to authenticate with Spotify" }, { status: 500 });
     }
@@ -53,9 +53,9 @@ export async function GET(request: NextRequest) {
     // Search for artists
     const searchResponse = await fetch(
       `https://api.spotify.com/v1/search?${new URLSearchParams({
+        limit: "10",
         q: query,
         type: "artist",
-        limit: "10",
       })}`,
       {
         headers: {
@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
 
     if (!searchResponse.ok) {
       log.error(
-        { operation: "spotify_search", status: searchResponse.status, query },
-        "Spotify search failed"
+        { operation: "spotify_search", query, status: searchResponse.status },
+        "Spotify search failed",
       );
       return NextResponse.json({ error: "Failed to search Spotify" }, { status: 500 });
     }
@@ -77,20 +77,20 @@ export async function GET(request: NextRequest) {
 
     // Transform to match our SpotifyArtist interface
     const formattedArtists = artists.map((artist: any) => ({
-      id: artist.id,
-      name: artist.name,
-      images: artist.images || [],
       external_urls: artist.external_urls || {
         spotify: `https://open.spotify.com/artist/${artist.id}`,
       },
       genres: artist.genres || [],
+      id: artist.id,
+      images: artist.images || [],
+      name: artist.name,
     }));
 
     return NextResponse.json(formattedArtists);
   } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "spotify_search", query },
-      "Error searching Spotify"
+      "Error searching Spotify",
     );
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

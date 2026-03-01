@@ -1,5 +1,6 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -9,14 +10,14 @@ import { withOperationContext } from "@/lib/logger/context";
 import { roleOrDefault } from "@/lib/auth/role";
 
 function parseLocalUserProfileId(metadata: unknown): number | null {
-  if (!metadata || typeof metadata !== "object") return null;
+  if (!metadata || typeof metadata !== "object") {return null;}
   const value = (metadata as Record<string, unknown>).localUserProfileId;
   if (typeof value === "number" && Number.isInteger(value) && value > 0) {
     return value;
   }
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") {return null;}
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) return null;
+  if (!Number.isInteger(parsed) || parsed <= 0) {return null;}
   return parsed;
 }
 
@@ -27,14 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Handle user.created event
     if (evt.type === "user.created") {
-      const {
-        id,
-        email_addresses,
-        first_name,
-        last_name,
-        image_url,
-        public_metadata,
-      } = evt.data;
+      const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data;
 
       const primaryEmail = email_addresses.find(
         (email) => email.id === evt.data.primary_email_address_id,
@@ -43,7 +37,7 @@ export async function POST(req: NextRequest) {
       if (!primaryEmail) {
         log.error(
           { operation: "webhook_user_created", userId: id },
-          "No primary email found for user"
+          "No primary email found for user",
         );
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
@@ -52,10 +46,10 @@ export async function POST(req: NextRequest) {
       const linkedLocalProfile = localUserProfileId
         ? await db
             .select({
-              id: users.id,
               clerkId: users.clerkId,
-              role: users.role,
+              id: users.id,
               onboardingComplete: users.onboardingComplete,
+              role: users.role,
             })
             .from(users)
             .where(eq(users.id, localUserProfileId))
@@ -72,9 +66,8 @@ export async function POST(req: NextRequest) {
       }
 
       const role = roleOrDefault(
-        (public_metadata as Record<string, unknown>)?.role ??
-          linkedLocalProfile?.role,
-        "fan"
+        (public_metadata as Record<string, unknown>)?.role ?? linkedLocalProfile?.role,
+        "fan",
       );
       const onboardingComplete =
         (public_metadata as Record<string, unknown>)?.onboardingComplete === true ||
@@ -87,13 +80,12 @@ export async function POST(req: NextRequest) {
           clerkId: id,
           email: primaryEmail,
           firstName: first_name || null,
-          lastName: last_name || null,
           imageUrl: image_url || null,
-          role,
+          lastName: last_name || null,
           onboardingComplete,
+          role,
         })
         .onConflictDoUpdate({
-          target: users.clerkId,
           set: {
             email: primaryEmail,
             firstName: first_name || null,
@@ -103,24 +95,18 @@ export async function POST(req: NextRequest) {
             onboardingComplete,
             updatedAt: new Date(),
           },
+          target: users.clerkId,
         });
 
       withOperationContext(log, "webhook_user_created", "user", id).info(
         { userId: id },
-        "User synced to database"
+        "User synced to database",
       );
     }
 
     // Handle user.updated event
     if (evt.type === "user.updated") {
-      const {
-        id,
-        email_addresses,
-        first_name,
-        last_name,
-        image_url,
-        public_metadata,
-      } = evt.data;
+      const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data;
 
       const primaryEmail = email_addresses.find(
         (email) => email.id === evt.data.primary_email_address_id,
@@ -129,7 +115,7 @@ export async function POST(req: NextRequest) {
       if (!primaryEmail) {
         log.error(
           { operation: "webhook_user_updated", userId: id },
-          "No primary email found for user"
+          "No primary email found for user",
         );
         return NextResponse.json({ error: "No primary email found" }, { status: 400 });
       }
@@ -138,10 +124,10 @@ export async function POST(req: NextRequest) {
       const linkedLocalProfile = localUserProfileId
         ? await db
             .select({
-              id: users.id,
               clerkId: users.clerkId,
-              role: users.role,
+              id: users.id,
               onboardingComplete: users.onboardingComplete,
+              role: users.role,
             })
             .from(users)
             .where(eq(users.id, localUserProfileId))
@@ -158,9 +144,8 @@ export async function POST(req: NextRequest) {
       }
 
       const role = roleOrDefault(
-        (public_metadata as Record<string, unknown>)?.role ??
-          linkedLocalProfile?.role,
-        "fan"
+        (public_metadata as Record<string, unknown>)?.role ?? linkedLocalProfile?.role,
+        "fan",
       );
       const onboardingComplete =
         (public_metadata as Record<string, unknown>)?.onboardingComplete === true ||
@@ -173,13 +158,12 @@ export async function POST(req: NextRequest) {
           clerkId: id,
           email: primaryEmail,
           firstName: first_name || null,
-          lastName: last_name || null,
           imageUrl: image_url || null,
-          role,
+          lastName: last_name || null,
           onboardingComplete,
+          role,
         })
         .onConflictDoUpdate({
-          target: users.clerkId,
           set: {
             email: primaryEmail,
             firstName: first_name || null,
@@ -189,11 +173,12 @@ export async function POST(req: NextRequest) {
             onboardingComplete,
             updatedAt: new Date(),
           },
+          target: users.clerkId,
         });
 
       withOperationContext(log, "webhook_user_updated", "user", id).info(
         { userId: id },
-        "User updated in database"
+        "User updated in database",
       );
     }
 
@@ -206,15 +191,15 @@ export async function POST(req: NextRequest) {
 
       withOperationContext(log, "webhook_user_deleted", "user", id).info(
         { userId: id },
-        "User deleted from database"
+        "User deleted from database",
       );
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
-  } catch (err) {
+  } catch (error) {
     log.error(
-      { error: sanitizeError(err), operation: "webhook_verification" },
-      "Error verifying webhook"
+      { error: sanitizeError(error), operation: "webhook_verification" },
+      "Error verifying webhook",
     );
     return NextResponse.json({ error: "Error verifying webhook" }, { status: 400 });
   }

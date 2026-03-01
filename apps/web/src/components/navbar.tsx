@@ -11,11 +11,11 @@ import { getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
 // Extract constants for better maintainability
 const MUSIC_GENRES = [
-  { name: "Country", href: "/country" as Route },
-  { name: "EDM", href: "/edm" as Route },
-  { name: "Hardcore & Rock", href: "/hardcore" as Route },
-  { name: "Hip-Hop & R&B", href: "/hip-hop-r-b" as Route },
-  { name: "Other", href: "/other" as Route },
+  { href: "/country" as Route, name: "Country" },
+  { href: "/edm" as Route, name: "EDM" },
+  { href: "/hardcore" as Route, name: "Hardcore & Rock" },
+  { href: "/hip-hop-r-b" as Route, name: "Hip-Hop & R&B" },
+  { href: "/other" as Route, name: "Other" },
 ];
 
 // Compute dates outside render for performance
@@ -129,22 +129,22 @@ export default function Navbar() {
             <CartModal />
             <SignedOut>
               <div className="flex items-center gap-2">
-              <SignInButton mode="modal">
-                <button
+                <SignInButton mode="modal">
+                  <button
                     className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
-                  aria-label="Sign in"
-                >
-                  <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button
+                    aria-label="Sign in"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
                     className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
-                  aria-label="Get started"
-                >
-                  <span className="text-xs font-bold tracking-wider uppercase">Get Started</span>
-                </button>
-              </SignUpButton>
+                    aria-label="Get started"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Get Started</span>
+                  </button>
+                </SignUpButton>
               </div>
             </SignedOut>
             <SignedIn>
@@ -161,9 +161,9 @@ export default function Navbar() {
                     elements: {
                       avatarBox:
                         "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
                       userButtonPopoverActionButton: "text-white hover:bg-gray-900",
                       userButtonPopoverActionButtonText: "text-white",
+                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
                     },
                   }}
                 />
@@ -207,9 +207,9 @@ export default function Navbar() {
                     elements: {
                       avatarBox:
                         "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
                       userButtonPopoverActionButton: "text-white hover:bg-gray-900",
                       userButtonPopoverActionButtonText: "text-white",
+                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
                     },
                   }}
                 />

@@ -25,10 +25,10 @@ export async function GET() {
   const email = getPrimaryEmail(clerkUser);
 
   return NextResponse.json({
-    id: userId,
+    avatar: clerkUser.imageUrl ?? null,
     email: email ?? "",
+    id: userId,
     name: clerkUser.fullName || clerkUser.firstName || email || "User",
     role,
-    avatar: clerkUser.imageUrl ?? null,
   });
 }

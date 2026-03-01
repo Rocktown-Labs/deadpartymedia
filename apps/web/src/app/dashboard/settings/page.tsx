@@ -3,7 +3,8 @@
 import { useState, useEffect, useTransition } from "react";
 import { useUser } from "@clerk/nextjs";
 import { updateUserProfile } from "./actions";
-import { userUpdateSchema, type UserUpdateInput } from "@/lib/validations/user";
+import { userUpdateSchema } from '@/lib/validations/user';
+import type { UserUpdateInput } from '@/lib/validations/user';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,9 +39,9 @@ export default function SettingsPage() {
     startTransition(async () => {
       try {
         const data: UserUpdateInput = {
+          email: email,
           first_name: firstName,
           last_name: lastName,
-          email: email,
         };
 
         const validated = userUpdateSchema.parse(data);
@@ -136,7 +137,7 @@ export default function SettingsPage() {
                     onChange={(e) => {
                       setFirstName(e.target.value);
                       if (profileErrors.first_name)
-                        setProfileErrors({ ...profileErrors, first_name: "" });
+                        {setProfileErrors({ ...profileErrors, first_name: "" });}
                     }}
                     className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${profileErrors.first_name ? "border-red-500" : ""}`}
                     placeholder="First name"
@@ -157,7 +158,7 @@ export default function SettingsPage() {
                     onChange={(e) => {
                       setLastName(e.target.value);
                       if (profileErrors.last_name)
-                        setProfileErrors({ ...profileErrors, last_name: "" });
+                        {setProfileErrors({ ...profileErrors, last_name: "" });}
                     }}
                     className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${profileErrors.last_name ? "border-red-500" : ""}`}
                     placeholder="Last name"

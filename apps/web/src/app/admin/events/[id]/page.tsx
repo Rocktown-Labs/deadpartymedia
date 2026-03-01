@@ -38,19 +38,19 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       <h1 className="text-3xl font-black mb-8">Edit Event</h1>
       <EventForm
         initialData={{
-          title: event.title,
-          slug: event.slug,
-          description: event.description,
-          image: event.image || undefined,
-          venue: event.venue,
-          location: event.location,
-          date: event.date,
-          time: event.time || undefined,
-          ticketLink: event.ticketLink || undefined,
-          price: event.price || undefined,
-          genre: event.genre,
-          status: event.status,
           artistIds,
+          date: event.date,
+          description: event.description,
+          genre: event.genre,
+          image: event.image || undefined,
+          location: event.location,
+          price: event.price || undefined,
+          slug: event.slug,
+          status: event.status,
+          ticketLink: event.ticketLink || undefined,
+          time: event.time || undefined,
+          title: event.title,
+          venue: event.venue,
         }}
         onSubmit={updateEvent.bind(null, eventId)}
         cancelHref={"/admin/events" as Route}

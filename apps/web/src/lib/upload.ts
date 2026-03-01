@@ -18,9 +18,7 @@ export const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (Vercel server upload l
  * Validate if a file is an allowed image type
  */
 export function isValidImageType(file: File): boolean {
-  return ALLOWED_IMAGE_TYPES.includes(
-    file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
-  );
+  return ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number]);
 }
 
 /**
@@ -36,28 +34,33 @@ export function isValidFileSize(file: File): boolean {
 export function generateImagePathname(
   type: UploadType,
   filename: string,
-  _addRandomSuffix: boolean = false
+  _addRandomSuffix: boolean = false,
 ): string {
   const timestamp = Date.now();
-  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const sanitizedFilename = filename.replaceAll(/[^a-zA-Z0-9.-]/g, "_");
 
   let pathname: string;
 
   switch (type) {
-    case "cover":
+    case "cover": {
       pathname = `posts/covers/${timestamp}-${sanitizedFilename}`;
       break;
-    case "content":
+    }
+    case "content": {
       pathname = `posts/content/${timestamp}-${sanitizedFilename}`;
       break;
-    case "profile":
+    }
+    case "profile": {
       pathname = `artists/profiles/${timestamp}-${sanitizedFilename}`;
       break;
-    case "event":
+    }
+    case "event": {
       pathname = `events/images/${timestamp}-${sanitizedFilename}`;
       break;
-    default:
+    }
+    default: {
       pathname = `uploads/${timestamp}-${sanitizedFilename}`;
+    }
   }
 
   // Note: addRandomSuffix is handled by Vercel Blob's put() option
@@ -73,15 +76,15 @@ export function validateImageFile(file: File): {
 } {
   if (!isValidImageType(file)) {
     return {
-      valid: false,
       error: `Invalid file type. Allowed types: ${ALLOWED_IMAGE_TYPES.join(", ")}`,
+      valid: false,
     };
   }
 
   if (!isValidFileSize(file)) {
     return {
-      valid: false,
       error: `File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+      valid: false,
     };
   }
 

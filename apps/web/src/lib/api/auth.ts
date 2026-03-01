@@ -66,7 +66,6 @@ export function useLogout() {
 
 export function useCurrentUser() {
   return useQuery<User | null>({
-    queryKey: ["current-user"],
     queryFn: async () => {
       const response = await fetch("/api/auth/me");
       if (response.status === 401) {
@@ -81,8 +80,9 @@ export function useCurrentUser() {
         return null;
       }
     },
-    retry: false,
+    queryKey: ["current-user"],
     refetchOnWindowFocus: true,
+    retry: false,
   });
 }
 

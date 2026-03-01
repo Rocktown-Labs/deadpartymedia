@@ -7,10 +7,7 @@ import { PostEditor } from "@/components/admin/post-editor";
 import { updatePost } from "../actions";
 import type { Route } from "next";
 import { checkRole } from "@/lib/auth/roles";
-import {
-  createArtistProfileStub,
-  createUserProfileStub,
-} from "@/app/admin/users/actions";
+import { createArtistProfileStub, createUserProfileStub } from "@/app/admin/users/actions";
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,9 +39,9 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
     ? await db
         .select({
           clerkId: users.clerkId,
+          email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          email: users.email,
           role: users.role,
         })
         .from(users)
@@ -53,11 +50,9 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         .then((rows) =>
           rows.map((row) => ({
             clerkId: row.clerkId,
+            name: [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || row.email,
             role: row.role,
-            name:
-              [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
-              row.email,
-          }))
+          })),
         )
     : [];
 
@@ -66,16 +61,16 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
       <h1 className="text-3xl font-black mb-8">Edit Post</h1>
       <PostEditor
         initialData={{
-          title: post.title,
-          slug: post.slug,
-          category: post.category,
-          excerpt: post.excerpt,
-          content: post.content,
-          coverImage: post.coverImage || undefined,
-          status: post.status,
-          isCoverStory: post.isCoverStory,
           artistIds,
           authorId: post.authorId,
+          category: post.category,
+          content: post.content,
+          coverImage: post.coverImage || undefined,
+          excerpt: post.excerpt,
+          isCoverStory: post.isCoverStory,
+          slug: post.slug,
+          status: post.status,
+          title: post.title,
         }}
         canManageAuthor={isSuperAdmin}
         authorOptions={authorOptions}
