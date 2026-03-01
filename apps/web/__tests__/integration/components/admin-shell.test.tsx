@@ -126,8 +126,11 @@ describe(AdminShell, () => {
 
     await user.click(railButton);
     expect(sidebar).toHaveAttribute("data-state", "collapsed");
+    expect(screen.getByAltText("Dead Party Media")).toBeInTheDocument();
+    expect(screen.queryByText("Control Center")).not.toBeInTheDocument();
 
     await user.click(railButton);
     expect(sidebar).toHaveAttribute("data-state", "expanded");
+    expect(screen.getByText("Control Center")).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useLayoutEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Route } from "next";
@@ -115,21 +116,33 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
           collapsible="icon"
           className="border-r border-gray-800/80 bg-[#111111] group-data-[variant=sidebar]:border-r"
         >
-          <SidebarHeader className="border-b border-gray-800/80 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-black text-[#7CFC00] leading-none">Admin</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gray-400">
-                  Control Center
-                </p>
+          <SidebarHeader className="overflow-hidden border-b border-gray-800/80 p-4 group-data-[collapsible=icon]:p-2">
+            {sidebarOpen ? (
+              <div className="flex items-center justify-between gap-2 overflow-hidden">
+                <div className="min-w-0">
+                  <p className="text-2xl font-black text-[#7CFC00] leading-none">Admin</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.16em] text-gray-400">
+                    Control Center
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="shrink-0 border-gray-700 text-[10px] uppercase text-gray-300"
+                >
+                  {userRole === "super_admin" ? "Super Admin" : "Writer"}
+                </Badge>
               </div>
-              <Badge
-                variant="outline"
-                className="border-gray-700 text-[10px] uppercase text-gray-300"
-              >
-                {userRole === "super_admin" ? "Super Admin" : "Writer"}
-              </Badge>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center py-1">
+                <Image
+                  src="/images/dead-party-logo.png"
+                  alt="Dead Party Media"
+                  width={26}
+                  height={26}
+                  className="size-[26px] rounded-full object-cover"
+                />
+              </div>
+            )}
           </SidebarHeader>
           <SidebarContent className="p-2">
             <SidebarMenu>
@@ -141,7 +154,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => router.push(item.href)}
-                      className="rounded-md text-sm data-[active=true]:bg-[#1A1A1A] data-[active=true]:text-[#7CFC00] hover:bg-[#1A1A1A]"
+                      className="rounded-md border border-transparent text-sm text-gray-300 data-[active=true]:border-[#7CFC00]/40 data-[active=true]:bg-[#7CFC00]/15 data-[active=true]:text-[#7CFC00] hover:bg-[#1A1A1A] hover:text-white"
                     >
                       <Icon className="size-4" />
                       <span>{item.label}</span>
@@ -152,7 +165,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-800/80 p-3 text-xs text-gray-500">
-            <p className="truncate">Cmd/Ctrl + B to toggle sidebar</p>
+            <p className="truncate group-data-[collapsible=icon]:hidden">Cmd/Ctrl + B to toggle sidebar</p>
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
