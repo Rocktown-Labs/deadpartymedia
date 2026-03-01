@@ -1,25 +1,13 @@
 import Link from "next/link";
-import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { canManageUsers } from "@/lib/auth/access";
+import type { Route } from "next";
+import { desc, count, ilike, or, asc } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
-import { SearchUsers } from "./search-users";
-import { RevokeInvitationButton } from "./revoke-invitation-button";
-import {
-  createProfile,
-  deleteLocalUserProfile,
-  inviteArtistProfile,
-  inviteUserProfile,
-  updateArtistEmail,
-  updateLocalUserEmail,
-  updateLocalUserRole,
-} from "./actions";
-import { db } from "@/lib/db";
-import { artists, users } from "@/lib/db/schema";
-import { desc, ilike, or } from "drizzle-orm";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -29,9 +17,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ADMIN_PAGE_SIZE,
+  buildSearchParams,
+  getOffsetFromPage,
+  parsePageParam,
+  parseSortOrderParam,
+  parseSortParam,
+} from "@/lib/admin/table-state";
+import { canManageUsers } from "@/lib/auth/access";
+import { db } from "@/lib/db";
+import { artists, users } from "@/lib/db/schema";
 import { CreateProfilePanel } from "./create-profile-panel";
+import {
+  createProfile,
+  deleteLocalUserProfile,
+  inviteArtistProfile,
+  inviteUserProfile,
+  updateArtistEmail,
+  updateLocalUserEmail,
+  updateLocalUserRole,
+} from "./actions";
+import { RevokeInvitationButton } from "./revoke-invitation-button";
+import { SearchUsers } from "./search-users";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
+
+const INVITATION_SORT_FIELDS = ["createdAt", "emailAddress", "role"] as const;
+const USER_SORT_FIELDS = ["createdAt", "name", "email", "role"] as const;
+const ARTIST_SORT_FIELDS = ["createdAt", "name", "genre", "email", "claimed"] as const;
+
+type InvitationSortField = (typeof INVITATION_SORT_FIELDS)[number];
+type UserSortField = (typeof USER_SORT_FIELDS)[number];
+type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
+
+type UsersSearchParams = {
+  art_order?: string;
+  art_page?: string;
+  art_sort?: string;
+  inv_order?: string;
+  inv_page?: string;
+  inv_sort?: string;
+  search?: string;
+  usr_order?: string;
+  usr_page?: string;
+  usr_sort?: string;
+};
 
 function isPlaceholderEmail(email: string) {
   return email.toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
@@ -48,6 +79,22 @@ function formatUserName(user: {
 
 function isInvitableRole(role: string) {
   return role === "writer" || role === "super_admin" || role === "artist";
+}
+
+function getInvitationRole(invitation: { publicMetadata?: unknown }) {
+  return ((invitation.publicMetadata as Record<string, string>)?.role || "fan").toLowerCase();
+}
+
+function getInvitationCreatedAt(invitation: { createdAt?: Date | number | string | null }) {
+  if (typeof invitation.createdAt === "number") {
+    return invitation.createdAt;
+  }
+
+  if (typeof invitation.createdAt === "string") {
+    return new Date(invitation.createdAt).getTime() || 0;
+  }
+
+  return invitation.createdAt?.getTime() ?? 0;
 }
 
 async function createProfileAction(formData: FormData) {
@@ -88,7 +135,7 @@ async function inviteArtistProfileAction(formData: FormData) {
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<UsersSearchParams>;
 }) {
   if (!(await canManageUsers())) {
     redirect("/admin");
@@ -96,6 +143,22 @@ export default async function UsersPage({
 
   const params = await searchParams;
   const query = params.search?.trim() || "";
+
+  const invPage = parsePageParam(params.inv_page);
+  const usrPage = parsePageParam(params.usr_page);
+  const artPage = parsePageParam(params.art_page);
+
+  const invSort = parseSortParam<InvitationSortField>(
+    params.inv_sort,
+    INVITATION_SORT_FIELDS,
+    "createdAt",
+  );
+  const usrSort = parseSortParam<UserSortField>(params.usr_sort, USER_SORT_FIELDS, "createdAt");
+  const artSort = parseSortParam<ArtistSortField>(params.art_sort, ARTIST_SORT_FIELDS, "createdAt");
+
+  const invOrder = parseSortOrderParam(params.inv_order, "desc");
+  const usrOrder = parseSortOrderParam(params.usr_order, "desc");
+  const artOrder = parseSortOrderParam(params.art_order, "desc");
 
   const userConditions = query
     ? or(
@@ -108,40 +171,116 @@ export default async function UsersPage({
     ? or(ilike(artists.name, `%${query}%`), ilike(artists.email, `%${query}%`))
     : undefined;
 
-  const [localUsers, localArtists] = await Promise.all([
-    db
-      .select({
-        clerkId: users.clerkId,
-        createdAt: users.createdAt,
-        email: users.email,
-        firstName: users.firstName,
-        id: users.id,
-        lastName: users.lastName,
-        onboardingComplete: users.onboardingComplete,
-        role: users.role,
-      })
-      .from(users)
-      .where(userConditions)
-      .orderBy(desc(users.createdAt)),
-    db
-      .select({
-        claimed: artists.claimed,
-        claimedById: artists.claimedById,
-        createdAt: artists.createdAt,
-        email: artists.email,
-        genre: artists.genre,
-        id: artists.id,
-        location: artists.location,
-        name: artists.name,
-        slug: artists.slug,
-      })
-      .from(artists)
-      .where(artistConditions)
-      .orderBy(desc(artists.createdAt)),
-  ]);
+  const userCountQuery = db.select({ total: count() }).from(users);
+  const userRowsQuery = db
+    .select({
+      clerkId: users.clerkId,
+      createdAt: users.createdAt,
+      email: users.email,
+      firstName: users.firstName,
+      id: users.id,
+      lastName: users.lastName,
+      onboardingComplete: users.onboardingComplete,
+      role: users.role,
+    })
+    .from(users);
 
-  const client = await clerkClient();
-  const invitations = await client.invitations.getInvitationList();
+  const artistCountQuery = db.select({ total: count() }).from(artists);
+  const artistRowsQuery = db
+    .select({
+      claimed: artists.claimed,
+      claimedById: artists.claimedById,
+      createdAt: artists.createdAt,
+      email: artists.email,
+      genre: artists.genre,
+      id: artists.id,
+      location: artists.location,
+      name: artists.name,
+      slug: artists.slug,
+    })
+    .from(artists);
+
+  const [localUsersTotalRows, localUsers, localArtistsTotalRows, localArtists, invitationsResult] =
+    await Promise.all([
+      userConditions ? userCountQuery.where(userConditions) : userCountQuery,
+      (userConditions ? userRowsQuery.where(userConditions) : userRowsQuery)
+        .orderBy(
+          usrSort === "name"
+            ? usrOrder === "asc"
+              ? asc(users.firstName)
+              : desc(users.firstName)
+            : usrSort === "email"
+              ? usrOrder === "asc"
+                ? asc(users.email)
+                : desc(users.email)
+              : usrSort === "role"
+                ? usrOrder === "asc"
+                  ? asc(users.role)
+                  : desc(users.role)
+                : usrOrder === "asc"
+                  ? asc(users.createdAt)
+                  : desc(users.createdAt),
+          usrSort === "name"
+            ? usrOrder === "asc"
+              ? asc(users.lastName)
+              : desc(users.lastName)
+            : desc(users.createdAt),
+        )
+        .limit(ADMIN_PAGE_SIZE)
+        .offset(getOffsetFromPage(usrPage, ADMIN_PAGE_SIZE)),
+      artistConditions ? artistCountQuery.where(artistConditions) : artistCountQuery,
+      (artistConditions ? artistRowsQuery.where(artistConditions) : artistRowsQuery)
+        .orderBy(
+          artSort === "name"
+            ? artOrder === "asc"
+              ? asc(artists.name)
+              : desc(artists.name)
+            : artSort === "genre"
+              ? artOrder === "asc"
+                ? asc(artists.genre)
+                : desc(artists.genre)
+              : artSort === "email"
+                ? artOrder === "asc"
+                  ? asc(artists.email)
+                  : desc(artists.email)
+                : artSort === "claimed"
+                  ? artOrder === "asc"
+                    ? asc(artists.claimed)
+                    : desc(artists.claimed)
+                  : artOrder === "asc"
+                    ? asc(artists.createdAt)
+                    : desc(artists.createdAt),
+          desc(artists.createdAt),
+        )
+        .limit(ADMIN_PAGE_SIZE)
+        .offset(getOffsetFromPage(artPage, ADMIN_PAGE_SIZE)),
+      (await clerkClient()).invitations.getInvitationList(),
+    ]);
+
+  const allInvitations = invitationsResult.data.slice().sort((left, right) => {
+    let comparison = 0;
+
+    if (invSort === "emailAddress") {
+      comparison = left.emailAddress.localeCompare(right.emailAddress);
+    } else if (invSort === "role") {
+      comparison = getInvitationRole(left).localeCompare(getInvitationRole(right));
+    } else {
+      comparison = getInvitationCreatedAt(left) - getInvitationCreatedAt(right);
+    }
+
+    return invOrder === "asc" ? comparison : comparison * -1;
+  });
+
+  const invitationTotal = allInvitations.length;
+  const pagedInvitations = allInvitations.slice(
+    getOffsetFromPage(invPage, ADMIN_PAGE_SIZE),
+    getOffsetFromPage(invPage, ADMIN_PAGE_SIZE) + ADMIN_PAGE_SIZE,
+  );
+
+  const localUsersTotal = Number(localUsersTotalRows[0]?.total ?? 0);
+  const localArtistsTotal = Number(localArtistsTotalRows[0]?.total ?? 0);
+
+  const currentSearchParams = buildSearchParams(params);
 
   return (
     <div className="space-y-6">
@@ -156,32 +295,89 @@ export default async function UsersPage({
       <CreateProfilePanel action={createProfileAction} />
 
       <div>
-        <SearchUsers />
+        <SearchUsers
+          defaultValue={query}
+          preservedSortAndOrder={{
+            art_order: params.art_order,
+            art_sort: params.art_sort,
+            inv_order: params.inv_order,
+            inv_sort: params.inv_sort,
+            usr_order: params.usr_order,
+            usr_sort: params.usr_sort,
+          }}
+        />
       </div>
 
-      {invitations.data.length > 0 && (
+      {invitationTotal > 0 && (
         <Card className="border-gray-800 bg-[#111111]">
           <CardHeader>
             <CardTitle className="text-xl">Pending Invitations</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto px-6">
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-800 hover:bg-transparent">
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="w-[180px]">Actions</TableHead>
+                    <TableHead>
+                      <AdminSortHeader
+                        currentOrder={invOrder}
+                        currentSort={params.inv_sort}
+                        defaultSort="createdAt"
+                        field="emailAddress"
+                        label="Email"
+                        orderParam="inv_order"
+                        pageParam="inv_page"
+                        pathname="/admin/users"
+                        searchParams={currentSearchParams}
+                        sortParam="inv_sort"
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <AdminSortHeader
+                        currentOrder={invOrder}
+                        currentSort={params.inv_sort}
+                        defaultSort="createdAt"
+                        field="role"
+                        label="Role"
+                        orderParam="inv_order"
+                        pageParam="inv_page"
+                        pathname="/admin/users"
+                        searchParams={currentSearchParams}
+                        sortParam="inv_sort"
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <AdminSortHeader
+                        currentOrder={invOrder}
+                        currentSort={params.inv_sort}
+                        defaultSort="createdAt"
+                        field="createdAt"
+                        label="Created"
+                        orderParam="inv_order"
+                        pageParam="inv_page"
+                        pathname="/admin/users"
+                        searchParams={currentSearchParams}
+                        sortParam="inv_sort"
+                      />
+                    </TableHead>
+                    <TableHead className="w-[180px] text-xs font-bold uppercase tracking-wider text-gray-300">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invitations.data.map((invitation) => (
+                  {pagedInvitations.map((invitation) => (
                     <TableRow key={invitation.id} className="border-gray-800 hover:bg-[#0F0F0F]">
                       <TableCell>{invitation.emailAddress}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-gray-700 text-gray-300">
-                          {(invitation.publicMetadata as Record<string, string>)?.role || "fan"}
+                          {getInvitationRole(invitation)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {invitation.createdAt
+                          ? new Date(getInvitationCreatedAt(invitation)).toLocaleDateString()
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         <RevokeInvitationButton
@@ -194,6 +390,14 @@ export default async function UsersPage({
                 </TableBody>
               </Table>
             </div>
+
+            <AdminPagination
+              pathname="/admin/users"
+              page={invPage}
+              pageParam="inv_page"
+              searchParams={currentSearchParams}
+              totalItems={invitationTotal}
+            />
           </CardContent>
         </Card>
       )}
@@ -202,22 +406,77 @@ export default async function UsersPage({
         <CardHeader>
           <CardTitle className="text-xl">Local User Profiles</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto px-6">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-800 hover:bg-transparent">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={usrOrder}
+                      currentSort={params.usr_sort}
+                      defaultSort="createdAt"
+                      field="name"
+                      label="Name"
+                      orderParam="usr_order"
+                      pageParam="usr_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="usr_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={usrOrder}
+                      currentSort={params.usr_sort}
+                      defaultSort="createdAt"
+                      field="email"
+                      label="Email"
+                      orderParam="usr_order"
+                      pageParam="usr_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="usr_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={usrOrder}
+                      currentSort={params.usr_sort}
+                      defaultSort="createdAt"
+                      field="role"
+                      label="Role"
+                      orderParam="usr_order"
+                      pageParam="usr_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="usr_sort"
+                    />
+                  </TableHead>
                   <TableHead>Identity</TableHead>
-                  <TableHead className="min-w-[19rem]">Actions</TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={usrOrder}
+                      currentSort={params.usr_sort}
+                      defaultSort="createdAt"
+                      field="createdAt"
+                      label="Created"
+                      orderParam="usr_order"
+                      pageParam="usr_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="usr_sort"
+                    />
+                  </TableHead>
+                  <TableHead className="min-w-[19rem] text-xs font-bold uppercase tracking-wider text-gray-300">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {localUsers.length === 0 ? (
                   <TableRow className="border-gray-800">
-                    <TableCell colSpan={5} className="py-8 text-center text-gray-400">
+                    <TableCell colSpan={6} className="py-8 text-center text-gray-400">
                       No profiles found
                     </TableCell>
                   </TableRow>
@@ -265,6 +524,9 @@ export default async function UsersPage({
                             {profile.clerkId}
                           </div>
                         </TableCell>
+                        <TableCell className="text-sm text-gray-300">
+                          {profile.createdAt.toLocaleDateString()}
+                        </TableCell>
                         <TableCell>
                           <div className="space-y-2">
                             {placeholderEmail ? (
@@ -308,6 +570,14 @@ export default async function UsersPage({
               </TableBody>
             </Table>
           </div>
+
+          <AdminPagination
+            pathname="/admin/users"
+            page={usrPage}
+            pageParam="usr_page"
+            searchParams={currentSearchParams}
+            totalItems={localUsersTotal}
+          />
         </CardContent>
       </Card>
 
@@ -315,22 +585,90 @@ export default async function UsersPage({
         <CardHeader>
           <CardTitle className="text-xl">Artist Profiles</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto px-6">
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-800 hover:bg-transparent">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Genre</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Claimed</TableHead>
-                  <TableHead className="min-w-[19rem]">Actions</TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={artOrder}
+                      currentSort={params.art_sort}
+                      defaultSort="createdAt"
+                      field="name"
+                      label="Name"
+                      orderParam="art_order"
+                      pageParam="art_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="art_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={artOrder}
+                      currentSort={params.art_sort}
+                      defaultSort="createdAt"
+                      field="genre"
+                      label="Genre"
+                      orderParam="art_order"
+                      pageParam="art_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="art_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={artOrder}
+                      currentSort={params.art_sort}
+                      defaultSort="createdAt"
+                      field="email"
+                      label="Email"
+                      orderParam="art_order"
+                      pageParam="art_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="art_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={artOrder}
+                      currentSort={params.art_sort}
+                      defaultSort="createdAt"
+                      field="claimed"
+                      label="Claimed"
+                      orderParam="art_order"
+                      pageParam="art_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="art_sort"
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <AdminSortHeader
+                      currentOrder={artOrder}
+                      currentSort={params.art_sort}
+                      defaultSort="createdAt"
+                      field="createdAt"
+                      label="Created"
+                      orderParam="art_order"
+                      pageParam="art_page"
+                      pathname="/admin/users"
+                      searchParams={currentSearchParams}
+                      sortParam="art_sort"
+                    />
+                  </TableHead>
+                  <TableHead className="min-w-[19rem] text-xs font-bold uppercase tracking-wider text-gray-300">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {localArtists.length === 0 ? (
                   <TableRow className="border-gray-800">
-                    <TableCell colSpan={5} className="py-8 text-center text-gray-400">
+                    <TableCell colSpan={6} className="py-8 text-center text-gray-400">
                       No artists found
                     </TableCell>
                   </TableRow>
@@ -348,9 +686,7 @@ export default async function UsersPage({
                         className="border-gray-800 hover:bg-[#0F0F0F]"
                       >
                         <TableCell className="font-medium">{artistProfile.name}</TableCell>
-                        <TableCell className="text-sm text-gray-300">
-                          {artistProfile.genre}
-                        </TableCell>
+                        <TableCell className="text-sm text-gray-300">{artistProfile.genre}</TableCell>
                         <TableCell className="text-sm text-gray-300">
                           {artistProfile.email || "—"}
                         </TableCell>
@@ -365,6 +701,9 @@ export default async function UsersPage({
                           >
                             {artistProfile.claimed ? "Claimed" : "Unclaimed"}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-300">
+                          {artistProfile.createdAt.toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
@@ -401,6 +740,14 @@ export default async function UsersPage({
               </TableBody>
             </Table>
           </div>
+
+          <AdminPagination
+            pathname="/admin/users"
+            page={artPage}
+            pageParam="art_page"
+            searchParams={currentSearchParams}
+            totalItems={localArtistsTotal}
+          />
         </CardContent>
       </Card>
     </div>

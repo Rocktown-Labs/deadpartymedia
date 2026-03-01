@@ -1,31 +1,14 @@
-"use client";
-
-import { usePathname, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function SearchUsers() {
-  const router = useRouter();
-  const pathname = usePathname();
+interface SearchUsersProps {
+  defaultValue: string;
+  preservedSortAndOrder: Record<string, string | undefined>;
+}
 
+export function SearchUsers({ defaultValue, preservedSortAndOrder }: SearchUsersProps) {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        const form = e.currentTarget;
-        const formData = new FormData(form);
-        const queryTerm = formData.get("search") as string;
-        const params = new URLSearchParams();
-        if (queryTerm) {
-          params.set("search", queryTerm);
-        }
-        const queryString = params.toString();
-        const url = queryString ? `${pathname}?${queryString}` : pathname;
-        // Use router.push with type assertion since we're dynamically constructing the URL
-        router.push(url as Parameters<typeof router.push>[0]);
-      }}
-      className="flex gap-4 items-end"
-    >
+    <form method="get" action="/admin/users" className="flex items-end gap-4">
       <div className="flex-1">
         <Label htmlFor="search">Search for users</Label>
         <Input
@@ -34,11 +17,25 @@ export function SearchUsers() {
           type="text"
           placeholder="Search by name or email..."
           className="mt-1"
+          defaultValue={defaultValue}
         />
       </div>
+
+      {Object.entries(preservedSortAndOrder).map(([key, value]) => {
+        if (!value) {
+          return null;
+        }
+
+        return <input key={key} type="hidden" name={key} value={value} />;
+      })}
+
+      <input type="hidden" name="inv_page" value="1" />
+      <input type="hidden" name="usr_page" value="1" />
+      <input type="hidden" name="art_page" value="1" />
+
       <button
         type="submit"
-        className="px-4 py-2 bg-[#7CFC00] text-black font-bold rounded-lg hover:bg-[#7CFC00]/90"
+        className="rounded-lg bg-[#7CFC00] px-4 py-2 font-bold text-black hover:bg-[#7CFC00]/90"
       >
         Search
       </button>
