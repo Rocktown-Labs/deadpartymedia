@@ -15,7 +15,7 @@ import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
 const LOCAL_PLACEHOLDER_PREFIX = "local_placeholder:";
-const VALID_INVITE_ROLES: Roles[] = new Set(["writer", "super_admin", "artist"]);
+const VALID_INVITE_ROLES = new Set<Roles>(["writer", "super_admin", "artist"]);
 
 function normalizeName(input: string): string {
   return input.trim().replace(/\s+/g, " ").slice(0, 150);

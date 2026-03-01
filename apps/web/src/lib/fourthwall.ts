@@ -150,7 +150,7 @@ async function fourthwallMutate<T>({
 
     return responseBody;
   } catch (error) {
-    throw new Error(`Fourthwall API error: ${error}`, { cause: e });
+    throw new Error(`Fourthwall API error: ${error}`, { cause: error });
   }
 }
 
