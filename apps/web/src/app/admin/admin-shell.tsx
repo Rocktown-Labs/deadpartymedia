@@ -80,12 +80,6 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
     };
   }, []);
 
-  useLayoutEffect(() => {
-    const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]+)/);
-    if (!match) {return;}
-    setSidebarOpen(match[1] === "true");
-  }, []);
-
   const visibleNavItems = useMemo(
     () =>
       NAV_ITEMS.filter((item) => {
@@ -113,6 +107,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
         className="min-h-[calc(100svh-var(--admin-navbar-height))] bg-[#0A0A0A]"
       >
         <Sidebar
+          mobileSide="bottom"
           collapsible="icon"
           className="border-r border-gray-800/80 bg-[#111111] group-data-[variant=sidebar]:border-r"
         >
