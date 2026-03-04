@@ -2,7 +2,7 @@ import { vi } from "vitest";
 
 export interface MockUser {
   id: string;
-  emailAddresses: Array<{ emailAddress: string; id: string }>;
+  emailAddresses: { emailAddress: string; id: string }[];
   firstName: string | null;
   lastName: string | null;
   imageUrl: string;
@@ -16,8 +16,8 @@ export const createMockUser = (overrides?: Partial<MockUser>): MockUser => ({
   imageUrl: "https://example.com/avatar.jpg",
   lastName: "User",
   publicMetadata: {
-    role: "fan",
     onboardingComplete: false,
+    role: "fan",
   },
   ...overrides,
 });

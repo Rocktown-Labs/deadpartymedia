@@ -11,8 +11,12 @@ import Image from "@tiptap/extension-image";
 import { drizzle } from "drizzle-orm/neon-http";
 import { and, eq, ne, or } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
-import { extractPermalinkDate, isWordpressPostPermalink, parseWordpressArticle } from './lib/wordpress-parser';
-import type { ParsedWordpressArticle } from './lib/wordpress-parser';
+import {
+  extractPermalinkDate,
+  isWordpressPostPermalink,
+  parseWordpressArticle,
+} from "./lib/wordpress-parser";
+import type { ParsedWordpressArticle } from "./lib/wordpress-parser";
 import { createImageMirror } from "./lib/image-mirror";
 
 const execFileAsync = promisify(execFile);
@@ -103,7 +107,9 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--limit") {
       const nextValue = argv[index + 1];
-      if (!nextValue) {throw new Error("Missing value for --limit");}
+      if (!nextValue) {
+        throw new Error("Missing value for --limit");
+      }
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new Error("--limit must be a positive integer");
@@ -115,7 +121,9 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--since") {
       const nextValue = argv[index + 1];
-      if (!nextValue) {throw new Error("Missing value for --since");}
+      if (!nextValue) {
+        throw new Error("Missing value for --since");
+      }
       const parsedDate = new Date(nextValue);
       if (Number.isNaN(parsedDate.valueOf())) {
         throw new TypeError("--since must be a valid ISO date (e.g. 2025-01-01)");
@@ -127,7 +135,9 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--concurrency") {
       const nextValue = argv[index + 1];
-      if (!nextValue) {throw new Error("Missing value for --concurrency");}
+      if (!nextValue) {
+        throw new Error("Missing value for --concurrency");
+      }
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 20) {
         throw new Error("--concurrency must be an integer between 1 and 20");
@@ -189,17 +199,25 @@ async function runFirecrawlJson(args: string[]): Promise<unknown> {
 }
 
 function extractMapLinks(payload: unknown): string[] {
-  if (!payload || typeof payload !== "object") {return [];}
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
 
-  const {data} = (payload as { data?: { links?: unknown[] } });
-  if (!data || !Array.isArray(data.links)) {return [];}
+  const { data } = payload as { data?: { links?: unknown[] } };
+  if (!data || !Array.isArray(data.links)) {
+    return [];
+  }
 
   return data.links
     .map((value) => {
-      if (typeof value === "string") {return value;}
+      if (typeof value === "string") {
+        return value;
+      }
       if (value && typeof value === "object") {
         const objectValue = value as { url?: unknown };
-        if (typeof objectValue.url === "string") {return objectValue.url;}
+        if (typeof objectValue.url === "string") {
+          return objectValue.url;
+        }
       }
       return null;
     })
@@ -251,7 +269,9 @@ function dedupeUrls(urls: string[]): string[] {
 
   for (const value of urls) {
     const normalized = value.endsWith("/") ? value : `${value}/`;
-    if (seen.has(normalized)) {continue;}
+    if (seen.has(normalized)) {
+      continue;
+    }
     seen.add(normalized);
     deduped.push(value.endsWith("/") ? value.slice(0, -1) : value);
   }
@@ -280,7 +300,9 @@ async function runWithConcurrency<T, R>(
   concurrency: number,
   worker: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
-  if (items.length === 0) {return [];}
+  if (items.length === 0) {
+    return [];
+  }
 
   const results = Array.from({ length: items.length }) as R[];
   let nextIndex = 0;
@@ -347,11 +369,11 @@ async function main() {
     inlineImagesMirrorFailed: 0,
     inlineImagesMirrored: 0,
     options: {
-      ownerClerkId: options.ownerClerkId,
-      limit: options.limit,
-      since: options.since?.toISOString() ?? null,
       concurrency: options.concurrency,
       dryRun: options.dryRun,
+      limit: options.limit,
+      ownerClerkId: options.ownerClerkId,
+      since: options.since?.toISOString() ?? null,
     },
     placeholderUsersCreated: 0,
     placeholderUsersUpdated: 0,
@@ -383,7 +405,9 @@ async function main() {
     if (options.since) {
       selectedUrls = selectedUrls.filter((url) => {
         const permalinkDate = extractPermalinkDate(url);
-        if (!permalinkDate) {return false;}
+        if (!permalinkDate) {
+          return false;
+        }
         return permalinkDate >= options.since!;
       });
       report.skippedBySinceCount = permalinkUrls.length - selectedUrls.length;
@@ -541,8 +565,8 @@ async function main() {
             email: toPlaceholderEmail(authorSlug),
             firstName: nameParts.firstName,
             lastName: nameParts.lastName,
-            role: "writer",
             onboardingComplete: true,
+            role: "writer",
             updatedAt: new Date(),
           },
           target: schema.users.clerkId,

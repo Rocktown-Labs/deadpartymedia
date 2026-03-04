@@ -1,35 +1,34 @@
-
 import { createEvent, updateEvent, deleteEvent } from "@/app/admin/events/actions";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 
 // Mock dependencies
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   redirect: vi.fn(),
 }));
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   revalidatePath: vi.fn(() => {}),
   revalidateTag: vi.fn(() => {}),
 }));
 
-vi.mock<typeof import('@/lib/auth/access')>(import('@/lib/auth/access'), () => ({
+vi.mock<typeof import("@/lib/auth/access")>(import("@/lib/auth/access"), () => ({
   canCreate: vi.fn(),
   canDelete: vi.fn(),
   canEdit: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/utils/slug')>(import('@/lib/utils/slug'), () => ({
+vi.mock<typeof import("@/lib/utils/slug")>(import("@/lib/utils/slug"), () => ({
   ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
-  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, "-")),
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replaceAll(/\s+/g, "-")),
 }));
 
-vi.mock<typeof import('@/lib/logger')>(import('@/lib/logger'), () => ({
+vi.mock<typeof import("@/lib/logger")>(import("@/lib/logger"), () => ({
   logger: {
     debug: vi.fn(),
     error: vi.fn(),
@@ -38,7 +37,7 @@ vi.mock<typeof import('@/lib/logger')>(import('@/lib/logger'), () => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/logger/sanitize')>(import('@/lib/logger/sanitize'), () => ({
+vi.mock<typeof import("@/lib/logger/sanitize")>(import("@/lib/logger/sanitize"), () => ({
   sanitizeError: vi.fn((error) => error),
 }));
 
@@ -55,19 +54,19 @@ const {
   mockFrom,
   mockLimit,
 } = vi.hoisted(() => ({
-    mockInsert: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockDelete: vi.fn(),
-    mockSelect: vi.fn(),
-    mockValues: vi.fn(),
-    mockReturning: vi.fn(),
-    mockSet: vi.fn(),
-    mockWhere: vi.fn(),
-    mockFrom: vi.fn(),
-    mockLimit: vi.fn(),
-  }));
+  mockDelete: vi.fn(),
+  mockFrom: vi.fn(),
+  mockInsert: vi.fn(),
+  mockLimit: vi.fn(),
+  mockReturning: vi.fn(),
+  mockSelect: vi.fn(),
+  mockSet: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockValues: vi.fn(),
+  mockWhere: vi.fn(),
+}));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     delete: mockDelete,
     insert: mockInsert,

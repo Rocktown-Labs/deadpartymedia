@@ -12,7 +12,9 @@ async function getOgImageData(type: string, slug: string) {
   switch (type) {
     case "article": {
       const article = await getArticle(slug);
-      if (!article) {return null;}
+      if (!article) {
+        return null;
+      }
       return {
         author: article.author?.name,
         category: article.category,
@@ -24,7 +26,9 @@ async function getOgImageData(type: string, slug: string) {
     }
     case "event": {
       const event = await getEvent(slug);
-      if (!event) {return null;}
+      if (!event) {
+        return null;
+      }
       const eventDate = event.date ? new Date(event.date).toLocaleDateString() : "";
       return {
         date: eventDate,
@@ -37,7 +41,9 @@ async function getOgImageData(type: string, slug: string) {
     }
     case "artist": {
       const artist = await getArtist(slug);
-      if (!artist) {return null;}
+      if (!artist) {
+        return null;
+      }
       return {
         description: artist.bio || `Learn more about ${artist.name}`,
         genre: artist.genre,

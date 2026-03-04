@@ -1,4 +1,3 @@
-
 import { getDashboardRoute, getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
 describe("dashboard route resolution", () => {

@@ -1,23 +1,22 @@
-
 import { GET } from "@/app/api/posts/[slug]/route";
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/content/post-content')>(import('@/lib/content/post-content'), () => ({
+vi.mock<typeof import("@/lib/content/post-content")>(import("@/lib/content/post-content"), () => ({
   normalizeStoredPostContent: vi.fn(() => ({ tiptapDoc: null })),
 }));
 
-vi.mock<typeof import('@tiptap/html')>(import('@tiptap/html'), () => ({
+vi.mock<typeof import("@tiptap/html")>(import("@tiptap/html"), () => ({
   generateHTML: vi.fn(() => "<p>converted</p>"),
 }));
 
-vi.mock<typeof import('@tiptap/starter-kit')>(import('@tiptap/starter-kit'), () => ({
+vi.mock<typeof import("@tiptap/starter-kit")>(import("@tiptap/starter-kit"), () => ({
   default: {},
 }));
 
-vi.mock<typeof import('@tiptap/extension-image')>(import('@tiptap/extension-image'), () => ({
+vi.mock<typeof import("@tiptap/extension-image")>(import("@tiptap/extension-image"), () => ({
   default: {},
 }));
 
@@ -62,12 +61,16 @@ const { mockPostChain, mockArtistsChain, mockCommentChain } = vi.hoisted(() => {
 
 let selectCallIndex = 0;
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     select: vi.fn(() => {
       selectCallIndex += 1;
-      if (selectCallIndex === 1) {return mockPostChain.select();}
-      if (selectCallIndex === 2) {return mockArtistsChain.select();}
+      if (selectCallIndex === 1) {
+        return mockPostChain.select();
+      }
+      if (selectCallIndex === 2) {
+        return mockArtistsChain.select();
+      }
       return mockCommentChain.select();
     }),
   },

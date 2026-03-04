@@ -1,15 +1,14 @@
-
 import { renderWithProviders, screen, waitFor } from "../../../tests/helpers/render";
 import { FanOnboarding } from "@/app/onboarding/fan-onboarding";
 import { fanOnboardingAction } from "@/app/onboarding/actions";
 import userEvent from "@testing-library/user-event";
 
 // Mock dependencies
-vi.mock<typeof import('@/app/onboarding/actions')>(import('@/app/onboarding/actions'), () => ({
+vi.mock<typeof import("@/app/onboarding/actions")>(import("@/app/onboarding/actions"), () => ({
   fanOnboardingAction: vi.fn(),
 }));
 
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   useRouter: () => ({
     prefetch: vi.fn(),
     push: vi.fn(),
@@ -17,18 +16,18 @@ vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
   }),
 }));
 
-vi.mock<typeof import('@clerk/nextjs')>(import('@clerk/nextjs'), () => ({
+vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
   useUser: () => ({
     isLoaded: true,
     user: {
       id: "user_test123",
       publicMetadata: {},
-      reload: vi.fn().mockResolvedValue(undefined),
+      reload: vi.fn().mockResolvedValue(),
     },
   }),
 }));
 
-vi.mock<typeof import('sonner')>(import('sonner'), () => ({
+vi.mock<typeof import("sonner")>(import("sonner"), () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),

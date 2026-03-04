@@ -21,13 +21,13 @@ export default function DeadPartyMedia() {
     author: typeof article.author === "string" ? article.author : article.author?.name || "Unknown",
     date: article.published_at
       ? new Date(article.published_at).toLocaleDateString("en-US", {
-          month: "short",
           day: "numeric",
+          month: "short",
           year: "numeric",
         })
       : new Date(article.created_at).toLocaleDateString("en-US", {
-          month: "short",
           day: "numeric",
+          month: "short",
           year: "numeric",
         }),
     image: article.cover_image || article.image || "/placeholder.svg",
@@ -50,8 +50,8 @@ export default function DeadPartyMedia() {
     .map((event) => ({
       artist: (event.artists || []).map((a: any) => a.name).join(" & ") || "Various Artists",
       date: {
-        month: new Date(event.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
         day: new Date(event.date).getDate().toString(),
+        month: new Date(event.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
       },
       image: event.image,
       ticketUrl: event.ticket_link || "#",

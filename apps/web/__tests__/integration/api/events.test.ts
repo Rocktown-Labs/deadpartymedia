@@ -1,4 +1,3 @@
-
 import { GET } from "@/app/api/events/route";
 
 // Mock database with proper chain
@@ -38,7 +37,7 @@ const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
 // Track which select call we're on
 let selectCallIndex = 0;
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     ...mockDbChain,
     // Override select to handle both events query and artist relations query
@@ -49,14 +48,13 @@ vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
         // Events query
         return mockDbChain.select();
       }
-        // Artist relations query
-        return mockArtistRelationsChain.select();
-      
+      // Artist relations query
+      return mockArtistRelationsChain.select();
     }),
   },
 }));
 
-vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middleware'), () => ({
+vi.mock<typeof import("@/lib/logger/middleware")>(import("@/lib/logger/middleware"), () => ({
   getRequestLogger: vi.fn(() => ({
     debug: vi.fn(),
     error: vi.fn(),
@@ -65,7 +63,7 @@ vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middlewar
   })),
 }));
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
 }));
 

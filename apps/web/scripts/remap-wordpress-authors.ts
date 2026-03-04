@@ -25,10 +25,10 @@ interface RemapReport {
   mappingsProcessed: number;
   postsUpdated: number;
   placeholderUsersDeleted: number;
-  failures: Array<{
+  failures: {
     authorSlug: string;
     reason: string;
-  }>;
+  }[];
 }
 
 function createDb(databaseUrl: string) {

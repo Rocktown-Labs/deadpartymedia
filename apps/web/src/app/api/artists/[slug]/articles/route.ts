@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { artists, postArtists, posts, users } from "@/lib/db/schema";
@@ -12,8 +12,12 @@ function resolveAuthorName(
   email: string | null,
 ) {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  if (fullName.length > 0) {return fullName;}
-  if (typeof email === "string" && email.trim().length > 0) {return email;}
+  if (fullName.length > 0) {
+    return fullName;
+  }
+  if (typeof email === "string" && email.trim().length > 0) {
+    return email;
+  }
   return "Unknown";
 }
 

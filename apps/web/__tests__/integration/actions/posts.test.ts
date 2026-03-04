@@ -1,4 +1,3 @@
-
 import {
   createPost,
   updatePost,
@@ -12,28 +11,28 @@ import { redirect } from "next/navigation";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 
 // Mock dependencies
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   redirect: vi.fn(),
 }));
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   revalidatePath: vi.fn(() => {}), // Mock to not throw
   revalidateTag: vi.fn(() => {}),
 }));
 
-vi.mock<typeof import('@/lib/auth/access')>(import('@/lib/auth/access'), () => ({
+vi.mock<typeof import("@/lib/auth/access")>(import("@/lib/auth/access"), () => ({
   canCreate: vi.fn(),
   canDelete: vi.fn(),
   canEdit: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/utils/slug')>(import('@/lib/utils/slug'), () => ({
+vi.mock<typeof import("@/lib/utils/slug")>(import("@/lib/utils/slug"), () => ({
   ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
-  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, "-")),
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replaceAll(/\s+/g, "-")),
 }));
 
 // Mock database - hoist variables to avoid initialization errors
@@ -49,19 +48,19 @@ const {
   mockFrom,
   mockLimit,
 } = vi.hoisted(() => ({
-    mockInsert: vi.fn(),
-    mockUpdate: vi.fn(),
-    mockDelete: vi.fn(),
-    mockSelect: vi.fn(),
-    mockValues: vi.fn(),
-    mockReturning: vi.fn(),
-    mockSet: vi.fn(),
-    mockWhere: vi.fn(),
-    mockFrom: vi.fn(),
-    mockLimit: vi.fn(),
-  }));
+  mockDelete: vi.fn(),
+  mockFrom: vi.fn(),
+  mockInsert: vi.fn(),
+  mockLimit: vi.fn(),
+  mockReturning: vi.fn(),
+  mockSelect: vi.fn(),
+  mockSet: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockValues: vi.fn(),
+  mockWhere: vi.fn(),
+}));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     delete: mockDelete,
     insert: mockInsert,
@@ -295,9 +294,7 @@ describe(updatePost, () => {
     mockDeleteWhere.mockResolvedValue();
 
     // Mock insert for new postArtists
-    const mockPostArtistsInsert = vi
-      .fn()
-      .mockReturnValue({ values: vi.fn().mockResolvedValue() });
+    const mockPostArtistsInsert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue() });
     mockInsert.mockReturnValue(mockPostArtistsInsert());
 
     await updatePost(1, formData);

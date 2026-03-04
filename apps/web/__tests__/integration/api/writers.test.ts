@@ -1,4 +1,3 @@
-
 import { GET } from "@/app/api/writers/route";
 
 const { mockDb } = vi.hoisted(() => ({
@@ -11,7 +10,7 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 
@@ -51,7 +50,7 @@ describe("gET /api/writers", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(data)).toBeTruthy();
     expect(data).toHaveLength(2);
-    expect(mockDb.where).toHaveBeenCalledOnce();
+    expect(mockDb.where).toHaveBeenCalledTimes(1);
     expect(data[0]).toStrictEqual({
       articleCount: 7,
       bio: "",

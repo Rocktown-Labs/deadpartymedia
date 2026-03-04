@@ -51,7 +51,7 @@ type InvitationSortField = (typeof INVITATION_SORT_FIELDS)[number];
 type UserSortField = (typeof USER_SORT_FIELDS)[number];
 type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
 
-type UsersSearchParams = {
+interface UsersSearchParams {
   art_order?: string;
   art_page?: string;
   art_sort?: string;
@@ -62,7 +62,7 @@ type UsersSearchParams = {
   usr_order?: string;
   usr_page?: string;
   usr_sort?: string;
-};
+}
 
 function isPlaceholderEmail(email: string) {
   return email.toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
@@ -206,9 +206,9 @@ export default async function UsersPage({
       (userConditions ? userRowsQuery.where(userConditions) : userRowsQuery)
         .orderBy(
           usrSort === "name"
-            ? usrOrder === "asc"
+            ? (usrOrder === "asc"
               ? asc(users.firstName)
-              : desc(users.firstName)
+              : desc(users.firstName))
             : usrSort === "email"
               ? usrOrder === "asc"
                 ? asc(users.email)
@@ -221,9 +221,9 @@ export default async function UsersPage({
                   ? asc(users.createdAt)
                   : desc(users.createdAt),
           usrSort === "name"
-            ? usrOrder === "asc"
+            ? (usrOrder === "asc"
               ? asc(users.lastName)
-              : desc(users.lastName)
+              : desc(users.lastName))
             : desc(users.createdAt),
         )
         .limit(ADMIN_PAGE_SIZE)
@@ -232,9 +232,9 @@ export default async function UsersPage({
       (artistConditions ? artistRowsQuery.where(artistConditions) : artistRowsQuery)
         .orderBy(
           artSort === "name"
-            ? artOrder === "asc"
+            ? (artOrder === "asc"
               ? asc(artists.name)
-              : desc(artists.name)
+              : desc(artists.name))
             : artSort === "genre"
               ? artOrder === "asc"
                 ? asc(artists.genre)
@@ -257,7 +257,7 @@ export default async function UsersPage({
       (await clerkClient()).invitations.getInvitationList(),
     ]);
 
-  const allInvitations = invitationsResult.data.slice().sort((left, right) => {
+  const allInvitations = [...invitationsResult.data].toSorted((left, right) => {
     let comparison = 0;
 
     if (invSort === "emailAddress") {
@@ -686,7 +686,9 @@ export default async function UsersPage({
                         className="border-gray-800 hover:bg-[#0F0F0F]"
                       >
                         <TableCell className="font-medium">{artistProfile.name}</TableCell>
-                        <TableCell className="text-sm text-gray-300">{artistProfile.genre}</TableCell>
+                        <TableCell className="text-sm text-gray-300">
+                          {artistProfile.genre}
+                        </TableCell>
                         <TableCell className="text-sm text-gray-300">
                           {artistProfile.email || "—"}
                         </TableCell>

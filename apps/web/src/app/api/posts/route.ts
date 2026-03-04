@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, postArtists, artists, articleComments, users } from "@/lib/db/schema";
@@ -12,8 +12,12 @@ function resolveAuthorName(
   email: string | null,
 ) {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  if (fullName.length > 0) {return fullName;}
-  if (typeof email === "string" && email.trim().length > 0) {return email;}
+  if (fullName.length > 0) {
+    return fullName;
+  }
+  if (typeof email === "string" && email.trim().length > 0) {
+    return email;
+  }
   return "Unknown";
 }
 
@@ -65,13 +69,13 @@ export async function GET(request: NextRequest) {
     const postIds = results.map((post) => post.id);
     const artistRelations: Record<
       number,
-      Array<{
+      {
         postId: number;
         artistId: number;
         artistSlug: string;
         artistName: string;
         artistImage: string | null;
-      }>
+      }[]
     > = {};
     const commentCountByPostId = new Map<number, number>();
 
@@ -116,9 +120,9 @@ export async function GET(request: NextRequest) {
       return {
         artists: postArtistsData.map((a) => ({
           id: a.artistId,
-          slug: a.artistSlug,
-          name: a.artistName,
           image: a.artistImage,
+          name: a.artistName,
+          slug: a.artistSlug,
         })),
         author: {
           id: post.authorId,

@@ -1,5 +1,5 @@
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
@@ -10,14 +10,20 @@ import { withOperationContext } from "@/lib/logger/context";
 import { roleOrDefault } from "@/lib/auth/role";
 
 function parseLocalUserProfileId(metadata: unknown): number | null {
-  if (!metadata || typeof metadata !== "object") {return null;}
+  if (!metadata || typeof metadata !== "object") {
+    return null;
+  }
   const value = (metadata as Record<string, unknown>).localUserProfileId;
   if (typeof value === "number" && Number.isInteger(value) && value > 0) {
     return value;
   }
-  if (typeof value !== "string") {return null;}
+  if (typeof value !== "string") {
+    return null;
+  }
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) {return null;}
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
   return parsed;
 }
 
@@ -89,10 +95,10 @@ export async function POST(req: NextRequest) {
           set: {
             email: primaryEmail,
             firstName: first_name || null,
-            lastName: last_name || null,
             imageUrl: image_url || null,
-            role,
+            lastName: last_name || null,
             onboardingComplete,
+            role,
             updatedAt: new Date(),
           },
           target: users.clerkId,
@@ -167,10 +173,10 @@ export async function POST(req: NextRequest) {
           set: {
             email: primaryEmail,
             firstName: first_name || null,
-            lastName: last_name || null,
             imageUrl: image_url || null,
-            role,
+            lastName: last_name || null,
             onboardingComplete,
+            role,
             updatedAt: new Date(),
           },
           target: users.clerkId,

@@ -4,7 +4,9 @@ import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
 
 // Next's generated RouteHandlerConfig types this as Promise-based params in this project.
-interface WriterRouteContext { params: Promise<{ id: string }> }
+interface WriterRouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function GET(_request: Request, { params }: WriterRouteContext) {
   const { id } = await params;

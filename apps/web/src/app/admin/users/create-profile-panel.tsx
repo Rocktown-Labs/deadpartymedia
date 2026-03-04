@@ -27,7 +27,10 @@ export function CreateProfilePanel({ action }: CreateProfilePanelProps) {
   const [profileType, setProfileType] = useState<(typeof PROFILE_TYPES)[number]>("user");
   const [error, setError] = useState<string | null>(null);
 
-  const submitLabel = useMemo(() => profileType === "artist" ? "Create Artist" : "Create User", [profileType]);
+  const submitLabel = useMemo(
+    () => (profileType === "artist" ? "Create Artist" : "Create User"),
+    [profileType],
+  );
 
   return (
     <Card className="border-gray-800 bg-[#111111]">

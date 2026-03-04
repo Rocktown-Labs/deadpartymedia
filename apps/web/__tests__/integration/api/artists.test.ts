@@ -1,4 +1,3 @@
-
 import { GET as GETArtists } from "@/app/api/artists/route";
 import { GET as GETArtist } from "@/app/api/artists/[slug]/route";
 import { GET as GETArtistArticles } from "@/app/api/artists/[slug]/articles/route";
@@ -43,19 +42,19 @@ const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
   return { mockDbChain, mockWhereResult };
 });
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDbChain,
 }));
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middleware'), () => ({
+vi.mock<typeof import("@/lib/logger/middleware")>(import("@/lib/logger/middleware"), () => ({
   getRequestLogger: vi.fn(() => ({
     debug: vi.fn(),
     error: vi.fn(),

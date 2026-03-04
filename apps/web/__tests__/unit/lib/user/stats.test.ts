@@ -1,4 +1,3 @@
-
 import { getUserStats } from "@/lib/user/stats";
 
 const { mockDb } = vi.hoisted(() => ({
@@ -7,7 +6,7 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 

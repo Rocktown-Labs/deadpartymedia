@@ -33,11 +33,11 @@ const ARTIST_SORT_FIELDS = ["name", "genre", "location", "claimed", "email", "cr
 
 type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
 
-type ArtistsSearchParams = {
+interface ArtistsSearchParams {
   order?: string;
   page?: string;
   sort?: string;
-};
+}
 
 export default async function ArtistsPage({
   searchParams,
@@ -69,9 +69,9 @@ export default async function ArtistsPage({
       .from(artists)
       .orderBy(
         sort === "name"
-          ? order === "asc"
+          ? (order === "asc"
             ? asc(artists.name)
-            : desc(artists.name)
+            : desc(artists.name))
           : sort === "genre"
             ? order === "asc"
               ? asc(artists.genre)
@@ -203,8 +203,12 @@ export default async function ArtistsPage({
                         {artist.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">{artist.genre}</TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">{artist.location}</TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-400">
+                      {artist.genre}
+                    </TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-400">
+                      {artist.location}
+                    </TableCell>
                     <TableCell className="px-6 py-4">
                       {artist.claimed ? (
                         <span className="font-bold text-green-400">✓ Claimed</span>
@@ -212,7 +216,9 @@ export default async function ArtistsPage({
                         <span className="text-gray-500">Not claimed</span>
                       )}
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">{artist.email || "—"}</TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-400">
+                      {artist.email || "—"}
+                    </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-400">
                       {new Date(artist.createdAt).toLocaleDateString()}
                     </TableCell>

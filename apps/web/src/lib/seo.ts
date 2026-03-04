@@ -27,18 +27,20 @@ export function getAbsoluteUrl(path: string): string {
  * Strip HTML tags and decode HTML entities from a string
  */
 export function stripHtml(html: string | null | undefined): string {
-  if (!html) {return "";}
+  if (!html) {
+    return "";
+  }
   // Remove HTML tags
   const text = html.replaceAll(/<[^>]*>/g, "");
   // Decode common HTML entities
   return text
-    .replaceAll(/&nbsp;/g, " ")
-    .replaceAll(/&amp;/g, "&")
-    .replaceAll(/&lt;/g, "<")
-    .replaceAll(/&gt;/g, ">")
-    .replaceAll(/&quot;/g, '"')
-    .replaceAll(/&#39;/g, "'")
-    .replaceAll(/&apos;/g, "'")
+    .replaceAll('&nbsp;', " ")
+    .replaceAll('&amp;', "&")
+    .replaceAll('&lt;', "<")
+    .replaceAll('&gt;', ">")
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&apos;', "'")
     .trim();
 }
 
@@ -46,7 +48,9 @@ export function stripHtml(html: string | null | undefined): string {
  * Truncate text to a maximum length, adding ellipsis if truncated
  */
 export function truncateText(text: string, maxLength: number = 160): string {
-  if (!text || text.length <= maxLength) {return text;}
+  if (!text || text.length <= maxLength) {
+    return text;
+  }
   return text.slice(0, maxLength - 3).trim() + "...";
 }
 
@@ -58,9 +62,13 @@ export function sanitizeDescription(
   fallback: string = DEFAULT_DESCRIPTION,
   maxLength: number = 160,
 ): string {
-  if (!description) {return fallback;}
+  if (!description) {
+    return fallback;
+  }
   const cleaned = stripHtml(description);
-  if (!cleaned) {return fallback;}
+  if (!cleaned) {
+    return fallback;
+  }
   return truncateText(cleaned, maxLength);
 }
 
@@ -125,7 +133,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
  * Generate metadata for an article
  */
 export function generateArticleMetadata(article: Article): Metadata {
-  const title = `${article.title} | ${SITE_NAME}`;
+  const fullTitle = `${article.title} | ${SITE_NAME}`;
   const description = sanitizeDescription(
     article.excerpt,
     `Read about ${article.title} on ${SITE_NAME}`,
@@ -135,16 +143,20 @@ export function generateArticleMetadata(article: Article): Metadata {
   const fallbackImage = getImageUrl(article.cover_image);
   const url = getAbsoluteUrl(`/article/${article.slug}`);
 
+  const artistNames = article.artists?.map((a) => a.name) ?? [];
+  const keywords = [article.category, ...artistNames, "arkansas music", "dead party media"].filter(
+    Boolean,
+  );
+
   return {
     alternates: {
       canonical: url,
     },
     description,
+    keywords,
     openGraph: {
-      title,
+      authors: article.author?.name ? [article.author.name] : undefined,
       description,
-      url,
-      siteName: SITE_NAME,
       images: [
         {
           url: ogImageUrl,
@@ -160,16 +172,18 @@ export function generateArticleMetadata(article: Article): Metadata {
         },
       ],
       locale: "en_US",
-      type: "article",
       publishedTime: article.published_at || undefined,
-      authors: article.author?.name ? [article.author.name] : undefined,
+      siteName: SITE_NAME,
+      title: fullTitle,
+      type: "article",
+      url,
     },
-    title,
+    title: article.title,
     twitter: {
       card: "summary_large_image",
-      title,
       description,
       images: [ogImageUrl, fallbackImage],
+      title: fullTitle,
     },
   };
 }
@@ -178,7 +192,7 @@ export function generateArticleMetadata(article: Article): Metadata {
  * Generate metadata for an event
  */
 export function generateEventMetadata(event: Event): Metadata {
-  const title = `${event.title} | ${SITE_NAME}`;
+  const fullTitle = `${event.title} | ${SITE_NAME}`;
   const eventDate = event.date ? new Date(event.date).toLocaleDateString() : "";
   const fallbackDescription = `${event.title} - ${event.venue}, ${event.location}${eventDate ? ` on ${eventDate}` : ""}`;
   const description = sanitizeDescription(event.description, fallbackDescription);
@@ -187,16 +201,25 @@ export function generateEventMetadata(event: Event): Metadata {
   const fallbackImage = getImageUrl(event.image);
   const url = getAbsoluteUrl(`/events/${event.slug}`);
 
+  const artistNames = event.artists?.map((a) => a.name) ?? [];
+  const keywords = [
+    event.genre,
+    event.venue,
+    event.location,
+    ...artistNames,
+    "arkansas events",
+    "live music",
+    "dead party media",
+  ].filter(Boolean);
+
   return {
     alternates: {
       canonical: url,
     },
     description,
+    keywords,
     openGraph: {
-      title,
       description,
-      url,
-      siteName: SITE_NAME,
       images: [
         {
           url: ogImageUrl,
@@ -212,14 +235,17 @@ export function generateEventMetadata(event: Event): Metadata {
         },
       ],
       locale: "en_US",
-      type: "website",
+      siteName: SITE_NAME,
+      title: fullTitle,
+      type: "article",
+      url,
     },
-    title,
+    title: event.title,
     twitter: {
       card: "summary_large_image",
-      title,
       description,
       images: [ogImageUrl, fallbackImage],
+      title: fullTitle,
     },
   };
 }
@@ -228,7 +254,7 @@ export function generateEventMetadata(event: Event): Metadata {
  * Generate metadata for an artist
  */
 export function generateArtistMetadata(artist: Artist): Metadata {
-  const title = `${artist.name} | ${SITE_NAME}`;
+  const fullTitle = `${artist.name} | ${SITE_NAME}`;
   const description = sanitizeDescription(
     artist.bio,
     `Learn more about ${artist.name} on ${SITE_NAME}`,
@@ -244,10 +270,7 @@ export function generateArtistMetadata(artist: Artist): Metadata {
     },
     description,
     openGraph: {
-      title,
       description,
-      url,
-      siteName: SITE_NAME,
       images: [
         {
           url: ogImageUrl,
@@ -263,14 +286,17 @@ export function generateArtistMetadata(artist: Artist): Metadata {
         },
       ],
       locale: "en_US",
+      siteName: SITE_NAME,
+      title: fullTitle,
       type: "profile",
+      url,
     },
-    title,
+    title: artist.name,
     twitter: {
       card: "summary_large_image",
-      title,
       description,
       images: [ogImageUrl, fallbackImage],
+      title: fullTitle,
     },
   };
 }

@@ -1,11 +1,10 @@
-
 import userEvent from "@testing-library/user-event";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 let mockPathname = "/admin";
 
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   usePathname: () => mockPathname,
   useRouter: () => ({
     back: vi.fn(),
@@ -28,14 +27,14 @@ function setViewport(width: number) {
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: vi.fn().mockImplementation((query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
       matches: query.includes("max-width") ? width < 768 : false,
       media: query,
       onchange: null,
-      addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      addListener: vi.fn(),
       removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
     })),
     writable: true,
   });

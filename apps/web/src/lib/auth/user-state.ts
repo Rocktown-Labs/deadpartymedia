@@ -39,10 +39,10 @@ export async function upsertUserAuthState({
       set: {
         email,
         firstName: firstName ?? null,
-        lastName: lastName ?? null,
         imageUrl: imageUrl ?? null,
-        role: normalizedRole,
+        lastName: lastName ?? null,
         onboardingComplete,
+        role: normalizedRole,
         updatedAt: new Date(),
       },
       target: users.clerkId,

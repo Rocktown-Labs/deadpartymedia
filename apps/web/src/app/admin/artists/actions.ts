@@ -87,8 +87,8 @@ export async function createArtist(formData: FormData) {
       await client.invitations.createInvitation({
         emailAddress: validatedData.email!,
         publicMetadata: {
-          role: "artist",
           artistId: artist.id.toString(),
+          role: "artist",
         },
         redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
       });
@@ -202,8 +202,8 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
     await client.invitations.createInvitation({
       emailAddress: email,
       publicMetadata: {
-        role: "artist",
         artistId: artistId.toString(),
+        role: "artist",
       },
       redirectUrl: `/sign-up?role=artist&artistId=${artistId}`,
     });

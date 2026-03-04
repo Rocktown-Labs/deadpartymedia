@@ -80,14 +80,14 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   const [profile] = await db
     .select({
-      id: users.id,
       clerkId: users.clerkId,
+      createdAt: users.createdAt,
       email: users.email,
       firstName: users.firstName,
+      id: users.id,
       lastName: users.lastName,
-      role: users.role,
       onboardingComplete: users.onboardingComplete,
-      createdAt: users.createdAt,
+      role: users.role,
       updatedAt: users.updatedAt,
     })
     .from(users)
@@ -106,9 +106,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     db
       .select({
         id: posts.id,
-        title: posts.title,
         slug: posts.slug,
         status: posts.status,
+        title: posts.title,
         updatedAt: posts.updatedAt,
       })
       .from(posts)
@@ -141,7 +141,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
       <Card className="border-gray-800 bg-[#111111]">
         <CardHeader>
           <CardTitle className="text-xl">Identity</CardTitle>
-          <CardDescription>Reference and lifecycle data for this local user profile.</CardDescription>
+          <CardDescription>
+            Reference and lifecycle data for this local user profile.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2 text-sm">
@@ -189,13 +191,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
       <Card className="border-gray-800 bg-[#111111]">
         <CardHeader>
           <CardTitle className="text-xl">Manage Profile</CardTitle>
-          <CardDescription>Update role, email state, invitations, or remove this profile.</CardDescription>
+          <CardDescription>
+            Update role, email state, invitations, or remove this profile.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form action={updateLocalUserRoleAction} className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="id" value={profile.id} />
             <div>
-              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">Role</label>
+              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">
+                Role
+              </label>
               <select
                 name="role"
                 defaultValue={profile.role}
@@ -215,7 +221,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           <form action={updateLocalUserEmailAction} className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="id" value={profile.id} />
             <div className="min-w-[18rem] flex-1">
-              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">Email</label>
+              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">
+                Email
+              </label>
               <Input name="email" type="email" defaultValue={profile.email} required />
             </div>
             <Button type="submit" variant="outline">

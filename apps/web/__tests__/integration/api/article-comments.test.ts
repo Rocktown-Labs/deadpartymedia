@@ -1,4 +1,3 @@
-
 import { GET, POST } from "@/app/api/articles/[slug]/comments/route";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
@@ -9,16 +8,16 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middleware'), () => ({
+vi.mock<typeof import("@/lib/logger/middleware")>(import("@/lib/logger/middleware"), () => ({
   getRequestLogger: vi.fn(() => ({
     debug: vi.fn(),
     error: vi.fn(),
@@ -94,7 +93,7 @@ describe("aPI /api/articles/[slug]/comments", () => {
 
   it("returns 403 when onboarding is incomplete", async () => {
     vi.mocked(auth).mockResolvedValue({
-      sessionClaims: { metadata: { role: "fan", onboardingComplete: false } },
+      sessionClaims: { metadata: { onboardingComplete: false, role: "fan" } },
       userId: "user_123",
     } as any);
 
@@ -118,7 +117,7 @@ describe("aPI /api/articles/[slug]/comments", () => {
 
   it("returns 400 when comment payload is malformed JSON", async () => {
     vi.mocked(auth).mockResolvedValue({
-      sessionClaims: { metadata: { role: "fan", onboardingComplete: true } },
+      sessionClaims: { metadata: { onboardingComplete: true, role: "fan" } },
       userId: "user_123",
     } as any);
 
@@ -141,7 +140,7 @@ describe("aPI /api/articles/[slug]/comments", () => {
 
   it("creates a comment for an onboarded user", async () => {
     vi.mocked(auth).mockResolvedValue({
-      sessionClaims: { metadata: { role: "fan", onboardingComplete: true } },
+      sessionClaims: { metadata: { onboardingComplete: true, role: "fan" } },
       userId: "user_123",
     } as any);
 
@@ -168,7 +167,7 @@ describe("aPI /api/articles/[slug]/comments", () => {
     vi.mocked(clerkClient).mockResolvedValue({
       users: {
         getUser: vi.fn().mockResolvedValue({
-          emailAddresses: [{ id: "email_1", emailAddress: "test@example.com" }],
+          emailAddresses: [{ emailAddress: "test@example.com", id: "email_1" }],
           firstName: "Test",
           fullName: "Test User",
           lastName: "User",

@@ -14,34 +14,34 @@ vi.mock("@dpmedia/env/web", () => ({
 // Mock logger BEFORE any other mocks to prevent env access during module initialization
 vi.mock("@/lib/logger", () => ({
   createChildLogger: vi.fn(() => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
     debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   })),
   createRequestLogger: vi.fn(() => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
     debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   })),
   default: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
     debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   },
   logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
     child: vi.fn(() => ({
       info: vi.fn(),
       error: vi.fn(),
       warn: vi.fn(),
       debug: vi.fn(),
     })),
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -80,13 +80,13 @@ afterEach(() => {
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    prefetch: vi.fn(),
+    asPath: "/",
     back: vi.fn(),
     pathname: "/",
+    prefetch: vi.fn(),
+    push: vi.fn(),
     query: {},
-    asPath: "/",
+    replace: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -95,7 +95,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/image", async () => {
   const React = await import("react");
   return {
-    default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => React.createElement("img", { src, alt, ...props }),
+    default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) =>
+      React.createElement("img", { alt, src, ...props }),
   };
 });
 
@@ -105,13 +106,13 @@ vi.mock("@clerk/nextjs", () => ({
   clerkClient: vi.fn(() => Promise.resolve({})),
   currentUser: vi.fn(() => Promise.resolve(null)),
   useAuth: () => ({
-    userId: null,
-    sessionId: null,
     isLoaded: true,
+    sessionId: null,
+    userId: null,
   }),
   useUser: () => ({
-    user: null,
     isLoaded: true,
+    user: null,
   }),
 }));
 

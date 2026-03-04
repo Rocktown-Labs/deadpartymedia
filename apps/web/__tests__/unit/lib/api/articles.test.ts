@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+
 import { buildPostsApiPath } from "@/lib/api/articles";
 
 describe(buildPostsApiPath, () => {
@@ -6,7 +6,7 @@ describe(buildPostsApiPath, () => {
     expect(buildPostsApiPath()).toBe("/api/posts");
   });
 
-  it("URL-encodes category values with special characters", () => {
+  it("uRL-encodes category values with special characters", () => {
     expect(buildPostsApiPath("HIP-HOP & R&B")).toBe("/api/posts?category=HIP-HOP%20%26%20R%26B");
     expect(buildPostsApiPath("HARDCORE & ROCK")).toBe("/api/posts?category=HARDCORE%20%26%20ROCK");
   });

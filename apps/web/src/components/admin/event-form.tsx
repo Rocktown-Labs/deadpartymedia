@@ -91,7 +91,9 @@ export function EventForm({
   };
 
   const handleEventImageUpload = async (file: File | null) => {
-    if (!file) {return;}
+    if (!file) {
+      return;
+    }
 
     const validation = validateImageFile(file);
     if (!validation.valid) {

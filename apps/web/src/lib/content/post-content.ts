@@ -19,8 +19,12 @@ function isObject(value: unknown): value is JsonObject {
 }
 
 function isTipTapDoc(value: unknown): value is JsonObject {
-  if (!isObject(value)) {return false;}
-  if (value.type !== "doc") {return false;}
+  if (!isObject(value)) {
+    return false;
+  }
+  if (value.type !== "doc") {
+    return false;
+  }
   return Array.isArray(value.content);
 }
 
@@ -33,23 +37,37 @@ function parseJson(input: string): unknown | null {
 }
 
 function maybeUnwrapNestedTipTapDoc(value: unknown): JsonObject | null {
-  if (!isTipTapDoc(value)) {return null;}
+  if (!isTipTapDoc(value)) {
+    return null;
+  }
 
-  const {content} = value;
-  if (!Array.isArray(content) || content.length !== 1) {return null;}
+  const { content } = value;
+  if (!Array.isArray(content) || content.length !== 1) {
+    return null;
+  }
 
   const firstNode = content[0];
-  if (!isObject(firstNode) || firstNode.type !== "paragraph") {return null;}
-  if (!Array.isArray(firstNode.content) || firstNode.content.length !== 1) {return null;}
+  if (!isObject(firstNode) || firstNode.type !== "paragraph") {
+    return null;
+  }
+  if (!Array.isArray(firstNode.content) || firstNode.content.length !== 1) {
+    return null;
+  }
 
   const textNode = firstNode.content[0];
-  if (!isObject(textNode) || textNode.type !== "text") {return null;}
+  if (!isObject(textNode) || textNode.type !== "text") {
+    return null;
+  }
 
   const nestedText = textNode.text;
-  if (typeof nestedText !== "string" || nestedText.trim().length === 0) {return null;}
+  if (typeof nestedText !== "string" || nestedText.trim().length === 0) {
+    return null;
+  }
 
   const nestedParsed = parseJson(nestedText);
-  if (!isTipTapDoc(nestedParsed)) {return null;}
+  if (!isTipTapDoc(nestedParsed)) {
+    return null;
+  }
 
   return nestedParsed;
 }

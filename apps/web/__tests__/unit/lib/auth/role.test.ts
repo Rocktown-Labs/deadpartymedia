@@ -1,4 +1,3 @@
-
 import { parseRole, roleOrDefault } from "@/lib/auth/role";
 
 describe("role parser", () => {

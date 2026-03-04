@@ -182,7 +182,9 @@ export function useSearchSpotifyArtists(query: string) {
   return useQuery<SpotifyArtist[]>({
     queryKey: ["spotify-search", query],
     queryFn: async () => {
-      if (!query || query.length < 5) {return [];}
+      if (!query || query.length < 5) {
+        return [];
+      }
       const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
@@ -200,7 +202,9 @@ export function useSpotifyArtistById(id: string | null) {
   return useQuery<SpotifyArtist | null>({
     queryKey: ["spotify-artist", id],
     queryFn: async () => {
-      if (!id) {return null;}
+      if (!id) {
+        return null;
+      }
       const response = await fetch(`/api/spotify/artist/${encodeURIComponent(id)}`);
       if (!response.ok) {
         if (response.status === 404) {

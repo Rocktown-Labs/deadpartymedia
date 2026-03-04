@@ -9,12 +9,16 @@ const optionalUrlField = z
 
 function normalizeInstagramInput(input: unknown): string {
   const raw = String(input ?? "").trim();
-  if (!raw) {return "";}
+  if (!raw) {
+    return "";
+  }
 
   // Username-first: accept @handle, handle-only, or a full instagram.com URL and normalize
   // to a canonical URL: https://instagram.com/<username>
   let candidate = raw.startsWith("@") ? raw.slice(1).trim() : raw;
-  if (!candidate) {return "";}
+  if (!candidate) {
+    return "";
+  }
 
   // Strip instagram domain/protocol if present
   candidate = candidate.replace(/^(?:https?:\/\/)?(?:www\.|m\.)?instagram\.com\//i, "");
@@ -24,7 +28,9 @@ function normalizeInstagramInput(input: unknown): string {
 
   const [firstSegment = ""] = candidate.split(/[/?#]/);
   candidate = firstSegment.trim();
-  if (!candidate) {return "";}
+  if (!candidate) {
+    return "";
+  }
 
   // Be permissive but safe: instagram usernames are typically 1-30 of letters/numbers/._
   if (!new RegExp(`^[A-Za-z0-9._]{1,${MAX_INSTAGRAM_USERNAME_LENGTH}}$`).test(candidate)) {
@@ -38,7 +44,9 @@ function normalizeInstagramInput(input: unknown): string {
 
 function normalizeE164Phone(input: unknown): string | undefined {
   const raw = String(input ?? "").trim();
-  if (!raw) {return undefined;}
+  if (!raw) {
+    return undefined;
+  }
 
   // Keep leading + if present; otherwise strip to digits.
   if (raw.startsWith("+")) {
@@ -47,11 +55,17 @@ function normalizeE164Phone(input: unknown): string | undefined {
   }
 
   const digits = raw.replaceAll(/[^0-9]/g, "");
-  if (!digits) {return undefined;}
+  if (!digits) {
+    return undefined;
+  }
 
   // US convenience: 10 digits -> +1XXXXXXXXXX, 11 digits starting with 1 -> +1...
-  if (digits.length === 10) {return `+1${digits}`;}
-  if (digits.length === 11 && digits.startsWith("1")) {return `+${digits}`;}
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
   return `+${digits}`;
 }
 

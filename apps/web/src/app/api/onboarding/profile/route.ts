@@ -134,19 +134,19 @@ export async function GET() {
   return NextResponse.json({
     artist: artistProfile
       ? {
-          id: artistProfile.id,
-          name: artistProfile.name ?? "",
           bio: artistProfile.bio ?? "",
-          location: artistProfile.location ?? "",
           genre: artistProfile.genre ?? "OTHER",
-          spotifyUrl: artistProfile.spotifyUrl ?? "",
-          spotifyArtistId: artistProfile.spotifyArtistId ?? "",
-          instagram: artistProfile.instagram ?? "",
-          twitter: artistProfile.twitter ?? "",
-          tiktok: artistProfile.tiktok ?? "",
-          website: artistProfile.website ?? "",
+          id: artistProfile.id,
           image: artistProfile.image ?? "",
+          instagram: artistProfile.instagram ?? "",
+          location: artistProfile.location ?? "",
+          name: artistProfile.name ?? "",
           phoneNumber: artistProfile.phoneNumber ?? "",
+          spotifyArtistId: artistProfile.spotifyArtistId ?? "",
+          spotifyUrl: artistProfile.spotifyUrl ?? "",
+          tiktok: artistProfile.tiktok ?? "",
+          twitter: artistProfile.twitter ?? "",
+          website: artistProfile.website ?? "",
         }
       : null,
     fan: {

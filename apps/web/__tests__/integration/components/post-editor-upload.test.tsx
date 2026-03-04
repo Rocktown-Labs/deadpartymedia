@@ -7,13 +7,13 @@ import { PostEditor } from "@/components/admin/post-editor";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 // Mock artists hook to avoid network calls and ensure predictable data
-vi.mock<typeof import('@/lib/api/artists')>(import('@/lib/api/artists'), () => ({
+vi.mock<typeof import("@/lib/api/artists")>(import("@/lib/api/artists"), () => ({
   useArtists: () => ({ data: [], isLoading: false }),
 }));
 
 // Sonner's toast implementation can rely on DOM APIs/timers that are flaky in JSDOM.
 // We only care that the upload fetch is attempted, so mock toast to no-ops.
-vi.mock<typeof import('sonner')>(import('sonner'), () => ({
+vi.mock<typeof import("sonner")>(import("sonner"), () => ({
   toast: {
     dismiss: vi.fn(),
     error: vi.fn(),

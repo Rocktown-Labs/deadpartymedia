@@ -16,9 +16,13 @@ interface ReplyRow {
 }
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) {return fallback;}
+  if (!value) {
+    return fallback;
+  }
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
   return parsed;
 }
 
@@ -68,10 +72,10 @@ export async function GET(request: Request) {
   const topLevelComments = await db
     .select({
       article: {
+        coverImage: posts.coverImage,
         id: posts.id,
         slug: posts.slug,
         title: posts.title,
-        coverImage: posts.coverImage,
       },
       content: articleComments.content,
       createdAt: articleComments.createdAt,
@@ -110,8 +114,10 @@ export async function GET(request: Request) {
 
   const repliesByParent = new Map<number, ReplyRow[]>();
   for (const reply of replies) {
-    const {parentId} = reply;
-    if (!parentId) {continue;}
+    const { parentId } = reply;
+    if (!parentId) {
+      continue;
+    }
     const existing = repliesByParent.get(parentId) ?? [];
     existing.push(reply);
     repliesByParent.set(parentId, existing);
@@ -126,19 +132,19 @@ export async function GET(request: Request) {
     previous: hasPreviousPage ? buildPaginationUrl(requestUrl, page - 1, pageSize) : null,
     results: topLevelComments.map((comment) => ({
       article: {
+        cover_image: comment.article.coverImage,
         id: comment.article.id,
         slug: comment.article.slug,
         title: comment.article.title,
-        cover_image: comment.article.coverImage,
       },
       content: comment.content,
       created_at: comment.createdAt.toISOString(),
       id: comment.id,
       parent: comment.parent,
       replies: (repliesByParent.get(comment.id) ?? []).map((reply) => ({
-        id: reply.id,
         content: reply.content,
         created_at: reply.createdAt.toISOString(),
+        id: reply.id,
         updated_at: reply.updatedAt.toISOString(),
       })),
       updated_at: comment.updatedAt.toISOString(),

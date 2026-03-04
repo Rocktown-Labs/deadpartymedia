@@ -1,9 +1,9 @@
 import { put } from "@vercel/blob";
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { validateImageFile, generateImagePathname } from '@/lib/upload';
-import type { UploadType } from '@/lib/upload';
+import { validateImageFile, generateImagePathname } from "@/lib/upload";
+import type { UploadType } from "@/lib/upload";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 

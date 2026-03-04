@@ -2,7 +2,9 @@ import { z } from "zod";
 
 function normalizeE164Phone(input: unknown): string | undefined {
   const raw = String(input ?? "").trim();
-  if (!raw) {return undefined;}
+  if (!raw) {
+    return undefined;
+  }
 
   if (raw.startsWith("+")) {
     const candidate = `+${raw.slice(1).replaceAll(/[^0-9]/g, "")}`;
@@ -10,10 +12,16 @@ function normalizeE164Phone(input: unknown): string | undefined {
   }
 
   const digits = raw.replaceAll(/[^0-9]/g, "");
-  if (!digits) {return undefined;}
+  if (!digits) {
+    return undefined;
+  }
 
-  if (digits.length === 10) {return `+1${digits}`;}
-  if (digits.length === 11 && digits.startsWith("1")) {return `+${digits}`;}
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
   return `+${digits}`;
 }
 

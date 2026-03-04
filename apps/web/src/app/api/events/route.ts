@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events, eventArtists, artists } from "@/lib/db/schema";
@@ -42,13 +42,13 @@ export async function GET(request: NextRequest) {
     const eventIds = filteredResults.map((event) => event.id);
     const artistRelations: Record<
       number,
-      Array<{
+      {
         eventId: number;
         artistId: number;
         artistSlug: string;
         artistName: string;
         artistImage: string | null;
-      }>
+      }[]
     > = {};
 
     if (eventIds.length > 0) {
@@ -79,9 +79,9 @@ export async function GET(request: NextRequest) {
       return {
         artists: eventArtistsData.map((a) => ({
           id: a.artistId,
-          slug: a.artistSlug,
-          name: a.artistName,
           image: a.artistImage,
+          name: a.artistName,
+          slug: a.artistSlug,
         })),
         created_at: event.createdAt.toISOString(),
         date: event.date,

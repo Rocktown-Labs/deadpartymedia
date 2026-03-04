@@ -23,10 +23,14 @@ function calculateItemCost(quantity: number, price: string): string {
 }
 
 function updateCartItem(item: CartItem, updateType: UpdateType): CartItem | null {
-  if (updateType === "delete") {return null;}
+  if (updateType === "delete") {
+    return null;
+  }
 
   const newQuantity = updateType === "plus" ? item.quantity + 1 : item.quantity - 1;
-  if (newQuantity === 0) {return null;}
+  if (newQuantity === 0) {
+    return null;
+  }
 
   const singleItemAmount = Number(item.cost.totalAmount.amount) / item.quantity;
   const newTotalAmount = calculateItemCost(newQuantity, singleItemAmount.toString());
@@ -62,14 +66,14 @@ function createOrUpdateCartItem(
     id: existingItem?.id || `${variant.id}-temp`,
     merchandise: {
       id: variant.id,
-      title: variant.title,
-      selectedOptions: variant.selectedOptions,
       product: {
         id: product.id,
         handle: product.handle,
         title: product.title,
         featuredImage: product.featuredImage,
       },
+      selectedOptions: variant.selectedOptions,
+      title: variant.title,
     },
     quantity,
   };
@@ -160,7 +164,7 @@ export function CartProvider({
   };
 
   const addCartItem = (variant: ProductVariant, product: Product) => {
-    updateOptimisticCart({ payload: { variant, product }, type: "ADD_ITEM" });
+    updateOptimisticCart({ payload: { product, variant }, type: "ADD_ITEM" });
   };
 
   const value = useMemo(

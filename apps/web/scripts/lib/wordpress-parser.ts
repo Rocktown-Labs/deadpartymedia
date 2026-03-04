@@ -46,13 +46,17 @@ export function isWordpressPostPermalink(url: string): boolean {
 
 export function extractPermalinkSlug(url: string): string | null {
   const match = url.match(WORDPRESS_POST_URL_PATTERN);
-  if (!match) {return null;}
+  if (!match) {
+    return null;
+  }
   return match[4] || null;
 }
 
 export function extractPermalinkDate(url: string): Date | null {
   const match = url.match(WORDPRESS_POST_URL_PATTERN);
-  if (!match) {return null;}
+  if (!match) {
+    return null;
+  }
 
   const [_, year, month, day] = match;
   const value = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
@@ -70,11 +74,17 @@ export function normalizeAuthorSlug(input: string): string {
 }
 
 export function mapWordpressCategory(rawCategories: string[]): AppCategory {
-  const normalized = rawCategories.map((value) => value.trim().toLowerCase().replaceAll(/\s+/g, " "));
+  const normalized = rawCategories.map((value) =>
+    value.trim().toLowerCase().replaceAll(/\s+/g, " "),
+  );
 
   for (const category of normalized) {
-    if (category === "country") {return "COUNTRY";}
-    if (category === "edm") {return "EDM";}
+    if (category === "country") {
+      return "COUNTRY";
+    }
+    if (category === "edm") {
+      return "EDM";
+    }
     if (
       category === "hardcore & rock" ||
       category === "hardcore-rock" ||
@@ -102,7 +112,9 @@ function cleanText(value: string): string {
 
 function truncateExcerpt(value: string, maxLength: number): string {
   const cleaned = cleanText(value);
-  if (cleaned.length <= maxLength) {return cleaned;}
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
   return `${cleaned.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
@@ -161,7 +173,9 @@ function parsePublishedAt(metadata: Record<string, unknown>, rootDocument: Docum
 
 function parseModifiedAt(metadata: Record<string, unknown>): Date | null {
   const metadataValue = getMetadataString(metadata, ["article:modified_time", "modifiedTime"]);
-  if (!metadataValue) {return null;}
+  if (!metadataValue) {
+    return null;
+  }
 
   const modified = new Date(metadataValue);
   return Number.isNaN(modified.valueOf()) ? null : modified;
@@ -209,7 +223,9 @@ function collectRawCategories(rootDocument: Document): string[] {
 
   for (const link of categoryLinks) {
     const text = cleanText(link.textContent ?? "");
-    if (text) {categories.add(text);}
+    if (text) {
+      categories.add(text);
+    }
   }
 
   return [...categories];
@@ -245,7 +261,7 @@ export function parseWordpressArticle(payload: FirecrawlScrapePayload): ParsedWo
     ? absolutizeUrl(coverImageNode.getAttribute("src") ?? "", sourceUrl)
     : null;
 
-  const inlineImageUrls = [...entryContent.querySelectorAll('img[src]')]
+  const inlineImageUrls = [...entryContent.querySelectorAll("img[src]")]
     .map((node) => node.getAttribute("src") ?? "")
     .map((value) => absolutizeUrl(value, sourceUrl))
     .filter((value) => value.length > 0);

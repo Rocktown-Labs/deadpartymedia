@@ -5,7 +5,9 @@ interface ErrorWithNestedMessage {
 }
 
 export function getErrorMessage(error: unknown): string | undefined {
-  if (typeof error !== "object" || error === null) {return undefined;}
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
 
   const maybe = error as ErrorWithNestedMessage;
   const message = maybe.error?.message;

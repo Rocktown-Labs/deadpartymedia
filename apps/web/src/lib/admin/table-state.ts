@@ -31,7 +31,10 @@ export function parseSortParam<TSort extends string>(
   return fallback;
 }
 
-export function parseSortOrderParam(value: string | undefined, fallback: SortOrder = "desc"): SortOrder {
+export function parseSortOrderParam(
+  value: string | undefined,
+  fallback: SortOrder = "desc",
+): SortOrder {
   if (value === "asc" || value === "desc") {
     return value;
   }
@@ -110,13 +113,7 @@ export function getNextSortState(options: {
   defaultSort: string;
   field: string;
 }): { order?: SortOrder; sort?: string } {
-  const {
-    currentOrder,
-    currentSort,
-    defaultOrder = "desc",
-    defaultSort,
-    field,
-  } = options;
+  const { currentOrder, currentSort, defaultOrder = "desc", defaultSort, field } = options;
 
   const isDefaultState = !currentSort;
   const isActiveField = currentSort === field;

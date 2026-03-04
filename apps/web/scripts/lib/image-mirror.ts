@@ -53,13 +53,17 @@ function extractFileNameFromUrl(sourceUrl: string): string {
 
 function ensureImageExtension(filename: string, contentType: string | null): string {
   const hasKnownExtension = /\.(jpg|jpeg|png|webp|gif)$/i.test(filename);
-  if (hasKnownExtension) {return filename;}
+  if (hasKnownExtension) {
+    return filename;
+  }
 
   const mappedExtension = contentType
     ? IMAGE_EXTENSION_FROM_CONTENT_TYPE[contentType.toLowerCase()]
     : undefined;
 
-  if (mappedExtension) {return `${filename}${mappedExtension}`;}
+  if (mappedExtension) {
+    return `${filename}${mappedExtension}`;
+  }
   return `${filename}.jpg`;
 }
 
@@ -123,10 +127,14 @@ export function createImageMirror(options: ImageMirrorOptions = {}) {
   const cache = new Map<string, string>();
 
   async function mirrorImageUrl(sourceUrl: string, kind: MirrorKind): Promise<string> {
-    if (dryRun) {return sourceUrl;}
+    if (dryRun) {
+      return sourceUrl;
+    }
 
     const cached = cache.get(sourceUrl);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     const download = await downloadImage(sourceUrl);
     const { pathname, addRandomSuffix } = buildPathname(kind, sourceUrl);
@@ -153,16 +161,20 @@ export function createImageMirror(options: ImageMirrorOptions = {}) {
 
     const dom = new JSDOM(`<body>${html}</body>`);
     const doc = dom.window.document;
-    const imageNodes = [...doc.querySelectorAll('img[src]')];
+    const imageNodes = [...doc.querySelectorAll("img[src]")];
     let replacedCount = 0;
     let failedCount = 0;
 
     for (const node of imageNodes) {
       const currentSrc = node.getAttribute("src");
-      if (!currentSrc) {continue;}
+      if (!currentSrc) {
+        continue;
+      }
 
       const sourceUrl = resolveAbsoluteUrl(currentSrc, baseUrl);
-      if (!/^https?:\/\//i.test(sourceUrl)) {continue;}
+      if (!/^https?:\/\//i.test(sourceUrl)) {
+        continue;
+      }
 
       try {
         const mirroredUrl = await mirrorImageUrl(sourceUrl, "content");

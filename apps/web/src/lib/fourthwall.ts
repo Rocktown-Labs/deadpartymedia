@@ -21,13 +21,13 @@ interface FourthwallProduct {
   name: string;
   slug: string;
   description: string;
-  images: Array<{
+  images: {
     url: string;
     transformedUrl: string;
     width: number;
     height: number;
-  }>;
-  variants: Array<{
+  }[];
+  variants: {
     id: string;
     name: string;
     sku: string;
@@ -40,12 +40,12 @@ interface FourthwallProduct {
     };
     stock: { type: "LIMITED" | "UNLIMITED"; inStock?: number };
     images: Array<{ url: string; transformedUrl: string }>;
-  }>;
+  }[];
 }
 
 interface FourthwallCart {
   id: string;
-  items: Array<{
+  items: {
     variant: {
       id: string;
       name: string;
@@ -64,7 +64,7 @@ interface FourthwallCart {
       };
     };
     quantity: number;
-  }>;
+  }[];
 }
 
 async function fourthwallFetch<T>({
@@ -179,11 +179,15 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
   const optionsMap = new Map<string, Set<string>>();
   fwProduct.variants.forEach((variant) => {
     if (variant.attributes.color) {
-      if (!optionsMap.has("Color")) {optionsMap.set("Color", new Set());}
+      if (!optionsMap.has("Color")) {
+        optionsMap.set("Color", new Set());
+      }
       optionsMap.get("Color")?.add(variant.attributes.color.name);
     }
     if (variant.attributes.size) {
-      if (!optionsMap.has("Size")) {optionsMap.set("Size", new Set());}
+      if (!optionsMap.has("Size")) {
+        optionsMap.set("Size", new Set());
+      }
       optionsMap.get("Size")?.add(variant.attributes.size.name);
     }
   });
@@ -201,27 +205,27 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
     description: fwProduct.description,
     descriptionHtml: fwProduct.description,
     featuredImage: {
-      url: fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
       altText: fwProduct.name,
-      width: fwProduct.images[0]?.width || 800,
       height: fwProduct.images[0]?.height || 800,
+      url: fwProduct.images[0]?.transformedUrl || fwProduct.images[0]?.url || "",
+      width: fwProduct.images[0]?.width || 800,
     },
     handle: fwProduct.slug,
     id: fwProduct.id,
     images: fwProduct.images.map((img) => ({
-      url: img.transformedUrl || img.url,
       altText: fwProduct.name,
-      width: img.width,
       height: img.height,
+      url: img.transformedUrl || img.url,
+      width: img.width,
     })),
     options,
     priceRange: {
-      minVariantPrice: {
-        amount: minPrice.toString(),
-        currencyCode: currency,
-      },
       maxVariantPrice: {
         amount: maxPrice.toString(),
+        currencyCode: currency,
+      },
+      minVariantPrice: {
+        amount: minPrice.toString(),
         currencyCode: currency,
       },
     },
@@ -246,20 +250,20 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
         .map((opt) => ({ name: opt.name, value: opt.value }));
 
       return {
-        id: v.id,
-        title: v.name,
         availableForSale,
-        selectedOptions,
-        price: {
-          amount: v.unitPrice.value.toString(),
-          currencyCode: v.unitPrice.currency,
-        },
+        id: v.id,
         images: v.images.map((img) => ({
           url: img.transformedUrl || img.url,
           altText: fwProduct.name,
           width: 800,
           height: 800,
         })),
+        price: {
+          amount: v.unitPrice.value.toString(),
+          currencyCode: v.unitPrice.currency,
+        },
+        selectedOptions,
+        title: v.name,
       };
     }),
   };
@@ -278,15 +282,6 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
       id: `${item.variant.id}-${fwCart.id}`,
       merchandise: {
         id: item.variant.id,
-        title: item.variant.name,
-        selectedOptions: [
-          ...(item.variant.attributes.color
-            ? [{ name: "Color", value: item.variant.attributes.color.name }]
-            : []),
-          ...(item.variant.attributes.size
-            ? [{ name: "Size", value: item.variant.attributes.size.name }]
-            : []),
-        ],
         product: {
           id: item.variant.product.id,
           handle: item.variant.product.slug,
@@ -298,6 +293,15 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
             height: 800,
           },
         },
+        selectedOptions: [
+          ...(item.variant.attributes.color
+            ? [{ name: "Color", value: item.variant.attributes.color.name }]
+            : []),
+          ...(item.variant.attributes.size
+            ? [{ name: "Size", value: item.variant.attributes.size.name }]
+            : []),
+        ],
+        title: item.variant.name,
       },
       quantity: item.quantity,
     };
@@ -339,7 +343,10 @@ export async function getProducts(currency = "USD"): Promise<Product[]> {
     logger.info({ count: data.results.length, operation: "get_products" }, "Found products");
     return data.results.map(transformProduct);
   } catch (error) {
-    logger.error({ error: sanitizeError(error), operation: "get_products" }, "Error fetching products");
+    logger.error(
+      { error: sanitizeError(error), operation: "get_products" },
+      "Error fetching products",
+    );
     return [];
   }
 }
@@ -404,8 +411,8 @@ export async function addToCart(
   const data = await fourthwallMutate<FourthwallCart>({
     body: {
       items: lines.map((line) => ({
-        variantId: line.merchandiseId,
         quantity: line.quantity,
+        variantId: line.merchandiseId,
       })),
     },
     path: `carts/${cartId}/add?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
@@ -421,8 +428,8 @@ export async function updateCart(
   const data = await fourthwallMutate<FourthwallCart>({
     body: {
       items: lines.map((line) => ({
-        variantId: line.merchandiseId,
         quantity: line.quantity,
+        variantId: line.merchandiseId,
       })),
     },
     path: `carts/${cartId}/change?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,

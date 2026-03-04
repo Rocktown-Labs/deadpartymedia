@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, asc, count, eq, inArray, isNull } from "drizzle-orm";
@@ -26,9 +26,13 @@ async function resolveSlug(params: RouteParams): Promise<string> {
 }
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) {return fallback;}
+  if (!value) {
+    return fallback;
+  }
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
   return parsed;
 }
 
@@ -138,11 +142,11 @@ export async function GET(request: NextRequest, { params }: { params: RouteParam
       ...comment,
       created_at: comment.created_at.toISOString(),
       replies: (repliesByParentId.get(comment.id) ?? []).map((reply) => ({
-        id: reply.id,
         content: reply.content,
-        user_name: reply.user_name,
         created_at: reply.created_at.toISOString(),
+        id: reply.id,
         updated_at: reply.updated_at.toISOString(),
+        user_name: reply.user_name,
       })),
       updated_at: comment.updated_at.toISOString(),
     }));

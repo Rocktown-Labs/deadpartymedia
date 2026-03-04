@@ -22,7 +22,9 @@ function formatPriceRange(product: Product) {
   const min = product.priceRange.minVariantPrice.amount;
   const max = product.priceRange.maxVariantPrice.amount;
 
-  if (min === max) {return `$${min}`;}
+  if (min === max) {
+    return `$${min}`;
+  }
   return `$${min} - $${max}`;
 }
 

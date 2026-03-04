@@ -21,8 +21,8 @@ export const mockUseUser = (user: Partial<MockUser> | null = null) => {
         imageUrl: "https://example.com/avatar.jpg",
         lastName: "User",
         publicMetadata: {
-          role: "fan",
           onboardingComplete: false,
+          role: "fan",
         },
         ...user,
       }
@@ -63,14 +63,16 @@ export const mockAuth = (userId: string | null = "user_test123") => {
 /**
  * Create mock user with specific role
  */
-export const createUserWithRole = (role: "fan" | "artist" | "writer" | "super_admin"): MockUser => ({
-    id: "user_test123",
-    emailAddresses: [{ emailAddress: "test@example.com", id: "email1" }],
-    firstName: "Test",
-    lastName: "User",
-    imageUrl: "https://example.com/avatar.jpg",
-    publicMetadata: {
-      role,
-      onboardingComplete: role !== "fan" && role !== "artist",
-    },
-  });
+export const createUserWithRole = (
+  role: "fan" | "artist" | "writer" | "super_admin",
+): MockUser => ({
+  emailAddresses: [{ emailAddress: "test@example.com", id: "email1" }],
+  firstName: "Test",
+  id: "user_test123",
+  imageUrl: "https://example.com/avatar.jpg",
+  lastName: "User",
+  publicMetadata: {
+    role,
+    onboardingComplete: role !== "fan" && role !== "artist",
+  },
+});

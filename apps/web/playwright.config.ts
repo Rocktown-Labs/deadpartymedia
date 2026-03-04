@@ -60,7 +60,9 @@ export default defineConfig({
       },
     ] as const;
 
-    if (!shouldRunAuthenticated) {return [...baseProjects];}
+    if (!shouldRunAuthenticated) {
+      return [...baseProjects];
+    }
 
     return [
       ...baseProjects,

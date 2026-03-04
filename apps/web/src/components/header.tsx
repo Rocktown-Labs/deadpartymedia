@@ -13,10 +13,10 @@ export default function Header() {
       <div className="flex flex-row items-center justify-between px-2 py-1">
         <nav className="flex gap-4 text-lg">
           {links.map(({ to, label }) => (
-              <Link key={to} href={to}>
-                {label}
-              </Link>
-            ))}
+            <Link key={to} href={to}>
+              {label}
+            </Link>
+          ))}
         </nav>
       </div>
       <hr />

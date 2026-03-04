@@ -32,11 +32,11 @@ const EVENT_SORT_FIELDS = ["title", "venue", "date", "genre", "status", "created
 
 type EventSortField = (typeof EVENT_SORT_FIELDS)[number];
 
-type EventsSearchParams = {
+interface EventsSearchParams {
   order?: string;
   page?: string;
   sort?: string;
-};
+}
 
 export default async function EventsPage({
   searchParams,
@@ -71,9 +71,9 @@ export default async function EventsPage({
     (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
       .orderBy(
         sort === "title"
-          ? order === "asc"
+          ? (order === "asc"
             ? asc(events.title)
-            : desc(events.title)
+            : desc(events.title))
           : sort === "venue"
             ? order === "asc"
               ? asc(events.venue)
@@ -215,9 +215,9 @@ export default async function EventsPage({
                         className={`rounded px-2 py-1 text-xs font-bold ${
                           event.status === "published"
                             ? "bg-green-500/20 text-green-400"
-                            : event.status === "draft"
+                            : (event.status === "draft"
                               ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-gray-500/20 text-gray-400"
+                              : "bg-gray-500/20 text-gray-400")
                         }`}
                       >
                         {event.status}

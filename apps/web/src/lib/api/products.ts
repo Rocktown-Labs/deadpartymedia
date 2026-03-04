@@ -9,9 +9,7 @@ interface UseProductsOptions {
 export function useProducts(options: UseProductsOptions = {}) {
   return useQuery<Product[]>({
     enabled: options.enabled ?? true,
-    queryFn: async () => {
-      return await getProducts();
-    },
+    queryFn: async () => await getProducts(),
     queryKey: ["products"],
   });
 }

@@ -19,7 +19,9 @@ declare global {
 }
 
 async function runStartupSchemaSanityCheck() {
-  if (globalThis.__dbSanityCheckStarted) {return;}
+  if (globalThis.__dbSanityCheckStarted) {
+    return;
+  }
   globalThis.__dbSanityCheckStarted = true;
 
   const result = (await db.execute(sql`

@@ -50,22 +50,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusCard: {
+    borderWidth: 1,
     marginBottom: 16,
     padding: 16,
-    borderWidth: 1,
   },
   statusCardTitle: {
-    marginBottom: 8,
     fontWeight: "bold",
+    marginBottom: 8,
   },
   statusIndicator: {
+    borderRadius: 4,
     height: 8,
     width: 8,
-    borderRadius: 4,
   },
   statusRow: {
-    flexDirection: "row",
     alignItems: "center",
+    flexDirection: "row",
     gap: 8,
   },
   statusText: {

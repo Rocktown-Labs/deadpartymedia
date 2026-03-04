@@ -1,8 +1,7 @@
-
 import { checkRole } from "@/lib/auth/roles";
 
 // Mock Clerk auth
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 

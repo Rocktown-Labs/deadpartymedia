@@ -35,10 +35,9 @@ export async function logDbOperation<T>(
 
       return result;
     }
-      // Just log the operation without executing
-      log.info({ operation, entityType, entityId }, `Database operation: ${operation}`);
-      return undefined;
-    
+    // Just log the operation without executing
+    log.info({ entityId, entityType, operation }, `Database operation: ${operation}`);
+    return undefined;
   } catch (error) {
     const duration = Date.now() - startTime;
     log.error(

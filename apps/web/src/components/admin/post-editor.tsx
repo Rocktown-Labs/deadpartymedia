@@ -18,8 +18,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useArtists } from '@/lib/api/artists';
-import type { Artist } from '@/lib/api/artists';
+import { useArtists } from "@/lib/api/artists";
+import type { Artist } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
 import { X, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -135,8 +135,12 @@ export function PostEditor({
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
   const allArtists = useMemo(() => {
     const deduped = new Map<number, Artist>();
-    for (const artist of artists) {deduped.set(artist.id, artist);}
-    for (const artist of createdArtists) {deduped.set(artist.id, artist);}
+    for (const artist of artists) {
+      deduped.set(artist.id, artist);
+    }
+    for (const artist of createdArtists) {
+      deduped.set(artist.id, artist);
+    }
     return [...deduped.values()];
   }, [artists, createdArtists]);
 
@@ -157,7 +161,7 @@ export function PostEditor({
         },
         onPaste: (editor, files, _htmlContent) => {
           // Only handle image files, let other content be handled by default paste handler
-          const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+          const imageFiles = [...files].filter((file) => file.type.startsWith("image/"));
           if (imageFiles.length > 0) {
             handleImageUpload(imageFiles, editor);
           }
@@ -171,7 +175,9 @@ export function PostEditor({
     editorInstance: typeof editor,
     position?: number,
   ) => {
-    if (!editorInstance) {return;}
+    if (!editorInstance) {
+      return;
+    }
 
     const imageFiles = [...files].filter((file) => file.type.startsWith("image/"));
 
@@ -217,7 +223,9 @@ export function PostEditor({
   };
 
   const handleCoverImageUpload = async (file: File | null) => {
-    if (!file) {return;}
+    if (!file) {
+      return;
+    }
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
@@ -265,7 +273,9 @@ export function PostEditor({
   };
 
   const handleCreateAuthorStub = async () => {
-    if (!onCreateAuthorStub) {return;}
+    if (!onCreateAuthorStub) {
+      return;
+    }
 
     const displayName = newAuthorName.trim();
     if (!displayName) {
@@ -283,7 +293,7 @@ export function PostEditor({
       }
 
       const result = await onCreateAuthorStub(formData);
-      const {profile} = result;
+      const { profile } = result;
       if (!result.success || !profile) {
         toast.error(result.error || "Failed to create author");
         return;
@@ -315,7 +325,9 @@ export function PostEditor({
   };
 
   const handleCreateArtistStub = async () => {
-    if (!onCreateArtistStub) {return;}
+    if (!onCreateArtistStub) {
+      return;
+    }
 
     const displayName = newArtistName.trim();
     if (!displayName) {
@@ -333,7 +345,7 @@ export function PostEditor({
       }
 
       const result = await onCreateArtistStub(formData);
-      const {artist} = result;
+      const { artist } = result;
       if (!result.success || !artist) {
         toast.error(result.error || "Failed to create artist");
         return;

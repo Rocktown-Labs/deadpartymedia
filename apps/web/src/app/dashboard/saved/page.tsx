@@ -108,7 +108,7 @@ export default function SavedPage() {
 
           <div className="space-y-4">
             {articles.map((item) => {
-              const {article} = item;
+              const { article } = item;
               return (
                 <div
                   key={item.id}

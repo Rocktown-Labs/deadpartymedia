@@ -1,4 +1,3 @@
-
 import { auth } from "@clerk/nextjs/server";
 import {
   GET as getReadArticles,
@@ -19,11 +18,11 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 
@@ -115,15 +114,15 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_1",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Excerpt",
           id: 11,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "test-post",
           title: "Test Post",
-          excerpt: "Excerpt",
-          coverImage: null,
-          authorId: "author_1",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 12,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 4,
         readAt: new Date("2026-01-03T00:00:00.000Z"),
@@ -152,15 +151,15 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_2",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Excerpt",
           id: 22,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "page-two-post",
           title: "Page Two Post",
-          excerpt: "Excerpt",
-          coverImage: null,
-          authorId: "author_2",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 2,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 6,
         readAt: new Date("2026-01-04T00:00:00.000Z"),
@@ -276,7 +275,7 @@ describe("aPI /api/user activity endpoints", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
     expect(onConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         set: expect.objectContaining({
@@ -315,15 +314,15 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_2",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Saved excerpt",
           id: 22,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "saved-post",
           title: "Saved Post",
-          excerpt: "Saved excerpt",
-          coverImage: null,
-          authorId: "author_2",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 2,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 9,
         savedAt: new Date("2026-01-03T00:00:00.000Z"),
@@ -352,15 +351,15 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_2",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Saved excerpt",
           id: 23,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "saved-page-two",
           title: "Saved Page Two",
-          excerpt: "Saved excerpt",
-          coverImage: null,
-          authorId: "author_2",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 3,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 10,
         savedAt: new Date("2026-01-04T00:00:00.000Z"),
@@ -387,15 +386,15 @@ describe("aPI /api/user activity endpoints", () => {
     const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_3",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Saved excerpt",
           id: 24,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "saved-fallback",
           title: "Saved Fallback",
-          excerpt: "Saved excerpt",
-          coverImage: null,
-          authorId: "author_3",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 4,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 11,
         savedAt: new Date("2026-01-05T00:00:00.000Z"),
@@ -422,15 +421,15 @@ describe("aPI /api/user activity endpoints", () => {
     const queryMock = mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          authorId: "author_4",
+          coverImage: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          excerpt: "Saved excerpt",
           id: 25,
+          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           slug: "saved-clamped",
           title: "Saved Clamped",
-          excerpt: "Saved excerpt",
-          coverImage: null,
-          authorId: "author_4",
-          publishedAt: new Date("2026-01-01T00:00:00.000Z"),
           views: 5,
-          createdAt: new Date("2026-01-01T00:00:00.000Z"),
         },
         id: 12,
         savedAt: new Date("2026-01-06T00:00:00.000Z"),
@@ -482,7 +481,7 @@ describe("aPI /api/user activity endpoints", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
     expect(data.id).toBe(17);
     expect(data.saved_at).toBeTypeOf("string");
   });
@@ -550,10 +549,10 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          coverImage: null,
           id: 12,
           slug: "post-12",
           title: "Post 12",
-          coverImage: null,
         },
         content: "Top level",
         createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -593,10 +592,10 @@ describe("aPI /api/user activity endpoints", () => {
     mockSelectWithInnerJoinOrderByLimitOffset([
       {
         article: {
+          coverImage: null,
           id: 12,
           slug: "post-12",
           title: "Post 12",
-          coverImage: null,
         },
         content: "Top level",
         createdAt: new Date("2026-01-01T00:00:00.000Z"),

@@ -1,4 +1,3 @@
-
 import { generateSlug } from "@/lib/utils/slug";
 
 describe(generateSlug, () => {

@@ -18,9 +18,13 @@ function normalizeArtistIds(ids: number[]) {
 }
 
 function haveDifferentArtistIds(a: number[], b: number[]) {
-  if (a.length !== b.length) {return true;}
+  if (a.length !== b.length) {
+    return true;
+  }
   for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) {return true;}
+    if (a[i] !== b[i]) {
+      return true;
+    }
   }
   return false;
 }

@@ -1,4 +1,3 @@
-
 import { ensureUniqueSlug } from "@/lib/utils/slug";
 
 // Mock database - create a shared mock object that can be reset per test
@@ -14,24 +13,24 @@ mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
 mockDbChain.from.mockReturnValue({ where: mockDbChain.where });
 mockDbChain.where.mockReturnValue({ limit: mockDbChain.limit });
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDbChain,
 }));
 
 // Mock schema to prevent relations from being called
-vi.mock<typeof import('@/lib/db/schema')>(import('@/lib/db/schema'), () => ({
-  artists: { slug: "slug", id: "id" },
-  events: { slug: "slug", id: "id" },
-  posts: { slug: "slug", id: "id" },
+vi.mock<typeof import("@/lib/db/schema")>(import("@/lib/db/schema"), () => ({
+  artists: { id: "id", slug: "slug" },
+  events: { id: "id", slug: "slug" },
+  posts: { id: "id", slug: "slug" },
 }));
 
-vi.mock<typeof import('drizzle-orm')>(import('drizzle-orm'), async (importOriginal) => {
+vi.mock<typeof import("drizzle-orm")>(import("drizzle-orm"), async (importOriginal) => {
   const actual = await importOriginal<typeof import("drizzle-orm")>();
   return {
     ...actual,
     and: vi.fn((...conditions) => conditions),
     eq: vi.fn((field, value) => ({ field, value })),
-    ne: vi.fn((field, value) => ({ field, value, operator: "ne" })),
+    ne: vi.fn((field, value) => ({ field, operator: "ne", value })),
     relations: vi.fn((table, callback) => callback({ many: vi.fn(), one: vi.fn() })),
   };
 });

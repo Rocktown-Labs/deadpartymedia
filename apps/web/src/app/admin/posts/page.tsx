@@ -27,22 +27,17 @@ import {
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
-import {
-  approveDeletePost,
-  deletePost,
-  denyDeletePost,
-  requestDeletePost,
-} from "./actions";
+import { approveDeletePost, deletePost, denyDeletePost, requestDeletePost } from "./actions";
 
 const POST_SORT_FIELDS = ["title", "status", "category", "isCoverStory", "createdAt"] as const;
 
 type PostSortField = (typeof POST_SORT_FIELDS)[number];
 
-type PostsSearchParams = {
+interface PostsSearchParams {
   order?: string;
   page?: string;
   sort?: string;
-};
+}
 
 export default async function PostsPage({
   searchParams,
@@ -77,9 +72,9 @@ export default async function PostsPage({
     (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
       .orderBy(
         sort === "title"
-          ? order === "asc"
+          ? (order === "asc"
             ? asc(posts.title)
-            : desc(posts.title)
+            : desc(posts.title))
           : sort === "status"
             ? order === "asc"
               ? asc(posts.status)
@@ -202,9 +197,9 @@ export default async function PostsPage({
                           className={`rounded px-2 py-1 text-xs font-bold ${
                             post.status === "published"
                               ? "bg-green-500/20 text-green-400"
-                              : post.status === "draft"
+                              : (post.status === "draft"
                                 ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-gray-500/20 text-gray-400"
+                                : "bg-gray-500/20 text-gray-400")
                           }`}
                         >
                           {post.status}
@@ -216,7 +211,9 @@ export default async function PostsPage({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">{post.category}</TableCell>
+                    <TableCell className="px-6 py-4 text-sm text-gray-400">
+                      {post.category}
+                    </TableCell>
                     <TableCell className="px-6 py-4">
                       {post.isCoverStory ? (
                         <span className="font-bold text-[#7CFC00]">★</span>

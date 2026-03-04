@@ -39,9 +39,9 @@ export default function NotFoundScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     padding: 16,
   },
   content: {
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    textAlign: "center",
     marginBottom: 24,
+    textAlign: "center",
   },
   title: {
     fontSize: 20,

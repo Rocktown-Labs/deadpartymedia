@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useLayoutEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useLayoutEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
@@ -45,12 +45,16 @@ const NAV_ITEMS: NavItem[] = [
 
 function getNavbarHeight() {
   const header = document.querySelector("header");
-  if (!header) {return 0;}
+  if (!header) {
+    return 0;
+  }
   return Math.ceil(header.getBoundingClientRect().height);
 }
 
 function isActiveRoute(pathname: string, href: Route) {
-  if (href === "/admin") {return pathname === href;}
+  if (href === "/admin") {
+    return pathname === href;
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -68,7 +72,9 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
     measure();
 
     const header = document.querySelector("header");
-    if (!header) {return;}
+    if (!header) {
+      return;
+    }
 
     const ro = new ResizeObserver(measure);
     ro.observe(header);
@@ -83,7 +89,9 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
   const visibleNavItems = useMemo(
     () =>
       NAV_ITEMS.filter((item) => {
-        if (item.superAdminOnly && !isSuperAdmin) {return false;}
+        if (item.superAdminOnly && !isSuperAdmin) {
+          return false;
+        }
         return true;
       }),
     [isSuperAdmin],
@@ -160,7 +168,9 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-800/80 p-3 text-xs text-gray-500">
-            <p className="truncate group-data-[collapsible=icon]:hidden">Cmd/Ctrl + B to toggle sidebar</p>
+            <p className="truncate group-data-[collapsible=icon]:hidden">
+              Cmd/Ctrl + B to toggle sidebar
+            </p>
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>

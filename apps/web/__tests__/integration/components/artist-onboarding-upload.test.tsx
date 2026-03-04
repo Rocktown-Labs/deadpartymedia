@@ -1,24 +1,23 @@
-
 import { screen } from "@testing-library/react";
 import { ArtistOnboarding } from "@/app/onboarding/artist-onboarding";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 // Mock Clerk
-vi.mock<typeof import('@clerk/nextjs')>(import('@clerk/nextjs'), () => ({
+vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
   useUser: () => ({
     user: { id: "test-user-id", reload: vi.fn().mockResolvedValue() },
   }),
 }));
 
 // Mock router
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
 }));
 
 // Mock database
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     insert: vi.fn(),
     select: vi.fn(),

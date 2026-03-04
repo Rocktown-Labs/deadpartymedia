@@ -1,13 +1,12 @@
-
 import { auth } from "@clerk/nextjs/server";
 import { getUserStats } from "@/lib/user/stats";
 import { GET } from "@/app/api/user/stats/route";
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/user/stats')>(import('@/lib/user/stats'), () => ({
+vi.mock<typeof import("@/lib/user/stats")>(import("@/lib/user/stats"), () => ({
   getUserStats: vi.fn(),
 }));
 

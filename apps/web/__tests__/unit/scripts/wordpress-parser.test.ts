@@ -1,4 +1,3 @@
-
 import {
   extractPermalinkDate,
   extractPermalinkSlug,
@@ -40,9 +39,9 @@ describe("wordpress-parser", () => {
     const parsed = parseWordpressArticle({
       html: SAMPLE_HTML,
       metadata: {
-        description: "Metadata excerpt from WordPress",
-        "article:published_time": "2026-02-03T00:14:28+00:00",
         "article:modified_time": "2026-02-11T14:28:09+00:00",
+        "article:published_time": "2026-02-03T00:14:28+00:00",
+        description: "Metadata excerpt from WordPress",
       },
       sourceUrl:
         "https://deadpartymedia.wordpress.com/2026/02/02/learning-to-let-go-welcome-to-the-hours-devour-us/",

@@ -1,5 +1,3 @@
-
-
 import { normalizeInstagramInput } from "@/app/onboarding/validation";
 
 describe(normalizeInstagramInput, () => {

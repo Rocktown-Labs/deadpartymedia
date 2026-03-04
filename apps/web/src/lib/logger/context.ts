@@ -16,9 +16,7 @@ export function generateRequestId(): string {
   bytes[8] = (bytes[8] & 0x3F) | 0x80; // Variant 10
 
   // Convert to UUID string format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-  const hex = [...bytes]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 
   return [
     hex.slice(0, 8),

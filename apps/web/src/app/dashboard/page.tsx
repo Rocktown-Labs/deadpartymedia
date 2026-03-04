@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useDashboardStats } from '@/lib/api/user-activity';
-import type { DashboardStats } from '@/lib/api/user-activity';
+import { useDashboardStats } from "@/lib/api/user-activity";
+import type { DashboardStats } from "@/lib/api/user-activity";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -41,10 +41,10 @@ export default function DashboardPage() {
       // Log to Sentry for error monitoring
       Sentry.captureException(error, {
         extra: {
-          userId: user?.id,
-          userRole: user?.publicMetadata?.role,
           errorMessage: error.message,
           errorStack: error.stack,
+          userId: user?.id,
+          userRole: user?.publicMetadata?.role,
         },
         tags: {
           component: "dashboard",

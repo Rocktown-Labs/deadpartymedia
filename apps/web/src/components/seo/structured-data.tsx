@@ -22,16 +22,16 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
     headline: article.title,
     image: getImageUrl(article.cover_image),
     mainEntityOfPage: {
-      "@type": "WebPage",
       "@id": getAbsoluteUrl(`/article/${article.slug}`),
+      "@type": "WebPage",
     },
     publisher: {
       "@type": "Organization",
-      name: "Dead Party Media",
       logo: {
         "@type": "ImageObject",
         url: getImageUrl("/images/dead-party-logo.png"),
       },
+      name: "Dead Party Media",
     },
     ...(article.artists &&
       article.artists.length > 0 && {
@@ -65,11 +65,11 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
     image: getImageUrl(event.image),
     location: {
       "@type": "Place",
-      name: event.venue,
       address: {
         "@type": "PostalAddress",
         addressLocality: event.location,
       },
+      name: event.venue,
     },
     name: event.title,
     organizer: {

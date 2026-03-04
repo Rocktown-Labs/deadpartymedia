@@ -28,9 +28,9 @@ const createLoggerConfig = (): pino.LoggerOptions => {
       transport: {
         options: {
           colorize: true,
-          translateTime: "SYS:standard",
           ignore: "pid,hostname",
           singleLine: false,
+          translateTime: "SYS:standard",
         },
         target: "pino-pretty",
       },

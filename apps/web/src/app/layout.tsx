@@ -32,21 +32,16 @@ export const metadata: Metadata = {
     "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
 
   icons: {
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     icon: [
       { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
   metadataBase: new URL(SITE_URL),
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: SITE_URL,
-    siteName: "Dead Party Media",
-    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
     description:
       "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [
@@ -57,6 +52,11 @@ export const metadata: Metadata = {
         alt: "Dead Party Media Logo",
       },
     ],
+    locale: "en_US",
+    siteName: "Dead Party Media",
+    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
+    type: "website",
+    url: SITE_URL,
   },
   title: {
     default: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
@@ -64,10 +64,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
     description:
       "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [DEFAULT_OG_IMAGE],
+    title: "Dead Party Media - Your #1 Outlet for Arkansas Music & Events",
   },
 };
 

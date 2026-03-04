@@ -1,6 +1,5 @@
-
-import { artistOnboardingSchema, fanOnboardingSchema } from '@/lib/validations/onboarding';
-import type { ArtistOnboardingFormData, FanOnboardingFormData } from '@/lib/validations/onboarding';
+import { artistOnboardingSchema, fanOnboardingSchema } from "@/lib/validations/onboarding";
+import type { ArtistOnboardingFormData, FanOnboardingFormData } from "@/lib/validations/onboarding";
 
 describe(artistOnboardingSchema, () => {
   const validArtistData: ArtistOnboardingFormData = {

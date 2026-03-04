@@ -15,8 +15,12 @@ interface ArticleCommentsProps {
 }
 
 function buildCommentsHref(pathname: string) {
-  if (!pathname) {return "#comments";}
-  if (pathname.includes("#")) {return pathname;}
+  if (!pathname) {
+    return "#comments";
+  }
+  if (pathname.includes("#")) {
+    return pathname;
+  }
   return `${pathname}#comments`;
 }
 
@@ -36,7 +40,9 @@ export function ArticleComments({
 
   async function handleCommentSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!commentText.trim() || !isSignedIn || !currentUser) {return;}
+    if (!commentText.trim() || !isSignedIn || !currentUser) {
+      return;
+    }
     setSubmitError(null);
 
     try {
@@ -103,7 +109,9 @@ export function ArticleComments({
               className="inline-flex items-center justify-center rounded-lg bg-[#7CFC00] px-4 py-2 text-sm font-bold text-black hover:bg-[#7CFC00]/90"
               onClick={() => {
                 // Ensure the URL points back to this section even if the user refreshes later.
-                if (typeof window !== "undefined") {window.location.hash = "comments";}
+                if (typeof window !== "undefined") {
+                  window.location.hash = "comments";
+                }
                 posthog.capture("comment_signin_clicked", { article_slug: slug });
               }}
             >

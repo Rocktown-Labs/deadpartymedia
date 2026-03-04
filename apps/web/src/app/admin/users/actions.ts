@@ -18,7 +18,7 @@ const LOCAL_PLACEHOLDER_PREFIX = "local_placeholder:";
 const VALID_INVITE_ROLES = new Set<Roles>(["writer", "super_admin", "artist"]);
 
 function normalizeName(input: string): string {
-  return input.trim().replace(/\s+/g, " ").slice(0, 150);
+  return input.trim().replaceAll(/\s+/g, " ").slice(0, 150);
 }
 
 function parseNameParts(displayName: string): { firstName: string; lastName: string | null } {
@@ -34,9 +34,9 @@ function parseNameParts(displayName: string): { firstName: string; lastName: str
 }
 
 function normalizeEmailOrNull(value: string | null): string | null {
-  if (!value) return null;
+  if (!value) {return null;}
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
+  if (!normalized) {return null;}
   const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
   return isValid ? normalized : null;
 }
@@ -56,7 +56,7 @@ function buildPlaceholderEmail(base: string): string {
 }
 
 function normalizeCreateRole(roleInput: FormDataEntryValue | null): Roles {
-  if (typeof roleInput !== "string") return "writer";
+  if (typeof roleInput !== "string") {return "writer";}
   if (roleInput === "writer" || roleInput === "super_admin" || roleInput === "fan") {
     return roleInput;
   }
@@ -64,9 +64,9 @@ function normalizeCreateRole(roleInput: FormDataEntryValue | null): Roles {
 }
 
 function getInviteRedirectUrl(role: Roles): string {
-  if (role === "writer") return "/sign-up?role=writer";
-  if (role === "artist") return "/sign-up?role=artist";
-  if (role === "fan") return "/sign-up?role=fan";
+  if (role === "writer") {return "/sign-up?role=writer";}
+  if (role === "artist") {return "/sign-up?role=artist";}
+  if (role === "fan") {return "/sign-up?role=fan";}
   return "/sign-up";
 }
 
@@ -121,14 +121,14 @@ export async function inviteUser(
 
     const invitation = await client.invitations.createInvitation({
       emailAddress: validatedData.email,
-      redirectUrl: redirectUrl || defaultRedirectUrl,
       publicMetadata,
+      redirectUrl: redirectUrl || defaultRedirectUrl,
     });
 
     revalidatePath("/admin/users");
-    return { success: true, invitation };
+    return { invitation, success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return { error: error.message, success: false };
   }
 }
 
@@ -144,7 +144,7 @@ export async function createUserProfileStub(formData: FormData) {
   const displayNameRaw = formData.get("displayName");
   const displayName = typeof displayNameRaw === "string" ? normalizeName(displayNameRaw) : "";
   if (!displayName) {
-    return { success: false, error: "Display name is required" };
+    return { error: "Display name is required", success: false };
   }
 
   const role = normalizeCreateRole(formData.get("role"));
@@ -160,24 +160,24 @@ export async function createUserProfileStub(formData: FormData) {
       clerkId,
       email,
       firstName,
-      lastName,
-      role,
-      onboardingComplete: role === "writer" || role === "super_admin",
       imageUrl: null,
+      lastName,
+      onboardingComplete: role === "writer" || role === "super_admin",
+      role,
     })
     .returning({
-      id: users.id,
       clerkId: users.clerkId,
       email: users.email,
-      role: users.role,
       firstName: users.firstName,
+      id: users.id,
       lastName: users.lastName,
+      role: users.role,
     });
 
   revalidatePath("/admin/users");
   return {
-    success: true,
     profile: created,
+    success: true,
   };
 }
 
@@ -193,7 +193,7 @@ export async function createArtistProfileStub(formData: FormData) {
   const nameRaw = formData.get("displayName");
   const name = typeof nameRaw === "string" ? normalizeName(nameRaw) : "";
   if (!name) {
-    return { success: false, error: "Artist name is required" };
+    return { error: "Artist name is required", success: false };
   }
 
   const locationRaw = formData.get("location");
@@ -217,34 +217,34 @@ export async function createArtistProfileStub(formData: FormData) {
   const [createdArtist] = await db
     .insert(artists)
     .values({
-      name,
-      slug,
       bio: "Profile pending update.",
-      location,
-      genre: genre as "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER",
-      email,
       claimed: false,
-      image: null,
-      spotifyUrl: null,
-      spotifyArtistId: null,
-      instagram: null,
-      twitter: null,
-      tiktok: null,
-      website: null,
-      phoneNumber: null,
       claimedById: null,
+      email,
+      genre: genre as "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER",
+      image: null,
+      instagram: null,
+      location,
+      name,
+      phoneNumber: null,
+      slug,
+      spotifyArtistId: null,
+      spotifyUrl: null,
+      tiktok: null,
+      twitter: null,
+      website: null,
     })
     .returning({
-      id: artists.id,
-      name: artists.name,
-      genre: artists.genre,
-      location: artists.location,
       email: artists.email,
+      genre: artists.genre,
+      id: artists.id,
+      location: artists.location,
+      name: artists.name,
     });
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/artists");
-  return { success: true, artist: createdArtist };
+  return { artist: createdArtist, success: true };
 }
 
 export async function createProfile(formData: FormData) {
@@ -272,10 +272,10 @@ export async function updateLocalUserEmail(formData: FormData) {
   const email = typeof emailRaw === "string" ? normalizeEmailOrNull(emailRaw) : null;
 
   if (!Number.isInteger(id) || id <= 0) {
-    return { success: false, error: "Invalid profile id" };
+    return { error: "Invalid profile id", success: false };
   }
   if (!email) {
-    return { success: false, error: "A valid email is required" };
+    return { error: "A valid email is required", success: false };
   }
 
   await db.update(users).set({ email, updatedAt: new Date() }).where(eq(users.id, id));
@@ -298,10 +298,10 @@ export async function updateArtistEmail(formData: FormData) {
   const email = typeof emailRaw === "string" ? normalizeEmailOrNull(emailRaw) : null;
 
   if (!Number.isInteger(id) || id <= 0) {
-    return { success: false, error: "Invalid artist id" };
+    return { error: "Invalid artist id", success: false };
   }
   if (!email) {
-    return { success: false, error: "A valid email is required" };
+    return { error: "A valid email is required", success: false };
   }
 
   await db.update(artists).set({ email, updatedAt: new Date() }).where(eq(artists.id, id));
@@ -322,14 +322,14 @@ export async function inviteUserProfile(formData: FormData) {
   const idRaw = formData.get("id");
   const id = typeof idRaw === "string" ? Number.parseInt(idRaw, 10) : Number.NaN;
   if (!Number.isInteger(id) || id <= 0) {
-    return { success: false, error: "Invalid profile id" };
+    return { error: "Invalid profile id", success: false };
   }
 
   const [profile] = await db
     .select({
-      id: users.id,
       clerkId: users.clerkId,
       email: users.email,
+      id: users.id,
       role: users.role,
     })
     .from(users)
@@ -337,7 +337,7 @@ export async function inviteUserProfile(formData: FormData) {
     .limit(1);
 
   if (!profile) {
-    return { success: false, error: "Profile not found" };
+    return { error: "Profile not found", success: false };
   }
 
   const role = profile.role as Roles;
@@ -388,8 +388,8 @@ export async function inviteArtistProfile(formData: FormData) {
     await client.invitations.createInvitation({
       emailAddress: artist.email,
       publicMetadata: {
-        role: "artist",
         artistId: String(artist.id),
+        role: "artist",
       },
       redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
     });

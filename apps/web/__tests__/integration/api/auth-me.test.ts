@@ -1,4 +1,3 @@
-
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { GET } from "@/app/api/auth/me/route";
 
@@ -8,11 +7,11 @@ const { mockDb } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
@@ -39,7 +38,7 @@ function mockClerkUser(
   vi.mocked(clerkClient).mockResolvedValue({
     users: {
       getUser: vi.fn().mockResolvedValue({
-        emailAddresses: [{ id: "email_1", emailAddress: "user@example.com" }],
+        emailAddresses: [{ emailAddress: "user@example.com", id: "email_1" }],
         firstName: "Test",
         fullName: "Test User",
         imageUrl: "https://example.com/avatar.png",
@@ -116,7 +115,7 @@ describe("gET /api/auth/me", () => {
     } as any);
     mockUserRoleQuery([]);
     mockClerkUser({
-      emailAddresses: [{ id: "email_2", emailAddress: "fallback@example.com" }],
+      emailAddresses: [{ emailAddress: "fallback@example.com", id: "email_2" }],
       firstName: null,
       fullName: null,
       primaryEmailAddressId: "missing_primary",

@@ -8,8 +8,8 @@ export const createMockSpotifyArtist = (overrides?: Partial<SpotifyArtist>): Spo
   id: "spotify_artist_123",
   images: [
     {
-      url: "https://example.com/artist-image.jpg",
       height: 640,
+      url: "https://example.com/artist-image.jpg",
       width: 640,
     },
   ],

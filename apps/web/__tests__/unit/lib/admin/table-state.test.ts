@@ -11,7 +11,7 @@ import {
 
 describe("table-state utilities", () => {
   it("parses page with fallback to 1", () => {
-    expect(parsePageParam(undefined)).toBe(1);
+    expect(parsePageParam()).toBe(1);
     expect(parsePageParam("0")).toBe(1);
     expect(parsePageParam("-3")).toBe(1);
     expect(parsePageParam("abc")).toBe(1);
@@ -38,7 +38,7 @@ describe("table-state utilities", () => {
         defaultSort: "createdAt",
         field: "title",
       }),
-    ).toEqual({ order: "asc", sort: "title" });
+    ).toStrictEqual({ order: "asc", sort: "title" });
 
     expect(
       getNextSortState({
@@ -48,7 +48,7 @@ describe("table-state utilities", () => {
         defaultSort: "createdAt",
         field: "title",
       }),
-    ).toEqual({});
+    ).toStrictEqual({});
 
     expect(
       getNextSortState({
@@ -58,7 +58,7 @@ describe("table-state utilities", () => {
         defaultSort: "createdAt",
         field: "title",
       }),
-    ).toEqual({ order: "desc", sort: "title" });
+    ).toStrictEqual({ order: "desc", sort: "title" });
 
     expect(
       getNextSortState({
@@ -68,7 +68,7 @@ describe("table-state utilities", () => {
         defaultSort: "createdAt",
         field: "createdAt",
       }),
-    ).toEqual({ order: "asc", sort: "createdAt" });
+    ).toStrictEqual({ order: "asc", sort: "createdAt" });
   });
 
   it("merges query params while preserving unrelated params", () => {

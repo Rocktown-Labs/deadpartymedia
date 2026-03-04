@@ -1,7 +1,6 @@
-
 import { GET } from "@/app/api/posts/route";
 
-vi.mock<typeof import('next/cache')>(import('next/cache'), () => ({
+vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
 }));
 
@@ -57,7 +56,7 @@ const { mockDbChain, mockArtistRelationsChain, mockCommentCountsChain } = vi.hoi
 // Track which select call we're on
 let selectCallIndex = 0;
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     ...mockDbChain,
     // Override select to handle both posts query and artist relations query
@@ -70,8 +69,7 @@ vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
       } else if (selectCallIndex === 2) {
         return mockArtistRelationsChain.select();
       }
-        return mockCommentCountsChain.select();
-      
+      return mockCommentCountsChain.select();
     }),
   },
 }));

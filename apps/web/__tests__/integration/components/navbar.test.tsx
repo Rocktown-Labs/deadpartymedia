@@ -1,4 +1,3 @@
-
 import { screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { renderWithProviders } from "../../../tests/helpers/render";
@@ -11,17 +10,20 @@ type MockUser = {
 
 let mockUser: MockUser = null;
 
-vi.mock<typeof import('@/components/cart/cart-modal')>(import('@/components/cart/cart-modal'), () => ({
-  default: () => <div data-testid="cart-modal" />,
-}));
+vi.mock<typeof import("@/components/cart/cart-modal")>(
+  import("@/components/cart/cart-modal"),
+  () => ({
+    default: () => <div data-testid="cart-modal" />,
+  }),
+);
 
-vi.mock<typeof import('@clerk/nextjs')>(import('@clerk/nextjs'), () => ({
+vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
   SignInButton: ({ children }: { children: ReactNode }) => <>{children}</>,
   SignUpButton: ({ children }: { children: ReactNode }) => <>{children}</>,
   SignedIn: ({ children }: { children: ReactNode }) => (mockUser ? <>{children}</> : null),
   SignedOut: ({ children }: { children: ReactNode }) => (!mockUser ? <>{children}</> : null),
   UserButton: () => <div data-testid="user-button" />,
-  useUser: () => ({ user: mockUser, isLoaded: true }),
+  useUser: () => ({ isLoaded: true, user: mockUser }),
 }));
 
 import Navbar from "@/components/navbar";

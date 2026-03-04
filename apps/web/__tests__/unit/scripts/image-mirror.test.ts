@@ -1,4 +1,3 @@
-
 import { createImageMirror } from "../../../scripts/lib/image-mirror";
 
 describe("image-mirror", () => {
@@ -27,8 +26,8 @@ describe("image-mirror", () => {
 
     expect(first).toBe("https://blob.example.com/posts/content/mock.png");
     expect(second).toBe("https://blob.example.com/posts/content/mock.png");
-    expect(downloadImage).toHaveBeenCalledOnce();
-    expect(uploadImage).toHaveBeenCalledOnce();
+    expect(downloadImage).toHaveBeenCalledTimes(1);
+    expect(uploadImage).toHaveBeenCalledTimes(1);
   });
 
   it("keeps original inline URL when mirroring fails", async () => {
@@ -55,6 +54,6 @@ describe("image-mirror", () => {
     expect(result.failedCount).toBe(1);
     expect(result.html).toContain("https://blob.example.com/");
     expect(result.html).toContain("https://example.com/fail.jpg");
-    expect(onWarn).toHaveBeenCalledOnce();
+    expect(onWarn).toHaveBeenCalledTimes(1);
   });
 });

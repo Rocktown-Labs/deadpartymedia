@@ -18,12 +18,14 @@ import { getDashboardRoute } from "@/lib/utils/dashboard";
 import { Button } from "@/components/ui/button";
 
 function getInitials(name: string): string {
-  if (!name) {return "U";}
+  if (!name) {
+    return "U";
+  }
   const parts = name.trim().split(" ");
   if (parts.length === 1) {
     return parts[0].charAt(0).toUpperCase();
   }
-  const lastPart = parts[parts.length - 1] ?? "";
+  const lastPart = parts.at(-1) ?? "";
   return (parts[0].charAt(0) + lastPart.charAt(0)).toUpperCase();
 }
 

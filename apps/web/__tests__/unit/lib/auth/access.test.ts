@@ -1,4 +1,3 @@
-
 import {
   canViewAll,
   canEdit,
@@ -11,11 +10,11 @@ import { checkRole } from "@/lib/auth/roles";
 import { auth } from "@clerk/nextjs/server";
 
 // Mock dependencies
-vi.mock<typeof import('@/lib/auth/roles')>(import('@/lib/auth/roles'), () => ({
+vi.mock<typeof import("@/lib/auth/roles")>(import("@/lib/auth/roles"), () => ({
   checkRole: vi.fn(),
 }));
 
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
 }));
 

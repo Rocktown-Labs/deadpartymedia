@@ -1,9 +1,5 @@
 import { createUrl } from "@/lib/utils";
-import {
-  getPageRange,
-  getTotalPages,
-  mergeSearchParams,
-} from "@/lib/admin/table-state";
+import { getPageRange, getTotalPages, mergeSearchParams } from "@/lib/admin/table-state";
 import {
   Pagination,
   PaginationContent,

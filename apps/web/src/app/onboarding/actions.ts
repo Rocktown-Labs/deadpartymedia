@@ -104,7 +104,9 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     );
     return {
       ...initialFormState,
-      errors: [error instanceof Error ? error.message : "Failed to complete onboarding. Please try again."],
+      errors: [
+        error instanceof Error ? error.message : "Failed to complete onboarding. Please try again.",
+      ],
     } as any;
   }
 }
@@ -266,7 +268,9 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
     );
     return {
       ...initialFormState,
-      errors: [error instanceof Error ? error.message : "Failed to complete onboarding. Please try again."],
+      errors: [
+        error instanceof Error ? error.message : "Failed to complete onboarding. Please try again.",
+      ],
     } as any;
   }
 }

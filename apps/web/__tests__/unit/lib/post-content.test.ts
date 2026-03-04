@@ -1,10 +1,9 @@
-
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
 describe("post-content normalization", () => {
   it("returns tiptap docs as editor JSON", () => {
     const content = JSON.stringify({
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Hello" }] }],
+      content: [{ content: [{ type: "text", text: "Hello" }], type: "paragraph" }],
       type: "doc",
     });
 
@@ -18,12 +17,12 @@ describe("post-content normalization", () => {
 
   it("unwraps nested tiptap docs embedded as escaped text", () => {
     const nested = JSON.stringify({
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Nested" }] }],
+      content: [{ content: [{ type: "text", text: "Nested" }], type: "paragraph" }],
       type: "doc",
     });
 
     const content = JSON.stringify({
-      content: [{ type: "paragraph", content: [{ type: "text", text: nested }] }],
+      content: [{ content: [{ type: "text", text: nested }], type: "paragraph" }],
       type: "doc",
     });
 
@@ -36,7 +35,7 @@ describe("post-content normalization", () => {
 
   it("unwraps JSON-stringified tiptap docs", () => {
     const tiptap = JSON.stringify({
-      content: [{ type: "paragraph", content: [{ type: "text", text: "Stringified" }] }],
+      content: [{ content: [{ type: "text", text: "Stringified" }], type: "paragraph" }],
       type: "doc",
     });
     const doubleStringified = JSON.stringify(tiptap);

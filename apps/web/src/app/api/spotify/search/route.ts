@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -9,7 +9,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
  */
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
-  const {searchParams} = request.nextUrl;
+  const { searchParams } = request.nextUrl;
   const query = searchParams.get("q");
 
   try {
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
         grant_type: "client_credentials",
       }),
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
       method: "POST",
     });

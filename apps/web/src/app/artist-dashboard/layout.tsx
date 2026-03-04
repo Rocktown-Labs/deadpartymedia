@@ -19,14 +19,18 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
   }, [isLoaded, isSignedIn, role, router]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || role !== "artist") {return;}
+    if (!isLoaded || !isSignedIn || role !== "artist") {
+      return;
+    }
 
     let cancelled = false;
     (async () => {
       try {
         const response = await fetch("/api/artists/me", { cache: "no-store" });
         if (!response.ok) {
-          if (!cancelled) {router.push("/onboarding");}
+          if (!cancelled) {
+            router.push("/onboarding");
+          }
           return;
         }
 
@@ -35,10 +39,14 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
         const hasInstagram = Boolean(artist?.instagram);
 
         if (!hasSpotify || !hasInstagram) {
-          if (!cancelled) {router.push("/onboarding");}
+          if (!cancelled) {
+            router.push("/onboarding");
+          }
         }
       } catch {
-        if (!cancelled) {router.push("/onboarding");}
+        if (!cancelled) {
+          router.push("/onboarding");
+        }
       }
     })();
 

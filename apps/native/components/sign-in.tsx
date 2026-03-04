@@ -98,18 +98,18 @@ function SignIn() {
 
 const styles = StyleSheet.create({
   button: {
-    padding: 12,
     alignItems: "center",
     justifyContent: "center",
+    padding: 12,
   },
   buttonText: {
     color: "#ffffff",
     fontSize: 16,
   },
   card: {
+    borderWidth: 1,
     marginTop: 16,
     padding: 16,
-    borderWidth: 1,
   },
   errorContainer: {
     marginBottom: 12,
@@ -120,9 +120,9 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    padding: 12,
     fontSize: 16,
     marginBottom: 12,
+    padding: 12,
   },
   title: {
     fontSize: 18,

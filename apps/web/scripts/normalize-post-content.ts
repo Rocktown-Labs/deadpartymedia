@@ -6,8 +6,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { desc, eq } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
-import { normalizeStoredPostContent } from '../src/lib/content/post-content';
-import type { NormalizedPostContentKind } from '../src/lib/content/post-content';
+import { normalizeStoredPostContent } from "../src/lib/content/post-content";
+import type { NormalizedPostContentKind } from "../src/lib/content/post-content";
 
 interface CliOptions {
   apply: boolean;
@@ -59,7 +59,9 @@ function parseCliArgs(argv: string[]): CliOptions {
 
     if (value === "--limit") {
       const nextValue = argv[index + 1];
-      if (!nextValue) {throw new Error("Missing value for --limit");}
+      if (!nextValue) {
+        throw new Error("Missing value for --limit");
+      }
       const parsed = Number.parseInt(nextValue, 10);
       if (!Number.isInteger(parsed) || parsed <= 0) {
         throw new Error("--limit must be a positive integer");
@@ -98,10 +100,10 @@ async function main() {
 
   const report: Report = {
     byKind: {
-      tiptap_json: 0,
+      html_or_text: 0,
       nested_tiptap_json: 0,
       stringified_tiptap_json: 0,
-      html_or_text: 0,
+      tiptap_json: 0,
     },
     completedAt: null,
     malformedCount: 0,

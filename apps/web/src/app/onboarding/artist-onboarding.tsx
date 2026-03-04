@@ -47,7 +47,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
 
   useEffect(() => {
-    if (!initialValues || hasAppliedPrefill.current) {return;}
+    if (!initialValues || hasAppliedPrefill.current) {
+      return;
+    }
 
     const fields: (keyof ArtistFormData)[] = [
       "name",
@@ -86,7 +88,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   }, [state, user, router]);
 
   const handleProfileImageUpload = async (file: File | null) => {
-    if (!file) {return;}
+    if (!file) {
+      return;
+    }
 
     const validation = validateImageFile(file);
     if (!validation.valid) {
@@ -125,11 +129,13 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   };
 
   const handleNext = async () => {
-    if (currentStep >= 3) {return;}
+    if (currentStep >= 3) {
+      return;
+    }
 
     // Validate required fields for current step before proceeding
     const formState = form.state;
-    const {values} = formState;
+    const { values } = formState;
 
     if (currentStep === 1) {
       // Step 1: name, location, and genre are required
@@ -224,7 +230,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
 
                 // Create FormData from form values
                 const formData = new FormData();
-                const {values} = formState;
+                const { values } = formState;
 
                 // Add all form fields to FormData
                 Object.entries(values).forEach(([key, value]) => {
@@ -581,7 +587,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                     validators={{
                       onChange: ({ value }) => {
                         const normalized = normalizeInstagramInput(String(value ?? ""));
-                        if (!normalized) {return "Instagram username is required";}
+                        if (!normalized) {
+                          return "Instagram username is required";
+                        }
                         return;
                       },
                     }}
@@ -622,7 +630,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                       Boolean(String(values.twitter ?? "").trim()) ||
                       Boolean(String(values.tiktok ?? "").trim()) ||
                       Boolean(String(values.website ?? "").trim());
-                    if (hasOptionalSocial) {return null;}
+                    if (hasOptionalSocial) {
+                      return null;
+                    }
                     return (
                       <div className="p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg">
                         <p className="text-sm text-gray-300 font-bold">

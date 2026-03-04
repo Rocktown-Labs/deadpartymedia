@@ -1,18 +1,17 @@
-
 import { fanOnboardingAction, artistOnboardingAction } from "@/app/onboarding/actions";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 // Mock dependencies
-vi.mock<typeof import('@clerk/nextjs/server')>(import('@clerk/nextjs/server'), () => ({
+vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
-vi.mock<typeof import('next/navigation')>(import('next/navigation'), () => ({
+vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   redirect: vi.fn(),
 }));
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     insert: vi.fn(),
     select: vi.fn(),
@@ -20,13 +19,13 @@ vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
   },
 }));
 
-vi.mock<typeof import('@/lib/auth/user-state')>(import('@/lib/auth/user-state'), () => ({
+vi.mock<typeof import("@/lib/auth/user-state")>(import("@/lib/auth/user-state"), () => ({
   upsertUserAuthState: vi.fn().mockResolvedValue(),
 }));
 
-vi.mock<typeof import('@/lib/utils/slug')>(import('@/lib/utils/slug'), () => ({
+vi.mock<typeof import("@/lib/utils/slug")>(import("@/lib/utils/slug"), () => ({
   ensureUniqueSlug: vi.fn(async (slug: string, _id?: number, _table?: string) => slug),
-  generateSlug: vi.fn((name: string) => name.toLowerCase().replace(/\s+/g, "-")),
+  generateSlug: vi.fn((name: string) => name.toLowerCase().replaceAll(/\s+/g, "-")),
 }));
 
 describe(fanOnboardingAction, () => {
@@ -52,7 +51,7 @@ describe(fanOnboardingAction, () => {
     const mockClient = {
       users: {
         getUser: vi.fn().mockResolvedValue({
-          emailAddresses: [{ id: "email_1", emailAddress: "fan@example.com" }],
+          emailAddresses: [{ emailAddress: "fan@example.com", id: "email_1" }],
           imageUrl: null,
           lastName: null,
           primaryEmailAddressId: "email_1",
@@ -123,7 +122,7 @@ describe(artistOnboardingAction, () => {
 
     const mockUpdateUserMetadata = vi.fn().mockResolvedValue();
     const mockGetUser = vi.fn().mockResolvedValue({
-      emailAddresses: [{ id: "email_1", emailAddress: "artist@example.com" }],
+      emailAddresses: [{ emailAddress: "artist@example.com", id: "email_1" }],
       id: userId,
       imageUrl: null,
       lastName: null,
@@ -176,7 +175,7 @@ describe(artistOnboardingAction, () => {
     const mockClient = {
       users: {
         getUser: vi.fn().mockResolvedValue({
-          emailAddresses: [{ id: "email_1", emailAddress: "artist2@example.com" }],
+          emailAddresses: [{ emailAddress: "artist2@example.com", id: "email_1" }],
           imageUrl: null,
           lastName: null,
           primaryEmailAddressId: "email_1",

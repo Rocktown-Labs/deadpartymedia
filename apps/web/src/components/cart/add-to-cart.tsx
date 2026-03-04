@@ -35,7 +35,7 @@ export function AddToCart({ product }: { product: Product }) {
   const { addCartItem } = useCart();
   const { state } = useProduct();
 
-  const {variants} = product;
+  const { variants } = product;
 
   // Find variant that matches all selected options
   const selectedVariant: ProductVariant | undefined = variants.find((variant: ProductVariant) =>
@@ -52,7 +52,9 @@ export function AddToCart({ product }: { product: Product }) {
   return (
     <form
       action={async () => {
-        if (!variant) {return;}
+        if (!variant) {
+          return;
+        }
         addCartItem(variant, product);
         await addItem(null, variant.id);
 

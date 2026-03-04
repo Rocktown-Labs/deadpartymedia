@@ -1,66 +1,42 @@
-"use client";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { useArticles } from "@/lib/api/articles";
+import type { Metadata } from "next";
+import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+import CountryPage from "./country-page-client";
 
-export default function CountryPage() {
-  const { data: articles, isLoading } = useArticles("COUNTRY");
+const { siteUrl, siteName } = getSiteDefaults();
+const ogImage = `${siteUrl}/images/deadparty-country-og.jpg`;
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
-  }
+export const metadata: Metadata = {
+  alternates: {
+    canonical: getAbsoluteUrl("/country"),
+  },
+  description:
+    "Explore country music articles, interviews, and features from Arkansas artists on Dead Party Media.",
+  keywords: [
+    "arkansas country music",
+    "country artists arkansas",
+    "country music articles",
+    "dead party media",
+  ],
+  openGraph: {
+    description:
+      "Explore country music articles, interviews, and features from Arkansas artists on Dead Party Media.",
+    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media Country Music" }],
+    locale: "en_US",
+    siteName,
+    title: `Country | ${siteName}`,
+    type: "website",
+    url: getAbsoluteUrl("/country"),
+  },
+  title: "Country",
+  twitter: {
+    card: "summary_large_image",
+    description:
+      "Explore country music articles, interviews, and features from Arkansas artists on Dead Party Media.",
+    images: [ogImage],
+    title: `Country | ${siteName}`,
+  },
+};
 
-  return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20 px-6">
-        <div className="container mx-auto max-w-7xl">
-          <Link
-            href="/music"
-            className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Music
-          </Link>
-
-          <h1 className="text-5xl font-black mb-12">COUNTRY</h1>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles && articles.length > 0 ? (
-              articles.map((article) => (
-                <Link key={article.id} href={`/article/${article.slug}`}>
-                  <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
-                    <div className="relative overflow-hidden bg-[#111111] h-40">
-                      <img
-                        src={article.cover_image || "/placeholder.svg"}
-                        alt={article.title}
-                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-white mb-2 line-clamp-2 hover:text-[#7CFC00] transition-colors">
-                        {article.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 line-clamp-2 mb-3">{article.excerpt}</p>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>{article.author.name}</span>
-                        <span>{new Date(article.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-400 text-lg">No articles found in this category.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+export default function CountryPageWrapper() {
+  return <CountryPage />;
 }

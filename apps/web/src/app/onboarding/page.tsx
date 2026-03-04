@@ -95,7 +95,9 @@ export default function OnboardingPage() {
   }, [isLoaded, user, router]);
 
   useEffect(() => {
-    if (!isLoaded || !user) {return;}
+    if (!isLoaded || !user) {
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -105,9 +107,13 @@ export default function OnboardingPage() {
           headers: { Accept: "application/json" },
           method: "GET",
         });
-        if (!response.ok) {return;}
+        if (!response.ok) {
+          return;
+        }
         const payload = (await response.json()) as OnboardingProfilePayload;
-        if (cancelled) {return;}
+        if (cancelled) {
+          return;
+        }
         setProfileData(payload);
       } catch {
         // Prefill is best-effort; onboarding should still work without it.

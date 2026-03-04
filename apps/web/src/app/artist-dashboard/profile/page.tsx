@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists";
-import { artistUpdateSchema } from '@/lib/validations/artist';
-import type { ArtistUpdateInput } from '@/lib/validations/artist';
+import { artistUpdateSchema } from "@/lib/validations/artist";
+import type { ArtistUpdateInput } from "@/lib/validations/artist";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -261,7 +261,9 @@ export default function ArtistProfilePage() {
                           value={spotifyUrl}
                           onChange={(e) => {
                             setSpotifyUrl(e.target.value);
-                            if (errors.spotify_url) {setErrors({ ...errors, spotify_url: "" });}
+                            if (errors.spotify_url) {
+                              setErrors({ ...errors, spotify_url: "" });
+                            }
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.spotify_url ? "border-red-500" : ""}`}
                           placeholder="https://open.spotify.com/artist/..."
@@ -281,7 +283,9 @@ export default function ArtistProfilePage() {
                           value={instagram}
                           onChange={(e) => {
                             setInstagram(e.target.value);
-                            if (errors.instagram) {setErrors({ ...errors, instagram: "" });}
+                            if (errors.instagram) {
+                              setErrors({ ...errors, instagram: "" });
+                            }
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.instagram ? "border-red-500" : ""}`}
                           placeholder="https://instagram.com/..."
@@ -301,7 +305,9 @@ export default function ArtistProfilePage() {
                           value={twitter}
                           onChange={(e) => {
                             setTwitter(e.target.value);
-                            if (errors.twitter) {setErrors({ ...errors, twitter: "" });}
+                            if (errors.twitter) {
+                              setErrors({ ...errors, twitter: "" });
+                            }
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.twitter ? "border-red-500" : ""}`}
                           placeholder="https://twitter.com/..."
@@ -321,7 +327,9 @@ export default function ArtistProfilePage() {
                           value={tiktok}
                           onChange={(e) => {
                             setTiktok(e.target.value);
-                            if (errors.tiktok) {setErrors({ ...errors, tiktok: "" });}
+                            if (errors.tiktok) {
+                              setErrors({ ...errors, tiktok: "" });
+                            }
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.tiktok ? "border-red-500" : ""}`}
                           placeholder="https://tiktok.com/@..."
@@ -341,7 +349,9 @@ export default function ArtistProfilePage() {
                           value={website}
                           onChange={(e) => {
                             setWebsite(e.target.value);
-                            if (errors.website) {setErrors({ ...errors, website: "" });}
+                            if (errors.website) {
+                              setErrors({ ...errors, website: "" });
+                            }
                           }}
                           className={`mt-1 bg-[#0A0A0A] border-gray-700 text-white ${errors.website ? "border-red-500" : ""}`}
                           placeholder="https://..."
@@ -363,7 +373,9 @@ export default function ArtistProfilePage() {
                             const file = e.target.files?.[0];
                             if (file) {
                               setImageFile(file);
-                              if (errors.image) {setErrors({ ...errors, image: "" });}
+                              if (errors.image) {
+                                setErrors({ ...errors, image: "" });
+                              }
                             }
                           }}
                           className="mt-1 bg-[#0A0A0A] border-gray-700 text-white"

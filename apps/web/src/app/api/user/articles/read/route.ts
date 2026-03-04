@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, count, desc, eq } from "drizzle-orm";
@@ -14,9 +14,13 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
 function parsePositiveInt(value: string | null, fallback: number): number {
-  if (!value) {return fallback;}
+  if (!value) {
+    return fallback;
+  }
   const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {return fallback;}
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
   return parsed;
 }
 
@@ -87,15 +91,15 @@ export async function GET(request: Request) {
   const items = await db
     .select({
       article: {
+        authorId: posts.authorId,
+        coverImage: posts.coverImage,
+        createdAt: posts.createdAt,
+        excerpt: posts.excerpt,
         id: posts.id,
+        publishedAt: posts.publishedAt,
         slug: posts.slug,
         title: posts.title,
-        excerpt: posts.excerpt,
-        coverImage: posts.coverImage,
-        authorId: posts.authorId,
-        publishedAt: posts.publishedAt,
         views: posts.views,
-        createdAt: posts.createdAt,
       },
       id: userArticleReads.id,
       readAt: userArticleReads.readAt,

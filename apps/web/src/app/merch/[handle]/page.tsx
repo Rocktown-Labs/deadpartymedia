@@ -15,7 +15,9 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
 
   const product = await getProduct(handle, "USD");
 
-  if (!product) {return notFound();}
+  if (!product) {
+    return notFound();
+  }
 
   // Preselect the first available variant so options and Add to Cart aren't disabled by default
   const initialVariant =

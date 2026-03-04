@@ -32,9 +32,13 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const formErrors = useStore(form.store, (formState) => formState.errors);
 
   useEffect(() => {
-    if (!initialName || initialName.trim().length === 0) {return;}
+    if (!initialName || initialName.trim().length === 0) {
+      return;
+    }
     const currentName = String(form.getFieldValue("name") ?? "");
-    if (currentName.trim().length > 0) {return;}
+    if (currentName.trim().length > 0) {
+      return;
+    }
     form.setFieldValue("name", initialName.trim());
   }, [form, initialName]);
 
@@ -78,7 +82,7 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
 
                 // Create FormData from form values
                 const formData = new FormData();
-                const {values} = formState;
+                const { values } = formState;
 
                 // Add all form fields to FormData
                 Object.entries(values).forEach(([key, value]) => {

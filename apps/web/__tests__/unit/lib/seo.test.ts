@@ -1,4 +1,3 @@
-
 import {
   getAbsoluteUrl,
   getImageUrl,
@@ -40,9 +39,7 @@ describe("sEO helpers", () => {
       expect(getImageUrl(null)).toBe(
         "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg",
       );
-      expect(getImageUrl()).toBe(
-        "https://www.deadpartymedia.com/images/dead-party-logo-og.jpg",
-      );
+      expect(getImageUrl()).toBe("https://www.deadpartymedia.com/images/dead-party-logo-og.jpg");
     });
 
     it("should return absolute URL for relative paths", () => {

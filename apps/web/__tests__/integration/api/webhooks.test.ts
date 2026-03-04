@@ -1,4 +1,3 @@
-
 import { POST } from "@/app/api/webhooks/route";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { users } from "@/lib/db/schema";
@@ -19,23 +18,23 @@ const { mockDb, mockLogger, mockWithOperationContext } = vi.hoisted(() => ({
   mockWithOperationContext: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/db')>(import('@/lib/db'), () => ({
+vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: mockDb,
 }));
 
-vi.mock<typeof import('@clerk/nextjs/webhooks')>(import('@clerk/nextjs/webhooks'), () => ({
+vi.mock<typeof import("@clerk/nextjs/webhooks")>(import("@clerk/nextjs/webhooks"), () => ({
   verifyWebhook: vi.fn(),
 }));
 
-vi.mock<typeof import('@/lib/logger/middleware')>(import('@/lib/logger/middleware'), () => ({
+vi.mock<typeof import("@/lib/logger/middleware")>(import("@/lib/logger/middleware"), () => ({
   getRequestLogger: vi.fn(() => mockLogger),
 }));
 
-vi.mock<typeof import('@/lib/logger/sanitize')>(import('@/lib/logger/sanitize'), () => ({
+vi.mock<typeof import("@/lib/logger/sanitize")>(import("@/lib/logger/sanitize"), () => ({
   sanitizeError: vi.fn((error) => error),
 }));
 
-vi.mock<typeof import('@/lib/logger/context')>(import('@/lib/logger/context'), () => ({
+vi.mock<typeof import("@/lib/logger/context")>(import("@/lib/logger/context"), () => ({
   withOperationContext: mockWithOperationContext,
 }));
 
@@ -48,12 +47,12 @@ describe("pOST /api/webhooks", () => {
   it("handles duplicate user.created delivery idempotently and returns 200", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        id: "user_123",
         email_addresses: [{ id: "email_1", email_address: "writer@example.com" }],
-        primary_email_address_id: "email_1",
         first_name: "Jane",
-        last_name: "Writer",
+        id: "user_123",
         image_url: "https://example.com/jane.png",
+        last_name: "Writer",
+        primary_email_address_id: "email_1",
         public_metadata: { role: "writer", onboardingComplete: true },
       },
       type: "user.created",
@@ -72,17 +71,17 @@ describe("pOST /api/webhooks", () => {
 
     expect(response.status).toBe(200);
     expect(data).toStrictEqual({ received: true });
-    expect(mockDb.insert).toHaveBeenCalledOnce();
-    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
+    expect(mockDb.insert).toHaveBeenCalledTimes(1);
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
     expect(onConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         set: expect.objectContaining({
           email: "writer@example.com",
           firstName: "Jane",
-          lastName: "Writer",
           imageUrl: "https://example.com/jane.png",
-          role: "writer",
+          lastName: "Writer",
           onboardingComplete: true,
+          role: "writer",
           updatedAt: expect.any(Date),
         }),
         target: users.clerkId,
@@ -93,12 +92,12 @@ describe("pOST /api/webhooks", () => {
   it("returns 400 when user.created has no primary email", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        id: "user_456",
         email_addresses: [],
-        primary_email_address_id: "missing",
         first_name: "No",
-        last_name: "Email",
+        id: "user_456",
         image_url: null,
+        last_name: "Email",
+        primary_email_address_id: "missing",
         public_metadata: {},
       },
       type: "user.created",
@@ -119,12 +118,12 @@ describe("pOST /api/webhooks", () => {
   it("handles user.updated idempotently with upsert and returns 200", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        id: "user_789",
         email_addresses: [{ id: "email_2", email_address: "artist@example.com" }],
-        primary_email_address_id: "email_2",
         first_name: "Alex",
-        last_name: "Artist",
+        id: "user_789",
         image_url: "https://example.com/alex.png",
+        last_name: "Artist",
+        primary_email_address_id: "email_2",
         public_metadata: { role: "artist", onboardingComplete: true },
       },
       type: "user.updated",
@@ -143,17 +142,17 @@ describe("pOST /api/webhooks", () => {
 
     expect(response.status).toBe(200);
     expect(data).toStrictEqual({ received: true });
-    expect(mockDb.insert).toHaveBeenCalledOnce();
-    expect(onConflictDoUpdate).toHaveBeenCalledOnce();
+    expect(mockDb.insert).toHaveBeenCalledTimes(1);
+    expect(onConflictDoUpdate).toHaveBeenCalledTimes(1);
     expect(onConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         set: expect.objectContaining({
           email: "artist@example.com",
           firstName: "Alex",
-          lastName: "Artist",
           imageUrl: "https://example.com/alex.png",
-          role: "artist",
+          lastName: "Artist",
           onboardingComplete: true,
+          role: "artist",
           updatedAt: expect.any(Date),
         }),
         target: users.clerkId,
@@ -164,12 +163,12 @@ describe("pOST /api/webhooks", () => {
   it("remaps placeholder local profile on invite-linked user.updated webhook", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        id: "user_real_123",
         email_addresses: [{ id: "email_3", email_address: "writer.remapped@example.com" }],
-        primary_email_address_id: "email_3",
         first_name: "Remapped",
-        last_name: "Writer",
+        id: "user_real_123",
         image_url: "https://example.com/remapped.png",
+        last_name: "Writer",
+        primary_email_address_id: "email_3",
         public_metadata: {
           role: "writer",
           onboardingComplete: true,
@@ -211,8 +210,8 @@ describe("pOST /api/webhooks", () => {
 
     expect(response.status).toBe(200);
     expect(data).toStrictEqual({ received: true });
-    expect(mockDb.update).toHaveBeenCalledOnce();
-    expect(mockDb.delete).toHaveBeenCalledOnce();
+    expect(mockDb.update).toHaveBeenCalledTimes(1);
+    expect(mockDb.delete).toHaveBeenCalledTimes(1);
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({
         clerkId: "user_real_123",
