@@ -97,7 +97,7 @@ export default async function PostsPage({
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(params);
+  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
 
   return (
     <div>

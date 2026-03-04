@@ -100,7 +100,7 @@ export default async function EventsPage({
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(params);
+  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
 
   return (
     <div>

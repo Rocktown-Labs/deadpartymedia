@@ -280,7 +280,7 @@ export default async function UsersPage({
   const localUsersTotal = Number(localUsersTotalRows[0]?.total ?? 0);
   const localArtistsTotal = Number(localArtistsTotalRows[0]?.total ?? 0);
 
-  const currentSearchParams = buildSearchParams(params);
+  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
 
   return (
     <div className="space-y-6">
