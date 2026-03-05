@@ -4,7 +4,12 @@ let posthogClient: PostHog | null = null;
 
 export function getPostHogClient() {
   if (!posthogClient) {
-    posthogClient = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+    const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    if (!posthogKey) {
+      throw new Error("NEXT_PUBLIC_POSTHOG_KEY is required to initialize PostHog");
+    }
+
+    posthogClient = new PostHog(posthogKey, {
       flushAt: 1,
       flushInterval: 0,
       host: process.env.NEXT_PUBLIC_POSTHOG_HOST,

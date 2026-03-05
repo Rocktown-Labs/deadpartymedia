@@ -34,13 +34,13 @@ export function stripHtml(html: string | null | undefined): string {
   const text = html.replaceAll(/<[^>]*>/g, "");
   // Decode common HTML entities
   return text
-    .replaceAll('&nbsp;', " ")
-    .replaceAll('&amp;', "&")
-    .replaceAll('&lt;', "<")
-    .replaceAll('&gt;', ">")
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replaceAll('&apos;', "'")
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&apos;", "'")
     .trim();
 }
 
@@ -159,16 +159,16 @@ export function generateArticleMetadata(article: Article): Metadata {
       description,
       images: [
         {
+          alt: article.title,
+          height: 630,
           url: ogImageUrl,
           width: 1200,
-          height: 630,
-          alt: article.title,
         },
         {
+          alt: article.title,
+          height: 630,
           url: fallbackImage,
           width: 1200,
-          height: 630,
-          alt: article.title,
         },
       ],
       locale: "en_US",
@@ -222,16 +222,16 @@ export function generateEventMetadata(event: Event): Metadata {
       description,
       images: [
         {
+          alt: event.title,
+          height: 630,
           url: ogImageUrl,
           width: 1200,
-          height: 630,
-          alt: event.title,
         },
         {
+          alt: event.title,
+          height: 630,
           url: fallbackImage,
           width: 1200,
-          height: 630,
-          alt: event.title,
         },
       ],
       locale: "en_US",
@@ -273,16 +273,16 @@ export function generateArtistMetadata(artist: Artist): Metadata {
       description,
       images: [
         {
+          alt: artist.name,
+          height: 630,
           url: ogImageUrl,
           width: 1200,
-          height: 630,
-          alt: artist.name,
         },
         {
+          alt: artist.name,
+          height: 630,
           url: fallbackImage,
           width: 1200,
-          height: 630,
-          alt: artist.name,
         },
       ],
       locale: "en_US",

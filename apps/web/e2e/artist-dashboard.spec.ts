@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
-import path from "node:path";
 
 /**
  * These tests use the authenticated artist user state

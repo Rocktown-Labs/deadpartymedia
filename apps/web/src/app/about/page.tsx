@@ -1,8 +1,38 @@
-"use client";
-
+import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+
+const { siteName, siteUrl } = getSiteDefaults();
+const ogImage = `${siteUrl}/images/dead-party-logo-og.jpg`;
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: getAbsoluteUrl("/about"),
+  },
+  description:
+    "Learn about Dead Party Media and our mission to spotlight Arkansas artists, events, and local music culture.",
+  keywords: ["about dead party media", "arkansas music media", "local music journalism"],
+  openGraph: {
+    description:
+      "Learn about Dead Party Media and our mission to spotlight Arkansas artists, events, and local music culture.",
+    images: [{ alt: "Dead Party Media", height: 630, url: ogImage, width: 1200 }],
+    locale: "en_US",
+    siteName,
+    title: `About | ${siteName}`,
+    type: "website",
+    url: getAbsoluteUrl("/about"),
+  },
+  title: "About",
+  twitter: {
+    card: "summary_large_image",
+    description:
+      "Learn about Dead Party Media and our mission to spotlight Arkansas artists, events, and local music culture.",
+    images: [ogImage],
+    title: `About | ${siteName}`,
+  },
+};
 
 export default function AboutPage() {
   return (

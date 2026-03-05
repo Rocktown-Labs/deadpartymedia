@@ -101,8 +101,10 @@ describe(canCreate, () => {
 
   it("should return true for super_admin", async () => {
     vi.mocked(checkRole)
-      .mockResolvedValueOnce(true) // super_admin check
-      .mockResolvedValueOnce(false); // writer check
+      // super_admin check
+      .mockResolvedValueOnce(true)
+      // writer check
+      .mockResolvedValueOnce(false);
 
     const result = await canCreate();
     expect(result).toBeTruthy();
@@ -110,8 +112,10 @@ describe(canCreate, () => {
 
   it("should return true for writer", async () => {
     vi.mocked(checkRole)
-      .mockResolvedValueOnce(false) // super_admin check
-      .mockResolvedValueOnce(true); // writer check
+      // super_admin check
+      .mockResolvedValueOnce(false)
+      // writer check
+      .mockResolvedValueOnce(true);
 
     const result = await canCreate();
     expect(result).toBeTruthy();
@@ -119,8 +123,10 @@ describe(canCreate, () => {
 
   it("should return false for neither super_admin nor writer", async () => {
     vi.mocked(checkRole)
-      .mockResolvedValueOnce(false) // super_admin check
-      .mockResolvedValueOnce(false); // writer check
+      // super_admin check
+      .mockResolvedValueOnce(false)
+      // writer check
+      .mockResolvedValueOnce(false);
 
     const result = await canCreate();
     expect(result).toBeFalsy();

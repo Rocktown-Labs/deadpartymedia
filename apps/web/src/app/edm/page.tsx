@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "Explore EDM articles, DJ interviews, and electronic music features from Arkansas artists on Dead Party Media.",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media EDM" }],
+    images: [{ alt: "Dead Party Media EDM", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
     title: `EDM | ${siteName}`,

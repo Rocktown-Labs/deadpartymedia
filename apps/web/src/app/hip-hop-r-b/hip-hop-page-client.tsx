@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useArticles } from "@/lib/api/articles";
+import { PageTitleHeader } from "@/components/page-title-header";
 
 export default function HipHopRAndBPage() {
   const { data: articles, isLoading } = useArticles("HIP-HOP & R&B");
@@ -26,7 +27,7 @@ export default function HipHopRAndBPage() {
             Back to Music
           </Link>
 
-          <h1 className="text-5xl font-black mb-12">HIP-HOP & R&B</h1>
+          <PageTitleHeader title="HIP-HOP & R&B" />
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles && articles.length > 0 ? (

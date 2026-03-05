@@ -26,6 +26,14 @@ interface ArtistOnboardingProps {
   initialValues?: Partial<ArtistFormData> | null;
 }
 
+function hasSuccessfulSubmission(state: unknown): state is { success: true } {
+  if (typeof state !== "object" || state === null) {
+    return false;
+  }
+  const { success } = state as { success?: unknown };
+  return success === true;
+}
+
 export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const router = useRouter();
   const { user } = useUser();
@@ -39,12 +47,18 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
 
   const form = useForm({
     ...artistFormOptions,
-    transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
+    transform: useTransform((baseForm) => mergeForm(baseForm, state ?? initialFormState), [state]),
   });
 
   const formErrors = useStore(form.store, (formState) => formState.errors);
 
-  const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
+  const genres: ArtistFormData["genre"][] = [
+    "COUNTRY",
+    "EDM",
+    "HARDCORE & ROCK",
+    "HIP-HOP & R&B",
+    "OTHER",
+  ];
 
   useEffect(() => {
     if (!initialValues || hasAppliedPrefill.current) {
@@ -77,9 +91,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   }, [form, initialValues]);
 
   // Handle successful submission
+
   useEffect(() => {
-    const success = (state as any)?.success;
-    if (success && user) {
+    if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
       user.reload().then(() => {
         router.push("/artist-dashboard");
@@ -134,32 +148,41 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
     }
 
     // Validate required fields for current step before proceeding
+
     const formState = form.state;
     const { values } = formState;
 
     if (currentStep === 1) {
       // Step 1: name, location, and genre are required
+
       // Trigger validation for each required field to show errors in UI
+
       await form.validateField("spotifyArtistId", "change");
       await form.validateField("name", "change");
       await form.validateField("location", "change");
       await form.validateField("genre", "change");
 
       // Check if required fields are filled
+
       if (!values.spotifyArtistId || String(values.spotifyArtistId).trim() === "") {
-        return; // Don't proceed if Spotify artist isn't selected
+        // Don't proceed if Spotify artist isn't selected
+        return;
       }
       if (!values.name || values.name.trim() === "") {
-        return; // Don't proceed if name is empty
+        // Don't proceed if name is empty
+        return;
       }
       if (!values.location || values.location.trim() === "") {
-        return; // Don't proceed if location is empty
+        // Don't proceed if location is empty
+        return;
       }
       if (!values.genre) {
-        return; // Don't proceed if genre is not selected
+        // Don't proceed if genre is not selected
+        return;
       }
     } else if (currentStep === 2) {
       // Step 2: bio is required (min 10 characters)
+
       await form.validateField("bio", "change");
 
       if (
@@ -168,12 +191,14 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
         values.bio.trim().length < 10 ||
         values.bio.length > 500
       ) {
-        return; // Don't proceed if bio is invalid
+        // Don't proceed if bio is invalid
+        return;
       }
     }
     // Step 3 is the final step; required fields are validated on submit
 
     // All validations passed, proceed to next step
+
     setCurrentStep((currentStep + 1) as OnboardingStep);
   };
 
@@ -226,13 +251,16 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                 e.preventDefault();
 
                 // Get current form state
+
                 const formState = form.state;
 
                 // Create FormData from form values
+
                 const formData = new FormData();
                 const { values } = formState;
 
                 // Add all form fields to FormData
+
                 Object.entries(values).forEach(([key, value]) => {
                   if (value !== undefined && value !== null && value !== "") {
                     formData.append(key, String(value));
@@ -240,7 +268,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                 });
 
                 // `action` is called imperatively (not via native `<form action={...}>` submit),
+
                 // so wrap in a transition to keep React state updates consistent.
+
                 startTransition(() => action(formData));
               }}
             >
@@ -282,6 +312,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                             form.setFieldValue("spotifyUrl", artist.external_urls.spotify);
 
                             // Artist/Band Name is tied to streaming identity; lock to Spotify.
+
                             form.setFieldValue("name", artist.name);
                           }}
                         />
@@ -376,7 +407,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                             <button
                               key={genre}
                               type="button"
-                              onClick={() => field.handleChange(genre as any)}
+                              onClick={() => field.handleChange(genre)}
                               className={`p-3 rounded-lg border-2 transition-all text-sm font-bold ${
                                 field.state.value === genre
                                   ? "border-[#7CFC00] bg-[#7CFC00]/10"

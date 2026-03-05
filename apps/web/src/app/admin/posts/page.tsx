@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
-import { and, asc, count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -72,9 +72,9 @@ export default async function PostsPage({
     (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
       .orderBy(
         sort === "title"
-          ? (order === "asc"
+          ? order === "asc"
             ? asc(posts.title)
-            : desc(posts.title))
+            : desc(posts.title)
           : sort === "status"
             ? order === "asc"
               ? asc(posts.status)
@@ -97,7 +97,9 @@ export default async function PostsPage({
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
+  const currentSearchParams = buildSearchParams(
+    params as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <div>
@@ -197,9 +199,9 @@ export default async function PostsPage({
                           className={`rounded px-2 py-1 text-xs font-bold ${
                             post.status === "published"
                               ? "bg-green-500/20 text-green-400"
-                              : (post.status === "draft"
+                              : post.status === "draft"
                                 ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-gray-500/20 text-gray-400")
+                                : "bg-gray-500/20 text-gray-400"
                           }`}
                         >
                           {post.status}

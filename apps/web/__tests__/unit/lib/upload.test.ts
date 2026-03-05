@@ -32,7 +32,8 @@ describe("upload utilities", () => {
     it("should return true for files within size limit", () => {
       const file = new File([new ArrayBuffer(1024 * 1024)], "test.jpg", {
         type: "image/jpeg",
-      }); // 1MB
+        // 1MB
+      });
       expect(isValidFileSize(file)).toBeTruthy();
     });
 
@@ -74,6 +75,7 @@ describe("upload utilities", () => {
       const pathname = generateImagePathname("cover", "test image (1).jpg");
       expect(pathname).toMatch(/^posts\/covers\/\d+-test_image.*\.jpg$/);
       // Verify special characters are replaced
+
       expect(pathname).not.toContain(" ");
       expect(pathname).not.toContain("(");
       expect(pathname).not.toContain(")");

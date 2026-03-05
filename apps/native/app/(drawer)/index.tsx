@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 
 import { Container } from "@/components/container";
 import { SignIn } from "@/components/sign-in";
@@ -10,7 +10,9 @@ export default function Home() {
   const { colorScheme } = useColorScheme();
   const theme = colorScheme === "dark" ? NAV_THEME.dark : NAV_THEME.light;
   // TODO: Replace with Django API health check
-  const healthCheck = "OK"; // Placeholder - will be replaced with actual API call
+
+  // Placeholder - will be replaced with actual API call
+  const healthCheck = "OK";
 
   return (
     <Container>

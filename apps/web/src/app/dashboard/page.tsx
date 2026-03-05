@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
 
   // Default stats for new users
+
   const defaultStats: DashboardStats = {
     articles_read_count: 0,
     articles_saved_count: 0,
@@ -33,12 +34,15 @@ export default function DashboardPage() {
   };
 
   // Use default stats if no error and no data (new user)
+
   const displayStats = stats || (!error ? defaultStats : null);
 
   // Comprehensive error logging
+
   useEffect(() => {
     if (error) {
       // Log to Sentry for error monitoring
+
       Sentry.captureException(error, {
         extra: {
           errorMessage: error.message,
@@ -53,6 +57,7 @@ export default function DashboardPage() {
       });
 
       // Track error event in PostHog
+
       posthog.capture("dashboard_stats_error", {
         error_message: error.message,
         error_type: error.name || "Unknown",
@@ -61,6 +66,7 @@ export default function DashboardPage() {
       });
     } else if (!stats && !isLoading) {
       // Track new user scenario (not an error, but useful for analytics)
+
       posthog.capture("dashboard_stats_empty", {
         is_new_user: true,
         user_id: user?.id,
@@ -68,6 +74,7 @@ export default function DashboardPage() {
       });
     } else if (stats) {
       // Track successful dashboard load
+
       posthog.capture("dashboard_stats_loaded", {
         articles_read: stats.articles_read_count,
         articles_saved: stats.articles_saved_count,
@@ -102,6 +109,7 @@ export default function DashboardPage() {
   }
 
   // Show error state only if there's an actual error
+
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -133,8 +141,10 @@ export default function DashboardPage() {
   }
 
   // If no stats and no error, show dashboard with zero stats (new user)
+
   if (!displayStats) {
-    return null; // This shouldn't happen, but fallback
+    // This shouldn't happen, but fallback
+    return null;
   }
 
   const statsCards: {

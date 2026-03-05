@@ -13,6 +13,8 @@ import { postSchema } from "@/lib/validations/post";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+type PostInsert = typeof posts.$inferInsert;
+
 function normalizeArtistIds(ids: number[]) {
   return [...new Set(ids)].toSorted((a, b) => a - b);
 }
@@ -107,14 +109,14 @@ export async function createPost(formData: FormData) {
       .insert(posts)
       .values({
         authorId: resolvedAuthorId,
-        category: validatedData.category as any,
+        category: validatedData.category as PostInsert["category"],
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
         excerpt: validatedData.excerpt,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,
         slug,
-        status: validatedData.status as any,
+        status: validatedData.status as PostInsert["status"],
         title: validatedData.title,
       })
       .returning();
@@ -267,14 +269,14 @@ export async function updatePost(id: number, formData: FormData) {
       .update(posts)
       .set({
         authorId: resolvedAuthorId,
-        category: validatedData.category as any,
+        category: validatedData.category as PostInsert["category"],
         content: validatedData.content,
         coverImage: validatedData.coverImage || null,
         excerpt: validatedData.excerpt,
         isCoverStory: validatedData.isCoverStory,
         publishedAt,
         slug,
-        status: validatedData.status as any,
+        status: validatedData.status as PostInsert["status"],
         title: validatedData.title,
         updatedAt: new Date(),
       })

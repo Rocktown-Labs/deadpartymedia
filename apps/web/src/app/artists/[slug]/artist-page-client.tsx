@@ -4,16 +4,36 @@ import { useRef } from "react";
 import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 import { ArtistStructuredData } from "@/components/seo/structured-data";
-import posthog from "posthog-js";
+import posthogClient from "posthog-js";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface ArtistPageClientProps {
   slug: string;
 }
 
+const getInternalReferrerPath = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const { referrer } = document;
+  if (!referrer) {
+    return null;
+  }
+
+  try {
+    const referrerUrl = new URL(referrer);
+    return referrerUrl.origin === window.location.origin ? referrerUrl.pathname : null;
+  } catch {
+    return null;
+  }
+};
+
 export function ArtistPageClient({ slug }: ArtistPageClientProps) {
+  const router = useRouter();
   const { data: artist, isLoading: artistLoading } = useArtist(slug);
   const { data: articles } = useArtistArticles(slug);
   const { data: events } = useArtistEvents(slug);
@@ -25,7 +45,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
 
   // Track artist profile viewed event - using ref to prevent duplicate tracking
   if (artist && artistViewedRef.current !== artist.slug) {
-    posthog.capture("artist_profile_viewed", {
+    posthogClient.capture("artist_profile_viewed", {
       article_count: artist.article_count,
       artist_genre: artist.genre,
       artist_id: artist.id,
@@ -38,14 +58,28 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
   }
 
   // Helper function to track social link clicks
-  const handleSocialClick = (platform: string, url: string) => {
-    posthog.capture("artist_social_clicked", {
+  const handleSocialClick = (platform: string, url: string | null | undefined) => {
+    if (!url) {
+      return;
+    }
+
+    posthogClient.capture("artist_social_clicked", {
       artist_id: artist?.id,
       artist_name: artist?.name,
       artist_slug: artist?.slug,
       platform,
       url,
     });
+  };
+
+  const handleBackClick = () => {
+    const internalReferrerPath = getInternalReferrerPath();
+    if (internalReferrerPath) {
+      router.back();
+      return;
+    }
+
+    router.push("/artists");
   };
 
   if (artistLoading) {
@@ -77,13 +111,14 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
         <main className="pt-40 pb-20">
           <div className="container mx-auto px-6 max-w-6xl">
             {/* Back Button */}
-            <Link
-              href="/artists"
+            <button
+              type="button"
+              onClick={handleBackClick}
               className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Artists
-            </Link>
+            </button>
 
             {/* Artist Info Card */}
             <div className="border border-gray-800 rounded-lg overflow-hidden mb-12 bg-[#0A0A0A]">
@@ -114,7 +149,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("instagram", artist.instagram!)}
+                        onClick={() => handleSocialClick("instagram", artist.instagram)}
                       >
                         <Instagram className="w-5 h-5" />
                       </a>
@@ -125,7 +160,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("twitter", artist.twitter!)}
+                        onClick={() => handleSocialClick("twitter", artist.twitter)}
                       >
                         <Twitter className="w-5 h-5" />
                       </a>
@@ -136,7 +171,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors text-sm font-bold"
-                        onClick={() => handleSocialClick("tiktok", artist.tiktok!)}
+                        onClick={() => handleSocialClick("tiktok", artist.tiktok)}
                       >
                         TT
                       </a>
@@ -147,7 +182,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("website", artist.website!)}
+                        onClick={() => handleSocialClick("website", artist.website)}
                       >
                         🌐
                       </a>

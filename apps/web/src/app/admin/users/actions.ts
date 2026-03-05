@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { artists, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
+import { getErrorMessage, getNestedErrorMessage } from "@/lib/utils/error";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
 const LOCAL_PLACEHOLDER_PREFIX = "local_placeholder:";
@@ -34,9 +35,13 @@ function parseNameParts(displayName: string): { firstName: string; lastName: str
 }
 
 function normalizeEmailOrNull(value: string | null): string | null {
-  if (!value) {return null;}
+  if (!value) {
+    return null;
+  }
   const normalized = value.trim().toLowerCase();
-  if (!normalized) {return null;}
+  if (!normalized) {
+    return null;
+  }
   const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
   return isValid ? normalized : null;
 }
@@ -56,7 +61,9 @@ function buildPlaceholderEmail(base: string): string {
 }
 
 function normalizeCreateRole(roleInput: FormDataEntryValue | null): Roles {
-  if (typeof roleInput !== "string") {return "writer";}
+  if (typeof roleInput !== "string") {
+    return "writer";
+  }
   if (roleInput === "writer" || roleInput === "super_admin" || roleInput === "fan") {
     return roleInput;
   }
@@ -64,9 +71,15 @@ function normalizeCreateRole(roleInput: FormDataEntryValue | null): Roles {
 }
 
 function getInviteRedirectUrl(role: Roles): string {
-  if (role === "writer") {return "/sign-up?role=writer";}
-  if (role === "artist") {return "/sign-up?role=artist";}
-  if (role === "fan") {return "/sign-up?role=fan";}
+  if (role === "writer") {
+    return "/sign-up?role=writer";
+  }
+  if (role === "artist") {
+    return "/sign-up?role=artist";
+  }
+  if (role === "fan") {
+    return "/sign-up?role=fan";
+  }
   return "/sign-up";
 }
 
@@ -108,7 +121,7 @@ export async function inviteUser(
   try {
     // For super_admin and writer roles, set onboardingComplete to true
     // since they don't need to go through the onboarding flow
-    const publicMetadata: Record<string, any> = {
+    const publicMetadata: Record<string, unknown> = {
       role: validatedData.role,
     };
     if (localUserProfileId) {
@@ -127,8 +140,11 @@ export async function inviteUser(
 
     revalidatePath("/admin/users");
     return { invitation, success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
+  } catch (error) {
+    return {
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to send invitation"),
+      success: false,
+    };
   }
 }
 
@@ -247,7 +263,7 @@ export async function createArtistProfileStub(formData: FormData) {
   return { artist: createdArtist, success: true };
 }
 
-export async function createProfile(formData: FormData) {
+export function createProfile(formData: FormData) {
   const profileTypeRaw = formData.get("profileType");
   const profileType = profileTypeRaw === "artist" ? "artist" : "user";
 
@@ -396,8 +412,36 @@ export async function inviteArtistProfile(formData: FormData) {
     revalidatePath("/admin/users");
     revalidatePath("/admin/artists");
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
+  } catch (error) {
+    return {
+      error:
+        getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to send artist invitation"),
+      success: false,
+    };
+  }
+}
+
+export async function deleteUser(userId: string) {
+  const { userId: currentUserId } = await auth();
+  if (!currentUserId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canManageUsers())) {
+    throw new Error("Unauthorized: Only super admins can delete users");
+  }
+
+  const client = await clerkClient();
+
+  try {
+    await client.users.deleteUser(userId);
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error) {
+    return {
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to delete user"),
+      success: false,
+    };
   }
 }
 
@@ -454,8 +498,11 @@ export async function revokeInvitation(invitationId: string) {
 
     revalidatePath("/admin/users");
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
+  } catch (error) {
+    return {
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to revoke invitation"),
+      success: false,
+    };
   }
 }
 
@@ -481,21 +528,13 @@ export async function updateUserRole(userId: string, role: Roles) {
     const user = await client.users.getUser(userId);
     const currentMetadata = user.publicMetadata || {};
 
-    // Build public metadata with role update
-    const publicMetadata: Record<string, any> = {
+    // For super_admin/writer, onboarding is complete immediately.
+    // For artist/fan, onboarding is reset and must be completed for the new role.
+    const publicMetadata: Record<string, unknown> = {
       ...currentMetadata,
+      onboardingComplete: role === "super_admin" || role === "writer",
       role,
     };
-
-    // For super_admin and writer roles, set onboardingComplete to true
-    // since they don't need to go through the onboarding flow
-    if (role === "super_admin" || role === "writer") {
-      publicMetadata.onboardingComplete = true;
-    } else {
-      // For non-admin roles (artist/fan), reset onboardingComplete to false
-      // so users must complete onboarding for their new role
-      publicMetadata.onboardingComplete = false;
-    }
 
     await client.users.updateUserMetadata(userId, {
       publicMetadata,
@@ -521,8 +560,11 @@ export async function updateUserRole(userId: string, role: Roles) {
 
     revalidatePath("/admin/users");
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
+  } catch (error) {
+    return {
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to update user role"),
+      success: false,
+    };
   }
 }
 
@@ -559,25 +601,4 @@ export async function updateLocalUserRole(formData: FormData) {
 
   revalidatePath("/admin/users");
   return { success: true };
-}
-
-export async function deleteUser(userId: string) {
-  const { userId: currentUserId } = await auth();
-  if (!currentUserId) {
-    redirect("/sign-in" as Route);
-  }
-
-  if (!(await canManageUsers())) {
-    throw new Error("Unauthorized: Only super admins can delete users");
-  }
-
-  const client = await clerkClient();
-
-  try {
-    await client.users.deleteUser(userId);
-    revalidatePath("/admin/users");
-    return { success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
-  }
 }

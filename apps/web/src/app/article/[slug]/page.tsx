@@ -9,19 +9,19 @@ interface ArticlePageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: ArticlePageProps): Promise<Metadata> => {
   const { slug } = await params;
   const article = await getArticle(slug);
 
   if (!article) {
     return {
       description: "The article you're looking for could not be found.",
-      title: "Article Not Found | Dead Party Media",
+      title: "Article Not Found",
     };
   }
 
   return generateArticleMetadata(article);
-}
+};
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;

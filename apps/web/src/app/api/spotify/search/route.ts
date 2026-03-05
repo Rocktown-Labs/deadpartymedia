@@ -3,6 +3,16 @@ import { NextResponse } from "next/server";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+interface SpotifyArtistSearchItem {
+  external_urls?: {
+    spotify?: string;
+  };
+  genres?: string[];
+  id: string;
+  images?: { url: string; height: number; width: number }[];
+  name: string;
+}
+
 /**
  * Search for artists on Spotify using the Spotify Web API
  * Uses Client Credentials flow (no user authentication required for search)
@@ -18,6 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get Spotify credentials from environment
+
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -27,6 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get access token using Client Credentials flow
+
     const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
       body: new URLSearchParams({
         grant_type: "client_credentials",
@@ -39,7 +51,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      await tokenResponse.text(); // Consume response body
+      // Consume response body
+      await tokenResponse.text();
       log.error(
         { operation: "spotify_auth", status: tokenResponse.status },
         "Failed to get Spotify access token",
@@ -51,6 +64,7 @@ export async function GET(request: NextRequest) {
     const accessToken = tokenData.access_token;
 
     // Search for artists
+
     const searchResponse = await fetch(
       `https://api.spotify.com/v1/search?${new URLSearchParams({
         limit: "10",
@@ -72,11 +86,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to search Spotify" }, { status: 500 });
     }
 
-    const searchData = await searchResponse.json();
-    const artists = searchData.artists?.items || [];
+    const searchData = (await searchResponse.json()) as {
+      artists?: { items?: SpotifyArtistSearchItem[] };
+    };
+    const artists = Array.isArray(searchData.artists?.items) ? searchData.artists.items : [];
 
     // Transform to match our SpotifyArtist interface
-    const formattedArtists = artists.map((artist: any) => ({
+
+    const formattedArtists = artists.map((artist) => ({
       external_urls: artist.external_urls || {
         spotify: `https://open.spotify.com/artist/${artist.id}`,
       },

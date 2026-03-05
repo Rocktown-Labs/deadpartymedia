@@ -19,14 +19,14 @@ function SubmitButton({ availableForSale }: { availableForSale: boolean }) {
     >
       {pending ? (
         "Adding..."
-      ) : (availableForSale ? (
+      ) : availableForSale ? (
         <>
           <ShoppingCart className="w-4 h-4" />
           Add to Cart
         </>
       ) : (
         "Out of Stock"
-      ))}
+      )}
     </button>
   );
 }

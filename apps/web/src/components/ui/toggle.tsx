@@ -17,8 +17,8 @@ const toggleVariants = cva(
     variants: {
       size: {
         default: "h-10 px-3 min-w-10",
-        sm: "h-9 px-2.5 min-w-9",
         lg: "h-11 px-5 min-w-11",
+        sm: "h-9 px-2.5 min-w-9",
       },
       variant: {
         default: "bg-transparent",

@@ -19,6 +19,7 @@ const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
   };
 
   // Set up the chain: select().from().where().orderBy().limit().offset()
+
   mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
   mockDbChain.from.mockReturnValue({ where: mockDbChain.where });
   mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy });
@@ -26,10 +27,12 @@ const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
   mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset });
 
   // Set up artist relations chain: select().from().innerJoin().where()
+
   mockArtistRelationsChain.select.mockReturnValue({ from: mockArtistRelationsChain.from });
   mockArtistRelationsChain.from.mockReturnValue({ innerJoin: mockArtistRelationsChain.innerJoin });
   mockArtistRelationsChain.innerJoin.mockReturnValue({ where: mockArtistRelationsChain.where });
-  mockArtistRelationsChain.where.mockResolvedValue([]); // Default to empty artist relations
+  // Default to empty artist relations
+  mockArtistRelationsChain.where.mockResolvedValue([]);
 
   return { mockArtistRelationsChain, mockDbChain };
 });
@@ -41,14 +44,18 @@ vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
     ...mockDbChain,
     // Override select to handle both events query and artist relations query
+
     select: vi.fn((_fields) => {
       selectCallIndex++;
       // First call is events query, second call is artist relations (with object)
+
       if (selectCallIndex === 1) {
         // Events query
+
         return mockDbChain.select();
       }
       // Artist relations query
+
       return mockArtistRelationsChain.select();
     }),
   },
@@ -73,6 +80,7 @@ describe("gET /api/events", () => {
     selectCallIndex = 0;
 
     // Reset the chain
+
     mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
     mockDbChain.from.mockReturnValue({ where: mockDbChain.where });
     mockDbChain.where.mockReturnValue({ orderBy: mockDbChain.orderBy });
@@ -80,12 +88,14 @@ describe("gET /api/events", () => {
     mockDbChain.limit.mockReturnValue({ offset: mockDbChain.offset });
 
     // Reset artist relations chain
+
     mockArtistRelationsChain.select.mockReturnValue({ from: mockArtistRelationsChain.from });
     mockArtistRelationsChain.from.mockReturnValue({
       innerJoin: mockArtistRelationsChain.innerJoin,
     });
     mockArtistRelationsChain.innerJoin.mockReturnValue({ where: mockArtistRelationsChain.where });
-    mockArtistRelationsChain.where.mockResolvedValue([]); // Default to empty artist relations
+    // Default to empty artist relations
+    mockArtistRelationsChain.where.mockResolvedValue([]);
   });
 
   it("should return published events", async () => {
@@ -119,7 +129,8 @@ describe("gET /api/events", () => {
     expect(response.status).toBe(200);
     expect(data.results).toHaveLength(1);
     expect(data.results[0].title).toBe("Test Event");
-    expect(data.results[0].artists).toStrictEqual([]); // Should include empty artists array
+    // Should include empty artists array
+    expect(data.results[0].artists).toStrictEqual([]);
   });
 
   it("should filter by genre", async () => {

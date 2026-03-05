@@ -3,17 +3,47 @@
 import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEvent } from "@/lib/api/events";
 import { EventStructuredData } from "@/components/seo/structured-data";
-import posthog from "posthog-js";
+import posthogClient from "posthog-js";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface EventPageClientProps {
   slug: string;
 }
 
+const getInternalReferrerPath = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const { referrer } = document;
+  if (!referrer) {
+    return null;
+  }
+
+  try {
+    const referrerUrl = new URL(referrer);
+    return referrerUrl.origin === window.location.origin ? referrerUrl.pathname : null;
+  } catch {
+    return null;
+  }
+};
+
 export function EventPageClient({ slug }: EventPageClientProps) {
+  const router = useRouter();
   const { data: event, isLoading } = useEvent(slug);
+
+  const handleBackClick = () => {
+    const internalReferrerPath = getInternalReferrerPath();
+    if (internalReferrerPath) {
+      router.back();
+      return;
+    }
+
+    router.push("/events");
+  };
 
   if (isLoading) {
     return (
@@ -46,13 +76,14 @@ export function EventPageClient({ slug }: EventPageClientProps) {
         <main className="pt-40 pb-20">
           <div className="container mx-auto px-6 max-w-6xl">
             {/* Back Button */}
-            <Link
-              href="/events"
+            <button
+              type="button"
+              onClick={handleBackClick}
               className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Events
-            </Link>
+            </button>
 
             {/* Event Header */}
             <div className="mb-8">
@@ -174,7 +205,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#7CFC00] px-6 py-3 text-center font-bold text-black transition-colors hover:bg-[#7CFC00]/90"
                     onClick={() => {
                       // Track event ticket clicked (conversion event)
-                      posthog.capture("event_ticket_clicked", {
+                      posthogClient.capture("event_ticket_clicked", {
                         event_date: event.date,
                         event_genre: event.genre,
                         event_id: event.id,

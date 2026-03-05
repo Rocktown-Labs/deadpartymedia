@@ -39,7 +39,8 @@ export const roleEnum = pgEnum("role", ["artist", "fan", "super_admin", "writer"
 // Users Table (synced from Clerk)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  clerkId: text("clerk_id").unique().notNull(), // Clerk user ID
+  // Clerk user ID
+  clerkId: text("clerk_id").unique().notNull(),
   email: text("email").notNull(),
   firstName: text("first_name"),
   lastName: text("last_name"),
@@ -57,9 +58,11 @@ export const posts = pgTable("posts", {
   slug: text("slug").notNull().unique(),
   category: categoryEnum("category").notNull(),
   excerpt: text("excerpt").notNull(),
-  content: text("content").notNull(), // JSON string for Tiptap content
+  // JSON string for Tiptap content
+  content: text("content").notNull(),
   coverImage: text("cover_image"),
-  authorId: text("author_id").notNull(), // Clerk user ID
+  // Clerk user ID
+  authorId: text("author_id").notNull(),
   status: postStatusEnum("status").notNull().default("draft"),
   isCoverStory: boolean("is_cover_story").notNull().default(false),
   publishedAt: timestamp("published_at"),
@@ -154,7 +157,8 @@ export const events = pgTable("events", {
   price: text("price"),
   genre: genreEnum("genre").notNull(),
   status: eventStatusEnum("status").notNull().default("draft"),
-  createdById: text("created_by_id").notNull(), // Clerk user ID
+  // Clerk user ID
+  createdById: text("created_by_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -174,10 +178,12 @@ export const artists = pgTable("artists", {
   twitter: text("twitter"),
   tiktok: text("tiktok"),
   website: text("website"),
-  email: text("email"), // Email for sending claim invitation
+  // Email for sending claim invitation
+  email: text("email"),
   phoneNumber: text("phone_number"),
   claimed: boolean("claimed").notNull().default(false),
-  claimedById: text("claimed_by_id"), // Clerk user ID of artist who claimed
+  // Clerk user ID of artist who claimed
+  claimedById: text("claimed_by_id"),
   profileViews: integer("profile_views").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

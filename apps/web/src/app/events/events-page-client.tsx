@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEvents } from "@/lib/api/events";
+import { PageTitleHeader } from "@/components/page-title-header";
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
@@ -37,11 +38,7 @@ export default function EventsPage() {
             Back to Home
           </Link>
 
-          {/* Page Header */}
-          <div className="mb-12">
-            <h1 className="text-5xl font-black mb-4">EVENTS</h1>
-            <p className="text-xl text-gray-400">Discover upcoming shows and past events</p>
-          </div>
+          <PageTitleHeader title="EVENTS" description="Discover upcoming shows and past events" />
 
           {/* Tabs */}
           <div className="flex gap-4 mb-8 border-b border-gray-800">

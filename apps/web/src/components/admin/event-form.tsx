@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { toast } from "sonner";
 import { validateImageFile } from "@/lib/upload";
+import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 
 interface EventFormProps {
   initialData?: {
@@ -153,11 +154,10 @@ export function EventForm({
     try {
       await onSubmit(formData);
     } catch (error) {
-      const digest = (error as any)?.digest as string | undefined;
-      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+      if (isNextRedirectError(error)) {
         return;
       }
-      toast.error(error instanceof Error ? error.message : "Failed to save event");
+      toast.error(getErrorMessage(error, "Failed to save event"));
     } finally {
       setIsSaving(false);
     }
@@ -387,9 +387,9 @@ export function EventForm({
               >
                 {artistsLoading
                   ? "Loading artists..."
-                  : (selectedArtists.length > 0
+                  : selectedArtists.length > 0
                     ? `${selectedArtists.length} artist(s) selected`
-                    : "Select artists")}
+                    : "Select artists"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
@@ -444,9 +444,9 @@ export function EventForm({
         <Button type="submit" disabled={isSubmitting || isSaving || imageUploading}>
           {imageUploading
             ? "Uploading image..."
-            : (isSubmitting || isSaving
+            : isSubmitting || isSaving
               ? "Saving..."
-              : "Save Event")}
+              : "Save Event"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

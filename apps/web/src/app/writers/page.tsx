@@ -1,7 +1,37 @@
-"use client";
-
+import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+
+const { siteName, siteUrl } = getSiteDefaults();
+const ogImage = `${siteUrl}/images/dead-party-logo-og.jpg`;
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: getAbsoluteUrl("/writers"),
+  },
+  description:
+    "Meet the Dead Party Media writing team covering Arkansas country, EDM, hardcore, hip-hop, and local live music.",
+  keywords: ["dead party media writers", "arkansas music writers", "local music journalism"],
+  openGraph: {
+    description:
+      "Meet the Dead Party Media writing team covering Arkansas country, EDM, hardcore, hip-hop, and local live music.",
+    images: [{ alt: "Dead Party Media Writers", height: 630, url: ogImage, width: 1200 }],
+    locale: "en_US",
+    siteName,
+    title: `Writers | ${siteName}`,
+    type: "website",
+    url: getAbsoluteUrl("/writers"),
+  },
+  title: "Writers",
+  twitter: {
+    card: "summary_large_image",
+    description:
+      "Meet the Dead Party Media writing team covering Arkansas country, EDM, hardcore, hip-hop, and local live music.",
+    images: [ogImage],
+    title: `Writers | ${siteName}`,
+  },
+};
 
 export default function WritersPage() {
   const writers = [

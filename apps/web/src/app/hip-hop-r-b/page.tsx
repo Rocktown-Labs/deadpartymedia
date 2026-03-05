@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "Explore hip-hop and R&B articles, interviews, and features from Arkansas artists on Dead Party Media.",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media Hip-Hop & R&B" }],
+    images: [{ alt: "Dead Party Media Hip-Hop & R&B", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
     title: `Hip-Hop & R&B | ${siteName}`,

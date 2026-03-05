@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "Explore articles and features covering all other music genres from Arkansas artists on Dead Party Media.",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media Other Genres" }],
+    images: [{ alt: "Dead Party Media Other Genres", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
     title: `Other Genres | ${siteName}`,

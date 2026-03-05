@@ -28,6 +28,7 @@ export default function Navbar() {
   const dashboardHref: Route = getDashboardRouteFromMetadata(user?.publicMetadata?.role);
 
   // Mount-only for global scroll listener (keep if adding scroll effects later)
+
   useEffect(() => {
     const handleScroll = () => {
       // If needed, add logic here (e.g., setIsScrolled(window.scrollY > 50))
@@ -56,7 +57,8 @@ export default function Navbar() {
                   alt="Dead Party Media"
                   width={50}
                   height={50}
-                  className="size-14" // Removed mx-6 to prevent overlap
+                  // Removed mx-6 to prevent overlap
+                  className="size-14"
                 />
               </Link>
             </div>

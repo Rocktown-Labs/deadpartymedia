@@ -19,6 +19,36 @@ import {
 import { Edit, User, MapPin, Music, Link as LinkIcon, Save } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { getErrorMessage } from "@/lib/utils/error";
+
+interface ValidationIssue {
+  message: string;
+  path?: unknown;
+}
+
+interface ErrorWithResponseData {
+  response?: {
+    data?: unknown;
+  };
+}
+
+function hasValidationIssues(error: unknown): error is { errors: ValidationIssue[] } {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  return Array.isArray((error as { errors?: unknown }).errors);
+}
+
+function getResponseData(error: unknown): Record<string, unknown> | null {
+  if (typeof error !== "object" || error === null) {
+    return null;
+  }
+  const data = (error as ErrorWithResponseData).response?.data;
+  if (typeof data !== "object" || data === null) {
+    return null;
+  }
+  return data as Record<string, unknown>;
+}
 
 export default function ArtistProfilePage() {
   const { data: artist, isLoading } = useCurrentUserArtist();
@@ -90,27 +120,40 @@ export default function ArtistProfilePage() {
       toast.success("Profile updated successfully!");
       setIsEditing(false);
       setImageFile(null);
-    } catch (error: any) {
-      if (error.errors) {
+    } catch (error) {
+      if (hasValidationIssues(error)) {
         // Zod validation errors
         const fieldErrors: Record<string, string> = {};
-        error.errors.forEach((err: any) => {
-          if (err.path) {
-            fieldErrors[err.path[0]] = err.message;
+        for (const issue of error.errors) {
+          if (!Array.isArray(issue.path) || issue.path.length === 0) {
+            continue;
           }
-        });
+          const [field] = issue.path;
+          if (typeof field === "string") {
+            fieldErrors[field] = issue.message;
+          }
+        }
         setErrors(fieldErrors);
-      } else if (error.response?.data) {
-        // API validation errors
-        const apiErrors = error.response.data;
-        const fieldErrors: Record<string, string> = {};
-        Object.keys(apiErrors).forEach((key) => {
-          fieldErrors[key] = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key];
-        });
-        setErrors(fieldErrors);
-        toast.error("Failed to update profile. Please check the errors.");
       } else {
-        toast.error(error.message || "Failed to update profile");
+        const apiErrors = getResponseData(error);
+        if (apiErrors) {
+          // API validation errors
+          const fieldErrors: Record<string, string> = {};
+          for (const [key, value] of Object.entries(apiErrors)) {
+            if (Array.isArray(value)) {
+              const firstValue = value[0];
+              if (typeof firstValue === "string") {
+                fieldErrors[key] = firstValue;
+              }
+            } else if (typeof value === "string") {
+              fieldErrors[key] = value;
+            }
+          }
+          setErrors(fieldErrors);
+          toast.error("Failed to update profile. Please check the errors.");
+        } else {
+          toast.error(getErrorMessage(error, "Failed to update profile"));
+        }
       }
     }
   };

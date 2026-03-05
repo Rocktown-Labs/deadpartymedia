@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "Discover upcoming live music events across Arkansas. Concerts, festivals, and shows from artists in every genre.",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media Events" }],
+    images: [{ alt: "Dead Party Media Events", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
     title: `Events | ${siteName}`,

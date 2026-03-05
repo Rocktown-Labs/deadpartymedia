@@ -23,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { inviteUser } from "./actions";
 import type { Roles } from "@/types/globals";
 import { useRouter } from "next/navigation";
+import { getErrorMessage } from "@/lib/utils/error";
+import { toast } from "sonner";
 
 export function InviteUserDialog() {
   const [open, setOpen] = useState(false);
@@ -52,10 +54,10 @@ export function InviteUserDialog() {
                 setOpen(false);
                 router.refresh();
               } else {
-                alert(result.error || "Failed to send invitation");
+                toast.error(result.error || "Failed to send invitation");
               }
-            } catch (error: any) {
-              alert(error.message || "Failed to send invitation");
+            } catch (error) {
+              toast.error(getErrorMessage(error, "Failed to send invitation"));
             } finally {
               setIsSubmitting(false);
             }

@@ -1,10 +1,15 @@
 export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .trim()
-    .replaceAll(/[^\w\s-]/g, "") // Remove special characters
-    .replaceAll(/[\s_-]+/g, "-") // Replace spaces and underscores with hyphens
-    .replaceAll(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+  return (
+    title
+      .toLowerCase()
+      .trim()
+      // Remove special characters
+      .replaceAll(/[^\w\s-]/g, "")
+      // Replace spaces and underscores with hyphens
+      .replaceAll(/[\s_-]+/g, "-")
+      // Remove leading/trailing hyphens
+      .replaceAll(/^-+|-+$/g, "")
+  );
 }
 
 export async function ensureUniqueSlug(
@@ -20,8 +25,9 @@ export async function ensureUniqueSlug(
   let counter = 1;
 
   // If table is specified, only check that table
+
   if (table) {
-    const tableSchema = table === "posts" ? posts : (table === "events" ? events : artists);
+    const tableSchema = table === "posts" ? posts : table === "events" ? events : artists;
     while (true) {
       const existing = await db
         .select()
@@ -42,6 +48,7 @@ export async function ensureUniqueSlug(
     }
   } else {
     // Check all tables if no table specified
+
     while (true) {
       const [existingPost] = await db
         .select()
@@ -66,7 +73,8 @@ export async function ensureUniqueSlug(
         .limit(1);
 
       if (!existingPost && !existingEvent && !existingArtist) {
-        break; // Slug is unique across all tables
+        // Slug is unique across all tables
+        break;
       }
 
       uniqueSlug = `${slug}-${counter}`;

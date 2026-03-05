@@ -19,9 +19,12 @@ import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { upsertUserAuthState } from "@/lib/auth/user-state";
 import { getPrimaryEmail } from "@/lib/auth/clerk";
+import type { ZodType } from "zod";
+
+type ArtistGenre = (typeof artists.$inferInsert)["genre"];
 
 // Helper to validate with Zod and return errors in TanStack Form format
-function validateWithZod<T>(schema: any, data: T): string | undefined {
+function validateWithZod<T>(schema: ZodType<T>, data: unknown): string | undefined {
   const result = schema.safeParse(data);
   if (!result.success) {
     return result.error.issues.map((e: { message: string }) => e.message).join(", ");
@@ -29,23 +32,27 @@ function validateWithZod<T>(schema: any, data: T): string | undefined {
   return undefined;
 }
 
+function createFormStateWithErrors(error: string) {
+  return {
+    ...initialFormState,
+    errors: [error],
+  };
+}
+
 // Fan onboarding server action
 const fanServerValidate = createServerValidate({
   ...fanFormOptions,
-  onServerValidate: async ({ value }) => {
+  onServerValidate: ({ value }) => {
     const error = validateWithZod(fanOnboardingSchema, value);
     if (error) {
       throw new ServerValidateError({
-        formState: {
-          ...initialFormState,
-          errors: [error],
-        } as any,
+        formState: createFormStateWithErrors(error),
       });
     }
   },
 });
 
-export async function fanOnboardingAction(prev: unknown, formData: FormData) {
+export async function fanOnboardingAction(_prev: unknown, formData: FormData) {
   const { userId } = await auth();
   const log = userId ? withUserContext(logger, userId, "fan") : logger;
   try {
@@ -92,7 +99,7 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
     return {
       ...initialFormState,
       success: true,
-    } as any;
+    };
   } catch (error) {
     if (error instanceof ServerValidateError) {
       return error.formState;
@@ -107,27 +114,24 @@ export async function fanOnboardingAction(prev: unknown, formData: FormData) {
       errors: [
         error instanceof Error ? error.message : "Failed to complete onboarding. Please try again.",
       ],
-    } as any;
+    };
   }
 }
 
 // Artist onboarding server action
 const artistServerValidate = createServerValidate({
   ...artistFormOptions,
-  onServerValidate: async ({ value }) => {
+  onServerValidate: ({ value }) => {
     const error = validateWithZod(artistOnboardingSchema, value);
     if (error) {
       throw new ServerValidateError({
-        formState: {
-          ...initialFormState,
-          errors: [error],
-        } as any,
+        formState: createFormStateWithErrors(error),
       });
     }
   },
 });
 
-export async function artistOnboardingAction(prev: unknown, formData: FormData) {
+export async function artistOnboardingAction(_prev: unknown, formData: FormData) {
   const { userId } = await auth();
   const log = userId ? withUserContext(logger, userId, "artist") : logger;
   try {
@@ -156,14 +160,14 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
         return {
           ...initialFormState,
           errors: ["Artist profile not found"],
-        } as any;
+        };
       }
 
       if (artist.claimed) {
         return {
           ...initialFormState,
           errors: ["This artist profile has already been claimed"],
-        } as any;
+        };
       }
 
       artistSlug = await ensureUniqueSlug(generateSlug(validatedData.name), artistId, "artists");
@@ -175,7 +179,7 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
           bio: validatedData.bio,
           claimed: true,
           claimedById: userId,
-          genre: validatedData.genre as any,
+          genre: validatedData.genre as ArtistGenre,
           image: validatedData.image || null,
           instagram: validatedData.instagram,
           location: validatedData.location,
@@ -198,7 +202,7 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
         bio: validatedData.bio,
         claimed: true,
         claimedById: userId,
-        genre: validatedData.genre as any,
+        genre: validatedData.genre as ArtistGenre,
         image: validatedData.image || null,
         instagram: validatedData.instagram,
         location: validatedData.location,
@@ -256,7 +260,7 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
     return {
       ...initialFormState,
       success: true,
-    } as any;
+    };
   } catch (error) {
     if (error instanceof ServerValidateError) {
       return error.formState;
@@ -271,6 +275,6 @@ export async function artistOnboardingAction(prev: unknown, formData: FormData) 
       errors: [
         error instanceof Error ? error.message : "Failed to complete onboarding. Please try again.",
       ],
-    } as any;
+    };
   }
 }

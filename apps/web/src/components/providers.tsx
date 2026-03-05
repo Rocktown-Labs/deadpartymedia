@@ -9,8 +9,9 @@ import { useRef } from "react";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000, // 1 minute
+      // 1 minute
       refetchOnWindowFocus: false,
+      staleTime: 60 * 1000,
     },
   },
 });
@@ -21,6 +22,7 @@ function PostHogIdentify() {
   const identifiedRef = useRef<string | null>(null);
 
   // Only identify if user is signed in and we haven't already identified this user
+
   if (isSignedIn && user && identifiedRef.current !== user.id) {
     posthog.identify(user.id, {
       email: user.primaryEmailAddress?.emailAddress,

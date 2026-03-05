@@ -6,7 +6,8 @@ import { getImageUrl, getSiteDefaults } from "@/lib/seo";
 export const runtime = "edge";
 
 const SITE_NAME = "Dead Party Media";
-const BRAND_COLOR = "#7CFC00"; // Lime green brand color
+// Lime green brand color
+const BRAND_COLOR = "#7CFC00";
 
 async function getOgImageData(type: string, slug: string) {
   switch (type) {
@@ -69,6 +70,7 @@ export async function GET(
 
     if (!data) {
       // Return default OG image if data not found
+
       return new Response("Not Found", { status: 404 });
     }
 

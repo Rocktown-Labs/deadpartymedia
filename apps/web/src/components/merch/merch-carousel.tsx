@@ -85,7 +85,7 @@ export function MerchCarousel({
               </div>
             ))}
           </div>
-        ) : (visibleProducts.length > 0 ? (
+        ) : visibleProducts.length > 0 ? (
           <div className="flex overflow-x-auto gap-8 pb-4 scrollbar-hide -mx-6 px-6">
             {visibleProducts.map((product) => (
               <Link
@@ -130,7 +130,7 @@ export function MerchCarousel({
               {hasError ? "Merch is temporarily unavailable." : "Check back soon for new merch!"}
             </p>
           </div>
-        ))}
+        )}
       </div>
     </section>
   );

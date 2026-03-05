@@ -13,6 +13,8 @@ import { eventSchema } from "@/lib/validations/event";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+type EventInsert = typeof events.$inferInsert;
+
 function normalizeArtistIds(ids: number[]) {
   return [...new Set(ids)].toSorted((a, b) => a - b);
 }
@@ -82,19 +84,19 @@ export async function createEvent(formData: FormData) {
     [event] = await db
       .insert(events)
       .values({
-        title: validatedData.title,
-        slug,
-        description: validatedData.description,
-        image: validatedData.image || null,
-        venue: validatedData.venue,
-        location: validatedData.location,
-        date: validatedData.date as any, // Pass date string directly for PostgreSQL date type
-        time: validatedData.time || null,
-        ticketLink: validatedData.ticketLink || null,
-        price: validatedData.price || null,
-        genre: validatedData.genre as any,
-        status: validatedData.status as any,
         createdById: userId,
+        date: validatedData.date as EventInsert["date"],
+        description: validatedData.description,
+        genre: validatedData.genre as EventInsert["genre"],
+        image: validatedData.image || null,
+        location: validatedData.location,
+        price: validatedData.price || null,
+        slug,
+        status: validatedData.status as EventInsert["status"],
+        ticketLink: validatedData.ticketLink || null,
+        time: validatedData.time || null,
+        title: validatedData.title,
+        venue: validatedData.venue,
       })
       .returning();
 
@@ -236,19 +238,19 @@ export async function updateEvent(id: number, formData: FormData) {
     await db
       .update(events)
       .set({
-        title: validatedData.title,
-        slug,
+        date: validatedData.date as EventInsert["date"],
         description: validatedData.description,
+        genre: validatedData.genre as EventInsert["genre"],
         image: validatedData.image || null,
-        venue: validatedData.venue,
         location: validatedData.location,
-        date: validatedData.date as any, // Pass date string directly for PostgreSQL date type
-        time: validatedData.time || null,
-        ticketLink: validatedData.ticketLink || null,
         price: validatedData.price || null,
-        genre: validatedData.genre as any,
-        status: validatedData.status as any,
+        slug,
+        status: validatedData.status as EventInsert["status"],
+        ticketLink: validatedData.ticketLink || null,
+        time: validatedData.time || null,
+        title: validatedData.title,
         updatedAt: new Date(),
+        venue: validatedData.venue,
       })
       .where(eq(events.id, id));
 

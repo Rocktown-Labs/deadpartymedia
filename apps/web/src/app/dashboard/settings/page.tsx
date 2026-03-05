@@ -13,6 +13,19 @@ import { Card } from "@/components/ui/card";
 import { User, Lock, Save } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardBackButton } from "../dashboard-back-button";
+import { getErrorMessage } from "@/lib/utils/error";
+
+interface ValidationIssue {
+  message: string;
+  path?: unknown;
+}
+
+function hasValidationIssues(error: unknown): error is { errors: ValidationIssue[] } {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  return Array.isArray((error as { errors?: unknown }).errors);
+}
 
 export default function SettingsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -62,18 +75,22 @@ export default function SettingsPage() {
             setProfileErrors({ email: result.error });
           }
         }
-      } catch (error: any) {
-        if (error.errors) {
+      } catch (error) {
+        if (hasValidationIssues(error)) {
           // Zod validation errors
           const fieldErrors: Record<string, string> = {};
-          error.errors.forEach((err: any) => {
-            if (err.path) {
-              fieldErrors[err.path[0]] = err.message;
+          for (const issue of error.errors) {
+            if (!Array.isArray(issue.path) || issue.path.length === 0) {
+              continue;
             }
-          });
+            const [field] = issue.path;
+            if (typeof field === "string") {
+              fieldErrors[field] = issue.message;
+            }
+          }
           setProfileErrors(fieldErrors);
         } else {
-          toast.error(error.message || "Failed to update profile");
+          toast.error(getErrorMessage(error, "Failed to update profile"));
         }
       }
     });

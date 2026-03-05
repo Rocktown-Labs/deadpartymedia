@@ -28,6 +28,7 @@ import { validateImageFile } from "@/lib/upload";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
+import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 
 interface AuthorOption {
   clerkId: string;
@@ -414,11 +415,10 @@ export function PostEditor({
     try {
       await onSubmit(formData);
     } catch (error) {
-      const digest = (error as any)?.digest as string | undefined;
-      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+      if (isNextRedirectError(error)) {
         return;
       }
-      toast.error(error instanceof Error ? error.message : "Failed to save post");
+      toast.error(getErrorMessage(error, "Failed to save post"));
     } finally {
       setIsSaving(false);
     }
@@ -650,9 +650,9 @@ export function PostEditor({
               >
                 {artistsLoading
                   ? "Loading artists..."
-                  : (selectedArtists.length > 0
+                  : selectedArtists.length > 0
                     ? `${selectedArtists.length} artist(s) selected`
-                    : "Select artists")}
+                    : "Select artists"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start">
@@ -741,9 +741,9 @@ export function PostEditor({
         <Button type="submit" disabled={isSubmitting || isSaving || coverImageUploading}>
           {coverImageUploading
             ? "Uploading cover..."
-            : (isSubmitting || isSaving
+            : isSubmitting || isSaving
               ? "Saving..."
-              : "Save Post")}
+              : "Save Post"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
           Cancel

@@ -22,7 +22,9 @@ export function useMonthlyHomepageStats() {
       }
       return response.json();
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - stats don't change frequently
-    refetchOnWindowFocus: false, // Don't refetch on window focus for stats
+    // 5 minutes - stats don't change frequently
+    staleTime: 5 * 60 * 1000,
+    // Don't refetch on window focus for stats
+    refetchOnWindowFocus: false,
   });
 }

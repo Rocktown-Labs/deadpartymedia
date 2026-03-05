@@ -13,6 +13,9 @@ import { artistSchema } from "@/lib/validations/artist";
 import { logger } from "@/lib/logger";
 import { withUserContext, withOperationContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { getErrorMessage } from "@/lib/utils/error";
+
+type ArtistGenre = (typeof artists.$inferInsert)["genre"];
 
 export async function createArtist(formData: FormData) {
   const { userId } = await auth();
@@ -65,7 +68,7 @@ export async function createArtist(formData: FormData) {
     .values({
       bio: validatedData.bio,
       email: validatedData.email || null,
-      genre: validatedData.genre as any,
+      genre: validatedData.genre as ArtistGenre,
       image: validatedData.image || null,
       instagram: validatedData.instagram || null,
       location: validatedData.location,
@@ -85,7 +88,7 @@ export async function createArtist(formData: FormData) {
     const client = await clerkClient();
     try {
       await client.invitations.createInvitation({
-        emailAddress: validatedData.email!,
+        emailAddress: validatedData.email,
         publicMetadata: {
           artistId: artist.id.toString(),
           role: "artist",
@@ -158,7 +161,7 @@ export async function updateArtist(id: number, formData: FormData) {
     .set({
       bio: validatedData.bio,
       email: validatedData.email || null,
-      genre: validatedData.genre as any,
+      genre: validatedData.genre as ArtistGenre,
       image: validatedData.image || null,
       instagram: validatedData.instagram || null,
       location: validatedData.location,
@@ -216,8 +219,8 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
     revalidateTag("artists", "max");
     revalidatePath("/admin/artists");
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message, success: false };
+  } catch (error) {
+    return { error: getErrorMessage(error, "Failed to send artist invitation"), success: false };
   }
 }
 

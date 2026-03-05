@@ -6,6 +6,14 @@ import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+const POST_CATEGORIES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
+
+type PostCategory = (typeof POST_CATEGORIES)[number];
+
+function isPostCategory(value: string): value is PostCategory {
+  return POST_CATEGORIES.includes(value as PostCategory);
+}
+
 function resolveAuthorName(
   firstName: string | null,
   lastName: string | null,
@@ -32,8 +40,8 @@ export async function GET(request: NextRequest) {
 
     // Build where conditions
     const conditions = [eq(posts.status, "published")];
-    if (category) {
-      conditions.push(eq(posts.category, category as any));
+    if (category && isPostCategory(category)) {
+      conditions.push(eq(posts.category, category));
     }
     if (coverStory) {
       conditions.push(eq(posts.isCoverStory, true));

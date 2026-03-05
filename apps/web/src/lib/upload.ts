@@ -12,7 +12,8 @@ export const ALLOWED_IMAGE_TYPES = [
   "image/gif",
 ] as const;
 
-export const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (Vercel server upload limit)
+// 4.5MB (Vercel server upload limit)
+export const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 
 /**
  * Validate if a file is an allowed image type
@@ -64,6 +65,7 @@ export function generateImagePathname(
   }
 
   // Note: addRandomSuffix is handled by Vercel Blob's put() option
+
   return pathname;
 }
 

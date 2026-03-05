@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     description:
       "Explore country music articles, interviews, and features from Arkansas artists on Dead Party Media.",
-    images: [{ url: ogImage, width: 1200, height: 630, alt: "Dead Party Media Country Music" }],
+    images: [{ alt: "Dead Party Media Country Music", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
     title: `Country | ${siteName}`,

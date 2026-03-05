@@ -8,8 +8,10 @@ declare global {
   interface CustomJwtSessionClaims {
     metadata: {
       role?: Roles;
-      artistId?: number; // For artists claiming their profile
-      onboardingComplete?: boolean; // Track if user has completed onboarding
+      // For artists claiming their profile
+      artistId?: number;
+      // Track if user has completed onboarding
+      onboardingComplete?: boolean;
     };
   }
 }

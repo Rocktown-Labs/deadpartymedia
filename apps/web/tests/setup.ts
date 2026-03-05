@@ -33,10 +33,10 @@ vi.mock("@/lib/logger", () => ({
   },
   logger: {
     child: vi.fn(() => ({
-      info: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
       debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
     })),
     debug: vi.fn(),
     error: vi.fn(),

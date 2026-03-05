@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { inviteArtistToClaim } from "../actions";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils/error";
 
 interface InviteArtistButtonProps {
   artistId: number;
@@ -13,7 +14,7 @@ interface InviteArtistButtonProps {
 export function InviteArtistButton({ artistId, email }: InviteArtistButtonProps) {
   const [isPending, startTransition] = useTransition();
 
-  const handleInvite = async () => {
+  const handleInvite = () => {
     startTransition(async () => {
       try {
         const result = await inviteArtistToClaim(artistId, email);
@@ -22,8 +23,8 @@ export function InviteArtistButton({ artistId, email }: InviteArtistButtonProps)
         } else {
           toast.error(result.error || "Failed to send invitation.");
         }
-      } catch (error: any) {
-        toast.error(error.message || "Failed to send invitation.");
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Failed to send invitation."));
       }
     });
   };

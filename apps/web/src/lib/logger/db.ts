@@ -2,7 +2,8 @@ import { logger } from "../logger";
 import { withOperationContext } from "./context";
 import { sanitizeError } from "./sanitize";
 
-const SLOW_QUERY_THRESHOLD_MS = 1000; // 1 second
+// 1 second
+const SLOW_QUERY_THRESHOLD_MS = 1000;
 
 /**
  * Log a database operation with timing and context
@@ -36,6 +37,7 @@ export async function logDbOperation<T>(
       return result;
     }
     // Just log the operation without executing
+
     log.info({ entityId, entityType, operation }, `Database operation: ${operation}`);
     return undefined;
   } catch (error) {

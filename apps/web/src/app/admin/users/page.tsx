@@ -206,9 +206,9 @@ export default async function UsersPage({
       (userConditions ? userRowsQuery.where(userConditions) : userRowsQuery)
         .orderBy(
           usrSort === "name"
-            ? (usrOrder === "asc"
+            ? usrOrder === "asc"
               ? asc(users.firstName)
-              : desc(users.firstName))
+              : desc(users.firstName)
             : usrSort === "email"
               ? usrOrder === "asc"
                 ? asc(users.email)
@@ -221,9 +221,9 @@ export default async function UsersPage({
                   ? asc(users.createdAt)
                   : desc(users.createdAt),
           usrSort === "name"
-            ? (usrOrder === "asc"
+            ? usrOrder === "asc"
               ? asc(users.lastName)
-              : desc(users.lastName))
+              : desc(users.lastName)
             : desc(users.createdAt),
         )
         .limit(ADMIN_PAGE_SIZE)
@@ -232,9 +232,9 @@ export default async function UsersPage({
       (artistConditions ? artistRowsQuery.where(artistConditions) : artistRowsQuery)
         .orderBy(
           artSort === "name"
-            ? (artOrder === "asc"
+            ? artOrder === "asc"
               ? asc(artists.name)
-              : desc(artists.name))
+              : desc(artists.name)
             : artSort === "genre"
               ? artOrder === "asc"
                 ? asc(artists.genre)
@@ -280,7 +280,9 @@ export default async function UsersPage({
   const localUsersTotal = Number(localUsersTotalRows[0]?.total ?? 0);
   const localArtistsTotal = Number(localArtistsTotalRows[0]?.total ?? 0);
 
-  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
+  const currentSearchParams = buildSearchParams(
+    params as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <div className="space-y-6">

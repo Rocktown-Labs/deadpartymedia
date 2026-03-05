@@ -152,9 +152,9 @@ export function useCreateComment() {
               .map((detail: unknown) =>
                 typeof detail === "string"
                   ? detail
-                  : (typeof detail === "object" && detail !== null
+                  : typeof detail === "object" && detail !== null
                     ? JSON.stringify(detail)
-                    : ""),
+                    : "",
               )
               .filter(Boolean)
               .join(", ")

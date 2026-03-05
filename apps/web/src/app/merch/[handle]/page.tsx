@@ -1,12 +1,81 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProduct } from "@/lib/fourthwall";
+import { getAbsoluteUrl, getImageUrl, getSiteDefaults, sanitizeDescription } from "@/lib/seo";
 import { Gallery } from "@/components/product/gallery";
 import { ProductProvider } from "@/components/product/product-context";
 import { ProductDescription } from "@/components/product/product-description";
+import type { Product } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default async function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
+interface ProductPageProps {
+  params: Promise<{ handle: string }>;
+}
+
+const NOT_FOUND_METADATA: Metadata = {
+  description: "The merch item you're looking for could not be found.",
+  title: "Merch Item Not Found",
+};
+
+const buildProductMetadata = (product: Product): Metadata => {
+  const { siteName } = getSiteDefaults();
+  const fullTitle = `${product.title} | ${siteName}`;
+  const description = sanitizeDescription(
+    product.descriptionHtml || product.description,
+    `Shop ${product.title} from ${siteName}.`,
+  );
+  const url = getAbsoluteUrl(`/merch/${product.handle}`);
+  const imageUrl = getImageUrl(product.featuredImage.url);
+
+  return {
+    alternates: {
+      canonical: url,
+    },
+    description,
+    openGraph: {
+      description,
+      images: [{ alt: product.title, height: 630, url: imageUrl, width: 1200 }],
+      locale: "en_US",
+      siteName,
+      title: fullTitle,
+      type: "website",
+      url,
+    },
+    title: product.title,
+    twitter: {
+      card: "summary_large_image",
+      description,
+      images: [imageUrl],
+      title: fullTitle,
+    },
+  };
+};
+
+const buildInitialVariantState = (product: Product): Record<string, string> => {
+  const initialVariant =
+    product.variants.find((variant) => variant.availableForSale) || product.variants[0];
+  const state: Record<string, string> = {};
+
+  for (const option of initialVariant?.selectedOptions ?? []) {
+    state[option.name.toLowerCase()] = option.value;
+  }
+
+  return state;
+};
+
+export const generateMetadata = async ({ params }: ProductPageProps): Promise<Metadata> => {
+  const { handle } = await params;
+
+  if (!handle) {
+    return NOT_FOUND_METADATA;
+  }
+
+  const product = await getProduct(handle, "USD");
+  return product ? buildProductMetadata(product) : NOT_FOUND_METADATA;
+};
+
+export default async function ProductPage({ params }: ProductPageProps) {
   const { handle } = await params;
 
   if (!handle) {
@@ -19,14 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
     return notFound();
   }
 
-  // Preselect the first available variant so options and Add to Cart aren't disabled by default
-  const initialVariant =
-    product.variants.find((variant) => variant.availableForSale) || product.variants[0];
-  const initialState =
-    initialVariant?.selectedOptions.reduce<Record<string, string>>((acc, option) => {
-      acc[option.name.toLowerCase()] = option.value;
-      return acc;
-    }, {}) || {};
+  const initialState = buildInitialVariantState(product);
 
   return (
     <ProductProvider initialState={initialState}>

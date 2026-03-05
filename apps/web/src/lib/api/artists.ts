@@ -193,7 +193,8 @@ export function useSearchSpotifyArtists(query: string) {
       return response.json();
     },
     enabled: query.length >= 5,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 }
@@ -215,7 +216,8 @@ export function useSpotifyArtistById(id: string | null) {
       return response.json();
     },
     enabled: !!id && id.trim().length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 }

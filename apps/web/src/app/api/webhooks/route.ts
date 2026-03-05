@@ -191,9 +191,12 @@ export async function POST(req: NextRequest) {
     // Handle user.deleted event
     if (evt.type === "user.deleted") {
       const { id } = evt.data;
+      if (!id) {
+        return NextResponse.json({ error: "Webhook payload missing user id" }, { status: 400 });
+      }
 
       // Delete user from database
-      await db.delete(users).where(eq(users.clerkId, id!));
+      await db.delete(users).where(eq(users.clerkId, id));
 
       withOperationContext(log, "webhook_user_deleted", "user", id).info(
         { userId: id },

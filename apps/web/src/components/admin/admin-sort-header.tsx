@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Route } from "next";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { createUrl } from "@/lib/utils";
-import { getNextSortState, mergeSearchParams, parseSortOrderParam } from '@/lib/admin/table-state';
-import type { SortOrder } from '@/lib/admin/table-state';
+import { getNextSortState, mergeSearchParams, parseSortOrderParam } from "@/lib/admin/table-state";
+import type { SortOrder } from "@/lib/admin/table-state";
 import { cn } from "@/lib/utils";
 
 interface AdminSortHeaderProps {

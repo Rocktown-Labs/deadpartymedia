@@ -26,6 +26,7 @@ const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
   };
 
   // Set up the chain: select().from().where() - where() can return results directly or chain to limit/orderBy
+
   mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
   mockDbChain.from.mockReturnValue({
     innerJoin: mockDbChain.innerJoin,
@@ -35,9 +36,12 @@ const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
   mockDbChain.innerJoin.mockReturnValue({ where: mockDbChain.where });
   mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where });
   // where() can return results directly (for artists route) or chain to limit/orderBy
+
   // Default: return promise (for artists list route) - will be overridden per test
+
   mockDbChain.where.mockResolvedValue([]);
-  mockOrderBy.mockResolvedValue([]); // orderBy can return results directly
+  // orderBy can return results directly
+  mockOrderBy.mockResolvedValue([]);
 
   return { mockDbChain, mockWhereResult };
 });
@@ -69,6 +73,7 @@ describe("gET /api/artists", () => {
     mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
     mockDbChain.from.mockReturnValue({ where: mockDbChain.where });
     // For artists list route, where() returns results directly (no limit/orderBy)
+
     mockDbChain.where.mockResolvedValue([]);
   });
 
@@ -97,6 +102,7 @@ describe("gET /api/artists", () => {
     ];
 
     // For artists list route, where() returns a promise directly (no limit/orderBy)
+
     mockDbChain.where.mockResolvedValue(mockArtists);
 
     const request = new Request("http://localhost:3001/api/artists");
@@ -136,6 +142,7 @@ describe("gET /api/artists", () => {
     ];
 
     // For artists list route with filter, where() returns a promise directly
+
     mockDbChain.where.mockResolvedValue(mockArtists);
 
     const request = new Request("http://localhost:3001/api/artists?genre=EDM");
@@ -147,6 +154,7 @@ describe("gET /api/artists", () => {
 
   it("should handle database errors", async () => {
     // For artists list route, where() returns a promise directly, so reject it
+
     mockDbChain.where.mockRejectedValue(new Error("Database error"));
 
     const request = new Request("http://localhost:3001/api/artists");
@@ -227,7 +235,9 @@ describe("gET /api/artists/[slug]/articles", () => {
     mockDbChain.innerJoin.mockReturnValue({ leftJoin: mockDbChain.leftJoin });
     mockDbChain.leftJoin.mockReturnValue({ where: mockDbChain.where });
     // where() returns chainable object with limit() and orderBy() for routes that chain
+
     // Use the hoisted mockWhereResult
+
     mockDbChain.where.mockReturnValue(mockWhereResult);
   });
 
@@ -259,11 +269,15 @@ describe("gET /api/artists/[slug]/articles", () => {
     mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
 
     // First query: artist lookup - select().from().where().limit()
+
     // where() returns chainable, limit() returns results
+
     mockDbChain.limit.mockResolvedValueOnce([mockArtist]);
 
     // Second query: articles - select().from().innerJoin().leftJoin().where().orderBy()
+
     // where() returns chainable, orderBy() returns results
+
     mockDbChain.orderBy.mockResolvedValueOnce(mockArticles);
 
     const request = new Request("http://localhost:3001/api/artists/test-artist/articles");
@@ -304,7 +318,9 @@ describe("gET /api/artists/[slug]/events", () => {
     });
     mockDbChain.innerJoin.mockReturnValue({ where: mockDbChain.where });
     // where() returns chainable object with limit() and orderBy() for routes that chain
+
     // Use the hoisted mockWhereResult
+
     mockDbChain.where.mockReturnValue(mockWhereResult);
   });
 
@@ -335,11 +351,15 @@ describe("gET /api/artists/[slug]/events", () => {
     mockDbChain.select.mockReturnValue({ from: mockDbChain.from });
 
     // First query: artist lookup - select().from().where().limit()
+
     // where() returns chainable, limit() returns results
+
     mockDbChain.limit.mockResolvedValueOnce([mockArtist]);
 
     // Second query: events - select().from().innerJoin().where().orderBy()
+
     // where() returns chainable, orderBy() returns results
+
     mockDbChain.orderBy.mockResolvedValueOnce(mockEvents);
 
     const request = new Request("http://localhost:3001/api/artists/test-artist/events");

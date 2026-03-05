@@ -1,4 +1,3 @@
-
 import { buildPostsApiPath } from "@/lib/api/articles";
 
 describe(buildPostsApiPath, () => {

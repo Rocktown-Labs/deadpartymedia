@@ -6,19 +6,27 @@ import { eq, and, desc, inArray } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+const EVENT_GENRES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
+
+type EventGenre = (typeof EVENT_GENRES)[number];
+
+function isEventGenre(value: string): value is EventGenre {
+  return EVENT_GENRES.includes(value as EventGenre);
+}
+
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
-    const status = searchParams.get("status"); // "upcoming" or "past"
+    const status = searchParams.get("status");
     const limit = Number.parseInt(searchParams.get("limit") || "10", 10);
     const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
 
     // Build where conditions
     const conditions = [eq(events.status, "published")];
-    if (genre) {
-      conditions.push(eq(events.genre, genre as any));
+    if (genre && isEventGenre(genre)) {
+      conditions.push(eq(events.genre, genre));
     }
 
     const results = await db

@@ -12,6 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { slug } = await params;
 
     // First get the artist by slug
+
     const [artist] = await db.select().from(artists).where(eq(artists.slug, slug)).limit(1);
 
     if (!artist) {
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Query events joined with eventArtists where artist matches and event is published
+
     const results = await db
       .select({
         created_at: events.createdAt,
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .orderBy(desc(events.date));
 
     // Transform to match existing EventList interface
+
     const eventList = results.map((event) => ({
       id: event.id,
       title: event.title,
@@ -54,7 +57,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ticket_link: event.ticket_link,
       price: event.price,
       genre: event.genre,
-      artists: [], // Would need to join to get all artists for this event
+      // Would need to join to get all artists for this event
+      artists: [],
       created_at: event.created_at.toISOString(),
     }));
 

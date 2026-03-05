@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { revokeInvitation } from "./actions";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils/error";
 
 interface RevokeInvitationButtonProps {
   invitationId: string;
@@ -15,18 +16,19 @@ export function RevokeInvitationButton({ invitationId, email }: RevokeInvitation
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  const handleRevoke = async () => {
+  const handleRevoke = () => {
     startTransition(async () => {
       try {
         const result = await revokeInvitation(invitationId);
         if (result.success) {
           toast.success(`Invitation for ${email} has been revoked.`);
-          router.refresh(); // Refresh the page to show updated invitation list
+          // Refresh the page to show updated invitation list
+          router.refresh();
         } else {
           toast.error(result.error || "Failed to revoke invitation.");
         }
-      } catch (error: any) {
-        toast.error(error.message || "Failed to revoke invitation.");
+      } catch (error) {
+        toast.error(getErrorMessage(error, "Failed to revoke invitation."));
       }
     });
   };

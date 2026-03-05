@@ -72,7 +72,7 @@ export const createUserWithRole = (
   imageUrl: "https://example.com/avatar.jpg",
   lastName: "User",
   publicMetadata: {
-    role,
     onboardingComplete: role !== "fan" && role !== "artist",
+    role,
   },
 });

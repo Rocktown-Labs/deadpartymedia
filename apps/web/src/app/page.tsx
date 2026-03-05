@@ -1,7 +1,10 @@
 "use client";
 import HomepageClient from "@/components/homepage-client";
+import type { HomepageArticle, HomepageEvent } from "@/components/homepage-client";
 import { useArticles } from "@/lib/api/articles";
+import type { ArticleList } from "@/lib/api/articles";
 import { useEvents } from "@/lib/api/events";
+import type { EventList } from "@/lib/api/events";
 import { useProducts } from "@/lib/api/products";
 
 export default function DeadPartyMedia() {
@@ -12,13 +15,13 @@ export default function DeadPartyMedia() {
   // Ensure articles and events are arrays
   // If editorial APIs fail, we still render the homepage and show skeletons/empty states,
   // while keeping merch (Fourthwall) available.
-  const articlesArray = Array.isArray(articles) ? articles : [];
-  const eventsArray = Array.isArray(events) ? events : [];
+  const articlesArray: ArticleList[] = Array.isArray(articles) ? articles : [];
+  const eventsArray: EventList[] = Array.isArray(events) ? events : [];
 
   // Transform articles to match homepage-client expected format
-  const transformedArticles = articlesArray.map((article: any) => ({
+  const transformedArticles: HomepageArticle[] = articlesArray.map((article) => ({
     ...article,
-    author: typeof article.author === "string" ? article.author : article.author?.name || "Unknown",
+    author: article.author?.name || "Unknown",
     date: article.published_at
       ? new Date(article.published_at).toLocaleDateString("en-US", {
           day: "numeric",
@@ -30,7 +33,7 @@ export default function DeadPartyMedia() {
           month: "short",
           year: "numeric",
         }),
-    image: article.cover_image || article.image || "/placeholder.svg",
+    image: article.cover_image || "/placeholder.svg",
   }));
 
   // Transform data for homepage
@@ -38,7 +41,7 @@ export default function DeadPartyMedia() {
   const articlesData = transformedArticles;
 
   // Transform events for the homepage format
-  const upcomingEvents = eventsArray
+  const upcomingEvents: HomepageEvent[] = eventsArray
     .filter((event) => {
       try {
         return new Date(event.date) >= new Date();
@@ -48,7 +51,7 @@ export default function DeadPartyMedia() {
     })
     .slice(0, 3)
     .map((event) => ({
-      artist: (event.artists || []).map((a: any) => a.name).join(" & ") || "Various Artists",
+      artist: (event.artists || []).map((artist) => artist.name).join(" & ") || "Various Artists",
       date: {
         day: new Date(event.date).getDate().toString(),
         month: new Date(event.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase(),

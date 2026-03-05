@@ -42,29 +42,16 @@ vi.mock<typeof import("@/lib/logger/sanitize")>(import("@/lib/logger/sanitize"),
 }));
 
 // Mock database - hoist variables to avoid initialization errors
-const {
-  mockInsert,
-  mockUpdate,
-  mockDelete,
-  mockSelect,
-  mockValues,
-  mockReturning,
-  mockSet,
-  mockWhere,
-  mockFrom,
-  mockLimit,
-} = vi.hoisted(() => ({
-  mockDelete: vi.fn(),
-  mockFrom: vi.fn(),
-  mockInsert: vi.fn(),
-  mockLimit: vi.fn(),
-  mockReturning: vi.fn(),
-  mockSelect: vi.fn(),
-  mockSet: vi.fn(),
-  mockUpdate: vi.fn(),
-  mockValues: vi.fn(),
-  mockWhere: vi.fn(),
-}));
+const { mockInsert, mockUpdate, mockDelete, mockSelect, mockValues, mockReturning, mockSet } =
+  vi.hoisted(() => ({
+    mockDelete: vi.fn(),
+    mockInsert: vi.fn(),
+    mockReturning: vi.fn(),
+    mockSelect: vi.fn(),
+    mockSet: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockValues: vi.fn(),
+  }));
 
 vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
   db: {
@@ -83,6 +70,7 @@ describe(createEvent, () => {
     vi.mocked(canCreate).mockResolvedValue(true);
 
     // Set up insert chain
+
     mockValues.mockReturnValue({ returning: mockReturning });
     mockReturning.mockResolvedValue([{ id: 1, slug: "test-event" }]);
     mockInsert.mockReturnValue({ values: mockValues });
@@ -98,10 +86,13 @@ describe(createEvent, () => {
     formData.append("date", "2024-01-01");
     formData.append("genre", "EDM");
     formData.append("status", "published");
-    formData.append("artistIds", "1,2"); // Comma-separated string
+    // Comma-separated string
+    formData.append("artistIds", "1,2");
 
     // Mock event insert - rely on call order instead of table identity (table is an object)
+
     // Chain: insert() -> { values } -> values() -> { returning } -> returning() -> Promise
+
     let insertCallCount = 0;
     mockInsert.mockImplementation(() => {
       insertCallCount++;
@@ -114,6 +105,7 @@ describe(createEvent, () => {
         };
       }
       // Subsequent calls (eventArtists) don't use returning()
+
       return { values: vi.fn().mockResolvedValue() };
     });
 
@@ -121,7 +113,9 @@ describe(createEvent, () => {
 
     expect(mockInsert).toHaveBeenCalledWith();
     // Should insert eventArtists relations
-    expect(mockInsert).toHaveBeenCalledTimes(2); // Once for event, once for eventArtists
+
+    // Once for event, once for eventArtists
+    expect(mockInsert).toHaveBeenCalledTimes(2);
   });
 
   it("should create event without artist relations", async () => {
@@ -136,6 +130,7 @@ describe(createEvent, () => {
     formData.append("status", "published");
 
     // Mock event insert - need to return the chain properly
+
     const mockReturning = vi.fn().mockResolvedValue([{ id: 1, slug: "test-event" }]);
     const mockValuesForEvent = vi.fn().mockReturnValue({ returning: mockReturning });
     const mockEventInsert = vi.fn().mockReturnValue({ values: mockValuesForEvent });
@@ -192,7 +187,9 @@ describe(updateEvent, () => {
     vi.mocked(auth).mockResolvedValue({ userId } as any);
 
     // First select call: event lookup with limit(1)
+
     // Second select call: existing eventArtists lookup returns rows directly
+
     mockSelect.mockImplementation(() => {
       selectCallCount += 1;
       if (selectCallCount === 1) {
@@ -220,6 +217,7 @@ describe(updateEvent, () => {
     vi.mocked(canEdit).mockResolvedValue(true);
 
     // Mock update chain
+
     mockSet.mockReturnValue({ where: vi.fn() });
     mockUpdate.mockReturnValue({ set: mockSet });
   });
@@ -234,14 +232,17 @@ describe(updateEvent, () => {
     formData.append("date", "2024-01-02");
     formData.append("genre", "EDM");
     formData.append("status", "published");
-    formData.append("artistIds", "2,3"); // Comma-separated string
+    // Comma-separated string
+    formData.append("artistIds", "2,3");
 
     // Mock delete for eventArtists
+
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
     mockDeleteWhere.mockResolvedValue();
 
     // Mock insert for new eventArtists
+
     const mockEventArtistsInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockResolvedValue(),
     });
@@ -250,8 +251,10 @@ describe(updateEvent, () => {
     await updateEvent(1, formData);
 
     expect(mockUpdate).toHaveBeenCalledWith();
-    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old eventArtists
-    expect(mockInsert).toHaveBeenCalledWith(); // Should insert new eventArtists
+    // Should delete old eventArtists
+    expect(mockDelete).toHaveBeenCalledWith();
+    // Should insert new eventArtists
+    expect(mockInsert).toHaveBeenCalledWith();
   });
 
   it("should remove all artists if empty artistIds", async () => {
@@ -272,8 +275,10 @@ describe(updateEvent, () => {
 
     await updateEvent(1, formData);
 
-    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old eventArtists
-    expect(mockInsert).not.toHaveBeenCalled(); // Should not insert new eventArtists
+    // Should delete old eventArtists
+    expect(mockDelete).toHaveBeenCalledWith();
+    // Should not insert new eventArtists
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("should throw error if event not found", async () => {
@@ -326,7 +331,9 @@ describe(deleteEvent, () => {
     const mockSelectWhere = vi.fn().mockReturnValue({ limit: mockSelectLimit });
     const mockSelectFrom = vi.fn().mockReturnValue({ where: mockSelectWhere });
     // First select call in deleteEvent: event status lookup with limit()
+
     // Second select call in deleteEvent: eventArtists lookup resolved directly
+
     let selectCallCount = 0;
     mockSelect.mockImplementation(() => {
       selectCallCount += 1;

@@ -73,12 +73,7 @@ import { useState } from "react";
 
 const [value, setValue] = useState(0.5);
 
-<Slider
-  value={value}
-  onValueChange={setValue}
-  minimumValue={0}
-  maximumValue={1}
-/>;
+<Slider value={value} onValueChange={setValue} minimumValue={0} maximumValue={1} />;
 ```
 
 ### Customization
@@ -99,13 +94,7 @@ const [value, setValue] = useState(0.5);
 ### Discrete Steps
 
 ```tsx
-<Slider
-  value={value}
-  onValueChange={setValue}
-  minimumValue={0}
-  maximumValue={10}
-  step={1}
-/>
+<Slider value={value} onValueChange={setValue} minimumValue={0} maximumValue={10} step={1} />
 ```
 
 ## Date/Time Picker
@@ -154,11 +143,7 @@ const [date, setDate] = useState(new Date());
 ### Time Intervals
 
 ```tsx
-<DateTimePicker
-  value={date}
-  mode="time"
-  minuteInterval={15}
-/>
+<DateTimePicker value={date} mode="time" minuteInterval={15} />
 ```
 
 ### Min/Max Dates
@@ -182,12 +167,7 @@ import { useState } from "react";
 
 const [count, setCount] = useState(0);
 
-<Stepper
-  value={count}
-  onValueChange={setCount}
-  minimumValue={0}
-  maximumValue={10}
-/>;
+<Stepper value={count} onValueChange={setCount} minimumValue={0} maximumValue={10} />;
 ```
 
 ## TextInput
@@ -206,7 +186,7 @@ import { TextInput } from "react-native";
     borderRadius: 8,
     backgroundColor: "#f0f0f0",
   }}
-/>
+/>;
 ```
 
 ### Keyboard Types
@@ -234,12 +214,7 @@ import { TextInput } from "react-native";
 ### Multiline
 
 ```tsx
-<TextInput
-  multiline
-  numberOfLines={4}
-  textAlignVertical="top"
-  style={{ minHeight: 100 }}
-/>
+<TextInput multiline numberOfLines={4} textAlignVertical="top" style={{ minHeight: 100 }} />
 ```
 
 ## Picker (Wheel)

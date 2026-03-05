@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { toast } from "sonner";
+import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 
 interface ArtistFormProps {
   initialData?: {
@@ -88,11 +89,10 @@ export function ArtistForm({
       await onSubmit(formData);
     } catch (error) {
       // Server actions may throw on validation/authorization, or throw a redirect signal.
-      const digest = (error as any)?.digest as string | undefined;
-      if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) {
+      if (isNextRedirectError(error)) {
         return;
       }
-      toast.error(error instanceof Error ? error.message : "Failed to save artist");
+      toast.error(getErrorMessage(error, "Failed to save artist"));
     } finally {
       setIsSaving(false);
     }

@@ -32,11 +32,11 @@ export const metadata: Metadata = {
     "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
 
   icons: {
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ sizes: "180x180", type: "image/png", url: "/apple-touch-icon.png" }],
     icon: [
-      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { sizes: "any", type: "image/x-icon", url: "/favicon.ico" },
+      { sizes: "16x16", type: "image/png", url: "/favicon-16x16.png" },
+      { sizes: "32x32", type: "image/png", url: "/favicon-32x32.png" },
     ],
   },
   manifest: "/site.webmanifest",
@@ -46,10 +46,10 @@ export const metadata: Metadata = {
       "Your #1 digital outlet for Arkansas music and live events. We cover artists across all genres, host events, and deliver exclusive content and interviews.",
     images: [
       {
+        alt: "Dead Party Media Logo",
+        height: 630,
         url: DEFAULT_OG_IMAGE,
         width: 1200,
-        height: 630,
-        alt: "Dead Party Media Logo",
       },
     ],
     locale: "en_US",

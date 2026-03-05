@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useMarkArticleRead } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
-import posthog from "posthog-js";
+import posthogClient from "posthog-js";
 import { ArticleComments } from "@/components/comments/article-comments";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useArticle } from "@/lib/api/articles";
@@ -17,7 +18,26 @@ interface ArticlePageClientProps {
   slug: string;
 }
 
+const getInternalReferrerPath = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const { referrer } = document;
+  if (!referrer) {
+    return null;
+  }
+
+  try {
+    const referrerUrl = new URL(referrer);
+    return referrerUrl.origin === window.location.origin ? referrerUrl.pathname : null;
+  } catch {
+    return null;
+  }
+};
+
 export function ArticlePageClient({ slug }: ArticlePageClientProps) {
+  const router = useRouter();
   const { data: article, isLoading } = useArticle(slug);
   const { isSignedIn, user: currentUser } = useUser();
   const markArticleRead = useMarkArticleRead();
@@ -38,7 +58,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
 
   // Track article viewed event (top of content funnel) - using ref to prevent duplicate tracking
   if (article && articleViewedRef.current !== article.slug) {
-    posthog.capture("article_viewed", {
+    posthogClient.capture("article_viewed", {
       article_category: article.category,
       article_id: article.id,
       article_slug: article.slug,
@@ -50,7 +70,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   }
 
   const handleLikeClick = () => {
-    posthog.capture("article_liked", {
+    posthogClient.capture("article_liked", {
       article_category: article?.category,
       article_id: article?.id,
       article_slug: slug,
@@ -59,12 +79,22 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   };
 
   const handleShareClick = () => {
-    posthog.capture("article_shared", {
+    posthogClient.capture("article_shared", {
       article_category: article?.category,
       article_id: article?.id,
       article_slug: slug,
       article_title: article?.title,
     });
+  };
+
+  const handleBackClick = () => {
+    const internalReferrerPath = getInternalReferrerPath();
+    if (internalReferrerPath) {
+      router.back();
+      return;
+    }
+
+    router.push("/");
   };
 
   if (isLoading) {
@@ -93,16 +123,17 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
       <ArticleStructuredData article={article} />
       <div className="min-h-screen bg-[#0A0A0A] text-white">
         {/* Article Content */}
-        <main className="pt-24 pb-20">
+        <main className="pt-40 pb-20">
           <div className="container mx-auto px-6 max-w-4xl">
             {/* Back Button */}
-            <Link
-              href="/"
+            <button
+              type="button"
+              onClick={handleBackClick}
               className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Articles
-            </Link>
+            </button>
 
             {/* Article Header */}
             <header className="mb-12">

@@ -69,9 +69,9 @@ export default async function ArtistsPage({
       .from(artists)
       .orderBy(
         sort === "name"
-          ? (order === "asc"
+          ? order === "asc"
             ? asc(artists.name)
-            : desc(artists.name))
+            : desc(artists.name)
           : sort === "genre"
             ? order === "asc"
               ? asc(artists.genre)
@@ -98,7 +98,9 @@ export default async function ArtistsPage({
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
+  const currentSearchParams = buildSearchParams(
+    params as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <div>

@@ -7,15 +7,21 @@ import { createChildLogger } from "../logger";
  */
 export function generateRequestId(): string {
   // Use crypto.getRandomValues() which is available in Edge Runtime
+
   // Generate a UUID v4 compatible string
+
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
 
   // Set version (4) and variant bits
-  bytes[6] = (bytes[6] & 0x0F) | 0x40; // Version 4
-  bytes[8] = (bytes[8] & 0x3F) | 0x80; // Variant 10
+
+  // Version 4
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  // Variant 10
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
 
   // Convert to UUID string format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 
   return [

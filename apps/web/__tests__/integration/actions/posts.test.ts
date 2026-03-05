@@ -20,7 +20,8 @@ vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
 }));
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
-  revalidatePath: vi.fn(() => {}), // Mock to not throw
+  // Mock to not throw
+  revalidatePath: vi.fn(() => {}),
   revalidateTag: vi.fn(() => {}),
 }));
 
@@ -77,6 +78,7 @@ describe(createPost, () => {
     vi.mocked(canCreate).mockResolvedValue(true);
 
     // Set up insert chain
+
     mockValues.mockReturnValue({ returning: mockReturning });
     mockReturning.mockResolvedValue([{ id: 1 }]);
     mockInsert.mockReturnValue({ values: mockValues });
@@ -91,10 +93,13 @@ describe(createPost, () => {
     formData.append("content", "{}");
     formData.append("status", "published");
     formData.append("isCoverStory", "false");
-    formData.append("artistIds", "1,2"); // Comma-separated string as sent by post-editor
+    // Comma-separated string as sent by post-editor
+    formData.append("artistIds", "1,2");
 
     // Mock post insert - rely on call order instead of table identity (table is an object)
+
     // Chain: insert() -> { values } -> values() -> { returning } -> returning() -> Promise
+
     let insertCallCount = 0;
     mockInsert.mockImplementation(() => {
       insertCallCount++;
@@ -107,6 +112,7 @@ describe(createPost, () => {
         };
       }
       // Subsequent calls (postArtists) don't use returning()
+
       return { values: vi.fn().mockResolvedValue() };
     });
 
@@ -114,7 +120,9 @@ describe(createPost, () => {
 
     expect(mockInsert).toHaveBeenCalledWith();
     // Should insert postArtists relations
-    expect(mockInsert).toHaveBeenCalledTimes(2); // Once for post, once for postArtists
+
+    // Once for post, once for postArtists
+    expect(mockInsert).toHaveBeenCalledTimes(2);
   });
 
   it("should create post without artist relations", async () => {
@@ -243,7 +251,9 @@ describe(updatePost, () => {
     vi.mocked(auth).mockResolvedValue({ userId } as any);
 
     // First select call: post lookup with limit(1)
+
     // Second select call: existing postArtists lookup returns rows directly
+
     mockSelect.mockImplementation(() => {
       selectCallCount += 1;
       if (selectCallCount === 1) {
@@ -273,6 +283,7 @@ describe(updatePost, () => {
     vi.mocked(canEdit).mockResolvedValue(true);
 
     // Mock update chain
+
     mockSet.mockReturnValue({ where: vi.fn() });
     mockUpdate.mockReturnValue({ set: mockSet });
   });
@@ -286,22 +297,27 @@ describe(updatePost, () => {
     formData.append("content", "{}");
     formData.append("status", "published");
     formData.append("isCoverStory", "false");
-    formData.append("artistIds", "2,3"); // Comma-separated string
+    // Comma-separated string
+    formData.append("artistIds", "2,3");
 
     // Mock delete for postArtists
+
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
     mockDeleteWhere.mockResolvedValue();
 
     // Mock insert for new postArtists
+
     const mockPostArtistsInsert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue() });
     mockInsert.mockReturnValue(mockPostArtistsInsert());
 
     await updatePost(1, formData);
 
     expect(mockUpdate).toHaveBeenCalledWith();
-    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old postArtists
-    expect(mockInsert).toHaveBeenCalledWith(); // Should insert new postArtists
+    // Should delete old postArtists
+    expect(mockDelete).toHaveBeenCalledWith();
+    // Should insert new postArtists
+    expect(mockInsert).toHaveBeenCalledWith();
   });
 
   it("should remove all artists if empty artistIds", async () => {
@@ -321,8 +337,10 @@ describe(updatePost, () => {
 
     await updatePost(1, formData);
 
-    expect(mockDelete).toHaveBeenCalledWith(); // Should delete old postArtists
-    expect(mockInsert).not.toHaveBeenCalled(); // Should not insert new postArtists
+    // Should delete old postArtists
+    expect(mockDelete).toHaveBeenCalledWith();
+    // Should not insert new postArtists
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("should throw error if post not found", async () => {
@@ -373,7 +391,9 @@ describe(deletePost, () => {
     const mockSelectWhere = vi.fn().mockReturnValue({ limit: mockSelectLimit });
     const mockSelectFrom = vi.fn().mockReturnValue({ where: mockSelectWhere });
     // First select call in deletePost: post status lookup with limit()
+
     // Second select call in deletePost: postArtists lookup resolved directly
+
     let selectCallCount = 0;
     mockSelect.mockImplementation(() => {
       selectCallCount += 1;
@@ -435,7 +455,8 @@ describe(requestDeletePost, () => {
 
   it("should request deletion for writer own post", async () => {
     vi.mocked(canEdit).mockResolvedValue(true);
-    vi.mocked(canDelete).mockResolvedValue(false); // Not super admin
+    // Not super admin
+    vi.mocked(canDelete).mockResolvedValue(false);
 
     await requestDeletePost(1);
 
@@ -449,7 +470,8 @@ describe(requestDeletePost, () => {
 
   it("should delete directly if super admin", async () => {
     vi.mocked(canEdit).mockResolvedValue(true);
-    vi.mocked(canDelete).mockResolvedValue(true); // Super admin
+    // Super admin
+    vi.mocked(canDelete).mockResolvedValue(true);
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
@@ -457,8 +479,10 @@ describe(requestDeletePost, () => {
 
     await requestDeletePost(1);
 
-    expect(mockDelete).toHaveBeenCalledWith(); // Should delete directly
-    expect(mockUpdate).not.toHaveBeenCalled(); // Should not request deletion
+    // Should delete directly
+    expect(mockDelete).toHaveBeenCalledWith();
+    // Should not request deletion
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it("should throw error if not authorized to edit", async () => {
@@ -474,7 +498,8 @@ describe(requestDeletePost, () => {
         id: 1,
       },
     ]);
-    vi.mocked(canEdit).mockResolvedValue(false); // Can't edit other's post
+    // Can't edit other's post
+    vi.mocked(canEdit).mockResolvedValue(false);
 
     await expect(requestDeletePost(1)).rejects.toThrow("Unauthorized");
   });

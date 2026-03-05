@@ -19,6 +19,14 @@ interface FanOnboardingProps {
   initialName?: string;
 }
 
+function hasSuccessfulSubmission(state: unknown): state is { success: true } {
+  if (typeof state !== "object" || state === null) {
+    return false;
+  }
+  const { success } = state as { success?: unknown };
+  return success === true;
+}
+
 export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const router = useRouter();
   const { user } = useUser();
@@ -26,7 +34,7 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
 
   const form = useForm({
     ...fanFormOptions,
-    transform: useTransform((baseForm) => mergeForm(baseForm, state!), [state]),
+    transform: useTransform((baseForm) => mergeForm(baseForm, state ?? initialFormState), [state]),
   });
 
   const formErrors = useStore(form.store, (formState) => formState.errors);
@@ -44,8 +52,7 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
 
   // Handle successful submission
   useEffect(() => {
-    const success = (state as any)?.success;
-    if (success && user) {
+    if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
       user.reload().then(() => {
         router.push("/dashboard");

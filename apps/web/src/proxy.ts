@@ -155,9 +155,9 @@ export default clerkMiddleware(async (auth, req) => {
       const targetPath =
         role === "super_admin" || role === "writer"
           ? "/admin"
-          : (role === "artist"
+          : role === "artist"
             ? "/artist-dashboard"
-            : "/dashboard");
+            : "/dashboard";
 
       if (userId) {
         log.info(

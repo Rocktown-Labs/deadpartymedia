@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useArticles } from "@/lib/api/articles";
 import type { ArticleList } from "@/lib/api/articles";
+import { PageTitleHeader } from "@/components/page-title-header";
 
 const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
 const categoryRouteMap: Record<string, Route> = {
@@ -71,16 +72,10 @@ export default function MusicPage() {
             Back to Home
           </Link>
 
-          {/* Page Header */}
-          <div className="mb-16">
-            <div className="flex items-center mb-6">
-              <h1 className="text-5xl font-black tracking-wider">MUSIC</h1>
-              <div className="ml-8 w-32 h-1 bg-[#7CFC00]"></div>
-            </div>
-            <p className="text-xl text-gray-400">
-              Explore the diverse sounds and stories of Arkansas music
-            </p>
-          </div>
+          <PageTitleHeader
+            title="MUSIC"
+            description="Explore the diverse sounds and stories of Arkansas music"
+          />
 
           {/* Music Categories */}
           <div className="space-y-16">

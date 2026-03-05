@@ -6,6 +6,14 @@ import { eq, and, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
+const ARTIST_GENRES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
+
+type ArtistGenre = (typeof ARTIST_GENRES)[number];
+
+function isArtistGenre(value: string): value is ArtistGenre {
+  return ARTIST_GENRES.includes(value as ArtistGenre);
+}
+
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
@@ -14,8 +22,8 @@ export async function GET(request: NextRequest) {
 
     // Build where conditions
     const conditions = [];
-    if (genre) {
-      conditions.push(eq(artists.genre, genre as any));
+    if (genre && isArtistGenre(genre)) {
+      conditions.push(eq(artists.genre, genre));
     }
 
     // Query artists with counts

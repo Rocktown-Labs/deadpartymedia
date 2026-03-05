@@ -11,11 +11,29 @@ import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useRouter } from "next/navigation";
 import { useMonthlyHomepageStats } from "@/lib/api/stats";
 import type { Route } from "next";
+import type { ArticleList } from "@/lib/api/articles";
+
+export type HomepageArticle = Omit<ArticleList, "author"> & {
+  author: string;
+  date: string;
+  image: string;
+};
+
+export interface HomepageEvent {
+  artist: string;
+  date: {
+    day: string;
+    month: string;
+  };
+  image: string;
+  ticketUrl: string;
+  venue: string;
+}
 
 interface HomepageClientProps {
-  featuredArticles: any[];
-  articlesData: any[];
-  upcomingEvents: any[];
+  featuredArticles: HomepageArticle[];
+  articlesData: HomepageArticle[];
+  upcomingEvents: HomepageEvent[];
   featuredProducts: Product[];
   isArticlesLoading?: boolean;
   isEventsLoading?: boolean;
@@ -79,20 +97,20 @@ export default function HomepageClient({
       </div>
 
       {/* Magazine Cover Hero */}
-      <section className="relative pt-40 pb-20 px-6">
+      <section className="relative pt-28 sm:pt-32 lg:pt-40 pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6">
         <div className="container mx-auto my-2.5">
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Main Cover Story */}
             {isArticlesLoading ? (
               <div className="lg:col-span-8">
-                <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800">
+                <div className="relative h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800">
                   <Skeleton className="absolute inset-0" />
                   <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
-                    <Skeleton className="h-6 w-40 mb-6" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 px-3 sm:p-8 sm:px-3 lg:p-12 lg:px-3">
+                    <Skeleton className="h-6 w-40 mb-4 sm:mb-6" />
                     <Skeleton className="h-14 w-5/6 mb-4" />
-                    <Skeleton className="h-14 w-3/5 mb-6" />
-                    <Skeleton className="h-6 w-4/5 mb-8" />
+                    <Skeleton className="h-14 w-3/5 mb-4 sm:mb-6" />
+                    <Skeleton className="h-6 w-4/5 mb-6 sm:mb-8" />
                     <div className="flex items-center space-x-4">
                       <Skeleton className="h-4 w-28" />
                       <Skeleton className="h-4 w-24" />
@@ -101,12 +119,12 @@ export default function HomepageClient({
                   </div>
                 </div>
               </div>
-            ) : (featuredArticles.length > 0 ? (
+            ) : featuredArticles.length > 0 ? (
               <div className="lg:col-span-8">
                 <Link href={`/article/${featuredArticles[0]?.slug}`} prefetch={false}>
                   <div className="relative group cursor-pointer h-full">
                     {/* Cover Image */}
-                    <div className="relative h-full min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
+                    <div className="relative h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
                       <Image
                         src={
                           featuredArticles[0]?.image ||
@@ -120,31 +138,28 @@ export default function HomepageClient({
                       <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
 
                       {/* Magazine-style text overlay */}
-                      <div className="absolute inset-0 flex flex-col justify-end p-12 px-3">
+                      <div className="absolute inset-0 flex flex-col justify-end p-6 px-3 sm:p-8 sm:px-3 lg:p-12 lg:px-3">
                         {/* Category Label */}
-                        <div className="mb-6">
+                        <div className="mb-4 sm:mb-6">
                           <span className="inline-block px-4 py-2 bg-[#7CFC00] text-black text-xs font-black tracking-[0.3em] uppercase">
                             Cover Story
                           </span>
                         </div>
 
                         {/* Headline */}
-                        <h1 className="text-5xl lg:text-7xl font-black leading-[0.95] mb-6 tracking-tight">
+                        <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black leading-[0.95] mb-4 sm:mb-6 tracking-tight">
                           {featuredArticles[0]?.title}
                         </h1>
 
                         {/* Deck/Subheadline */}
-                        <p className="text-xl text-gray-300 mb-8 max-w-3xl leading-relaxed border-l-4 border-[#7CFC00] pl-6">
+                        <p className="text-base sm:text-lg lg:text-xl text-gray-300 mb-6 sm:mb-8 max-w-3xl leading-relaxed border-l-4 border-[#7CFC00] pl-4 sm:pl-6">
                           {featuredArticles[0]?.excerpt}
                         </p>
 
                         {/* Byline */}
-                        <div className="flex items-center space-x-6 text-sm text-gray-400 uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 lg:gap-x-6 text-xs sm:text-sm text-gray-400 uppercase tracking-wider">
                           <span className="font-medium">
-                            By{" "}
-                            {typeof featuredArticles[0]?.author === "string"
-                              ? featuredArticles[0]?.author
-                              : featuredArticles[0]?.author?.name || "Unknown"}
+                            By {featuredArticles[0]?.author || "Unknown"}
                           </span>
                           <span>•</span>
                           <span>
@@ -184,7 +199,7 @@ export default function HomepageClient({
                   </div>
                 </div>
               </div>
-            ))}
+            )}
 
             {/* Sidebar - In This Issue */}
             <div className="lg:col-span-4 flex flex-col gap-6">
@@ -242,7 +257,7 @@ export default function HomepageClient({
                         <Skeleton className="h-4 w-2/3" />
                       </div>
                     </>
-                  ) : (featuredArticles.length > 1 ? (
+                  ) : featuredArticles.length > 1 ? (
                     featuredArticles.slice(1, 3).map((article, index) => (
                       <Link
                         key={article.id || index}
@@ -266,17 +281,14 @@ export default function HomepageClient({
                             {article.title}
                           </h4>
                           <div className="text-xs text-gray-500 uppercase tracking-wider">
-                            By{" "}
-                            {typeof article.author === "string"
-                              ? article.author
-                              : article.author?.name || "Unknown"}
+                            By {article.author || "Unknown"}
                           </div>
                         </div>
                       </Link>
                     ))
                   ) : (
                     <p className="text-gray-400 text-sm">More articles coming soon...</p>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -355,7 +367,7 @@ export default function HomepageClient({
                 </div>
               ))}
             </div>
-          ) : (articlesData.length > 3 ? (
+          ) : articlesData.length > 3 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {articlesData.slice(3, visibleArticles).map((article) => (
                 <Link key={article.id} href={`/article/${article.slug}`} prefetch={false}>
@@ -380,27 +392,23 @@ export default function HomepageClient({
                       <h3 className="text-2xl font-black leading-tight group-hover:text-[#7CFC00] transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
+                      <p className="text-gray-400 leading-relaxed line-clamp-3">
                         {article.excerpt}
                       </p>
                       <div className="flex items-center text-xs text-gray-500 uppercase tracking-wider pt-4 border-t border-gray-800">
-                        <span className="font-medium">
-                          {typeof article.author === "string"
-                            ? article.author
-                            : article.author?.name || "Unknown"}
-                        </span>
+                        <span className="font-medium">{article.author || "Unknown"}</span>
                         <span className="mx-2">•</span>
                         <span>
                           {article.date ||
                             (article.published_at
                               ? new Date(article.published_at).toLocaleDateString("en-US", {
-                                  month: "short",
                                   day: "numeric",
+                                  month: "short",
                                   year: "numeric",
                                 })
                               : new Date(article.created_at).toLocaleDateString("en-US", {
-                                  month: "short",
                                   day: "numeric",
+                                  month: "short",
                                   year: "numeric",
                                 }))}
                         </span>
@@ -418,7 +426,7 @@ export default function HomepageClient({
                   : "More articles coming soon..."}
               </p>
             </div>
-          ))}
+          )}
 
           {articlesData.length > 3 && visibleArticles < articlesData.length && (
             <div className="text-center mt-16">
@@ -472,7 +480,7 @@ export default function HomepageClient({
                 </div>
               ))}
             </div>
-          ) : (upcomingEvents.length > 0 ? (
+          ) : upcomingEvents.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8">
               {upcomingEvents.map((event, index) => (
                 <div key={index} className="group cursor-pointer">
@@ -513,7 +521,7 @@ export default function HomepageClient({
                   : "No upcoming events right now."}
               </p>
             </div>
-          ))}
+          )}
         </div>
       </section>
 

@@ -402,13 +402,14 @@ async function main() {
 
     let selectedUrls = permalinkUrls;
 
-    if (options.since) {
+    const sinceDate = options.since;
+    if (sinceDate) {
       selectedUrls = selectedUrls.filter((url) => {
         const permalinkDate = extractPermalinkDate(url);
         if (!permalinkDate) {
           return false;
         }
-        return permalinkDate >= options.since!;
+        return permalinkDate >= sinceDate;
       });
       report.skippedBySinceCount = permalinkUrls.length - selectedUrls.length;
     }
@@ -652,7 +653,8 @@ async function main() {
           )
           .limit(1);
 
-        if (existingImportSource.length > 0) {
+        const [firstImportSource] = existingImportSource;
+        if (firstImportSource) {
           await db
             .update(schema.postImportSources)
             .set({
@@ -664,7 +666,7 @@ async function main() {
               sourceUrl: record.sourceUrl,
               updatedAt: new Date(),
             })
-            .where(eq(schema.postImportSources.id, existingImportSource[0]!.id));
+            .where(eq(schema.postImportSources.id, firstImportSource.id));
 
           report.importSourcesUpdated += 1;
         } else {

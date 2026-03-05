@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useArticles } from "@/lib/api/articles";
+import { PageTitleHeader } from "@/components/page-title-header";
 
 export default function HardcorePage() {
   const { data: articles, isLoading } = useArticles("HARDCORE & ROCK");
@@ -26,7 +27,7 @@ export default function HardcorePage() {
             Back to Music
           </Link>
 
-          <h1 className="text-5xl font-black mb-12">HARDCORE & ROCK</h1>
+          <PageTitleHeader title="HARDCORE & ROCK" />
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles && articles.length > 0 ? (

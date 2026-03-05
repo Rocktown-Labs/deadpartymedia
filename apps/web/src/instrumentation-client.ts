@@ -2,15 +2,18 @@ import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com";
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-  api_host: POSTHOG_HOST,
-  ui_host: POSTHOG_HOST,
-  // Enables capturing unhandled exceptions via Error Tracking
-  capture_exceptions: true,
-  // Turn on debug in development mode
-  debug: process.env.NODE_ENV === "development",
-});
+if (POSTHOG_KEY) {
+  posthog.init(POSTHOG_KEY, {
+    api_host: POSTHOG_HOST,
+    ui_host: POSTHOG_HOST,
+    // Enables capturing unhandled exceptions via Error Tracking
+    capture_exceptions: true,
+    // Turn on debug in development mode
+    debug: process.env.NODE_ENV === "development",
+  });
+}
 
 //IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches, especially components like a PostHogProvider. instrumentation-client.ts is the correct solution for initializating client-side PostHog in Next.js 15.3+ apps.
 Sentry.init({

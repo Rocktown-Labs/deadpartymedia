@@ -71,9 +71,9 @@ export default async function EventsPage({
     (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
       .orderBy(
         sort === "title"
-          ? (order === "asc"
+          ? order === "asc"
             ? asc(events.title)
-            : desc(events.title))
+            : desc(events.title)
           : sort === "venue"
             ? order === "asc"
               ? asc(events.venue)
@@ -100,7 +100,9 @@ export default async function EventsPage({
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(params as Record<string, string | string[] | undefined>);
+  const currentSearchParams = buildSearchParams(
+    params as Record<string, string | string[] | undefined>,
+  );
 
   return (
     <div>
@@ -215,9 +217,9 @@ export default async function EventsPage({
                         className={`rounded px-2 py-1 text-xs font-bold ${
                           event.status === "published"
                             ? "bg-green-500/20 text-green-400"
-                            : (event.status === "draft"
+                            : event.status === "draft"
                               ? "bg-yellow-500/20 text-yellow-400"
-                              : "bg-gray-500/20 text-gray-400")
+                              : "bg-gray-500/20 text-gray-400"
                         }`}
                       >
                         {event.status}

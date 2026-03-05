@@ -39,7 +39,7 @@ interface FourthwallProduct {
       size?: { name: string };
     };
     stock: { type: "LIMITED" | "UNLIMITED"; inStock?: number };
-    images: Array<{ url: string; transformedUrl: string }>;
+    images: { url: string; transformedUrl: string }[];
   }[];
 }
 
@@ -56,7 +56,7 @@ interface FourthwallCart {
         color?: { name: string; swatch: string };
         size?: { name: string };
       };
-      images: Array<{ url: string; transformedUrl: string }>;
+      images: { url: string; transformedUrl: string }[];
       product: {
         id: string;
         name: string;
@@ -121,7 +121,7 @@ async function fourthwallMutate<T>({
   method = "POST",
 }: {
   path: string;
-  body?: any;
+  body?: unknown;
   method?: "POST" | "PUT" | "DELETE";
 }): Promise<T> {
   try {
@@ -253,10 +253,10 @@ function transformProduct(fwProduct: FourthwallProduct): Product {
         availableForSale,
         id: v.id,
         images: v.images.map((img) => ({
-          url: img.transformedUrl || img.url,
           altText: fwProduct.name,
-          width: 800,
           height: 800,
+          url: img.transformedUrl || img.url,
+          width: 800,
         })),
         price: {
           amount: v.unitPrice.value.toString(),
@@ -283,15 +283,15 @@ function transformCart(fwCart: FourthwallCart, currency: string): Cart {
       merchandise: {
         id: item.variant.id,
         product: {
-          id: item.variant.product.id,
-          handle: item.variant.product.slug,
-          title: item.variant.product.name,
           featuredImage: {
-            url: item.variant.images[0]?.transformedUrl || item.variant.images[0]?.url || "",
             altText: item.variant.product.name,
-            width: 800,
             height: 800,
+            url: item.variant.images[0]?.transformedUrl || item.variant.images[0]?.url || "",
+            width: 800,
           },
+          handle: item.variant.product.slug,
+          id: item.variant.product.id,
+          title: item.variant.product.name,
         },
         selectedOptions: [
           ...(item.variant.attributes.color

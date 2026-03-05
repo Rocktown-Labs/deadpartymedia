@@ -43,6 +43,7 @@ describe(FanOnboarding, () => {
     renderWithProviders(<FanOnboarding />);
     expect(screen.getByText(/complete your profile/i)).toBeInTheDocument();
     // Use getByPlaceholderText since label doesn't have htmlFor attribute
+
     expect(screen.getByPlaceholderText(/your name/i)).toBeInTheDocument();
   });
 
@@ -54,11 +55,14 @@ describe(FanOnboarding, () => {
     const submitButton = screen.getByRole("button", { name: /complete/i });
 
     // Focus and blur the input to trigger validation, then submit
+
     await user.click(nameInput);
-    await user.tab(); // Blur the input
+    // Blur the input
+    await user.tab();
     await user.click(submitButton);
 
     // Wait for validation error - TanStack Form shows "Name is required"
+
     await waitFor(
       () => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument();
@@ -78,6 +82,7 @@ describe(FanOnboarding, () => {
     renderWithProviders(<FanOnboarding />);
 
     // Use getByPlaceholderText since label doesn't have htmlFor attribute
+
     const nameInput = screen.getByPlaceholderText(/your name/i);
     await user.type(nameInput, "Test Fan");
 
@@ -97,10 +102,12 @@ describe(FanOnboarding, () => {
     renderWithProviders(<FanOnboarding />);
 
     // Use getByPlaceholderText since label doesn't have htmlFor attribute
+
     const nameInput = screen.getByPlaceholderText(/your name/i);
     await user.type(nameInput, "Test Fan");
 
     // Optional location field - check if it exists
+
     const locationInput = screen.queryByPlaceholderText(/location/i);
     if (locationInput) {
       await user.type(locationInput, "Little Rock, AR");

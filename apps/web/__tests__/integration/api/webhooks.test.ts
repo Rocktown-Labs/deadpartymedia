@@ -47,13 +47,13 @@ describe("pOST /api/webhooks", () => {
   it("handles duplicate user.created delivery idempotently and returns 200", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        email_addresses: [{ id: "email_1", email_address: "writer@example.com" }],
+        email_addresses: [{ email_address: "writer@example.com", id: "email_1" }],
         first_name: "Jane",
         id: "user_123",
         image_url: "https://example.com/jane.png",
         last_name: "Writer",
         primary_email_address_id: "email_1",
-        public_metadata: { role: "writer", onboardingComplete: true },
+        public_metadata: { onboardingComplete: true, role: "writer" },
       },
       type: "user.created",
     } as any);
@@ -118,13 +118,13 @@ describe("pOST /api/webhooks", () => {
   it("handles user.updated idempotently with upsert and returns 200", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        email_addresses: [{ id: "email_2", email_address: "artist@example.com" }],
+        email_addresses: [{ email_address: "artist@example.com", id: "email_2" }],
         first_name: "Alex",
         id: "user_789",
         image_url: "https://example.com/alex.png",
         last_name: "Artist",
         primary_email_address_id: "email_2",
-        public_metadata: { role: "artist", onboardingComplete: true },
+        public_metadata: { onboardingComplete: true, role: "artist" },
       },
       type: "user.updated",
     } as any);
@@ -163,16 +163,16 @@ describe("pOST /api/webhooks", () => {
   it("remaps placeholder local profile on invite-linked user.updated webhook", async () => {
     vi.mocked(verifyWebhook).mockResolvedValue({
       data: {
-        email_addresses: [{ id: "email_3", email_address: "writer.remapped@example.com" }],
+        email_addresses: [{ email_address: "writer.remapped@example.com", id: "email_3" }],
         first_name: "Remapped",
         id: "user_real_123",
         image_url: "https://example.com/remapped.png",
         last_name: "Writer",
         primary_email_address_id: "email_3",
         public_metadata: {
-          role: "writer",
-          onboardingComplete: true,
           localUserProfileId: "99",
+          onboardingComplete: true,
+          role: "writer",
         },
       },
       type: "user.updated",

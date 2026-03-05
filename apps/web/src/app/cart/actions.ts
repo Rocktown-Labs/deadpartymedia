@@ -21,16 +21,19 @@ async function setCartId(cartId: string) {
 
 export async function createCartAndSetCookie() {
   const cart = await createCart();
-  await setCartId(cart.id!);
+  if (!cart.id) {
+    throw new Error("Cart ID missing from Fourthwall createCart response");
+  }
+  await setCartId(cart.id);
   return cart;
 }
 
-export async function addItem(prevState: any, selectedVariantId: string | undefined) {
+export async function addItem(_prevState: unknown, selectedVariantId: string | undefined) {
   try {
     const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id!;
+    const cartId = cart.id;
 
-    if (!cart || !selectedVariantId) {
+    if (!cart || !cartId || !selectedVariantId) {
       return "Error adding item to cart";
     }
 
@@ -41,12 +44,12 @@ export async function addItem(prevState: any, selectedVariantId: string | undefi
   }
 }
 
-export async function removeItem(prevState: any, merchandiseId: string) {
+export async function removeItem(_prevState: unknown, merchandiseId: string) {
   try {
     const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id!;
+    const cartId = cart.id;
 
-    if (!cart) {
+    if (!cart || !cartId) {
       return "Error fetching cart";
     }
 
@@ -64,7 +67,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
 }
 
 export async function updateItemQuantity(
-  prevState: any,
+  _prevState: unknown,
   payload: {
     merchandiseId: string;
     quantity: number;
@@ -74,9 +77,9 @@ export async function updateItemQuantity(
 
   try {
     const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id!;
+    const cartId = cart.id;
 
-    if (!cart) {
+    if (!cart || !cartId) {
       return "Error fetching cart";
     }
 
@@ -129,6 +132,6 @@ export async function redirectToCheckout(_currency: string): Promise<void> {
     return;
   }
 
-  const checkoutUrl: string = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`;
-  redirect(checkoutUrl as any);
+  const checkoutUrl = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`;
+  redirect(checkoutUrl);
 }

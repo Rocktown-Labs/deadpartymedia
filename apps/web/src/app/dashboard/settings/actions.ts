@@ -8,6 +8,7 @@ import type { UserUpdateInput, PasswordChangeInput } from "@/lib/validations/use
 import { logger } from "@/lib/logger";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { getErrorMessage, getNestedErrorMessage } from "@/lib/utils/error";
 
 export async function updateUserProfile(data: UserUpdateInput) {
   const { userId } = await auth();
@@ -39,13 +40,13 @@ export async function updateUserProfile(data: UserUpdateInput) {
     // If email needs to be updated, Clerk will send a verification email
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     log.error(
       { error: sanitizeError(error), operation: "update_user_profile" },
       "Error updating user profile",
     );
     return {
-      error: error.errors?.[0]?.longMessage || "Failed to update profile",
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to update profile"),
       success: false,
     };
   }
