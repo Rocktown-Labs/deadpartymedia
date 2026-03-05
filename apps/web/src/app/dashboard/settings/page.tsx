@@ -65,14 +65,15 @@ export default function SettingsPage() {
           // Reload user data to reflect changes
           await user?.reload();
         } else {
-          toast.error(result.error || "Failed to update profile");
+          const errorMessage = result.error ?? "Failed to update profile";
+          toast.error(errorMessage);
           // Handle field-specific errors if needed
-          if (result.error.includes("first_name")) {
-            setProfileErrors({ first_name: result.error });
-          } else if (result.error.includes("last_name")) {
-            setProfileErrors({ last_name: result.error });
-          } else if (result.error.includes("email")) {
-            setProfileErrors({ email: result.error });
+          if (errorMessage.includes("first_name")) {
+            setProfileErrors({ first_name: errorMessage });
+          } else if (errorMessage.includes("last_name")) {
+            setProfileErrors({ last_name: errorMessage });
+          } else if (errorMessage.includes("email")) {
+            setProfileErrors({ email: errorMessage });
           }
         }
       } catch (error) {

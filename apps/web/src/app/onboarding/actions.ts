@@ -32,24 +32,10 @@ function validateWithZod<T>(schema: ZodType<T>, data: unknown): string | undefin
   return undefined;
 }
 
-function createFormStateWithErrors(error: string) {
-  return {
-    ...initialFormState,
-    errors: [error],
-  };
-}
-
 // Fan onboarding server action
 const fanServerValidate = createServerValidate({
   ...fanFormOptions,
-  onServerValidate: ({ value }) => {
-    const error = validateWithZod(fanOnboardingSchema, value);
-    if (error) {
-      throw new ServerValidateError({
-        formState: createFormStateWithErrors(error),
-      });
-    }
-  },
+  onServerValidate: ({ value }) => validateWithZod(fanOnboardingSchema, value),
 });
 
 export async function fanOnboardingAction(_prev: unknown, formData: FormData) {
@@ -121,14 +107,7 @@ export async function fanOnboardingAction(_prev: unknown, formData: FormData) {
 // Artist onboarding server action
 const artistServerValidate = createServerValidate({
   ...artistFormOptions,
-  onServerValidate: ({ value }) => {
-    const error = validateWithZod(artistOnboardingSchema, value);
-    if (error) {
-      throw new ServerValidateError({
-        formState: createFormStateWithErrors(error),
-      });
-    }
-  },
+  onServerValidate: ({ value }) => validateWithZod(artistOnboardingSchema, value),
 });
 
 export async function artistOnboardingAction(_prev: unknown, formData: FormData) {

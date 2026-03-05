@@ -4,6 +4,7 @@ import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/li
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Route } from "next";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -133,5 +134,5 @@ export async function redirectToCheckout(_currency: string): Promise<void> {
   }
 
   const checkoutUrl = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`;
-  redirect(checkoutUrl);
+  redirect(checkoutUrl as Route);
 }
