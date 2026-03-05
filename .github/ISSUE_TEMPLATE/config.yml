@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Agent Workflow Guide
+    url: https://github.com/cgRGM/deadpartymedia/blob/master/AGENTS.md
+    about: Read required issue/branch/PR/project workflow conventions.
+  - name: Copilot Instructions
+    url: https://github.com/cgRGM/deadpartymedia/blob/master/copilot-instructions.md
+    about: Read implementation instructions for coding assistants.

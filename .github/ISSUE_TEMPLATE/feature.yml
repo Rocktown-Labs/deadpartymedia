@@ -1,0 +1,48 @@
+name: Feature
+description: Plan and track a new feature from scope to acceptance.
+title: "feat: "
+labels:
+  - type:feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for net-new user-facing or platform-facing functionality.
+        Link relevant docs and keep acceptance criteria testable.
+  - type: textarea
+    id: problem-goal
+    attributes:
+      label: Problem / Goal
+      description: What problem are we solving and why does this matter?
+      placeholder: Describe current pain, desired outcome, and impacted users/systems.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Provide a checklist that defines done.
+      value: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+  - type: textarea
+    id: agents-references
+    attributes:
+      label: Relevant .agents References (optional)
+      description: Link skill docs that should guide implementation.
+      placeholder: |
+        - .agents/skills/<skill>/SKILL.md
+        - .agents/skills/<skill>/references/<file>.md
+        - apps/web/.agents/skills/neon-postgres/SKILL.md
+    validations:
+      required: false
+  - type: textarea
+    id: implementation-context
+    attributes:
+      label: Additional Context (optional)
+      description: Links, screenshots, dependencies, or constraints.
+    validations:
+      required: false

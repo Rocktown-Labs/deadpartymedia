@@ -1,0 +1,48 @@
+name: Chore
+description: Track maintenance, refactors, tooling updates, or operational work.
+title: "chore: "
+labels:
+  - type:chore
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for non-feature/non-bug scoped work such as cleanup,
+        dependency updates, tooling, or repo maintenance.
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Task Purpose
+      description: Why is this chore needed now?
+      placeholder: Describe the maintenance goal and impact/risk of not doing it.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What areas of the repo/system are in scope?
+      placeholder: List affected app(s), package(s), or workflows.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Provide a checklist for completion.
+      value: |
+        - [ ] Planned changes applied
+        - [ ] Validation/testing complete
+        - [ ] Documentation updated if workflow/behavior changed
+    validations:
+      required: true
+  - type: textarea
+    id: agents-references
+    attributes:
+      label: Relevant .agents References (optional)
+      description: Link skill docs that should constrain the work.
+      placeholder: |
+        - .agents/skills/<skill>/SKILL.md
+        - .agents/skills/<skill>/references/<file>.md
+    validations:
+      required: false

@@ -1,126 +1,129 @@
-# Ultracite Code Standards
+# Dead Party Media Agent Operating Guide
 
-This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
+This file is the root operating contract for autonomous agents in this repo.
+Use it as the first source of workflow truth, then route into `.agents`.
 
-## Quick Reference
+## GitHub Is Source Of Truth
 
-- **Format code**: `pnpm dlx ultracite fix`
-- **Check for issues**: `pnpm dlx ultracite check`
-- **Diagnose setup**: `pnpm dlx ultracite doctor`
+Track planning and delivery in GitHub, not only local context.
 
-Oxlint + Oxfmt (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
+- **Issues** are the source of truth for planned work (`Feature`, `Bug`, `Chore`).
+- **PRs** are the review and merge unit, and must link to an issue.
+- **Project board** is the live status surface with:
+  `Backlog -> In Progress -> In Review -> Done`.
 
----
+## Required Delivery Loop
 
-## Core Principles
+Follow this loop for all non-trivial work:
 
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
+1. **Plan**
+   - Review relevant `.agents` skills before implementation planning.
+2. **Create or reference an Issue**
+   - Use one of the required issue templates.
+   - Issue title must start with:
+     - `feat: ...`
+     - `fix: ...`
+     - `chore: ...`
+3. **Create feature/fix/chore branch from `master`**
+   - Branch naming is required:
+     - `feat/<slug>-<issueNumber>`
+     - `fix/<slug>-<issueNumber>`
+     - `chore/<slug>-<issueNumber>`
+4. **Implement + test**
+   - Keep changes scoped to issue acceptance criteria.
+   - Run relevant checks/tests before opening PR.
+5. **Open PR**
+   - PR title mirrors issue title.
+   - PR body must include:
+     - Summary
+     - Implementation notes
+     - Testing notes
+     - `Closes #<issueNumber>`
+6. **Review**
+   - Address review feedback and keep PR/Issue/project status aligned.
+7. **Merge to `master`**
+8. **Close issue**
+   - Ensure issue is closed and project card is in `Done`.
 
-### Type Safety & Explicitness
+## Issues, PRs, And Project Board
 
-- Use explicit types for function parameters and return values when they enhance clarity
-- Prefer `unknown` over `any` when the type is genuinely unknown
-- Use const assertions (`as const`) for immutable values and literal types
-- Leverage TypeScript's type narrowing instead of type assertions
-- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
+### Issues
 
-### Modern JavaScript/TypeScript
+- Use `.github/ISSUE_TEMPLATE/feature.yml`, `bug.yml`, or `chore.yml`.
+- Each issue must include:
+  - Problem/goal statement
+  - Acceptance criteria as a markdown checklist
+  - Optional links to relevant `.agents` skill files
 
-- Use arrow functions for callbacks and short functions
-- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
-- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
-- Prefer template literals over string concatenation
-- Use destructuring for object and array assignments
-- Use `const` by default, `let` only when reassignment is needed, never `var`
+### Pull Requests
 
-### Async & Promises
+- Use `.github/pull_request_template.md`.
+- PR must reference the tracked issue and include test evidence.
+- Keep commit and PR scope aligned to the issue acceptance criteria.
 
-- Always `await` promises in async functions - don't forget to use the return value
-- Use `async/await` syntax instead of promise chains for better readability
-- Handle errors appropriately in async code with try-catch blocks
-- Don't use async functions as Promise executors
+### Project Board Status Policy
 
-### React & JSX
+- Issue created -> `Backlog`
+- Branch created + active implementation -> `In Progress`
+- PR opened -> `In Review`
+- PR merged + issue closed -> `Done`
 
-- Use function components over class components
-- Call hooks at the top level only, never conditionally
-- Specify all dependencies in hook dependency arrays correctly
-- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
-- Nest children between opening and closing tags instead of passing as props
-- Don't define components inside other components
-- Use semantic HTML and ARIA attributes for accessibility:
-  - Provide meaningful alt text for images
-  - Use proper heading hierarchy
-  - Add labels for form inputs
-  - Include keyboard event handlers alongside mouse events
-  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
+Recommended automation defaults:
 
-### Error Handling & Debugging
+- Auto-add new Issues and PRs to the project.
+- Default new items to `Backlog`.
+- Auto-mark closed items as `Done`.
+- Optionally map labels like `in-progress` / `in-review` to board status.
 
-- Remove `console.log`, `debugger`, and `alert` statements from production code
-- Throw `Error` objects with descriptive messages, not strings or other values
-- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
-- Prefer early returns over nested conditionals for error cases
+## `.agents`-First Protocol
 
-### Code Organization
+Before planning or coding:
 
-- Keep functions focused and under reasonable cognitive complexity limits
-- Extract complex conditions into well-named boolean variables
-- Use early returns to reduce nesting
-- Prefer simple conditionals over nested ternary operators
-- Group related code together and separate concerns
+1. Inspect matching skill docs under `.agents/skills/*/SKILL.md`.
+2. Read linked `references/` or `rules/` files only as needed.
+3. Apply those conventions during design, implementation, and review.
+4. For web database / Neon work, also check:
+   `apps/web/.agents/skills/neon-postgres/SKILL.md`.
 
-### Security
+If no skill clearly matches, use closest domain guidance and note assumptions.
 
-- Add `rel="noopener"` when using `target="_blank"` on links
-- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
-- Don't use `eval()` or assign directly to `document.cookie`
-- Validate and sanitize user input
+## Domain Chronicle (Current Repo)
 
-### Performance
+| Domain                                      | Skills                                                                                                                            | Paths                                                                                                                                                                                                        | Use When                                                                                                    |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Code quality and tooling                    | `ultracite`, `firecrawl`, `find-skills`                                                                                           | `.agents/skills/ultracite`, `.agents/skills/firecrawl`, `.agents/skills/find-skills`                                                                                                                         | Lint/format standards, web research/scraping workflows, finding/installing additional skills                |
+| Web/React/Next architecture and performance | `vercel-react-best-practices`, `vercel-composition-patterns`, `next-cache-components`, `frontend-design`, `web-design-guidelines` | `.agents/skills/vercel-react-best-practices`, `.agents/skills/vercel-composition-patterns`, `.agents/skills/next-cache-components`, `.agents/skills/frontend-design`, `.agents/skills/web-design-guidelines` | Next.js/React performance, component API design, cache components, UI implementation, UI compliance reviews |
+| Native/Expo/mobile                          | `building-native-ui`, `native-data-fetching`, `vercel-react-native-skills`                                                        | `.agents/skills/building-native-ui`, `.agents/skills/native-data-fetching`, `.agents/skills/vercel-react-native-skills`                                                                                      | Expo Router UI, network/data-fetching patterns for native, React Native performance and platform rules      |
+| SEO and marketing content                   | `seo-audit`, `programmatic-seo`, `copywriting`                                                                                    | `.agents/skills/seo-audit`, `.agents/skills/programmatic-seo`, `.agents/skills/copywriting`                                                                                                                  | SEO diagnostics, SEO-at-scale page systems, conversion-focused page copy                                    |
+| App-local data platform                     | `neon-postgres`                                                                                                                   | `apps/web/.agents/skills/neon-postgres`                                                                                                                                                                      | Neon connection patterns, branching, APIs/SDKs, and Drizzle/Neon integration tasks in web app scope         |
 
-- Avoid spread syntax in accumulators within loops
-- Use top-level regex literals instead of creating them in loops
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
+Cross-reference notes:
 
-### Framework-Specific Guidance
+- Ultracite standards are maintained in:
+  `.agents/skills/ultracite/SKILL.md` and
+  `.agents/skills/ultracite/references/code-standards.md`.
+- Firecrawl operational and safety details are in:
+  `.agents/skills/firecrawl/rules/install.md` and
+  `.agents/skills/firecrawl/rules/security.md`.
 
-**Next.js:**
+## Quality Gates
 
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
+Use these as defaults unless a narrower command is more appropriate:
 
-**React 19+:**
+- Lint/format checks: `pnpm dlx ultracite check`
+- Auto-fix: `pnpm dlx ultracite fix`
+- Web tests: `pnpm web:test`
+- Web E2E: `pnpm web:test:e2e`
+- Type checks (workspace): `pnpm check-types`
 
-- Use ref as a prop instead of `React.forwardRef`
+## Maintenance Rule
 
-**Solid/Svelte/Vue/Qwik:**
+When workflow or skill structure changes, update all of:
 
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
+- `AGENTS.md`
+- `copilot-instructions.md`
+- `.github/copilot-instructions.md`
+- `.github/ISSUE_TEMPLATE/*`
+- `.github/pull_request_template.md`
 
----
-
-## Testing
-
-- Write assertions inside `it()` or `test()` blocks
-- Avoid done callbacks in async tests - use async/await instead
-- Don't use `.only` or `.skip` in committed code
-- Keep test suites reasonably flat - avoid excessive `describe` nesting
-
-## When Oxlint + Oxfmt Can't Help
-
-Oxlint + Oxfmt's linter will catch most issues automatically. Focus your attention on:
-
-1. **Business logic correctness** - Oxlint + Oxfmt can't validate your algorithms
-2. **Meaningful naming** - Use descriptive names for functions, variables, and types
-3. **Architecture decisions** - Component structure, data flow, and API design
-4. **Edge cases** - Handle boundary conditions and error states
-5. **User experience** - Accessibility, performance, and usability considerations
-6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
-
----
-
-Most formatting and common issues are automatically fixed by Oxlint + Oxfmt. Run `pnpm dlx ultracite fix` before committing to ensure compliance.
+Do not let these files drift from actual repo structure and operating practice.

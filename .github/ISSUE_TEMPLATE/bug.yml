@@ -1,0 +1,62 @@
+name: Bug
+description: Track a defect and define completion criteria for the fix.
+title: "fix: "
+labels:
+  - type:bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for regressions, correctness issues, or operational bugs.
+        Include enough detail to reproduce and verify the fix.
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: What is broken?
+      placeholder: Describe the observed behavior and why it is incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: Expected vs Actual
+      description: Define expected behavior and current behavior.
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Details (optional)
+      description: Steps, environment, logs, or screenshots that help reproduce.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Provide a checklist for done/fixed validation.
+      value: |
+        - [ ] Root cause identified
+        - [ ] Fix implemented
+        - [ ] Regression coverage added or updated
+        - [ ] Verification complete in affected flow(s)
+    validations:
+      required: true
+  - type: textarea
+    id: agents-references
+    attributes:
+      label: Relevant .agents References (optional)
+      description: Link skill docs relevant to this bug and fix strategy.
+      placeholder: |
+        - .agents/skills/<skill>/SKILL.md
+        - .agents/skills/<skill>/rules/<file>.md
+    validations:
+      required: false
