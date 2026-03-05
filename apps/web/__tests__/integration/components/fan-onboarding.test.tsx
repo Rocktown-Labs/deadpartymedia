@@ -22,7 +22,7 @@ vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
     user: {
       id: "user_test123",
       publicMetadata: {},
-      reload: vi.fn().mockResolvedValue(),
+      reload: vi.fn().mockResolvedValue(null),
     },
   }),
 }));

@@ -1,4 +1,7 @@
 import { GET } from "@/app/api/events/route";
+import type { NextRequest } from "next/server";
+
+const toNextRequest = (request: Request): NextRequest => request as unknown as NextRequest;
 
 // Mock database with proper chain
 const { mockDbChain, mockArtistRelationsChain } = vi.hoisted(() => {
@@ -123,7 +126,7 @@ describe("gET /api/events", () => {
     mockDbChain.offset.mockResolvedValue(mockEvents);
 
     const request = new Request("http://localhost:3001/api/events");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -158,7 +161,7 @@ describe("gET /api/events", () => {
     mockDbChain.offset.mockResolvedValue(mockEvents);
 
     const request = new Request("http://localhost:3001/api/events?genre=EDM");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
 
     expect(response.status).toBe(200);
     expect(mockDbChain.where).toHaveBeenCalledTimes(1);
@@ -200,7 +203,7 @@ describe("gET /api/events", () => {
     mockArtistRelationsChain.where.mockResolvedValue(mockArtistRelations);
 
     const request = new Request("http://localhost:3001/api/events");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -217,7 +220,7 @@ describe("gET /api/events", () => {
     mockDbChain.offset.mockRejectedValue(new Error("Database error"));
 
     const request = new Request("http://localhost:3001/api/events");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(500);

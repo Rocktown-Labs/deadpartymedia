@@ -6,7 +6,7 @@ const LEGACY_ROLE_ALIASES: Readonly<Record<string, Roles>> = {
   admin: "super_admin",
 };
 
-export function parseRole(value: unknown): Roles | null {
+export function parseRole(value?: unknown): Roles | null {
   if (typeof value !== "string") {
     return null;
   }
@@ -15,6 +15,6 @@ export function parseRole(value: unknown): Roles | null {
   return VALID_ROLES.has(normalizedValue as Roles) ? (normalizedValue as Roles) : null;
 }
 
-export function roleOrDefault(value: unknown, fallback: Roles = "fan"): Roles {
+export function roleOrDefault(value?: unknown, fallback: Roles = "fan"): Roles {
   return parseRole(value) ?? fallback;
 }

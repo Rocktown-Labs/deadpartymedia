@@ -11,7 +11,7 @@ describe("post-content normalization", () => {
 
     expect(normalized.kind).toBe("tiptap_json");
     expect(normalized.tiptapDoc).not.toBeNull();
-    expectTypeOf(normalized.editorValue).toBeObject();
+    expect(normalized.editorValue).toStrictEqual(expect.any(Object));
     expect(normalized.changed).toBeFalsy();
   });
 

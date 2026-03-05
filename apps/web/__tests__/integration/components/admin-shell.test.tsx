@@ -49,8 +49,7 @@ beforeAll(() => {
       unobserve() {}
       disconnect() {}
     }
-    // @ts-expect-error test-only shim
-    global.ResizeObserver = MockResizeObserver;
+    global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
   }
 });
 

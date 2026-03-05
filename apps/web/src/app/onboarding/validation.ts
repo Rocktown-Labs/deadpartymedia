@@ -1,4 +1,4 @@
-export function normalizeInstagramInput(input: unknown): string {
+export function normalizeInstagramInput(input?: unknown): string {
   const raw = String(input ?? "").trim();
   if (!raw) {
     return "";

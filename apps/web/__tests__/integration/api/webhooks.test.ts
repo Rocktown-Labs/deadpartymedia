@@ -58,7 +58,7 @@ describe("pOST /api/webhooks", () => {
       type: "user.created",
     } as any);
 
-    const onConflictDoUpdate = vi.fn().mockResolvedValue();
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(null);
     const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
     mockDb.insert.mockReturnValue({ values });
 
@@ -129,7 +129,7 @@ describe("pOST /api/webhooks", () => {
       type: "user.updated",
     } as any);
 
-    const onConflictDoUpdate = vi.fn().mockResolvedValue();
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(null);
     const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
     mockDb.insert.mockReturnValue({ values });
 
@@ -190,14 +190,14 @@ describe("pOST /api/webhooks", () => {
     const selectFrom = vi.fn().mockReturnValue({ where: selectWhere });
     mockDb.select.mockReturnValue({ from: selectFrom });
 
-    const updateWhere = vi.fn().mockResolvedValue();
+    const updateWhere = vi.fn().mockResolvedValue(null);
     const updateSet = vi.fn().mockReturnValue({ where: updateWhere });
     mockDb.update.mockReturnValue({ set: updateSet });
 
-    const deleteWhere = vi.fn().mockResolvedValue();
+    const deleteWhere = vi.fn().mockResolvedValue(null);
     mockDb.delete.mockReturnValue({ where: deleteWhere });
 
-    const onConflictDoUpdate = vi.fn().mockResolvedValue();
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(null);
     const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
     mockDb.insert.mockReturnValue({ values });
 

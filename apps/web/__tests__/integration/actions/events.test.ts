@@ -10,12 +10,12 @@ vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), (
 }));
 
 vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
-  redirect: vi.fn(),
+  redirect: vi.fn() as unknown as (typeof import("next/navigation"))["redirect"],
 }));
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
-  revalidatePath: vi.fn(() => {}),
-  revalidateTag: vi.fn(() => {}),
+  revalidatePath: vi.fn(() => {}) as unknown as (typeof import("next/cache"))["revalidatePath"],
+  revalidateTag: vi.fn(() => {}) as unknown as (typeof import("next/cache"))["revalidateTag"],
 }));
 
 vi.mock<typeof import("@/lib/auth/access")>(import("@/lib/auth/access"), () => ({
@@ -35,7 +35,7 @@ vi.mock<typeof import("@/lib/logger")>(import("@/lib/logger"), () => ({
     error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-  },
+  } as unknown as (typeof import("@/lib/logger"))["logger"],
 }));
 
 vi.mock<typeof import("@/lib/logger/sanitize")>(import("@/lib/logger/sanitize"), () => ({
@@ -60,7 +60,7 @@ vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
     insert: mockInsert,
     select: mockSelect,
     update: mockUpdate,
-  },
+  } as unknown as (typeof import("@/lib/db"))["db"],
 }));
 
 describe(createEvent, () => {
@@ -107,7 +107,7 @@ describe(createEvent, () => {
       }
       // Subsequent calls (eventArtists) don't use returning()
 
-      return { values: vi.fn().mockResolvedValue() };
+      return { values: vi.fn().mockResolvedValue(null) };
     });
 
     await createEvent(formData);
@@ -240,12 +240,12 @@ describe(updateEvent, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
 
     // Mock insert for new eventArtists
 
     const mockEventArtistsInsert = vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue(),
+      values: vi.fn().mockResolvedValue(null),
     });
     mockInsert.mockReturnValue(mockEventArtistsInsert());
 
@@ -272,7 +272,7 @@ describe(updateEvent, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
 
     await updateEvent(1, formData);
 
@@ -350,7 +350,7 @@ describe(deleteEvent, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
   });
 
   it("should delete event", async () => {

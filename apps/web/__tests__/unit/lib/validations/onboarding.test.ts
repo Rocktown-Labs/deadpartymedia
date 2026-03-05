@@ -1,15 +1,20 @@
 import { artistOnboardingSchema, fanOnboardingSchema } from "@/lib/validations/onboarding";
 import type { ArtistOnboardingFormData, FanOnboardingFormData } from "@/lib/validations/onboarding";
 
-describe(artistOnboardingSchema, () => {
+describe("artist onboarding schema", () => {
   const validArtistData: ArtistOnboardingFormData = {
     bio: "This is a valid bio with more than 10 characters",
     genre: "EDM",
+    image: undefined,
     instagram: "https://instagram.com/testartist",
     location: "Little Rock, AR",
     name: "Test Artist",
+    phoneNumber: undefined,
     spotifyArtistId: "123",
     spotifyUrl: "https://open.spotify.com/artist/123",
+    tiktok: undefined,
+    twitter: undefined,
+    website: undefined,
   };
 
   it("should validate correct artist data", () => {
@@ -178,9 +183,20 @@ describe(artistOnboardingSchema, () => {
   });
 });
 
-describe(fanOnboardingSchema, () => {
+describe("fan onboarding schema", () => {
   const validFanData: FanOnboardingFormData = {
+    bio: undefined,
+    genre: undefined,
+    image: undefined,
+    instagram: undefined,
+    location: undefined,
     name: "Test Fan",
+    phoneNumber: undefined,
+    spotifyArtistId: undefined,
+    spotifyUrl: undefined,
+    tiktok: undefined,
+    twitter: undefined,
+    website: undefined,
   };
 
   it("should validate correct fan data with only name", () => {

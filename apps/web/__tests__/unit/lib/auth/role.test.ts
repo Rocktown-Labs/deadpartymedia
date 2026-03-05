@@ -25,6 +25,6 @@ describe("role parser", () => {
     expect(roleOrDefault("artist")).toBe("artist");
     expect(roleOrDefault("admin")).toBe("super_admin");
     expect(roleOrDefault({ role: "writer" }, "fan")).toBe("fan");
-    expect(roleOrDefault(undefined, "artist")).toBe("artist");
+    expect(roleOrDefault(null, "artist")).toBe("artist");
   });
 });

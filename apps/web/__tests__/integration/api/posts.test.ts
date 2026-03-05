@@ -1,4 +1,7 @@
 import { GET } from "@/app/api/posts/route";
+import type { NextRequest } from "next/server";
+
+const toNextRequest = (request: Request): NextRequest => request as unknown as NextRequest;
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
@@ -143,7 +146,7 @@ describe("gET /api/posts", () => {
     // Artist relations query will return empty array (default mock)
 
     const request = new Request("http://localhost:3001/api/posts");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -153,7 +156,6 @@ describe("gET /api/posts", () => {
     expect(data.results[0].artists).toStrictEqual([]);
     expect(data.results[0].comment_count).toBe(0);
     expect(data.results[0].author.id).toBe("user1");
-    expectTypeOf(data.results[0].author.id).toBeString();
     expect(data.results[0].author.name).toBe("Test Writer");
     expect(data.results[0].author.name.length).toBeGreaterThan(0);
   });
@@ -180,7 +182,7 @@ describe("gET /api/posts", () => {
     mockDbChain.offset.mockResolvedValue(mockPosts);
 
     const request = new Request("http://localhost:3001/api/posts?category=EDM");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
 
     expect(response.status).toBe(200);
     expect(mockDbChain.where).toHaveBeenCalledTimes(1);
@@ -192,7 +194,7 @@ describe("gET /api/posts", () => {
     mockDbChain.offset.mockResolvedValue(mockPosts);
 
     const request = new Request("http://localhost:3001/api/posts?limit=5&offset=10");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
 
     expect(response.status).toBe(200);
     expect(mockDbChain.limit).toHaveBeenCalledTimes(1);
@@ -221,7 +223,7 @@ describe("gET /api/posts", () => {
     mockDbChain.offset.mockResolvedValue(mockPosts);
 
     const request = new Request("http://localhost:3001/api/posts?cover_story=true");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
 
     expect(response.status).toBe(200);
     expect(mockDbChain.where).toHaveBeenCalledTimes(1);
@@ -231,7 +233,7 @@ describe("gET /api/posts", () => {
     mockDbChain.offset.mockRejectedValue(new Error("Database error"));
 
     const request = new Request("http://localhost:3001/api/posts");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -271,7 +273,7 @@ describe("gET /api/posts", () => {
     mockArtistRelationsChain.where.mockResolvedValue(mockArtistRelations);
 
     const request = new Request("http://localhost:3001/api/posts");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -312,7 +314,7 @@ describe("gET /api/posts", () => {
     ]);
 
     const request = new Request("http://localhost:3001/api/posts");
-    const response = await GET(request);
+    const response = await GET(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);

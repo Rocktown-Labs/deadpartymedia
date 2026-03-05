@@ -5,7 +5,7 @@ import { renderWithProviders } from "../../../tests/helpers/render";
 // Mock Clerk
 vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
   useUser: () => ({
-    user: { id: "test-user-id", reload: vi.fn().mockResolvedValue() },
+    user: { id: "test-user-id", reload: vi.fn().mockResolvedValue(null) },
   }),
 }));
 

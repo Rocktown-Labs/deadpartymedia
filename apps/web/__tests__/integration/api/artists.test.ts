@@ -4,6 +4,9 @@ import { GET as GETArtistArticles } from "@/app/api/artists/[slug]/articles/rout
 import { GET as GETArtistEvents } from "@/app/api/artists/[slug]/events/route";
 import { GET as GETArtistMe } from "@/app/api/artists/me/route";
 import { auth } from "@clerk/nextjs/server";
+import type { NextRequest } from "next/server";
+
+const toNextRequest = (request: Request): NextRequest => request as unknown as NextRequest;
 
 // Mock database with proper chain
 const { mockDbChain, mockWhereResult } = vi.hoisted(() => {
@@ -106,7 +109,7 @@ describe("gET /api/artists", () => {
     mockDbChain.where.mockResolvedValue(mockArtists);
 
     const request = new Request("http://localhost:3001/api/artists");
-    const response = await GETArtists(request);
+    const response = await GETArtists(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -146,7 +149,7 @@ describe("gET /api/artists", () => {
     mockDbChain.where.mockResolvedValue(mockArtists);
 
     const request = new Request("http://localhost:3001/api/artists?genre=EDM");
-    const response = await GETArtists(request);
+    const response = await GETArtists(toNextRequest(request));
 
     expect(response.status).toBe(200);
     expect(mockDbChain.where).toHaveBeenCalledTimes(1);
@@ -158,7 +161,7 @@ describe("gET /api/artists", () => {
     mockDbChain.where.mockRejectedValue(new Error("Database error"));
 
     const request = new Request("http://localhost:3001/api/artists");
-    const response = await GETArtists(request);
+    const response = await GETArtists(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -199,7 +202,9 @@ describe("gET /api/artists/[slug]", () => {
     mockDbChain.limit.mockResolvedValue([mockArtist]);
 
     const request = new Request("http://localhost:3001/api/artists/test-artist");
-    const response = await GETArtist(request, { params: Promise.resolve({ slug: "test-artist" }) });
+    const response = await GETArtist(toNextRequest(request), {
+      params: Promise.resolve({ slug: "test-artist" }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -213,7 +218,7 @@ describe("gET /api/artists/[slug]", () => {
     mockDbChain.limit.mockResolvedValue([]);
 
     const request = new Request("http://localhost:3001/api/artists/non-existent");
-    const response = await GETArtist(request, {
+    const response = await GETArtist(toNextRequest(request), {
       params: Promise.resolve({ slug: "non-existent" }),
     });
     const data = await response.json();
@@ -281,7 +286,7 @@ describe("gET /api/artists/[slug]/articles", () => {
     mockDbChain.orderBy.mockResolvedValueOnce(mockArticles);
 
     const request = new Request("http://localhost:3001/api/artists/test-artist/articles");
-    const response = await GETArtistArticles(request, {
+    const response = await GETArtistArticles(toNextRequest(request), {
       params: Promise.resolve({ slug: "test-artist" }),
     });
     const data = await response.json();
@@ -298,7 +303,7 @@ describe("gET /api/artists/[slug]/articles", () => {
     mockDbChain.limit.mockResolvedValue([]);
 
     const request = new Request("http://localhost:3001/api/artists/non-existent/articles");
-    const response = await GETArtistArticles(request, {
+    const response = await GETArtistArticles(toNextRequest(request), {
       params: Promise.resolve({ slug: "non-existent" }),
     });
     const data = await response.json();
@@ -363,7 +368,7 @@ describe("gET /api/artists/[slug]/events", () => {
     mockDbChain.orderBy.mockResolvedValueOnce(mockEvents);
 
     const request = new Request("http://localhost:3001/api/artists/test-artist/events");
-    const response = await GETArtistEvents(request, {
+    const response = await GETArtistEvents(toNextRequest(request), {
       params: Promise.resolve({ slug: "test-artist" }),
     });
     const data = await response.json();
@@ -378,7 +383,7 @@ describe("gET /api/artists/[slug]/events", () => {
     mockDbChain.limit.mockResolvedValue([]);
 
     const request = new Request("http://localhost:3001/api/artists/non-existent/events");
-    const response = await GETArtistEvents(request, {
+    const response = await GETArtistEvents(toNextRequest(request), {
       params: Promise.resolve({ slug: "non-existent" }),
     });
     const data = await response.json();
@@ -424,7 +429,7 @@ describe("gET /api/artists/me", () => {
     mockDbChain.limit.mockResolvedValue([mockArtist]);
 
     const request = new Request("http://localhost:3001/api/artists/me");
-    const response = await GETArtistMe(request);
+    const response = await GETArtistMe(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -436,7 +441,7 @@ describe("gET /api/artists/me", () => {
     vi.mocked(auth).mockResolvedValue({ userId: null } as any);
 
     const request = new Request("http://localhost:3001/api/artists/me");
-    const response = await GETArtistMe(request);
+    const response = await GETArtistMe(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -450,7 +455,7 @@ describe("gET /api/artists/me", () => {
     mockDbChain.limit.mockResolvedValue([]);
 
     const request = new Request("http://localhost:3001/api/artists/me");
-    const response = await GETArtistMe(request);
+    const response = await GETArtistMe(toNextRequest(request));
     const data = await response.json();
 
     expect(response.status).toBe(404);

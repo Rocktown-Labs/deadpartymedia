@@ -22,7 +22,7 @@ function mapRoleToDashboardRoute(role: Roles): Route {
  * Get the dashboard route based on user role.
  * Works with Clerk's publicMetadata.role format.
  */
-export function getDashboardRoute(role: string | undefined | null): Route {
+export function getDashboardRoute(role?: string | null): Route {
   return mapRoleToDashboardRoute(roleOrDefault(role, "fan"));
 }
 

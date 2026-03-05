@@ -113,7 +113,7 @@ describe(createPost, () => {
       }
       // Subsequent calls (postArtists) don't use returning()
 
-      return { values: vi.fn().mockResolvedValue() };
+      return { values: vi.fn().mockResolvedValue(null) };
     });
 
     await createPost(formData);
@@ -301,11 +301,13 @@ describe(updatePost, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
 
     // Mock insert for new postArtists
 
-    const mockPostArtistsInsert = vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue() });
+    const mockPostArtistsInsert = vi
+      .fn()
+      .mockReturnValue({ values: vi.fn().mockResolvedValue(null) });
     mockInsert.mockReturnValue(mockPostArtistsInsert());
 
     await updatePost(1, formData);
@@ -330,7 +332,7 @@ describe(updatePost, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
 
     await updatePost(1, formData);
 
@@ -406,7 +408,7 @@ describe(deletePost, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
   });
 
   it("should delete post", async () => {
@@ -472,7 +474,7 @@ describe(requestDeletePost, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
 
     await requestDeletePost(1);
 
@@ -511,7 +513,7 @@ describe(approveDeletePost, () => {
 
     const mockDeleteWhere = vi.fn();
     mockDelete.mockReturnValue({ where: mockDeleteWhere });
-    mockDeleteWhere.mockResolvedValue();
+    mockDeleteWhere.mockResolvedValue(null);
   });
 
   it("should approve and delete post", async () => {

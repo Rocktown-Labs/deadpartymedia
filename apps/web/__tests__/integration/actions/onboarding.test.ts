@@ -20,7 +20,7 @@ vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
 }));
 
 vi.mock<typeof import("@/lib/auth/user-state")>(import("@/lib/auth/user-state"), () => ({
-  upsertUserAuthState: vi.fn().mockResolvedValue(),
+  upsertUserAuthState: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock<typeof import("@/lib/utils/slug")>(import("@/lib/utils/slug"), () => ({
@@ -120,7 +120,7 @@ describe(artistOnboardingAction, () => {
     const userId = "user_test123";
     vi.mocked(auth).mockResolvedValue({ userId } as any);
 
-    const mockUpdateUserMetadata = vi.fn().mockResolvedValue();
+    const mockUpdateUserMetadata = vi.fn().mockResolvedValue(null);
     const mockGetUser = vi.fn().mockResolvedValue({
       emailAddresses: [{ emailAddress: "artist@example.com", id: "email_1" }],
       id: userId,
@@ -132,14 +132,14 @@ describe(artistOnboardingAction, () => {
     const mockClient = {
       users: {
         getUser: mockGetUser,
-        updateUser: vi.fn().mockResolvedValue(),
+        updateUser: vi.fn().mockResolvedValue(null),
         updateUserMetadata: mockUpdateUserMetadata,
       },
     };
     vi.mocked(clerkClient).mockResolvedValue(mockClient as any);
 
     // Mock database operations - db.insert(table).values(...) resolves a promise
-    const mockValues = vi.fn().mockResolvedValue();
+    const mockValues = vi.fn().mockResolvedValue(null);
     vi.mocked(db.insert).mockReturnValue({
       values: mockValues,
     } as any);
@@ -183,7 +183,7 @@ describe(artistOnboardingAction, () => {
             artistId: artistId.toString(),
           },
         }),
-        updateUser: vi.fn().mockResolvedValue(),
+        updateUser: vi.fn().mockResolvedValue(null),
         updateUserMetadata: vi.fn(),
       },
     };

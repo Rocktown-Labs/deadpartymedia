@@ -2,7 +2,7 @@ export const ADMIN_PAGE_SIZE = 10;
 
 export type SortOrder = "asc" | "desc";
 
-export function parsePageParam(value: string | undefined): number {
+export function parsePageParam(value?: string): number {
   if (!value) {
     return 1;
   }

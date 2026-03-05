@@ -1,4 +1,7 @@
 import { GET } from "@/app/api/posts/[slug]/route";
+import type { NextRequest } from "next/server";
+
+const toNextRequest = (request: Request): NextRequest => request as unknown as NextRequest;
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
   cacheTag: vi.fn(),
@@ -122,7 +125,9 @@ describe("gET /api/posts/[slug]", () => {
     mockCommentChain.where.mockResolvedValue([{ count: 4 }]);
 
     const request = new Request("http://localhost:3001/api/posts/test-post");
-    const response = await GET(request, { params: Promise.resolve({ slug: "test-post" }) });
+    const response = await GET(toNextRequest(request), {
+      params: Promise.resolve({ slug: "test-post" }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -155,7 +160,9 @@ describe("gET /api/posts/[slug]", () => {
     ]);
 
     const request = new Request("http://localhost:3001/api/posts/fallback-post");
-    const response = await GET(request, { params: Promise.resolve({ slug: "fallback-post" }) });
+    const response = await GET(toNextRequest(request), {
+      params: Promise.resolve({ slug: "fallback-post" }),
+    });
     const data = await response.json();
 
     expect(response.status).toBe(200);
