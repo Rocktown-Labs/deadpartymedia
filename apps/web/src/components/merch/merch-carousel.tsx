@@ -44,6 +44,7 @@ export function MerchCarousel({
     error,
   } = useProducts({
     enabled: !hasProvidedProducts,
+    limit,
   });
   const isLoading = isLoadingProp ?? (!hasProvidedProducts && isQueryLoading);
   const hasError = hasErrorProp ?? (!hasProvidedProducts && Boolean(error));

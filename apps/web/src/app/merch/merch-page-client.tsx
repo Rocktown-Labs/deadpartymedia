@@ -1,33 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Filter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { getProducts } from "@/lib/fourthwall";
-import type { Product } from "@/lib/types";
 import { PageTitleHeader } from "@/components/page-title-header";
+import { useProducts } from "@/lib/api/products";
 
 export default function MerchPageClient() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const fetchedProducts = await getProducts("USD");
-        setProducts(fetchedProducts);
-      } catch {
-        // Set empty array on error so page still renders
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProducts();
-  }, []);
+  const { data: productsData, isLoading: isProductsLoading } = useProducts({ limit: 100 });
+  const products = Array.isArray(productsData) ? productsData : [];
 
   const categories = ["All", ...new Set(products.map((p) => p.title.split(" ")[0]))];
 
@@ -36,7 +19,7 @@ export default function MerchPageClient() {
       ? products
       : products.filter((item) => item.title.startsWith(selectedCategory));
 
-  if (loading) {
+  if (isProductsLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
@@ -140,7 +123,7 @@ export default function MerchPageClient() {
               ))}
           </div>
 
-          {filteredItems.length === 0 && !loading && (
+          {filteredItems.length === 0 && !isProductsLoading && (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🛍️</div>
               <p className="text-gray-400 text-lg mb-4">

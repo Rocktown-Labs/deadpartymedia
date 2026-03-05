@@ -10,7 +10,11 @@ import { useProducts } from "@/lib/api/products";
 export default function DeadPartyMedia() {
   const { data: articles, isLoading: articlesLoading, error: articlesError } = useArticles();
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
-  const { data: products, isLoading: productsLoading, error: productsError } = useProducts();
+  const {
+    data: products,
+    isLoading: productsLoading,
+    error: productsError,
+  } = useProducts({ limit: 5 });
 
   // Ensure articles and events are arrays
   // If editorial APIs fail, we still render the homepage and show skeletons/empty states,
@@ -64,7 +68,6 @@ export default function DeadPartyMedia() {
   // Ensure products is an array
   const productsArray = Array.isArray(products) ? products : [];
 
-  // Get featured products (first 5)
   const featuredProducts = productsArray.slice(0, 5);
 
   return (

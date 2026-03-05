@@ -8,6 +8,7 @@ import { ProductDescription } from "@/components/product/product-description";
 import type { Product } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { cache } from "react";
 
 interface ProductPageProps {
   params: Promise<{ handle: string }>;
@@ -64,6 +65,10 @@ const buildInitialVariantState = (product: Product): Record<string, string> => {
   return state;
 };
 
+const getMerchProduct = cache(
+  async (handle: string): Promise<Product | undefined> => getProduct(handle, "USD"),
+);
+
 export const generateMetadata = async ({ params }: ProductPageProps): Promise<Metadata> => {
   const { handle } = await params;
 
@@ -71,7 +76,7 @@ export const generateMetadata = async ({ params }: ProductPageProps): Promise<Me
     return NOT_FOUND_METADATA;
   }
 
-  const product = await getProduct(handle, "USD");
+  const product = await getMerchProduct(handle);
   return product ? buildProductMetadata(product) : NOT_FOUND_METADATA;
 };
 
@@ -82,7 +87,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     return notFound();
   }
 
-  const product = await getProduct(handle, "USD");
+  const product = await getMerchProduct(handle);
 
   if (!product) {
     return notFound();

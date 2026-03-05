@@ -40,21 +40,38 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   const router = useRouter();
   const { data: article, isLoading } = useArticle(slug);
   const { isSignedIn, user: currentUser } = useUser();
-  const markArticleRead = useMarkArticleRead();
+  const { mutate: markArticleRead } = useMarkArticleRead();
   const articleViewedRef = useRef<string | null>(null);
+  const markArticleReadRef = useRef(markArticleRead);
+  const trackedArticleReadRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    markArticleReadRef.current = markArticleRead;
+  }, [markArticleRead]);
 
   // Track article read when article loads and user is logged in
   useEffect(() => {
-    if (article && isSignedIn && currentUser && article.id) {
-      // Mark article as read (handles duplicates gracefully on backend)
-      markArticleRead.mutate(article.id, {
-        onError: (error) => {
-          // Silently fail - don't interrupt user experience
-          console.error("Error tracking article read:", error);
-        },
-      });
+    const articleId = article?.id;
+    const userId = currentUser?.id;
+
+    if (!articleId || !isSignedIn || !userId) {
+      return;
     }
-  }, [article, isSignedIn, currentUser, markArticleRead]);
+
+    const trackingKey = `${userId}:${articleId}`;
+    if (trackedArticleReadRef.current === trackingKey) {
+      return;
+    }
+    trackedArticleReadRef.current = trackingKey;
+
+    // Mark article as read (handles duplicates gracefully on backend)
+    markArticleReadRef.current(articleId, {
+      onError: (error) => {
+        // Silently fail - don't interrupt user experience
+        console.error("Error tracking article read:", error);
+      },
+    });
+  }, [article?.id, currentUser?.id, isSignedIn]);
 
   // Track article viewed event (top of content funnel) - using ref to prevent duplicate tracking
   if (article && articleViewedRef.current !== article.slug) {

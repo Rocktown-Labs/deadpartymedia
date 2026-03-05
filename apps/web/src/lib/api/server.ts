@@ -37,6 +37,8 @@ const getRequestBaseUrl = async (): Promise<string> => {
   }
 };
 
+const METADATA_REVALIDATE_SECONDS = 300;
+
 /**
  * Server-side API client for fetching data from Next.js API routes.
  * Used for generating metadata in Next.js server components.
@@ -47,12 +49,13 @@ const serverFetch = async <T>(endpoint: string): Promise<T> => {
   const url = `${normalizedBaseUrl}${endpoint}`;
 
   const response = await fetch(url, {
-    // Don't cache by default - let Next.js handle caching
-    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
     },
     method: "GET",
+    next: {
+      revalidate: METADATA_REVALIDATE_SECONDS,
+    },
   });
 
   if (!response.ok) {

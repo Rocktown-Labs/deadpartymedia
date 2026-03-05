@@ -77,6 +77,7 @@ export function useMarkArticleRead() {
       queryClient.invalidateQueries({ queryKey: ["user", "read-articles"] });
       queryClient.invalidateQueries({ queryKey: ["user", "stats"] });
     },
+    retry: false,
   });
 }
 
