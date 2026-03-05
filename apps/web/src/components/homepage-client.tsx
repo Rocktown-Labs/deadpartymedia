@@ -97,16 +97,16 @@ export default function HomepageClient({
       </div>
 
       {/* Magazine Cover Hero */}
-      <section className="relative pt-28 sm:pt-32 lg:pt-40 pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6">
+      <section className="relative pt-[calc(var(--navbar-offset)+0.75rem)] sm:pt-[calc(var(--navbar-offset)+1rem)] lg:pt-[calc(var(--navbar-offset)+1.5rem)] pb-12 sm:pb-16 lg:pb-20 px-4 sm:px-6">
         <div className="container mx-auto my-2.5">
           <div className="grid lg:grid-cols-12 gap-8">
             {/* Main Cover Story */}
             {isArticlesLoading ? (
               <div className="lg:col-span-8">
-                <div className="relative h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800">
+                <div className="relative h-full min-h-[460px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black border border-gray-800">
                   <Skeleton className="absolute inset-0" />
                   <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-6 px-3 sm:p-8 sm:px-3 lg:p-12 lg:px-3">
+                  <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8 lg:p-12">
                     <Skeleton className="h-6 w-40 mb-4 sm:mb-6" />
                     <Skeleton className="h-14 w-5/6 mb-4" />
                     <Skeleton className="h-14 w-3/5 mb-4 sm:mb-6" />
@@ -124,7 +124,7 @@ export default function HomepageClient({
                 <Link href={`/article/${featuredArticles[0]?.slug}`} prefetch={false}>
                   <div className="relative group cursor-pointer h-full">
                     {/* Cover Image */}
-                    <div className="relative h-full min-h-[400px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
+                    <div className="relative h-full min-h-[460px] sm:min-h-[500px] lg:min-h-[600px] overflow-hidden bg-linear-to-br from-gray-900 to-black">
                       <Image
                         src={
                           featuredArticles[0]?.image ||
@@ -138,26 +138,26 @@ export default function HomepageClient({
                       <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
 
                       {/* Magazine-style text overlay */}
-                      <div className="absolute inset-0 flex flex-col justify-end p-6 px-3 sm:p-8 sm:px-3 lg:p-12 lg:px-3">
+                      <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-8 lg:p-12">
                         {/* Category Label */}
-                        <div className="mb-4 sm:mb-6">
-                          <span className="inline-block px-4 py-2 bg-[#7CFC00] text-black text-xs font-black tracking-[0.3em] uppercase">
+                        <div className="mb-3 sm:mb-6">
+                          <span className="inline-block bg-[#7CFC00] px-3 py-1.5 text-[10px] sm:px-4 sm:py-2 sm:text-xs text-black font-black tracking-[0.24em] sm:tracking-[0.3em] uppercase">
                             Cover Story
                           </span>
                         </div>
 
                         {/* Headline */}
-                        <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black leading-[0.95] mb-4 sm:mb-6 tracking-tight">
+                        <h1 className="text-2xl sm:text-5xl lg:text-7xl font-black leading-[1.02] sm:leading-[0.95] mb-3 sm:mb-6 tracking-tight">
                           {featuredArticles[0]?.title}
                         </h1>
 
                         {/* Deck/Subheadline */}
-                        <p className="text-base sm:text-lg lg:text-xl text-gray-300 mb-6 sm:mb-8 max-w-3xl leading-relaxed border-l-4 border-[#7CFC00] pl-4 sm:pl-6">
+                        <p className="text-sm sm:text-lg lg:text-xl text-gray-300 mb-4 sm:mb-8 max-w-none sm:max-w-3xl leading-relaxed line-clamp-6 sm:line-clamp-none border-l-4 border-[#7CFC00] pl-3 sm:pl-6">
                           {featuredArticles[0]?.excerpt}
                         </p>
 
                         {/* Byline */}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 lg:gap-x-6 text-xs sm:text-sm text-gray-400 uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 lg:gap-x-6 text-[11px] sm:text-sm text-gray-400 uppercase tracking-wider">
                           <span className="font-medium">
                             By {featuredArticles[0]?.author || "Unknown"}
                           </span>
@@ -177,7 +177,7 @@ export default function HomepageClient({
                       </div>
 
                       {/* Vertical Text Accent */}
-                      <div className="absolute right-8 top-1/2 -translate-y-1/2 -rotate-90 origin-right">
+                      <div className="hidden sm:block absolute right-8 top-1/2 -translate-y-1/2 -rotate-90 origin-right">
                         <span className="text-xs tracking-[0.5em] text-gray-600 font-bold uppercase">
                           Arkansas Music
                         </span>

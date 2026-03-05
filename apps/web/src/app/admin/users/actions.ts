@@ -263,7 +263,7 @@ export async function createArtistProfileStub(formData: FormData) {
   return { artist: createdArtist, success: true };
 }
 
-export function createProfile(formData: FormData) {
+export async function createProfile(formData: FormData) {
   const profileTypeRaw = formData.get("profileType");
   const profileType = profileTypeRaw === "artist" ? "artist" : "user";
 
