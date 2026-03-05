@@ -82,8 +82,13 @@ export function useMarkArticleRead() {
 }
 
 // Saved Articles
-export function useSavedArticles() {
+interface UseSavedArticlesOptions {
+  enabled?: boolean;
+}
+
+export function useSavedArticles(options: UseSavedArticlesOptions = {}) {
   return useQuery<PaginatedResponse<SavedArticle>>({
+    enabled: options.enabled ?? true,
     queryFn: async ({ signal }) => {
       const response = await fetch("/api/user/articles/saved", { signal });
       if (!response.ok) {

@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ArrowLeft, Calendar, User, Share2, Heart } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Calendar, User, Share2, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useMarkArticleRead } from "@/lib/api/user-activity";
+import { useMarkArticleRead, useSaveArticle, useSavedArticles } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
 import posthogClient from "posthog-js";
 import { ArticleComments } from "@/components/comments/article-comments";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useArticle } from "@/lib/api/articles";
+import { toast } from "sonner";
 
 interface ArticlePageClientProps {
   slug: string;
@@ -41,9 +43,12 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   const { data: article, isLoading } = useArticle(slug);
   const { isSignedIn, user: currentUser } = useUser();
   const { mutate: markArticleRead } = useMarkArticleRead();
+  const { mutateAsync: saveArticle, isPending: isSavingArticle } = useSaveArticle();
+  const { data: savedArticles } = useSavedArticles({ enabled: isSignedIn });
   const articleViewedRef = useRef<string | null>(null);
   const markArticleReadRef = useRef(markArticleRead);
   const trackedArticleReadRef = useRef<string | null>(null);
+  const [savedInSession, setSavedInSession] = useState(false);
 
   useEffect(() => {
     markArticleReadRef.current = markArticleRead;
@@ -86,22 +91,103 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
     articleViewedRef.current = article.slug;
   }
 
-  const handleLikeClick = () => {
-    posthogClient.capture("article_liked", {
-      article_category: article?.category,
-      article_id: article?.id,
-      article_slug: slug,
-      article_title: article?.title,
-    });
+  const savedEntry = useMemo(() => {
+    if (!article?.id || !savedArticles?.results) {
+      return null;
+    }
+
+    return (
+      savedArticles.results.find((savedArticle) => savedArticle.article.id === article.id) ?? null
+    );
+  }, [article?.id, savedArticles?.results]);
+
+  const isArticleSaved = savedInSession || Boolean(savedEntry);
+
+  const handleSaveClick = async () => {
+    if (!article?.id) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      router.push("/sign-in" as Route);
+      return;
+    }
+
+    if (isArticleSaved) {
+      toast.info("Article already saved");
+      return;
+    }
+
+    try {
+      await saveArticle(article.id);
+      setSavedInSession(true);
+      toast.success("Article saved");
+      posthogClient.capture("article_saved", {
+        article_category: article.category,
+        article_id: article.id,
+        article_slug: slug,
+        article_title: article.title,
+      });
+    } catch (error) {
+      toast.error("Failed to save article");
+      posthogClient.captureException(error);
+    }
   };
 
-  const handleShareClick = () => {
-    posthogClient.capture("article_shared", {
-      article_category: article?.category,
-      article_id: article?.id,
-      article_slug: slug,
-      article_title: article?.title,
-    });
+  const handleShareClick = async () => {
+    if (!article) {
+      return;
+    }
+
+    const shareUrl = typeof window !== "undefined" ? window.location.href : `/article/${slug}`;
+    const shareText = article.excerpt || article.title;
+
+    try {
+      const browserNavigator = navigator as Navigator & {
+        share?: (data?: ShareData) => Promise<void>;
+        clipboard?: Clipboard;
+      };
+
+      if (typeof browserNavigator.share === "function") {
+        await browserNavigator.share({
+          text: shareText,
+          title: article.title,
+          url: shareUrl,
+        });
+        posthogClient.capture("article_shared", {
+          article_category: article.category,
+          article_id: article.id,
+          article_slug: slug,
+          article_title: article.title,
+          share_method: "native",
+        });
+        return;
+      }
+
+      if (browserNavigator.clipboard?.writeText) {
+        await browserNavigator.clipboard.writeText(shareUrl);
+      } else {
+        toast.error("Sharing is not supported on this device");
+        return;
+      }
+
+      toast.success("Article link copied");
+      posthogClient.capture("article_shared", {
+        article_category: article.category,
+        article_id: article.id,
+        article_slug: slug,
+        article_title: article.title,
+        share_method: "clipboard",
+      });
+    } catch (error) {
+      const errorName = error instanceof Error ? error.name : "";
+      if (errorName === "AbortError") {
+        return;
+      }
+
+      toast.error("Unable to share article");
+      posthogClient.captureException(error);
+    }
   };
 
   const handleBackClick = () => {
@@ -181,11 +267,12 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black bg-transparent"
-                    onClick={handleLikeClick}
+                    className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black bg-transparent disabled:opacity-100"
+                    onClick={handleSaveClick}
+                    disabled={isSavingArticle || isArticleSaved}
                   >
-                    <Heart className="w-4 h-4 mr-2" />
-                    Like
+                    <Bookmark className="w-4 h-4 mr-2" />
+                    {isArticleSaved ? "Saved" : isSavingArticle ? "Saving..." : "Save"}
                   </Button>
                   <Button
                     variant="outline"

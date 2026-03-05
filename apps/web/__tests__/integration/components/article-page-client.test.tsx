@@ -24,6 +24,18 @@ vi.mock<typeof import("@/lib/api/user-activity")>(import("@/lib/api/user-activit
   useMarkArticleRead: vi.fn(() => ({
     mutate: mockMutate,
   })),
+  useSaveArticle: vi.fn(() => ({
+    isPending: false,
+    mutateAsync: vi.fn(),
+  })),
+  useSavedArticles: vi.fn(() => ({
+    data: {
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    },
+  })),
 }));
 
 vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), async () => {
