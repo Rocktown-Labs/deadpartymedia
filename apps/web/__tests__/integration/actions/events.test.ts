@@ -1,11 +1,12 @@
 import { createEvent, updateEvent, deleteEvent } from "@/app/admin/events/actions";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 
 // Mock dependencies
+const mockAuth = vi.hoisted(() => Object.assign(vi.fn(), { protect: vi.fn() }));
+
 vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
-  auth: vi.fn(),
+  auth: mockAuth,
 }));
 
 vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
@@ -66,7 +67,7 @@ describe(createEvent, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
-    vi.mocked(auth).mockResolvedValue({ userId } as any);
+    mockAuth.mockResolvedValue({ userId } as any);
     vi.mocked(canCreate).mockResolvedValue(true);
 
     // Set up insert chain
@@ -111,7 +112,7 @@ describe(createEvent, () => {
 
     await createEvent(formData);
 
-    expect(mockInsert).toHaveBeenCalledWith();
+    expect(mockInsert).toHaveBeenCalledTimes(2);
     // Should insert eventArtists relations
 
     // Once for event, once for eventArtists
@@ -138,12 +139,12 @@ describe(createEvent, () => {
 
     await createEvent(formData);
 
-    expect(mockInsert).toHaveBeenCalledWith();
+    expect(mockInsert).toHaveBeenCalledTimes(1);
     // Should only insert event, not eventArtists
   });
 
   it("should redirect if not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+    mockAuth.mockResolvedValue({ userId: null } as any);
 
     const formData = new FormData();
     formData.append("title", "Test Event");
@@ -184,7 +185,7 @@ describe(updateEvent, () => {
     vi.clearAllMocks();
     selectCallCount = 0;
     const userId = "user_test123";
-    vi.mocked(auth).mockResolvedValue({ userId } as any);
+    mockAuth.mockResolvedValue({ userId } as any);
 
     // First select call: event lookup with limit(1)
 
@@ -250,11 +251,11 @@ describe(updateEvent, () => {
 
     await updateEvent(1, formData);
 
-    expect(mockUpdate).toHaveBeenCalledWith();
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
     // Should delete old eventArtists
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
     // Should insert new eventArtists
-    expect(mockInsert).toHaveBeenCalledWith();
+    expect(mockInsert).toHaveBeenCalledTimes(1);
   });
 
   it("should remove all artists if empty artistIds", async () => {
@@ -276,7 +277,7 @@ describe(updateEvent, () => {
     await updateEvent(1, formData);
 
     // Should delete old eventArtists
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
     // Should not insert new eventArtists
     expect(mockInsert).not.toHaveBeenCalled();
   });
@@ -324,7 +325,7 @@ describe(deleteEvent, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     const userId = "user_test123";
-    vi.mocked(auth).mockResolvedValue({ userId } as any);
+    mockAuth.mockResolvedValue({ userId } as any);
     vi.mocked(canDelete).mockResolvedValue(true);
 
     const mockSelectLimit = vi.fn().mockResolvedValue([{ status: "published" }]);
@@ -355,11 +356,11 @@ describe(deleteEvent, () => {
   it("should delete event", async () => {
     await deleteEvent(1);
 
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
   });
 
   it("should redirect if not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+    mockAuth.mockResolvedValue({ userId: null } as any);
 
     await deleteEvent(1);
 

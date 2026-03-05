@@ -12,7 +12,7 @@ import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 
 // Mock dependencies
 vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
-  auth: vi.fn(),
+  auth: Object.assign(vi.fn(), { protect: vi.fn() }),
 }));
 
 vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({

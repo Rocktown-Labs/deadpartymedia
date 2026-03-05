@@ -3,7 +3,7 @@ import { getUserStats } from "@/lib/user/stats";
 import { GET } from "@/app/api/user/stats/route";
 
 vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
-  auth: vi.fn(),
+  auth: Object.assign(vi.fn(), { protect: vi.fn() }),
 }));
 
 vi.mock<typeof import("@/lib/user/stats")>(import("@/lib/user/stats"), () => ({

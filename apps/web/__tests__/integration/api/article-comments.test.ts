@@ -13,7 +13,7 @@ vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({
 }));
 
 vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
-  auth: vi.fn(),
+  auth: Object.assign(vi.fn(), { protect: vi.fn() }),
   clerkClient: vi.fn(),
 }));
 

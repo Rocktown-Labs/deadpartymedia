@@ -4,11 +4,11 @@ import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/li
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { Route } from "next";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
 const CART_COOKIE_KEY = "dead-party-cart-id";
+const redirectToExternalUrl = redirect as unknown as (url: string) => never;
 
 export async function getCartId(): Promise<string | undefined> {
   const cookieStore = await cookies();
@@ -134,5 +134,5 @@ export async function redirectToCheckout(_currency: string): Promise<void> {
   }
 
   const checkoutUrl = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`;
-  redirect(checkoutUrl as Route);
+  redirectToExternalUrl(checkoutUrl);
 }

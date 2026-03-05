@@ -15,7 +15,7 @@ vi.mock<typeof import("@/lib/auth/roles")>(import("@/lib/auth/roles"), () => ({
 }));
 
 vi.mock<typeof import("@clerk/nextjs/server")>(import("@clerk/nextjs/server"), () => ({
-  auth: vi.fn(),
+  auth: Object.assign(vi.fn(), { protect: vi.fn() }),
 }));
 
 describe(canViewAll, () => {
