@@ -40,7 +40,7 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-gray-800">
       <div className="container mx-auto px-6">
-        <div className="py-2 border-b border-gray-800/50 flex items-center justify-between text-xs tracking-widest text-gray-500 px-6">
+        <div className="py-2 border-b border-gray-800/50 flex items-center justify-between text-xs tracking-widest text-gray-500">
           <span>
             ISSUE {currentDate.getMonth() + 1}.{currentDate.getFullYear()}
           </span>
@@ -62,7 +62,7 @@ export default function Navbar() {
                 />
               </Link>
             </div>
-            <div className="hidden lg:block mx-6">
+            <div className="hidden lg:block">
               <Link href="/">
                 <div className="text-3xl font-black tracking-tighter">
                   <span className="text-[#7CFC00]">DEAD</span>

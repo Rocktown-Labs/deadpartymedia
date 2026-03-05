@@ -124,86 +124,88 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white">
         {/* Article Content */}
         <main className="pt-40 pb-20">
-          <div className="container mx-auto px-6 max-w-4xl">
-            {/* Back Button */}
-            <button
-              type="button"
-              onClick={handleBackClick}
-              className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Articles
-            </button>
+          <div className="container mx-auto px-6">
+            <div className="max-w-4xl">
+              {/* Back Button */}
+              <button
+                type="button"
+                onClick={handleBackClick}
+                className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Articles
+              </button>
 
-            {/* Article Header */}
-            <header className="mb-12">
-              <div className="flex items-center space-x-4 mb-6">
-                <span className="inline-block px-3 py-1 bg-[#7CFC00] text-black text-xs font-bold tracking-wider">
-                  {article.category}
-                </span>
-                <div className="flex items-center text-gray-400 text-sm space-x-4">
-                  <div className="flex items-center">
-                    <User className="w-4 h-4 mr-1" />
-                    {article.author.name}
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {article.published_at
-                      ? new Date(article.published_at).toLocaleDateString()
-                      : "Draft"}
+              {/* Article Header */}
+              <header className="mb-12">
+                <div className="flex items-center space-x-4 mb-6">
+                  <span className="inline-block px-3 py-1 bg-[#7CFC00] text-black text-xs font-bold tracking-wider">
+                    {article.category}
+                  </span>
+                  <div className="flex items-center text-gray-400 text-sm space-x-4">
+                    <div className="flex items-center">
+                      <User className="w-4 h-4 mr-1" />
+                      {article.author.name}
+                    </div>
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {article.published_at
+                        ? new Date(article.published_at).toLocaleDateString()
+                        : "Draft"}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">
-                {article.title}
-              </h1>
+                <h1 className="text-4xl md:text-6xl font-black leading-tight mb-8">
+                  {article.title}
+                </h1>
 
-              {/* Social Actions */}
-              <div className="flex items-center space-x-4 mb-8">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black bg-transparent"
-                  onClick={handleLikeClick}
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  Like
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#9400D3] text-[#9400D3] hover:bg-[#9400D3] hover:text-white bg-transparent"
-                  onClick={handleShareClick}
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-              </div>
-            </header>
+                {/* Social Actions */}
+                <div className="flex items-center space-x-4 mb-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black bg-transparent"
+                    onClick={handleLikeClick}
+                  >
+                    <Heart className="w-4 h-4 mr-2" />
+                    Like
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-[#9400D3] text-[#9400D3] hover:bg-[#9400D3] hover:text-white bg-transparent"
+                    onClick={handleShareClick}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
+              </header>
 
-            {/* Featured Image */}
-            <div className="mb-12">
-              <Image
-                src={article.cover_image || "/placeholder.svg"}
-                alt={article.title}
-                width={800}
-                height={500}
-                className="w-full h-96 object-cover rounded-lg"
+              {/* Featured Image */}
+              <div className="mb-12">
+                <Image
+                  src={article.cover_image || "/placeholder.svg"}
+                  alt={article.title}
+                  width={800}
+                  height={500}
+                  className="w-full h-96 object-cover rounded-lg"
+                />
+              </div>
+
+              {/* Article Content */}
+              <article
+                className="prose prose-invert prose-lg max-w-none"
+                dangerouslySetInnerHTML={{ __html: String(article.content || "") }}
+              />
+
+              <ArticleComments
+                slug={slug}
+                commentCount={article.comment_count}
+                articleId={article.id}
+                articleTitle={article.title}
               />
             </div>
-
-            {/* Article Content */}
-            <article
-              className="prose prose-invert prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: String(article.content || "") }}
-            />
-
-            <ArticleComments
-              slug={slug}
-              commentCount={article.comment_count}
-              articleId={article.id}
-              articleTitle={article.title}
-            />
           </div>
 
           <MerchCarousel heading="Merch" />

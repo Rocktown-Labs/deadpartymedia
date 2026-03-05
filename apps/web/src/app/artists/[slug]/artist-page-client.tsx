@@ -109,198 +109,201 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white">
         {/* Main Content */}
         <main className="pt-40 pb-20">
-          <div className="container mx-auto px-6 max-w-6xl">
-            {/* Back Button */}
-            <button
-              type="button"
-              onClick={handleBackClick}
-              className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Artists
-            </button>
+          <div className="container mx-auto px-6">
+            <div className="max-w-6xl">
+              {/* Back Button */}
+              <button
+                type="button"
+                onClick={handleBackClick}
+                className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Artists
+              </button>
 
-            {/* Artist Info Card */}
-            <div className="border border-gray-800 rounded-lg overflow-hidden mb-12 bg-[#0A0A0A]">
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <h1 className="text-3xl font-bold">{artist.name}</h1>
-                  <span className="px-3 py-1 bg-[#7CFC00] text-black text-sm font-medium rounded whitespace-nowrap ml-4">
-                    {artist.genre}
-                  </span>
-                </div>
-                <p className="text-gray-400 mb-4">
-                  <MapPin className="w-4 h-4 inline mr-1" />
-                  {artist.location}
-                </p>
-
-                {/* Bio */}
-                <p className="text-gray-300 leading-relaxed mb-4">{artist.bio}</p>
-
-                {/* Divider */}
-                <div className="border-t border-gray-800 mb-4" />
-
-                {/* Social Links and Article Count */}
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-4">
-                    {artist.instagram && (
-                      <a
-                        href={artist.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("instagram", artist.instagram)}
-                      >
-                        <Instagram className="w-5 h-5" />
-                      </a>
-                    )}
-                    {artist.twitter && (
-                      <a
-                        href={artist.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("twitter", artist.twitter)}
-                      >
-                        <Twitter className="w-5 h-5" />
-                      </a>
-                    )}
-                    {artist.tiktok && (
-                      <a
-                        href={artist.tiktok}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-[#7CFC00] transition-colors text-sm font-bold"
-                        onClick={() => handleSocialClick("tiktok", artist.tiktok)}
-                      >
-                        TT
-                      </a>
-                    )}
-                    {artist.website && (
-                      <a
-                        href={artist.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-[#7CFC00] transition-colors"
-                        onClick={() => handleSocialClick("website", artist.website)}
-                      >
-                        🌐
-                      </a>
-                    )}
+              {/* Artist Info Card */}
+              <div className="border border-gray-800 rounded-lg overflow-hidden mb-12 bg-[#0A0A0A]">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-2">
+                    <h1 className="text-3xl font-bold">{artist.name}</h1>
+                    <span className="px-3 py-1 bg-[#7CFC00] text-black text-sm font-medium rounded whitespace-nowrap ml-4">
+                      {artist.genre}
+                    </span>
                   </div>
-                  <div className="text-base">
-                    <span className="text-gray-400">Articles: </span>
-                    <span className="font-bold text-[#7CFC00] text-xl">{artist.article_count}</span>
-                    {artist.event_count > 0 && (
-                      <>
-                        <span className="text-gray-400 ml-4">Events: </span>
-                        <span className="font-bold text-[#7CFC00] text-xl">
-                          {artist.event_count}
-                        </span>
-                      </>
-                    )}
+                  <p className="text-gray-400 mb-4">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    {artist.location}
+                  </p>
+
+                  {/* Bio */}
+                  <p className="text-gray-300 leading-relaxed mb-4">{artist.bio}</p>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-800 mb-4" />
+
+                  {/* Social Links and Article Count */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-4">
+                      {artist.instagram && (
+                        <a
+                          href={artist.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                          onClick={() => handleSocialClick("instagram", artist.instagram)}
+                        >
+                          <Instagram className="w-5 h-5" />
+                        </a>
+                      )}
+                      {artist.twitter && (
+                        <a
+                          href={artist.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                          onClick={() => handleSocialClick("twitter", artist.twitter)}
+                        >
+                          <Twitter className="w-5 h-5" />
+                        </a>
+                      )}
+                      {artist.tiktok && (
+                        <a
+                          href={artist.tiktok}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-[#7CFC00] transition-colors text-sm font-bold"
+                          onClick={() => handleSocialClick("tiktok", artist.tiktok)}
+                        >
+                          TT
+                        </a>
+                      )}
+                      {artist.website && (
+                        <a
+                          href={artist.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-[#7CFC00] transition-colors"
+                          onClick={() => handleSocialClick("website", artist.website)}
+                        >
+                          🌐
+                        </a>
+                      )}
+                    </div>
+                    <div className="text-base">
+                      <span className="text-gray-400">Articles: </span>
+                      <span className="font-bold text-[#7CFC00] text-xl">
+                        {artist.article_count}
+                      </span>
+                      {artist.event_count > 0 && (
+                        <>
+                          <span className="text-gray-400 ml-4">Events: </span>
+                          <span className="font-bold text-[#7CFC00] text-xl">
+                            {artist.event_count}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Spotify Embed - Full Width */}
+                {artist.spotify_artist_id && (
+                  <div className="p-6 border-t border-gray-800">
+                    <iframe
+                      style={{ borderRadius: "12px" }}
+                      src={`https://open.spotify.com/embed/artist/${artist.spotify_artist_id}?utm_source=generator&theme=0`}
+                      width="100%"
+                      height="352"
+                      frameBorder="0"
+                      allowFullScreen
+                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Spotify Embed - Full Width */}
-              {artist.spotify_artist_id && (
-                <div className="p-6 border-t border-gray-800">
-                  <iframe
-                    style={{ borderRadius: "12px" }}
-                    src={`https://open.spotify.com/embed/artist/${artist.spotify_artist_id}?utm_source=generator&theme=0`}
-                    width="100%"
-                    height="352"
-                    frameBorder="0"
-                    allowFullScreen
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                  />
+              {/* Related Articles */}
+              {articlesArray.length > 0 && (
+                <div className="mb-12">
+                  <h2 className="text-2xl font-bold mb-6">Articles Featuring {artist.name}</h2>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {articlesArray.map((article) => (
+                      <Link
+                        key={article.id}
+                        href={`/article/${article.slug}`}
+                        className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
+                      >
+                        <div className="aspect-video relative overflow-hidden">
+                          <Image
+                            src={article.cover_image || "/placeholder.svg"}
+                            alt={article.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <span className="text-xs text-[#7CFC00] font-medium">
+                            {article.category}
+                          </span>
+                          <h3 className="font-bold mt-2 mb-2 group-hover:text-[#7CFC00] transition-colors">
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {new Date(article.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Related Events */}
+              {eventsArray.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Events Featuring {artist.name}</h2>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {eventsArray.map((event) => (
+                      <Link
+                        key={event.id}
+                        href={`/events/${event.slug}`}
+                        className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
+                      >
+                        <div className="aspect-video relative overflow-hidden">
+                          <Image
+                            src={event.image || "/placeholder.svg"}
+                            alt={event.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <span className="text-xs text-[#7CFC00] font-medium">{event.genre}</span>
+                          <h3 className="font-bold mt-2 mb-2 group-hover:text-[#7CFC00] transition-colors">
+                            {event.title}
+                          </h3>
+                          <p className="text-sm text-gray-400">
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              day: "numeric",
+                              month: "short",
+                              weekday: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                          <div className="mt-2 space-y-1 text-sm text-gray-500">
+                            {event.time && <p>{event.time}</p>}
+                            {event.venue && <p>{event.venue}</p>}
+                            {event.location && <p>{event.location}</p>}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Related Articles */}
-            {articlesArray.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">Articles Featuring {artist.name}</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {articlesArray.map((article) => (
-                    <Link
-                      key={article.id}
-                      href={`/article/${article.slug}`}
-                      className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
-                    >
-                      <div className="aspect-video relative overflow-hidden">
-                        <Image
-                          src={article.cover_image || "/placeholder.svg"}
-                          alt={article.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <span className="text-xs text-[#7CFC00] font-medium">
-                          {article.category}
-                        </span>
-                        <h3 className="font-bold mt-2 mb-2 group-hover:text-[#7CFC00] transition-colors">
-                          {article.title}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {new Date(article.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Related Events */}
-            {eventsArray.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">Events Featuring {artist.name}</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {eventsArray.map((event) => (
-                    <Link
-                      key={event.id}
-                      href={`/events/${event.slug}`}
-                      className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
-                    >
-                      <div className="aspect-video relative overflow-hidden">
-                        <Image
-                          src={event.image || "/placeholder.svg"}
-                          alt={event.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <span className="text-xs text-[#7CFC00] font-medium">{event.genre}</span>
-                        <h3 className="font-bold mt-2 mb-2 group-hover:text-[#7CFC00] transition-colors">
-                          {event.title}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          {new Date(event.date).toLocaleDateString("en-US", {
-                            day: "numeric",
-                            month: "short",
-                            weekday: "short",
-                            year: "numeric",
-                          })}
-                        </p>
-                        <div className="mt-2 space-y-1 text-sm text-gray-500">
-                          {event.time && <p>{event.time}</p>}
-                          {event.venue && <p>{event.venue}</p>}
-                          {event.location && <p>{event.location}</p>}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
-
           <MerchCarousel heading="Merch" />
         </main>
       </div>

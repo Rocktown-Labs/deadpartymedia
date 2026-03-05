@@ -62,7 +62,7 @@ export default function MusicPage() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Main Content */}
       <main className="pt-40 pb-20">
-        <div className="container mx-auto px-6 max-w-7xl">
+        <div className="container mx-auto px-6">
           {/* Back Button */}
           <Link
             href="/"

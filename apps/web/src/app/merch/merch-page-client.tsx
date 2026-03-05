@@ -50,7 +50,7 @@ export default function MerchPageClient() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-40 pb-20">
-        <div className="container mx-auto px-6 max-w-7xl">
+        <div className="container mx-auto px-6">
           <Link
             href="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"

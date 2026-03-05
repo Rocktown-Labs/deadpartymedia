@@ -17,8 +17,8 @@ export default function EdmPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20 px-6">
-        <div className="container mx-auto max-w-7xl">
+      <main className="pt-40 pb-20">
+        <div className="container mx-auto px-6">
           <Link
             href="/music"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
