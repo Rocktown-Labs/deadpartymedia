@@ -10,8 +10,8 @@ export default function ArtistDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20 px-6">
-        <div className="container mx-auto max-w-6xl">
+      <main className="pt-40 pb-20">
+        <div className="container mx-auto px-6">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Artist Dashboard</h1>
             <p className="text-gray-400">

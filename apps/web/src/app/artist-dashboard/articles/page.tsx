@@ -23,8 +23,8 @@ export default function ArtistArticlesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <main className="pt-40 pb-20 px-6">
-          <div className="container mx-auto max-w-6xl">
+        <main className="pt-40 pb-20">
+          <div className="container mx-auto px-6">
             <div className="mb-8">
               <Skeleton className="h-10 w-64 mb-2" />
               <Skeleton className="h-4 w-96" />
@@ -43,8 +43,8 @@ export default function ArtistArticlesPage() {
   if (!artist) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <main className="pt-40 pb-20 px-6">
-          <div className="container mx-auto max-w-6xl">
+        <main className="pt-40 pb-20">
+          <div className="container mx-auto px-6">
             <div className="mb-8">
               <h1 className="text-4xl font-black mb-2">My Articles</h1>
               <p className="text-gray-400">Articles featuring your artist profile</p>
@@ -71,8 +71,8 @@ export default function ArtistArticlesPage() {
   if (articlesArray.length === 0) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <main className="pt-40 pb-20 px-6">
-          <div className="container mx-auto max-w-6xl">
+        <main className="pt-40 pb-20">
+          <div className="container mx-auto px-6">
             <div className="mb-8">
               <h1 className="text-4xl font-black mb-2">My Articles</h1>
               <p className="text-gray-400">Articles featuring {artist.name}</p>
@@ -96,8 +96,8 @@ export default function ArtistArticlesPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20 px-6">
-        <div className="container mx-auto max-w-6xl">
+      <main className="pt-40 pb-20">
+        <div className="container mx-auto px-6">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">My Articles</h1>
             <p className="text-gray-400">

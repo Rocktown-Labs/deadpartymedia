@@ -91,16 +91,16 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <main className="pt-40 pb-20 px-6">
-          <div className="container mx-auto max-w-6xl">
+        <main className="pt-40 pb-20">
+          <div className="container mx-auto px-6">
             <div className="mb-8">
               <Skeleton className="h-10 w-64 mb-2" />
               <Skeleton className="h-4 w-96" />
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
-              <Skeleton className="h-32" />
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              <Skeleton className="h-28 sm:h-32" />
+              <Skeleton className="h-28 sm:h-32" />
+              <Skeleton className="h-28 sm:h-32" />
             </div>
           </div>
         </main>
@@ -113,8 +113,8 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white">
-        <main className="pt-40 pb-20 px-6">
-          <div className="container mx-auto max-w-6xl">
+        <main className="pt-40 pb-20">
+          <div className="container mx-auto px-6">
             <Empty>
               <EmptyHeader>
                 <EmptyMedia>
@@ -205,8 +205,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-40 pb-20 px-6">
-        <div className="container mx-auto max-w-6xl">
+      <main className="pt-40 pb-20">
+        <div className="container mx-auto px-6">
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Dashboard</h1>
             <p className="text-gray-400">
@@ -215,17 +215,19 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="mb-8 grid grid-cols-3 gap-3 md:gap-6">
             {statsCards.map((card) => {
               const Icon = card.icon;
               return (
                 <Link key={card.title} href={card.href}>
-                  <div className="bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors cursor-pointer">
+                  <div className="cursor-pointer rounded-lg border border-gray-800 bg-[#111111] p-3 transition-colors hover:border-[#7CFC00] sm:p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <Icon className={`w-8 h-8 ${card.color}`} />
+                      <Icon className={`h-5 w-5 sm:h-8 sm:w-8 ${card.color}`} />
                     </div>
-                    <div className="text-3xl font-black mb-1">{card.value}</div>
-                    <div className="text-sm text-gray-400">{card.title}</div>
+                    <div className="mb-1 text-xl font-black sm:text-3xl">{card.value}</div>
+                    <div className="text-[11px] leading-tight text-gray-400 sm:text-sm">
+                      {card.title}
+                    </div>
                   </div>
                 </Link>
               );
