@@ -1,6 +1,5 @@
 "use server";
 
-import { cacheLife, cacheTag } from "next/cache";
 import { TAGS } from "./constants";
 import type { Cart, Product, ProductOption } from "./types";
 import { logger } from "./logger";
@@ -11,12 +10,7 @@ const FOURTHWALL_API_URL =
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_FW_STOREFRONT_TOKEN;
 const MAX_PRODUCT_LIMIT = 100;
 const DEFAULT_PRODUCT_LIMIT = 100;
-
-const PRODUCT_CACHE_LIFE_SECONDS = {
-  expire: 60 * 60 * 24 * 7,
-  revalidate: 60 * 60 * 24,
-  stale: 60 * 60 * 24,
-} as const;
+const PRODUCT_REVALIDATE_SECONDS = 60 * 60 * 24;
 
 if (!STOREFRONT_TOKEN) {
   logger.warn(
@@ -80,10 +74,12 @@ async function fourthwallFetch<T>({
   path,
   tags,
   cache = "force-cache",
+  revalidate,
 }: {
   path: string;
   tags?: string[];
   cache?: RequestCache;
+  revalidate?: number;
 }): Promise<T> {
   try {
     // Ensure clean URL construction
@@ -95,13 +91,23 @@ async function fourthwallFetch<T>({
 
     logger.debug({ operation: "fourthwall_fetch", url }, "Fetching from Fourthwall");
 
+    const nextOptions =
+      tags || typeof revalidate === "number"
+        ? {
+            next: {
+              ...(typeof revalidate === "number" ? { revalidate } : {}),
+              ...(tags ? { tags } : {}),
+            },
+          }
+        : {};
+
     const result = await fetch(url, {
       cache,
       headers: {
         "Content-Type": "application/json",
       },
       method: "GET",
-      ...(tags && { next: { tags } }),
+      ...nextOptions,
     });
 
     if (!result.ok) {
@@ -350,7 +356,10 @@ function normalizeProductLimit(limit: number): number {
 
 async function fetchProductsFromSource(currency: string, limit: number): Promise<Product[]> {
   const data = await fourthwallFetch<{ results: FourthwallProduct[] }>({
+    cache: "force-cache",
     path: `collections/all/products?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}&size=${limit}`,
+    revalidate: PRODUCT_REVALIDATE_SECONDS,
+    tags: [TAGS.products],
   });
 
   logger.info(
@@ -363,28 +372,13 @@ async function fetchProductsFromSource(currency: string, limit: number): Promise
 
 async function fetchProductFromSource(slug: string, currency: string): Promise<Product> {
   const data = await fourthwallFetch<FourthwallProduct>({
+    cache: "force-cache",
     path: `products/${slug}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
+    revalidate: PRODUCT_REVALIDATE_SECONDS,
+    tags: [TAGS.products, `${TAGS.products}-${slug}`],
   });
 
   return transformProduct(data);
-}
-
-async function getCachedProducts(currency: string, limit: number): Promise<Product[]> {
-  "use cache";
-
-  cacheLife(PRODUCT_CACHE_LIFE_SECONDS);
-  cacheTag(TAGS.products);
-
-  return fetchProductsFromSource(currency, limit);
-}
-
-async function getCachedProduct(slug: string, currency: string): Promise<Product> {
-  "use cache";
-
-  cacheLife(PRODUCT_CACHE_LIFE_SECONDS);
-  cacheTag(TAGS.products, `${TAGS.products}-${slug}`);
-
-  return fetchProductFromSource(slug, currency);
 }
 
 export async function getProducts(
@@ -394,7 +388,7 @@ export async function getProducts(
   const normalizedLimit = normalizeProductLimit(limit);
 
   try {
-    return await getCachedProducts(currency, normalizedLimit);
+    return await fetchProductsFromSource(currency, normalizedLimit);
   } catch (error) {
     logger.error(
       {
@@ -416,7 +410,7 @@ export async function getProduct(slug: string, currency = "USD"): Promise<Produc
   }
 
   try {
-    return await getCachedProduct(slug, currency);
+    return await fetchProductFromSource(slug, currency);
   } catch (error) {
     logger.error(
       { error: sanitizeError(error), operation: "get_product", slug },

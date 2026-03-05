@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { connection } from "next/server";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
 
 const { siteName, siteUrl } = getSiteDefaults();
@@ -34,7 +35,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  await connection();
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Main Content */}

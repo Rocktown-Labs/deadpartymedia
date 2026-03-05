@@ -8,7 +8,6 @@ const turbopackRoot = path.resolve(process.cwd(), "../..");
 const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
-  cacheComponents: true,
   turbopack: {
     root: turbopackRoot,
   },

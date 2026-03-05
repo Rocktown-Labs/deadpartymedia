@@ -1,8 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { connection } from "next/server";
 import { ArrowLeft } from "lucide-react";
 
-export default function NotFound() {
+export default async function NotFound() {
+  await connection();
+
   return (
     <main className="min-h-screen bg-[#0A0A0A] px-6 pb-28 pt-[calc(var(--navbar-offset)+1.5rem)] text-white lg:pb-20">
       <div className="container mx-auto">
