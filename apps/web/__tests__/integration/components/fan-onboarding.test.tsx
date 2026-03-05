@@ -91,7 +91,7 @@ describe(FanOnboarding, () => {
 
     await waitFor(
       () => {
-        expect(mockAction).toHaveBeenCalledWith();
+        expect(mockAction).toHaveBeenCalledTimes(1);
       },
       { timeout: 3000 },
     );

@@ -230,7 +230,7 @@ describe(artistOnboardingAction, () => {
 
     const result = await artistOnboardingAction(null, formData);
 
-    expect(mockClient.users.updateUserMetadata).toHaveBeenCalledWith();
+    expect(mockClient.users.updateUserMetadata).toHaveBeenCalledTimes(1);
     expect((result as any).success).toBeTruthy();
   });
 

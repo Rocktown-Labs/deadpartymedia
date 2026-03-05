@@ -118,10 +118,7 @@ describe(createPost, () => {
 
     await createPost(formData);
 
-    expect(mockInsert).toHaveBeenCalledWith();
-    // Should insert postArtists relations
-
-    // Once for post, once for postArtists
+    // Once for post, once for postArtists.
     expect(mockInsert).toHaveBeenCalledTimes(2);
   });
 
@@ -144,7 +141,7 @@ describe(createPost, () => {
 
     await createPost(formData);
 
-    expect(mockInsert).toHaveBeenCalledWith();
+    expect(mockInsert).toHaveBeenCalledTimes(1);
     // Should only insert post, not postArtists
   });
 
@@ -313,11 +310,11 @@ describe(updatePost, () => {
 
     await updatePost(1, formData);
 
-    expect(mockUpdate).toHaveBeenCalledWith();
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
     // Should delete old postArtists
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
     // Should insert new postArtists
-    expect(mockInsert).toHaveBeenCalledWith();
+    expect(mockInsert).toHaveBeenCalledTimes(1);
   });
 
   it("should remove all artists if empty artistIds", async () => {
@@ -338,7 +335,7 @@ describe(updatePost, () => {
     await updatePost(1, formData);
 
     // Should delete old postArtists
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
     // Should not insert new postArtists
     expect(mockInsert).not.toHaveBeenCalled();
   });
@@ -415,7 +412,7 @@ describe(deletePost, () => {
   it("should delete post", async () => {
     await deletePost(1);
 
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
   });
 
   it("should redirect if not authenticated", async () => {
@@ -460,7 +457,7 @@ describe(requestDeletePost, () => {
 
     await requestDeletePost(1);
 
-    expect(mockUpdate).toHaveBeenCalledWith();
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
         deleteRequested: true,
@@ -480,7 +477,7 @@ describe(requestDeletePost, () => {
     await requestDeletePost(1);
 
     // Should delete directly
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
     // Should not request deletion
     expect(mockUpdate).not.toHaveBeenCalled();
   });
@@ -520,7 +517,7 @@ describe(approveDeletePost, () => {
   it("should approve and delete post", async () => {
     await approveDeletePost(1);
 
-    expect(mockDelete).toHaveBeenCalledWith();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
   });
 
   it("should throw error if not super admin", async () => {
@@ -544,7 +541,7 @@ describe(denyDeletePost, () => {
   it("should deny and clear delete request", async () => {
     await denyDeletePost(1);
 
-    expect(mockUpdate).toHaveBeenCalledWith();
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
         deleteRequested: false,

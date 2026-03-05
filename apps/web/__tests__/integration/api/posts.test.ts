@@ -183,7 +183,7 @@ describe("gET /api/posts", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockDbChain.where).toHaveBeenCalledWith();
+    expect(mockDbChain.where).toHaveBeenCalledTimes(1);
   });
 
   it("should handle pagination with limit and offset", async () => {
@@ -195,8 +195,8 @@ describe("gET /api/posts", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockDbChain.limit).toHaveBeenCalledWith();
-    expect(mockDbChain.offset).toHaveBeenCalledWith();
+    expect(mockDbChain.limit).toHaveBeenCalledTimes(1);
+    expect(mockDbChain.offset).toHaveBeenCalledTimes(1);
   });
 
   it("should filter cover stories", async () => {
@@ -224,7 +224,7 @@ describe("gET /api/posts", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockDbChain.where).toHaveBeenCalledWith();
+    expect(mockDbChain.where).toHaveBeenCalledTimes(1);
   });
 
   it("should handle database errors", async () => {

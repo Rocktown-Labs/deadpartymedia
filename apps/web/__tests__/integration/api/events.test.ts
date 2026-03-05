@@ -161,7 +161,7 @@ describe("gET /api/events", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockDbChain.where).toHaveBeenCalledWith();
+    expect(mockDbChain.where).toHaveBeenCalledTimes(1);
   });
 
   it("should include artist data when events have artists", async () => {

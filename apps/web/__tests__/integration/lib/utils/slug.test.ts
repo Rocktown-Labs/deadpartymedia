@@ -50,10 +50,10 @@ describe(ensureUniqueSlug, () => {
 
     const slug = await ensureUniqueSlug("test-artist", undefined, "artists");
     expect(slug).toBe("test-artist");
-    expect(mockDbChain.select).toHaveBeenCalledWith();
-    expect(mockDbChain.from).toHaveBeenCalledWith();
-    expect(mockDbChain.where).toHaveBeenCalledWith();
-    expect(mockDbChain.limit).toHaveBeenCalledWith();
+    expect(mockDbChain.select).toHaveBeenCalledTimes(1);
+    expect(mockDbChain.from).toHaveBeenCalledTimes(1);
+    expect(mockDbChain.where).toHaveBeenCalledTimes(1);
+    expect(mockDbChain.limit).toHaveBeenCalledTimes(1);
   });
 
   it("should append counter if slug exists", async () => {

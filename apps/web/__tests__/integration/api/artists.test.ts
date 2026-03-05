@@ -149,7 +149,7 @@ describe("gET /api/artists", () => {
     const response = await GETArtists(request);
 
     expect(response.status).toBe(200);
-    expect(mockDbChain.where).toHaveBeenCalledWith();
+    expect(mockDbChain.where).toHaveBeenCalledTimes(1);
   });
 
   it("should handle database errors", async () => {
