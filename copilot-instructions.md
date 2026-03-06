@@ -1,112 +1,386 @@
-# Copilot Implementation Guide (Dead Party Media)
+---
+applyTo: "**/*.{ts,tsx,js,jsx}"
+---
 
-This guide is for Copilot-style coding assistants working in this repository.
-Follow it with `AGENTS.md` as the governing workflow contract.
+# GitHub‑Driven Development Workflow
 
-## Start Here (Mandatory)
+This file defines how autonomous agents should plan, implement, test, and ship code using **GitHub Issues, GitHub Projects, and Pull Requests as the source of truth**.
 
-Before planning or generating code:
+The goal is to enforce a reliable **Plan → Branch → Implement → Test → PR → Merge → Ship** workflow while integrating tightly with the GitHub CLI (`gh`).
 
-1. Read `AGENTS.md`.
-2. Read the relevant skill docs in `.agents/skills/*/SKILL.md`.
-3. If task touches web DB/Neon behavior, also read:
-   `apps/web/.agents/skills/neon-postgres/SKILL.md`.
+Reference:
+https://cli.github.com/manual/gh
 
-Do not skip `.agents` discovery and jump directly to implementation.
+---
 
-## GitHub Workflow Requirements
+# Core Principles
 
-Use GitHub as the work-tracking layer for status and delivery:
+1. **GitHub is the source of truth**
+   - Issues define work
+   - Projects track progress
+   - PRs ship code
 
-1. Plan work.
-2. Create or reference an Issue (`Feature`, `Bug`, `Chore`).
-3. Create a branch from `master`.
-4. Implement and test.
-5. Open PR.
-6. Review.
-7. Merge to `master`.
-8. Close issue.
+2. **Never push directly to `main` or `master`**
 
-### Issue Rules
+3. **Every change must trace to a GitHub Issue**
 
-- Use the issue forms in `.github/ISSUE_TEMPLATE/`.
-- Titles must start with:
-  - `feat: ...`
-  - `fix: ...`
-  - `chore: ...`
-- Include acceptance criteria as a checklist.
-- Add optional links to relevant `.agents` files when useful.
+4. **All work flows through a Pull Request**
 
-### Branch Rules
+5. **Project status must reflect real development state**
 
-- `feat/<slug>-<issueNumber>`
-- `fix/<slug>-<issueNumber>`
-- `chore/<slug>-<issueNumber>`
+---
 
-Examples:
+# Development Lifecycle
 
-- `feat/article-share-card-412`
-- `fix/cart-session-timeout-389`
-- `chore/update-playwright-fixtures-377`
+Agents must follow this lifecycle.
 
-### Pull Request Rules
+1. Discover or create Issue
+2. Ensure repository Project exists
+3. Add Issue to Project (Backlog)
+4. Enter Plan Mode
+5. Create branch
+6. Implement
+7. Run quality gates
+8. Preview if applicable
+9. Open Pull Request
+10. Update Project status
+11. Address CI/review
+12. Merge
+13. Mark Project item Done
 
-- Title mirrors issue title.
-- Body must include:
-  - Summary
-  - Implementation Notes
-  - Testing Notes
-  - `Closes #<issueNumber>`
-- Use `.github/pull_request_template.md`.
+---
 
-## GitHub Project Board Rules
+# Plan Mode (Required Before Coding)
 
-Project status must stay in sync with work state:
+Before generating code, the agent must:
 
-- Issue created -> `Backlog`
-- Branch created/work started -> `In Progress`
-- PR opened -> `In Review`
-- PR merged + issue closed -> `Done`
+1. Read the GitHub Issue
+2. Extract acceptance criteria
+3. Identify affected files
+4. Identify required tests
+5. Define implementation strategy
+6. Confirm branch strategy
 
-Recommended automation:
+Plan output should include:
 
-- Auto-add new issues/PRs to project.
-- Default to `Backlog`.
-- Auto-mark `Done` on close/merge.
-- Optional label mapping for `in-progress` and `in-review`.
+- Issue link
+- Implementation steps
+- File changes
+- Test strategy
+- Branch name
+- PR plan
 
-## Task Routing To `.agents`
+Agents must **not begin coding until Plan Mode completes**.
 
-| Task Type                                          | Skills To Read First                                                                                                                                          |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lint, formatting, JS/TS code quality               | `.agents/skills/ultracite/SKILL.md`                                                                                                                           |
-| React/Next performance and architecture            | `.agents/skills/vercel-react-best-practices/SKILL.md`, `.agents/skills/vercel-composition-patterns/SKILL.md`, `.agents/skills/next-cache-components/SKILL.md` |
-| Web UI implementation or review                    | `.agents/skills/frontend-design/SKILL.md`, `.agents/skills/web-design-guidelines/SKILL.md`                                                                    |
-| Expo/React Native UI and performance               | `.agents/skills/building-native-ui/SKILL.md`, `.agents/skills/vercel-react-native-skills/SKILL.md`                                                            |
-| Network/data-fetching behavior (especially native) | `.agents/skills/native-data-fetching/SKILL.md`                                                                                                                |
-| SEO work                                           | `.agents/skills/seo-audit/SKILL.md`, `.agents/skills/programmatic-seo/SKILL.md`                                                                               |
-| Marketing copy                                     | `.agents/skills/copywriting/SKILL.md`                                                                                                                         |
-| Web research/scraping                              | `.agents/skills/firecrawl/SKILL.md`                                                                                                                           |
-| Neon/Postgres work in web app                      | `apps/web/.agents/skills/neon-postgres/SKILL.md`                                                                                                              |
+---
 
-## Quality And Testing Expectations
+# GitHub CLI Operational Commands
 
-Use commands relevant to the changed scope:
+Agents should use `gh` for GitHub interactions.
 
-- Lint/check: `pnpm dlx ultracite check`
-- Fix formatting/lint: `pnpm dlx ultracite fix`
-- Type checks: `pnpm check-types`
-- Web unit/integration tests: `pnpm web:test`
-- Web e2e tests: `pnpm web:test:e2e`
+## Verify authentication
 
-Include executed commands/results in PR testing notes.
+```bash
+gh auth status
+```
 
-## Alignment Rule
+## Confirm repository context
 
-If `.agents` structure, workflow, or delivery conventions change, update:
+```bash
+gh repo view
+```
+
+---
+
+# Issue Workflow
+
+## List Issues
+
+```bash
+gh issue list --state open
+```
+
+## Search Issues
+
+```bash
+gh issue list --search "<keywords>"
+```
+
+## View Issue
+
+```bash
+gh issue view <issueNumber> --comments
+```
+
+## Create Issue
+
+```bash
+gh issue create --title "feat: ..." --body "..."
+```
+
+Issue titles must follow:
+
+- `feat:`
+- `fix:`
+- `chore:`
+
+Example:
+
+```
+feat: add authentication middleware
+```
+
+---
+
+# GitHub Project Workflow
+
+Every repository should have a **GitHub Project (kanban)** attached.
+
+Agents must ensure a project exists before beginning work.
+
+## Determine repo owner
+
+```bash
+gh repo view --json owner,name -q '.owner.login'
+```
+
+## List Projects
+
+```bash
+gh project list --owner <orgOrUser>
+```
+
+## View Project
+
+```bash
+gh project view <projectNumber> --owner <orgOrUser>
+```
+
+## Create Project if none exists
+
+```bash
+gh project create \
+  --owner <orgOrUser> \
+  --title "<repo-name> Project"
+```
+
+---
+
+# Project Status Mapping
+
+| Development State | Project Status |
+| ----------------- | -------------- |
+| Issue created     | Backlog        |
+| Branch created    | In Progress    |
+| PR opened         | In Review      |
+| PR merged         | Done           |
+
+---
+
+# Add Issue to Project
+
+```bash
+gh project item-add <projectNumber> \
+  --owner <orgOrUser> \
+  --url <issueUrl>
+```
+
+---
+
+# View Project Items
+
+```bash
+gh project item-list <projectNumber> \
+  --owner <orgOrUser>
+```
+
+---
+
+# Update Project Status
+
+Retrieve field IDs:
+
+```bash
+gh project view <projectNumber> \
+  --owner <orgOrUser> \
+  --format json
+```
+
+Update status:
+
+```bash
+gh project item-edit <projectNumber> \
+  --owner <orgOrUser> \
+  --id <itemId> \
+  --field-id <statusFieldId> \
+  --single-select-option-id <optionId>
+```
+
+If status update cannot be performed due to missing IDs, log the reason and continue development.
+
+---
+
+# Branch Strategy
+
+Branches must always derive from `main`.
+
+Update main first:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+Create branch:
+
+```bash
+git checkout -b <type>/<slug>-<issueNumber>
+```
+
+Branch naming rules:
+
+```
+feat/<slug>-<issueNumber>
+fix/<slug>-<issueNumber>
+chore/<slug>-<issueNumber>
+```
+
+Example:
+
+```
+feat/auth-middleware-42
+```
+
+Rules:
+
+- lowercase
+- kebab-case
+- descriptive slug
+
+---
+
+# Pull Request Rules
+
+PR title must match the Issue title exactly.
+
+Required PR body:
+
+```
+## Summary
+
+## Implementation Notes
+
+## Testing Notes
+
+Closes #<issueNumber>
+```
+
+Create PR:
+
+```bash
+gh pr create \
+  --title "<issueTitle>" \
+  --body "<PR body>" \
+  --base main \
+  --head <branchName>
+```
+
+---
+
+# Merge Rules
+
+Only merge when:
+
+- CI passes
+- Tests pass
+- Review feedback resolved
+
+Merge PR:
+
+```bash
+gh pr merge --merge --delete-branch
+```
+
+After merge:
+
+- Issue closes automatically
+- Move Project item → Done
+
+---
+
+# Required Quality Gates
+
+Agents must run before PR:
+
+```bash
+pnpm check
+pnpm typecheck
+pnpm test
+```
+
+If lint fixes required:
+
+```bash
+pnpm fix
+```
+
+Follow **Ultracite standards**.
+
+---
+
+# Repository Architecture Conventions
+
+Follow existing project structure.
+
+```
+app/
+components/
+lib/
+db/
+workflows/
+```
+
+Avoid unrelated refactors.
+
+Changes must stay focused on the Issue.
+
+---
+
+# Agent Skill Routing
+
+Agents should inspect `.agents/skills` before implementing work.
+
+| Domain                      | Path                                         | Purpose                          |
+| --------------------------- | -------------------------------------------- | -------------------------------- |
+| Copywriting                 | `.agents/skills/copywriting`                 | Marketing copy frameworks        |
+| Programmatic SEO            | `.agents/skills/programmatic-seo`            | SEO page generation              |
+| SEO Audit                   | `.agents/skills/seo-audit`                   | Technical SEO diagnostics        |
+| Email Best Practices        | `.agents/skills/email-best-practices`        | Deliverability & compliance      |
+| Frontend Design             | `.agents/skills/frontend-design`             | UI design guidance               |
+| Vercel Composition Patterns | `.agents/skills/vercel-composition-patterns` | React composition                |
+| Vercel React Best Practices | `.agents/skills/vercel-react-best-practices` | Next.js performance              |
+| Workflow                    | `.agents/skills/workflow`                    | Reserved for workflow automation |
+
+Agents must inspect the relevant skill's `SKILL.md` before implementing code.
+
+---
+
+# Synchronization Rule
+
+Keep this file synchronized with:
 
 - `AGENTS.md`
-- `copilot-instructions.md`
 - `.github/copilot-instructions.md`
-- `.github/ISSUE_TEMPLATE/*`
-- `.github/pull_request_template.md`
+- `.agents/workflow/*`
+
+When updating workflow rules, update all references in the same PR.
+
+---
+
+# Summary
+
+Agents must operate using:
+
+Issue → Plan → Branch → Implement → Test → PR → Merge → Done
+
+GitHub Issues and Projects must always reflect the **true state of development**.

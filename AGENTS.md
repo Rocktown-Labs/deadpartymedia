@@ -1,129 +1,386 @@
-# Dead Party Media Agent Operating Guide
+---
+applyTo: "**/*.{ts,tsx,js,jsx}"
+---
 
-This file is the root operating contract for autonomous agents in this repo.
-Use it as the first source of workflow truth, then route into `.agents`.
+# GitHub‑Driven Development Workflow
 
-## GitHub Is Source Of Truth
+This file defines how autonomous agents should plan, implement, test, and ship code using **GitHub Issues, GitHub Projects, and Pull Requests as the source of truth**.
 
-Track planning and delivery in GitHub, not only local context.
+The goal is to enforce a reliable **Plan → Branch → Implement → Test → PR → Merge → Ship** workflow while integrating tightly with the GitHub CLI (`gh`).
 
-- **Issues** are the source of truth for planned work (`Feature`, `Bug`, `Chore`).
-- **PRs** are the review and merge unit, and must link to an issue.
-- **Project board** is the live status surface with:
-  `Backlog -> In Progress -> In Review -> Done`.
+Reference:
+https://cli.github.com/manual/gh
 
-## Required Delivery Loop
+---
 
-Follow this loop for all non-trivial work:
+# Core Principles
 
-1. **Plan**
-   - Review relevant `.agents` skills before implementation planning.
-2. **Create or reference an Issue**
-   - Use one of the required issue templates.
-   - Issue title must start with:
-     - `feat: ...`
-     - `fix: ...`
-     - `chore: ...`
-3. **Create feature/fix/chore branch from `master`**
-   - Branch naming is required:
-     - `feat/<slug>-<issueNumber>`
-     - `fix/<slug>-<issueNumber>`
-     - `chore/<slug>-<issueNumber>`
-4. **Implement + test**
-   - Keep changes scoped to issue acceptance criteria.
-   - Run relevant checks/tests before opening PR.
-5. **Open PR**
-   - PR title mirrors issue title.
-   - PR body must include:
-     - Summary
-     - Implementation notes
-     - Testing notes
-     - `Closes #<issueNumber>`
-6. **Review**
-   - Address review feedback and keep PR/Issue/project status aligned.
-7. **Merge to `master`**
-8. **Close issue**
-   - Ensure issue is closed and project card is in `Done`.
+1. **GitHub is the source of truth**
+   - Issues define work
+   - Projects track progress
+   - PRs ship code
 
-## Issues, PRs, And Project Board
+2. **Never push directly to `main` or `master`**
 
-### Issues
+3. **Every change must trace to a GitHub Issue**
 
-- Use `.github/ISSUE_TEMPLATE/feature.yml`, `bug.yml`, or `chore.yml`.
-- Each issue must include:
-  - Problem/goal statement
-  - Acceptance criteria as a markdown checklist
-  - Optional links to relevant `.agents` skill files
+4. **All work flows through a Pull Request**
 
-### Pull Requests
+5. **Project status must reflect real development state**
 
-- Use `.github/pull_request_template.md`.
-- PR must reference the tracked issue and include test evidence.
-- Keep commit and PR scope aligned to the issue acceptance criteria.
+---
 
-### Project Board Status Policy
+# Development Lifecycle
 
-- Issue created -> `Backlog`
-- Branch created + active implementation -> `In Progress`
-- PR opened -> `In Review`
-- PR merged + issue closed -> `Done`
+Agents must follow this lifecycle.
 
-Recommended automation defaults:
+1. Discover or create Issue
+2. Ensure repository Project exists
+3. Add Issue to Project (Backlog)
+4. Enter Plan Mode
+5. Create branch
+6. Implement
+7. Run quality gates
+8. Preview if applicable
+9. Open Pull Request
+10. Update Project status
+11. Address CI/review
+12. Merge
+13. Mark Project item Done
 
-- Auto-add new Issues and PRs to the project.
-- Default new items to `Backlog`.
-- Auto-mark closed items as `Done`.
-- Optionally map labels like `in-progress` / `in-review` to board status.
+---
 
-## `.agents`-First Protocol
+# Plan Mode (Required Before Coding)
 
-Before planning or coding:
+Before generating code, the agent must:
 
-1. Inspect matching skill docs under `.agents/skills/*/SKILL.md`.
-2. Read linked `references/` or `rules/` files only as needed.
-3. Apply those conventions during design, implementation, and review.
-4. For web database / Neon work, also check:
-   `apps/web/.agents/skills/neon-postgres/SKILL.md`.
+1. Read the GitHub Issue
+2. Extract acceptance criteria
+3. Identify affected files
+4. Identify required tests
+5. Define implementation strategy
+6. Confirm branch strategy
 
-If no skill clearly matches, use closest domain guidance and note assumptions.
+Plan output should include:
 
-## Domain Chronicle (Current Repo)
+- Issue link
+- Implementation steps
+- File changes
+- Test strategy
+- Branch name
+- PR plan
 
-| Domain                                      | Skills                                                                                                                            | Paths                                                                                                                                                                                                        | Use When                                                                                                    |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| Code quality and tooling                    | `ultracite`, `firecrawl`, `find-skills`                                                                                           | `.agents/skills/ultracite`, `.agents/skills/firecrawl`, `.agents/skills/find-skills`                                                                                                                         | Lint/format standards, web research/scraping workflows, finding/installing additional skills                |
-| Web/React/Next architecture and performance | `vercel-react-best-practices`, `vercel-composition-patterns`, `next-cache-components`, `frontend-design`, `web-design-guidelines` | `.agents/skills/vercel-react-best-practices`, `.agents/skills/vercel-composition-patterns`, `.agents/skills/next-cache-components`, `.agents/skills/frontend-design`, `.agents/skills/web-design-guidelines` | Next.js/React performance, component API design, cache components, UI implementation, UI compliance reviews |
-| Native/Expo/mobile                          | `building-native-ui`, `native-data-fetching`, `vercel-react-native-skills`                                                        | `.agents/skills/building-native-ui`, `.agents/skills/native-data-fetching`, `.agents/skills/vercel-react-native-skills`                                                                                      | Expo Router UI, network/data-fetching patterns for native, React Native performance and platform rules      |
-| SEO and marketing content                   | `seo-audit`, `programmatic-seo`, `copywriting`                                                                                    | `.agents/skills/seo-audit`, `.agents/skills/programmatic-seo`, `.agents/skills/copywriting`                                                                                                                  | SEO diagnostics, SEO-at-scale page systems, conversion-focused page copy                                    |
-| App-local data platform                     | `neon-postgres`                                                                                                                   | `apps/web/.agents/skills/neon-postgres`                                                                                                                                                                      | Neon connection patterns, branching, APIs/SDKs, and Drizzle/Neon integration tasks in web app scope         |
+Agents must **not begin coding until Plan Mode completes**.
 
-Cross-reference notes:
+---
 
-- Ultracite standards are maintained in:
-  `.agents/skills/ultracite/SKILL.md` and
-  `.agents/skills/ultracite/references/code-standards.md`.
-- Firecrawl operational and safety details are in:
-  `.agents/skills/firecrawl/rules/install.md` and
-  `.agents/skills/firecrawl/rules/security.md`.
+# GitHub CLI Operational Commands
 
-## Quality Gates
+Agents should use `gh` for GitHub interactions.
 
-Use these as defaults unless a narrower command is more appropriate:
+## Verify authentication
 
-- Lint/format checks: `pnpm dlx ultracite check`
-- Auto-fix: `pnpm dlx ultracite fix`
-- Web tests: `pnpm web:test`
-- Web E2E: `pnpm web:test:e2e`
-- Type checks (workspace): `pnpm check-types`
+```bash
+gh auth status
+```
 
-## Maintenance Rule
+## Confirm repository context
 
-When workflow or skill structure changes, update all of:
+```bash
+gh repo view
+```
+
+---
+
+# Issue Workflow
+
+## List Issues
+
+```bash
+gh issue list --state open
+```
+
+## Search Issues
+
+```bash
+gh issue list --search "<keywords>"
+```
+
+## View Issue
+
+```bash
+gh issue view <issueNumber> --comments
+```
+
+## Create Issue
+
+```bash
+gh issue create --title "feat: ..." --body "..."
+```
+
+Issue titles must follow:
+
+- `feat:`
+- `fix:`
+- `chore:`
+
+Example:
+
+```
+feat: add authentication middleware
+```
+
+---
+
+# GitHub Project Workflow
+
+Every repository should have a **GitHub Project (kanban)** attached.
+
+Agents must ensure a project exists before beginning work.
+
+## Determine repo owner
+
+```bash
+gh repo view --json owner,name -q '.owner.login'
+```
+
+## List Projects
+
+```bash
+gh project list --owner <orgOrUser>
+```
+
+## View Project
+
+```bash
+gh project view <projectNumber> --owner <orgOrUser>
+```
+
+## Create Project if none exists
+
+```bash
+gh project create \
+  --owner <orgOrUser> \
+  --title "<repo-name> Project"
+```
+
+---
+
+# Project Status Mapping
+
+| Development State | Project Status |
+| ----------------- | -------------- |
+| Issue created     | Backlog        |
+| Branch created    | In Progress    |
+| PR opened         | In Review      |
+| PR merged         | Done           |
+
+---
+
+# Add Issue to Project
+
+```bash
+gh project item-add <projectNumber> \
+  --owner <orgOrUser> \
+  --url <issueUrl>
+```
+
+---
+
+# View Project Items
+
+```bash
+gh project item-list <projectNumber> \
+  --owner <orgOrUser>
+```
+
+---
+
+# Update Project Status
+
+Retrieve field IDs:
+
+```bash
+gh project view <projectNumber> \
+  --owner <orgOrUser> \
+  --format json
+```
+
+Update status:
+
+```bash
+gh project item-edit <projectNumber> \
+  --owner <orgOrUser> \
+  --id <itemId> \
+  --field-id <statusFieldId> \
+  --single-select-option-id <optionId>
+```
+
+If status update cannot be performed due to missing IDs, log the reason and continue development.
+
+---
+
+# Branch Strategy
+
+Branches must always derive from `main`.
+
+Update main first:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+Create branch:
+
+```bash
+git checkout -b <type>/<slug>-<issueNumber>
+```
+
+Branch naming rules:
+
+```
+feat/<slug>-<issueNumber>
+fix/<slug>-<issueNumber>
+chore/<slug>-<issueNumber>
+```
+
+Example:
+
+```
+feat/auth-middleware-42
+```
+
+Rules:
+
+- lowercase
+- kebab-case
+- descriptive slug
+
+---
+
+# Pull Request Rules
+
+PR title must match the Issue title exactly.
+
+Required PR body:
+
+```
+## Summary
+
+## Implementation Notes
+
+## Testing Notes
+
+Closes #<issueNumber>
+```
+
+Create PR:
+
+```bash
+gh pr create \
+  --title "<issueTitle>" \
+  --body "<PR body>" \
+  --base main \
+  --head <branchName>
+```
+
+---
+
+# Merge Rules
+
+Only merge when:
+
+- CI passes
+- Tests pass
+- Review feedback resolved
+
+Merge PR:
+
+```bash
+gh pr merge --merge --delete-branch
+```
+
+After merge:
+
+- Issue closes automatically
+- Move Project item → Done
+
+---
+
+# Required Quality Gates
+
+Agents must run before PR:
+
+```bash
+pnpm check
+pnpm typecheck
+pnpm test
+```
+
+If lint fixes required:
+
+```bash
+pnpm fix
+```
+
+Follow **Ultracite standards**.
+
+---
+
+# Repository Architecture Conventions
+
+Follow existing project structure.
+
+```
+app/
+components/
+lib/
+db/
+workflows/
+```
+
+Avoid unrelated refactors.
+
+Changes must stay focused on the Issue.
+
+---
+
+# Agent Skill Routing
+
+Agents should inspect `.agents/skills` before implementing work.
+
+| Domain                      | Path                                         | Purpose                          |
+| --------------------------- | -------------------------------------------- | -------------------------------- |
+| Copywriting                 | `.agents/skills/copywriting`                 | Marketing copy frameworks        |
+| Programmatic SEO            | `.agents/skills/programmatic-seo`            | SEO page generation              |
+| SEO Audit                   | `.agents/skills/seo-audit`                   | Technical SEO diagnostics        |
+| Email Best Practices        | `.agents/skills/email-best-practices`        | Deliverability & compliance      |
+| Frontend Design             | `.agents/skills/frontend-design`             | UI design guidance               |
+| Vercel Composition Patterns | `.agents/skills/vercel-composition-patterns` | React composition                |
+| Vercel React Best Practices | `.agents/skills/vercel-react-best-practices` | Next.js performance              |
+| Workflow                    | `.agents/skills/workflow`                    | Reserved for workflow automation |
+
+Agents must inspect the relevant skill's `SKILL.md` before implementing code.
+
+---
+
+# Synchronization Rule
+
+Keep this file synchronized with:
 
 - `AGENTS.md`
-- `copilot-instructions.md`
 - `.github/copilot-instructions.md`
-- `.github/ISSUE_TEMPLATE/*`
-- `.github/pull_request_template.md`
+- `.agents/workflow/*`
 
-Do not let these files drift from actual repo structure and operating practice.
+When updating workflow rules, update all references in the same PR.
+
+---
+
+# Summary
+
+Agents must operate using:
+
+Issue → Plan → Branch → Implement → Test → PR → Merge → Done
+
+GitHub Issues and Projects must always reflect the **true state of development**.
