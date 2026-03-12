@@ -34,6 +34,7 @@ function buildPaginationUrl(url: URL, page: number, pageSize: number): string {
 }
 
 function serializeArticle(row: {
+  category: string;
   id: number;
   slug: string;
   title: string;
@@ -45,10 +46,12 @@ function serializeArticle(row: {
   createdAt: Date;
 }) {
   return {
+    artists: [],
     author: {
       id: row.authorId,
-      name: "",
+      name: "Dead Party Media",
     },
+    category: row.category,
     cover_image: row.coverImage,
     created_at: row.createdAt.toISOString(),
     excerpt: row.excerpt,
@@ -78,6 +81,7 @@ export async function GET(request: Request) {
     .select({
       article: {
         authorId: posts.authorId,
+        category: posts.category,
         coverImage: posts.coverImage,
         createdAt: posts.createdAt,
         excerpt: posts.excerpt,
@@ -163,6 +167,7 @@ export async function POST(request: NextRequest) {
   const [article] = await db
     .select({
       authorId: posts.authorId,
+      category: posts.category,
       coverImage: posts.coverImage,
       createdAt: posts.createdAt,
       excerpt: posts.excerpt,

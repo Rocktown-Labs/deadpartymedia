@@ -1,196 +1,210 @@
 # Dead Party Media
 
-Your #1 outlet for Arkansas music.
+Dead Party Media is a `pnpm`/Turbo monorepo with a Next.js web app and an Expo mobile app.
 
-## Quick Start
+The main workspace packages are:
 
-### Prerequisites
+- `apps/web`: Next.js 16 app, API routes, auth flows, admin flows, and Fourthwall commerce integration
+- `apps/mobile`: Expo Router mobile client built on React Native Reusables + Clerk
+- `packages/contracts`: shared DTOs/contracts for web and mobile
+- `packages/env`: shared typed env helpers
+- `packages/config`: shared TypeScript config
 
-- Node.js 20+ and pnpm
-- Python 3.11+ and [UV](https://github.com/astral-sh/uv)
-- Docker (for local PostgreSQL)
+There is no Django app in this repo.
 
-### Setup
+## Current architecture
 
-1. **Install dependencies:**
+### `apps/web`
+
+`apps/web` is the primary backend/BFF surface today. It handles:
+
+- editorial pages, artists, writers, events, and article detail
+- user comments, saved/read history, and dashboard stats
+- fan onboarding and artist onboarding/dashboard flows
+- admin CRUD for posts, artists, events, and users
+- Fourthwall product browsing and cart support
+- internal JSON API routes under `apps/web/src/app/api/*`
+- Clerk auth/webhooks
+- Drizzle ORM + Neon Postgres
+
+### `apps/mobile`
+
+`apps/mobile` is the active native client. It is being built to mirror the mobile web app as closely as practical while staying native-safe where React Native needs different patterns.
+
+Phase 1 covers:
+
+- Home, Music, Events, Merch, and Artists tabs
+- article, event, artist, and merch detail screens
+- Clerk sign-in, sign-up, verify-email, forgot-password, and reset-password
+- fan onboarding, saved stories, reading history, comments, settings, and stats
+- artist dashboard routes for profile, articles, and events
+- in-app cart management with checkout handoff to Fourthwall
+
+Phase 2 adds native admin parity.
+
+Merch checkout still happens on Fourthwall. The app keeps browsing and cart state in-app, then opens the Fourthwall checkout URL.
+
+## Tech stack
+
+- `pnpm` workspaces
+- Turbo
+- TypeScript
+- Next.js 16 + React 19
+- Expo 54 + React Native 0.81
+- React Native Reusables + NativeWind
+- TanStack Query
+- Clerk
+- Drizzle ORM + Neon Postgres
+- Fourthwall storefront/cart APIs
+- Vitest + Playwright
+- Ultracite / Oxlint
+
+## Prerequisites
+
+- Node.js 20+
+- `pnpm` 10+
+
+Optional depending on the work you are doing:
+
+- a Neon Postgres database
+- a Clerk app
+- a Fourthwall storefront token
+- Expo/iOS/Android tooling for `apps/mobile`
+
+## Getting started
+
+1. Install dependencies:
 
    ```bash
    pnpm install
    ```
 
-2. **Set up environment variables:**
+2. Create the web env file:
 
    ```bash
-   # Backend - create .env file (gitignored)
-   cp apps/server/.env.example apps/server/.env
-   # Edit apps/server/.env with your settings
-   # Defaults work with Docker PostgreSQL (see docker-compose.yml)
-
-   # Frontend - create .env.local file (gitignored)
-   cp apps/web/.env.example apps/web/.env.local
-   # Edit apps/web/.env.local with your settings
-   # Default: NEXT_PUBLIC_API_URL=http://localhost:8000/api
-   # Also set DATABASE_URL for the web app (Drizzle + Neon)
+   cp apps/web/.env.development.local.example apps/web/.env.development.local
    ```
 
-3. **Start PostgreSQL (Docker):**
+3. Create the mobile env file:
 
    ```bash
-   docker-compose up -d
+   cp apps/mobile/.env.example apps/mobile/.env
    ```
 
-4. **Set up Django database:**
+4. Fill in the env values you need.
+
+5. Start development:
 
    ```bash
-   cd apps/server
-   uv run python manage.py makemigrations
-   uv run python manage.py migrate
-   uv run python manage.py createsuperuser
-   ```
-
-5. **Run the application:**
-
-   ```bash
-   # From root directory - runs both frontend and backend
    pnpm dev
    ```
 
-   Or run individually:
-
-   ```bash
-   pnpm dev:web      # Frontend: http://localhost:3001
-   pnpm dev:server   # Backend: http://localhost:8000
-   ```
-
-## Project Structure
-
-See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed documentation on:
-
-- Directory structure
-- Environment variables
-- Configuration files
-- API endpoints
-- Content management
-- Common tasks
-
-## Tech Stack
-
-### Frontend
-
-- Next.js 16 (App Router)
-- React 19
-- TanStack Query
-- Tailwind CSS v4
-- Shadcn UI
-
-### Backend
-
-- Django 5.2
-- Django REST Framework
-- Django Admin (Jazzmin)
-- PostgreSQL
-- Amazon S3 (for image storage)
-- Django Allauth (authentication)
-
-## Development
-
-### Running Services
+Useful commands:
 
 ```bash
-# Both frontend and backend
-pnpm dev
-
-# Individual services
-pnpm dev:web      # Next.js frontend
-pnpm dev:server   # Django backend
+pnpm dev:web
+pnpm dev:mobile
+pnpm dev:native
+pnpm check
+pnpm check-types
+pnpm web:test
+pnpm web:test:e2e
 ```
 
-### Database
+`pnpm dev` starts `web` and `mobile` in parallel. `pnpm dev:native` is kept as an alias for `pnpm dev:mobile`.
 
-Local development uses Docker PostgreSQL:
+The web app runs on [http://localhost:3001](http://localhost:3001).
+
+To run only the mobile app:
 
 ```bash
-docker-compose up -d    # Start
-docker-compose down     # Stop
-docker-compose logs     # View logs
+pnpm --filter mobile dev
+pnpm --filter mobile ios
+pnpm --filter mobile android
+pnpm --filter mobile web
 ```
 
-### Admin Access
+## Environment variables
 
-- Django Admin: http://localhost:8000/admin/
-- Create superuser: `cd apps/server && uv run python manage.py createsuperuser`
+The repo does not use a single root `.env`.
 
-## Environment Variables
+### Web
 
-### Backend (`apps/server/.env`)
+Important web variables include:
 
-**Location:** `apps/server/.env` (create from `.env.example`)
+- `DATABASE_URL`
+- `NEXT_PUBLIC_SITE_URL`
+- `DB_SCHEMA_SANITY_CHECK=1`
+- Clerk variables required by `@clerk/nextjs`
+- `NEXT_PUBLIC_FW_STOREFRONT_TOKEN`
+- `NEXT_PUBLIC_FW_CHECKOUT`
+- `NEXT_PUBLIC_FW_API_URL`
+- `NEXT_PUBLIC_POSTHOG_KEY`
+- `NEXT_PUBLIC_POSTHOG_HOST`
 
-- `SECRET_KEY` - Django secret key (generate with: `python -c "import secrets; print(secrets.token_urlsafe(50))"`)
-- `DEBUG` - Debug mode (True for dev, False for prod)
-- `DB_*` - PostgreSQL connection (defaults match docker-compose.yml)
-- `USE_S3` - Enable S3 storage (False for local dev, True for prod)
-- `AWS_*` - S3 credentials (only needed if USE_S3=True)
+### Mobile
 
-### Frontend (`apps/web/.env.local`)
+Important mobile variables include:
 
-**Location:** `apps/web/.env.local` (create from `.env.example`)
+- `EXPO_PUBLIC_API_URL`
+- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `EXPO_PUBLIC_FW_CHECKOUT`
 
-- `NEXT_PUBLIC_API_URL` - Django API URL (default: http://localhost:8000/api)
-- `DATABASE_URL` - Postgres connection string for Next.js server code + API routes (Neon)
+`apps/mobile` uses `apps/web` as its backend/BFF through JSON API routes.
 
-Tip: For Neon branch switching, see `apps/web/.env.development.local.example` (dev) and `apps/web/.env.production.local.example` (main).
+## Data and contracts
 
-## Vercel + Neon
+- Database schema and migrations live in `apps/web/src/lib/db/schema.ts`, `apps/web/drizzle/`, and `apps/web/drizzle.config.ts`
+- Shared mobile/web DTOs live in `packages/contracts`
+- Mobile cart flows use `apps/web/src/app/api/cart`
+- Product detail for mobile uses `apps/web/src/app/api/products/[handle]`
 
-This repo expects `DATABASE_URL` to be set in the Vercel Project Environment Variables so API routes can access Postgres.
+Useful database commands:
 
-- **Production**: set `DATABASE_URL` to the Neon **main** branch pooler URL (host like `ep-restless-leaf-...-pooler...`).
-- **Preview**: set `DATABASE_URL` to the Neon **dev** branch pooler URL (host like `ep-autumn-lab-...-pooler...`).
+```bash
+pnpm web:db:generate
+pnpm web:db:migrate
+pnpm web:db:push
+pnpm web:db:studio
+```
 
-Optional (nice for catching migration drift in Preview/CI):
+## Testing
 
-- Set `DB_SCHEMA_SANITY_CHECK=1` for **Preview** (and/or **Development**).
+Root-level checks:
 
-## Database Migrations (GitHub Actions)
+```bash
+pnpm check
+pnpm check-types
+```
 
-This repo includes a workflow that runs Drizzle migrations against the Neon **main** branch when code is pushed to `main`.
+Web tests:
 
-- Workflow: `.github/workflows/web-db-migrate.yml`
-- Required repo variable:
-  - `NEON_PROJECT_ID` (Neon project id, e.g. `cold-mud-71328663`)
+```bash
+pnpm web:test
+pnpm web:test:coverage
+pnpm web:test:e2e
+```
 
-- Required repo secrets:
-  - `NEON_DATABASE_URL_MAIN` (set this to the Neon **main** branch pooled connection string)
-  - `NEON_API_KEY` (Neon API key used to create/delete a temporary branch for a migration dry-run)
+There is not yet a full automated test suite wired up for `apps/mobile`.
 
-## Production
+## Project layout
 
-1. **Backend:** Update `apps/server/.env` with production values:
-   - Set `DEBUG=False`
-   - Set `USE_S3=True` and configure AWS credentials
-   - Update `DB_*` with production database connection
-   - Set `ALLOWED_HOSTS` with your domain
+```text
+.
+├── apps/
+│   ├── mobile/     # Expo Router app
+│   └── web/        # Next.js app
+├── packages/
+│   ├── config/     # shared TS config
+│   ├── contracts/  # shared DTOs/contracts
+│   └── env/        # shared env helpers
+├── turbo.json
+├── pnpm-workspace.yaml
+└── package.json
+```
 
-2. **Frontend:** Update `apps/web/.env.local`:
-   - Set `NEXT_PUBLIC_API_URL` to production API URL
+## Current caveats
 
-3. **Deploy:**
-   - Build frontend: `pnpm build`
-   - Deploy Django backend (Gunicorn + Nginx recommended)
-   - Run migrations on production database
-
-See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) and [SETUP.md](./SETUP.md) for detailed production setup.
-
-## Deployment
-
-For production deployment to AWS Lightsail:
-
-- **Deployment Guide**: [apps/server/DEPLOYMENT.md](./apps/server/DEPLOYMENT.md)
-- **IAM Policies**: [apps/server/IAM_POLICIES.md](./apps/server/IAM_POLICIES.md)
-
-The deployment uses GitHub Actions for CI/CD. Ensure you have:
-
-1. GitHub Secrets configured (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
-2. IAM user with required permissions (see IAM_POLICIES.md)
-3. AWS Secrets Manager configured with application secrets
+- `apps/mobile` is the active native client, but full runtime verification still depends on installing its Expo/Clerk/Reusables dependencies in the workspace.
+- A duplicated template folder currently exists at `apps/mobile/mobile`; it is not part of the intended app structure.
+- Some older comments and env references still mention previous architecture directions. This README reflects the current intended architecture.

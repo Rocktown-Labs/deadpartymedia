@@ -7,9 +7,10 @@
   ],
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev --parallel -F web -F native",
+    "dev": "turbo run dev --parallel -F web -F mobile",
     "dev:web": "turbo -F web dev",
-    "dev:native": "turbo -F native dev",
+    "dev:native": "turbo -F mobile dev",
+    "dev:mobile": "turbo -F mobile dev",
     "dev:all": "turbo run dev --parallel",
     "build": "turbo build",
     "check-types": "turbo check-types",
@@ -46,11 +47,5 @@
     "typescript": "catalog:",
     "ultracite": "7.2.4"
   },
-  "packageManager": "pnpm@10.19.0",
-  "pnpm": {
-    "overrides": {
-      "@types/react": "^19.2.7",
-      "@types/react-dom": "^19.2.3"
-    }
-  }
+  "packageManager": "pnpm@10.19.0"
 }

@@ -29,6 +29,7 @@ export async function GET() {
     email: email ?? "",
     id: userId,
     name: clerkUser.fullName || clerkUser.firstName || email || "User",
+    onboardingComplete: sessionClaims?.metadata?.onboardingComplete === true,
     role,
   });
 }

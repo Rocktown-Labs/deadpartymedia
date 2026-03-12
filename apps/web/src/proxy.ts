@@ -52,6 +52,7 @@ export default clerkMiddleware(async (auth, req) => {
   const log = getRequestLogger(req);
   let response: NextResponse;
   const isRscRequest = req.nextUrl.searchParams.has("_rsc");
+  const isApiRequest = req.nextUrl.pathname.startsWith("/api/");
 
   if (isRscRequest) {
     log.info(
@@ -86,6 +87,12 @@ export default clerkMiddleware(async (auth, req) => {
         },
         "Unauthorized access attempt",
       );
+      if (isApiRequest) {
+        response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        addRequestIdHeader(response, requestId);
+        return response;
+      }
+
       response = NextResponse.redirect(new URL("/sign-in", req.url));
       addRequestIdHeader(response, requestId);
       return response;
