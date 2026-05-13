@@ -63,8 +63,51 @@ export async function GET(request: NextRequest) {
       .from(artists)
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
+    // Deduplicate artists by name (case-insensitive)
+    const uniqueArtists = new Map<string, (typeof results)[0]>();
+
+    for (const artist of results) {
+      const normalizedName = artist.name.trim().toLowerCase();
+      const existing = uniqueArtists.get(normalizedName);
+
+      if (!existing) {
+        uniqueArtists.set(normalizedName, artist);
+        continue;
+      }
+
+      // Conflict Resolution Logic:
+      // 1. Prefer claimed profiles
+      // 2. Prefer profiles with images
+      // 3. Prefer profiles with more engagement (articles + events)
+      // 4. Prefer profiles with more views
+      let shouldReplace = false;
+
+      if (artist.claimed && !existing.claimed) {
+        shouldReplace = true;
+      } else if (artist.claimed === existing.claimed) {
+        if (artist.image && !existing.image) {
+          shouldReplace = true;
+        } else if (!!artist.image === !!existing.image) {
+          const artistTotal = (artist.article_count || 0) + (artist.event_count || 0);
+          const existingTotal = (existing.article_count || 0) + (existing.event_count || 0);
+
+          if (artistTotal > existingTotal) {
+            shouldReplace = true;
+          } else if (artistTotal === existingTotal) {
+            if ((artist.profile_views || 0) > (existing.profile_views || 0)) {
+              shouldReplace = true;
+            }
+          }
+        }
+      }
+
+      if (shouldReplace) {
+        uniqueArtists.set(normalizedName, artist);
+      }
+    }
+
     // Transform to match existing Artist interface
-    const artistList = results.map((artist) => ({
+    const artistList = Array.from(uniqueArtists.values()).map((artist) => ({
       article_count: artist.article_count || 0,
       bio: artist.bio,
       claimed: artist.claimed,

@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { toast } from "sonner";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { SpotifySearch } from "@/components/spotify-search";
+import type { SpotifyArtist } from "@/lib/api/artists";
 
 interface ArtistFormProps {
   initialData?: {
@@ -100,6 +102,32 @@ export function ArtistForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800 space-y-4">
+        <h3 className="text-sm font-medium text-zinc-400">Spotify Integration</h3>
+        <SpotifySearch
+          value={spotifyUrl}
+          onSelect={(artist: SpotifyArtist) => {
+            setSpotifyArtistId(artist.id);
+            setSpotifyUrl(artist.external_urls.spotify);
+
+            // Auto-fill other fields if they are empty
+            if (!name) {
+              setName(artist.name);
+              const generatedSlug = artist.name.toLowerCase().replaceAll(/\s+/g, "-");
+              setSlug(generatedSlug);
+            }
+
+            if (!image && artist.images && artist.images.length > 0) {
+              // Usually first image is the highest resolution
+              setImage(artist.images[0].url);
+            }
+          }}
+        />
+        <p className="text-xs text-zinc-500">
+          Search for an artist to automatically sync their Spotify ID, URL, and profile image.
+        </p>
+      </div>
+
       <div>
         <Label htmlFor="name">Name</Label>
         <Input
