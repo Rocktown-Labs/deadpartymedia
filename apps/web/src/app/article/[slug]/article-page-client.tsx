@@ -228,7 +228,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
         {/* Article Content */}
         <main className="pt-40 pb-20">
           <div className="container mx-auto px-6">
-            <div className="max-w-4xl">
+            <div className="max-w-4xl mx-auto">
               {/* Back Button */}
               <button
                 type="button"
