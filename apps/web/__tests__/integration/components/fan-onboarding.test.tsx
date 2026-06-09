@@ -14,6 +14,9 @@ vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
     push: vi.fn(),
     replace: vi.fn(),
   }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+  }),
 }));
 
 vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
@@ -22,6 +25,11 @@ vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
     user: {
       id: "user_test123",
       publicMetadata: {},
+      reload: vi.fn().mockResolvedValue(null),
+    },
+  }),
+  useSession: () => ({
+    session: {
       reload: vi.fn().mockResolvedValue(null),
     },
   }),

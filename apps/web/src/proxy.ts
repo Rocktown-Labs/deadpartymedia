@@ -131,7 +131,9 @@ export default clerkMiddleware(async (auth, req) => {
     if (userId) {
       log.info({ operation: "onboarding_redirect", userId }, "Redirecting to onboarding");
     }
-    response = NextResponse.redirect(new URL("/onboarding", req.url));
+    const redirectUrl = new URL("/onboarding", req.url);
+    redirectUrl.searchParams.set("redirect_url", req.nextUrl.pathname + req.nextUrl.search);
+    response = NextResponse.redirect(redirectUrl);
     addRequestIdHeader(response, requestId);
     return response;
   }
