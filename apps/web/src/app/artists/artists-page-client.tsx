@@ -89,8 +89,15 @@ export default function ArtistsPageClient() {
                       <div className="mt-auto pt-3 md:pt-4 border-t border-gray-800 flex items-center justify-between text-[10px] md:text-xs text-gray-500">
                         <span className="truncate mr-2">{artist.genre}</span>
                         <div className="flex items-center gap-2 md:gap-4 shrink-0">
-                          <span>{artist.article_count} <span className="hidden md:inline">articles</span><span className="md:hidden">art.</span></span>
-                          <span>{artist.event_count} <span className="hidden md:inline">events</span><span className="md:hidden">ev.</span></span>
+                          <span>
+                            {artist.article_count}{" "}
+                            <span className="hidden md:inline">articles</span>
+                            <span className="md:hidden">art.</span>
+                          </span>
+                          <span>
+                            {artist.event_count} <span className="hidden md:inline">events</span>
+                            <span className="md:hidden">ev.</span>
+                          </span>
                         </div>
                       </div>
                     </div>

@@ -13,10 +13,14 @@ export default function SignUpPage() {
 
   // Build redirect URL based on role - always go to onboarding after sign-up
   const getRedirectUrl = () => {
+    const redirectParam = searchParams.get("redirect_url") || searchParams.get("redirect");
+    const suffix = redirectParam ? `&redirect_url=${encodeURIComponent(redirectParam)}` : "";
     if (role === "artist") {
-      return "/onboarding?role=artist";
+      return `/onboarding?role=artist${suffix}`;
     }
-    return "/onboarding";
+    return redirectParam
+      ? `/onboarding?redirect_url=${encodeURIComponent(redirectParam)}`
+      : "/onboarding";
   };
 
   return (

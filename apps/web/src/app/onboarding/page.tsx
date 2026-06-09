@@ -83,16 +83,22 @@ export default function OnboardingPage() {
         return;
       }
 
-      // If onboarding is complete, redirect to appropriate dashboard
+      // If onboarding is complete, redirect to appropriate dashboard or redirect_url
       if (onboardingComplete) {
-        if (userRole === "artist") {
-          router.push("/artist-dashboard");
-        } else {
-          router.push("/dashboard");
-        }
+        const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
+        const destination =
+          rawRedirect &&
+          !rawRedirect.startsWith("/onboarding") &&
+          !rawRedirect.startsWith("/sign-in") &&
+          !rawRedirect.startsWith("/sign-up")
+            ? rawRedirect
+            : userRole === "artist"
+              ? "/artist-dashboard"
+              : "/dashboard";
+        router.push(destination as Route);
       }
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, searchParams]);
 
   useEffect(() => {
     if (!isLoaded || !user) {

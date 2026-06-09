@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useActionState, useEffect, useRef, startTransition } from "react";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useUser, useSession } from "@clerk/nextjs";
+import type { Route } from "next";
 import Image from "next/image";
 import { MapPin, Instagram, Twitter, Phone, Upload, X } from "lucide-react";
 import {
@@ -36,7 +37,9 @@ function hasSuccessfulSubmission(state: unknown): state is { success: true } {
 
 export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
+  const { session } = useSession();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
   const [selectedSpotifyArtist, setSelectedSpotifyArtist] = useState<SpotifyArtist | null>(null);
   const [state, action] = useActionState(artistOnboardingAction, initialFormState);
@@ -95,11 +98,19 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   useEffect(() => {
     if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
-      user.reload().then(() => {
-        router.push("/artist-dashboard");
+      Promise.all([user.reload(), session?.reload()]).then(() => {
+        const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
+        const destination =
+          rawRedirect &&
+          !rawRedirect.startsWith("/onboarding") &&
+          !rawRedirect.startsWith("/sign-in") &&
+          !rawRedirect.startsWith("/sign-up")
+            ? rawRedirect
+            : "/artist-dashboard";
+        router.push(destination as Route);
       });
     }
-  }, [state, user, router]);
+  }, [state, user, session, router, searchParams]);
 
   const handleProfileImageUpload = async (file: File | null) => {
     if (!file) {

@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, startTransition } from "react";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useUser, useSession } from "@clerk/nextjs";
+import type { Route } from "next";
 import Image from "next/image";
 import {
   initialFormState,
@@ -29,7 +30,9 @@ function hasSuccessfulSubmission(state: unknown): state is { success: true } {
 
 export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
+  const { session } = useSession();
   const [state, action] = useActionState(fanOnboardingAction, initialFormState);
 
   const form = useForm({
@@ -54,11 +57,19 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
   useEffect(() => {
     if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
-      user.reload().then(() => {
-        router.push("/dashboard");
+      Promise.all([user.reload(), session?.reload()]).then(() => {
+        const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
+        const destination =
+          rawRedirect &&
+          !rawRedirect.startsWith("/onboarding") &&
+          !rawRedirect.startsWith("/sign-in") &&
+          !rawRedirect.startsWith("/sign-up")
+            ? rawRedirect
+            : "/";
+        router.push(destination as Route);
       });
     }
-  }, [state, user, router]);
+  }, [state, user, session, router, searchParams]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">

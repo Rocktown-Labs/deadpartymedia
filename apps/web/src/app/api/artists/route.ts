@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match existing Artist interface
-    const artistList = Array.from(uniqueArtists.values()).map((artist) => ({
+    const artistList = [...uniqueArtists.values()].map((artist) => ({
       article_count: artist.article_count || 0,
       bio: artist.bio,
       claimed: artist.claimed,

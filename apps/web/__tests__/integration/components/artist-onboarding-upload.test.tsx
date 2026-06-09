@@ -7,12 +7,20 @@ vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
   useUser: () => ({
     user: { id: "test-user-id", reload: vi.fn().mockResolvedValue(null) },
   }),
+  useSession: () => ({
+    session: {
+      reload: vi.fn().mockResolvedValue(null),
+    },
+  }),
 }));
 
 // Mock router
 vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   useRouter: () => ({
     push: vi.fn(),
+  }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
   }),
 }));
 
