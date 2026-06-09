@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: "**.fourthwall.com",
+        hostname: "*.fourthwall.com",
         pathname: "/**",
         protocol: "https",
       },
