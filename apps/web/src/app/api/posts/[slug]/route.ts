@@ -8,6 +8,7 @@ import { sanitizeError } from "@/lib/logger/sanitize";
 import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
 function resolveAuthorName(
@@ -80,7 +81,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Normalize stored content and convert to HTML when TipTap JSON is present.
     const normalizedContent = normalizeStoredPostContent(post.content);
     const content = normalizedContent.tiptapDoc
-      ? generateHTML(normalizedContent.tiptapDoc, [StarterKit, Image])
+      ? generateHTML(normalizedContent.tiptapDoc, [
+          StarterKit,
+          Image,
+          Link.configure({
+            HTMLAttributes: {
+              class: "text-red-500 hover:text-red-400 underline font-medium cursor-pointer",
+            },
+          }),
+        ])
       : post.content;
 
     // Transform to match existing Article interface
