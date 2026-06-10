@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import type { Route } from "next";
 import type { ComponentType, SVGProps } from "react";
@@ -9,6 +11,7 @@ import { Reddit } from "@/components/ui/svgs/reddit";
 import { Spotify } from "@/components/ui/svgs/spotify";
 import { Threads } from "@/components/ui/svgs/threads";
 import { Youtube } from "@/components/ui/svgs/youtube";
+import { usePathname } from "next/navigation";
 
 interface SocialLink {
   name: string;
@@ -47,6 +50,11 @@ const EXTERNAL_LINK_PROPS = {
 } as const;
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
+    return null;
+  }
+
   return (
     <>
       {/* Social/Connect Section */}
