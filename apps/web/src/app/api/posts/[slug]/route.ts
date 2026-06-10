@@ -68,6 +68,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         image: artists.image,
         name: artists.name,
         slug: artists.slug,
+        bio: artists.bio,
+        location: artists.location,
+        genre: artists.genre,
+        spotifyUrl: artists.spotifyUrl,
+        spotifyArtistId: artists.spotifyArtistId,
       })
       .from(postArtists)
       .innerJoin(artists, eq(postArtists.artistId, artists.id))
