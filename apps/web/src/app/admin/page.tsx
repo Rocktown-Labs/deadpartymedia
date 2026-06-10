@@ -3,6 +3,7 @@ import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { posts, events } from "@/lib/db/schema";
 import { eq, desc, count } from "drizzle-orm";
+import Link from "next/link";
 
 export default async function AdminDashboard() {
   const isSuperAdmin = await checkRole("super_admin");
@@ -54,7 +55,14 @@ export default async function AdminDashboard() {
             ) : (
               recentPosts.map((post) => (
                 <div key={post.id} className="border-b border-gray-800 pb-2">
-                  <h3 className="font-bold">{post.title}</h3>
+                  <Link
+                    href={post.status === "published" ? `/article/${post.slug}` : `/admin/posts/${post.id}`}
+                    className="group inline-block"
+                  >
+                    <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">
+                      {post.title}
+                    </h3>
+                  </Link>
                   <p className="text-sm text-gray-400">
                     {post.status} • {new Date(post.createdAt).toLocaleDateString()}
                   </p>
@@ -72,7 +80,14 @@ export default async function AdminDashboard() {
             ) : (
               recentEvents.map((event) => (
                 <div key={event.id} className="border-b border-gray-800 pb-2">
-                  <h3 className="font-bold">{event.title}</h3>
+                  <Link
+                    href={event.status === "published" ? `/events/${event.slug}` : `/admin/events/${event.id}`}
+                    className="group inline-block"
+                  >
+                    <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">
+                      {event.title}
+                    </h3>
+                  </Link>
                   <p className="text-sm text-gray-400">
                     {event.status} • {new Date(event.createdAt).toLocaleDateString()}
                   </p>
@@ -85,3 +100,4 @@ export default async function AdminDashboard() {
     </div>
   );
 }
+
