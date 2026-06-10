@@ -7,15 +7,14 @@ import { posts, users } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import {
-  deleteLocalUserProfile,
-  inviteUserProfile,
-  updateLocalUserEmail,
-  updateLocalUserRole,
-} from "../actions";
+  UserRoleSelect,
+  UserEmailForm,
+  InviteUserButton,
+  DeleteUserButton,
+} from "../client-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -43,27 +42,6 @@ function formatUserName(user: {
 
 function isInvitableRole(role: string) {
   return role === "writer" || role === "super_admin" || role === "artist";
-}
-
-async function updateLocalUserRoleAction(formData: FormData) {
-  "use server";
-  await updateLocalUserRole(formData);
-}
-
-async function updateLocalUserEmailAction(formData: FormData) {
-  "use server";
-  await updateLocalUserEmail(formData);
-}
-
-async function inviteUserProfileAction(formData: FormData) {
-  "use server";
-  await inviteUserProfile(formData);
-}
-
-async function deleteLocalUserProfileAction(formData: FormData) {
-  "use server";
-  await deleteLocalUserProfile(formData);
-  redirect("/admin/users");
 }
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -196,54 +174,29 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form action={updateLocalUserRoleAction} className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="id" value={profile.id} />
-            <div>
-              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">
-                Role
-              </label>
-              <select
-                name="role"
-                defaultValue={profile.role}
-                className="h-10 min-w-[12rem] rounded-md border border-gray-800 bg-[#0A0A0A] px-3 py-2 text-sm"
-              >
-                <option value="writer">Writer</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="fan">Fan</option>
-                <option value="artist">Artist</option>
-              </select>
-            </div>
-            <Button type="submit" variant="outline">
-              Save Role
-            </Button>
-          </form>
+          <div className="flex flex-col gap-4">
+            <UserRoleSelect userId={profile.id} currentRole={profile.role} layout="detail" />
 
-          <form action={updateLocalUserEmailAction} className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="id" value={profile.id} />
-            <div className="min-w-[18rem] flex-1">
-              <label className="mb-1 block text-xs uppercase tracking-wider text-gray-400">
-                Email
-              </label>
-              <Input name="email" type="email" defaultValue={profile.email} required />
-            </div>
-            <Button type="submit" variant="outline">
-              Save Email
-            </Button>
-          </form>
+            <UserEmailForm
+              userId={profile.id}
+              currentEmail={placeholderEmail ? "" : profile.email}
+              layout="detail"
+            />
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-gray-800 pt-4">
-            <form action={inviteUserProfileAction}>
-              <input type="hidden" name="id" value={profile.id} />
-              <Button type="submit" disabled={!canInvite}>
-                Send Invite
-              </Button>
-            </form>
-            <form action={deleteLocalUserProfileAction}>
-              <input type="hidden" name="id" value={profile.id} />
-              <Button type="submit" variant="destructive">
-                Delete Profile
-              </Button>
-            </form>
+            <InviteUserButton
+              userId={profile.id}
+              disabled={!canInvite}
+              size="default"
+              label="Send Invite"
+            />
+            <DeleteUserButton
+              userId={profile.id}
+              redirectToUsers={true}
+              size="default"
+              label="Delete Profile"
+            />
             {!canInvite ? (
               <p className="text-xs text-gray-400">
                 Invite requires a non-placeholder email and writer/super_admin/artist role.

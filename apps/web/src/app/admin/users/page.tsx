@@ -29,17 +29,15 @@ import { canManageUsers } from "@/lib/auth/access";
 import { db } from "@/lib/db";
 import { artists, users } from "@/lib/db/schema";
 import { CreateProfilePanel } from "./create-profile-panel";
-import {
-  createProfile,
-  deleteLocalUserProfile,
-  inviteArtistProfile,
-  inviteUserProfile,
-  updateArtistEmail,
-  updateLocalUserEmail,
-  updateLocalUserRole,
-} from "./actions";
+import { createProfile, inviteArtistProfile, updateArtistEmail } from "./actions";
 import { RevokeInvitationButton } from "./revoke-invitation-button";
 import { SearchUsers } from "./search-users";
+import {
+  UserRoleSelect,
+  UserEmailForm,
+  InviteUserButton,
+  DeleteUserButton,
+} from "./client-actions";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
 
@@ -100,26 +98,6 @@ function getInvitationCreatedAt(invitation: { createdAt?: Date | number | string
 async function createProfileAction(formData: FormData) {
   "use server";
   await createProfile(formData);
-}
-
-async function updateLocalUserRoleAction(formData: FormData) {
-  "use server";
-  await updateLocalUserRole(formData);
-}
-
-async function updateLocalUserEmailAction(formData: FormData) {
-  "use server";
-  await updateLocalUserEmail(formData);
-}
-
-async function inviteUserProfileAction(formData: FormData) {
-  "use server";
-  await inviteUserProfile(formData);
-}
-
-async function deleteLocalUserProfileAction(formData: FormData) {
-  "use server";
-  await deleteLocalUserProfile(formData);
 }
 
 async function updateArtistEmailAction(formData: FormData) {
@@ -500,25 +478,7 @@ export default async function UsersPage({
                         </TableCell>
                         <TableCell className="text-sm text-gray-300">{profile.email}</TableCell>
                         <TableCell>
-                          <form
-                            action={updateLocalUserRoleAction}
-                            className="flex flex-wrap items-center gap-2"
-                          >
-                            <input type="hidden" name="id" value={profile.id} />
-                            <select
-                              name="role"
-                              defaultValue={profile.role}
-                              className="h-8 rounded-md border border-gray-800 bg-[#0A0A0A] px-2 py-1 text-sm"
-                            >
-                              <option value="writer">Writer</option>
-                              <option value="super_admin">Super Admin</option>
-                              <option value="fan">Fan</option>
-                              <option value="artist">Artist</option>
-                            </select>
-                            <Button type="submit" size="sm" variant="outline">
-                              Save
-                            </Button>
-                          </form>
+                          <UserRoleSelect userId={profile.id} currentRole={profile.role} />
                         </TableCell>
                         <TableCell className="text-xs text-gray-400">
                           <div>{placeholder ? "Local Placeholder" : "Clerk Linked"}</div>
@@ -532,36 +492,11 @@ export default async function UsersPage({
                         <TableCell>
                           <div className="space-y-2">
                             {placeholderEmail ? (
-                              <form
-                                action={updateLocalUserEmailAction}
-                                className="flex flex-wrap items-center gap-2"
-                              >
-                                <input type="hidden" name="id" value={profile.id} />
-                                <Input
-                                  name="email"
-                                  type="email"
-                                  placeholder="Set real email"
-                                  className="h-8 min-w-[13rem]"
-                                  required
-                                />
-                                <Button type="submit" size="sm" variant="outline">
-                                  Save Email
-                                </Button>
-                              </form>
+                              <UserEmailForm userId={profile.id} currentEmail="" />
                             ) : null}
                             <div className="flex flex-wrap items-center gap-2">
-                              <form action={inviteUserProfileAction}>
-                                <input type="hidden" name="id" value={profile.id} />
-                                <Button type="submit" size="sm" disabled={!canInvite}>
-                                  Invite
-                                </Button>
-                              </form>
-                              <form action={deleteLocalUserProfileAction}>
-                                <input type="hidden" name="id" value={profile.id} />
-                                <Button type="submit" size="sm" variant="destructive">
-                                  Delete
-                                </Button>
-                              </form>
+                              <InviteUserButton userId={profile.id} disabled={!canInvite} />
+                              <DeleteUserButton userId={profile.id} />
                             </div>
                           </div>
                         </TableCell>

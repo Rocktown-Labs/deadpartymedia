@@ -51,6 +51,7 @@ export function InviteUserDialog() {
               const role = formData.get("role") as Roles;
               const result = await inviteUser(email, role);
               if (result.success) {
+                toast.success("Invitation sent successfully!");
                 setOpen(false);
                 router.refresh();
               } else {
