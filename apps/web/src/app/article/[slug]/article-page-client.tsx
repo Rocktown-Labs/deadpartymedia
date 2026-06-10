@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Bookmark } from "lucide-react";
+import { ArrowLeft, Calendar, User, Share2, Bookmark, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -133,6 +133,17 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
       posthogClient.captureException(error);
     }
   };
+
+  const canEdit = useMemo(() => {
+    if (!isSignedIn || !currentUser || !article) {
+      return false;
+    }
+    const role = (currentUser.publicMetadata?.role as string | undefined)?.toLowerCase();
+    const isSuperAdmin = role === "super_admin";
+    const isWriter = role === "writer";
+    const isAuthor = currentUser.id === article.author?.id;
+    return isSuperAdmin || (isWriter && isAuthor);
+  }, [isSignedIn, currentUser, article]);
 
   const handleShareClick = async () => {
     if (!article) {
@@ -283,6 +294,18 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
                   </Button>
+                  {canEdit && (
+                    <Link href={`/admin/posts/${article.id}`} passHref>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black bg-transparent"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Post
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </header>
 
