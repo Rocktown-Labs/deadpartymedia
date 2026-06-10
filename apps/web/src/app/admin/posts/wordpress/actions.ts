@@ -30,6 +30,63 @@ const backfillAnalysisSchema = z.object({
     }),
   ),
 });
+async function searchSpotifyArtist(
+  query: string,
+): Promise<{ spotifyArtistId: string; spotifyUrl: string; imageUrl?: string } | null> {
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return null;
+  }
+  try {
+    const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+      }),
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+      cache: "no-store",
+    });
+    if (!tokenResponse.ok) {
+      return null;
+    }
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    const searchResponse = await fetch(
+      `https://api.spotify.com/v1/search?${new URLSearchParams({
+        limit: "1",
+        q: query,
+        type: "artist",
+      })}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
+      },
+    );
+    if (!searchResponse.ok) {
+      return null;
+    }
+    const searchData = await searchResponse.json();
+    const artist = searchData.artists?.items?.[0];
+    if (!artist) {
+      return null;
+    }
+    return {
+      spotifyArtistId: artist.id,
+      spotifyUrl: artist.external_urls?.spotify || `https://open.spotify.com/artist/${artist.id}`,
+      imageUrl: artist.images?.[0]?.url,
+    };
+  } catch (error) {
+    console.error("Error searching Spotify in backfill action:", error);
+    return null;
+  }
+}
 
 export type BackfillAnalysis = z.infer<typeof backfillAnalysisSchema> & {
   artistsMapping: {
@@ -38,6 +95,9 @@ export type BackfillAnalysis = z.infer<typeof backfillAnalysisSchema> & {
     location: string;
     bio: string;
     existingId: number | null;
+    spotifyArtistId: string | null;
+    spotifyUrl: string | null;
+    spotifyImageUrl: string | null;
   }[];
 };
 
@@ -140,9 +200,14 @@ Perform the following tasks:
       .where(sql`lower(${artists.name}) = ${artist.name.toLowerCase()}`)
       .limit(1);
 
+    const spotifyMatch = await searchSpotifyArtist(artist.name);
+
     artistsMapping.push({
       ...artist,
       existingId: existingArtist?.id ?? null,
+      spotifyArtistId: spotifyMatch?.spotifyArtistId ?? null,
+      spotifyUrl: spotifyMatch?.spotifyUrl ?? null,
+      spotifyImageUrl: spotifyMatch?.imageUrl ?? null,
     });
   }
 
@@ -171,7 +236,11 @@ interface ImportWordPressPostPayload {
     genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
     location: string;
     bio: string;
+    spotifyUrl?: string | null;
+    spotifyArtistId?: string | null;
+    image?: string | null;
   }[];
+  status?: "draft" | "published";
 }
 
 export async function importWordPressPostAction(payload: ImportWordPressPostPayload) {
@@ -194,6 +263,7 @@ export async function importWordPressPostAction(payload: ImportWordPressPostPayl
     rawCategories,
     selectedArtistIds,
     newArtistsToCreate,
+    status = "published",
   } = payload;
 
   return await db.transaction(async (tx) => {
@@ -211,6 +281,9 @@ export async function importWordPressPostAction(payload: ImportWordPressPostPayl
           location: newArtist.location || "Arkansas",
           bio: newArtist.bio,
           claimed: false,
+          spotifyUrl: newArtist.spotifyUrl || null,
+          spotifyArtistId: newArtist.spotifyArtistId || null,
+          image: newArtist.image || null,
         })
         .returning({ id: artists.id });
 
@@ -249,34 +322,82 @@ export async function importWordPressPostAction(payload: ImportWordPressPostPayl
       await tx.update(posts).set({ isCoverStory: false }).where(eq(posts.isCoverStory, true));
     }
 
-    // 4. Generate post slug and insert post
-    const postSlug = await resolveUniquePostSlug(title);
     const publishedDate = new Date(sourcePublishedAt);
     const modifiedDate = sourceModifiedAt ? new Date(sourceModifiedAt) : publishedDate;
 
-    const [insertedPost] = await tx
-      .insert(posts)
-      .values({
-        title,
-        slug: postSlug,
-        category,
-        excerpt,
-        content: contentTiptapJson,
-        coverImage: mirroredCoverImageUrl,
-        authorId,
-        status: "published",
-        isCoverStory,
-        publishedAt: publishedDate,
-        createdAt: publishedDate,
-        updatedAt: modifiedDate,
-      })
-      .returning({ id: posts.id });
+    // Check if the post was already imported
+    const [existingImport] = await tx
+      .select({ postId: postImportSources.postId })
+      .from(postImportSources)
+      .where(eq(postImportSources.sourceUrl, sourceUrl))
+      .limit(1);
 
-    if (!insertedPost) {
-      throw new Error("Failed to insert backfilled post");
+    let postId = existingImport?.postId ?? null;
+    let postSlug = "";
+
+    if (postId) {
+      // 4a. Update existing post
+      const [existingPost] = await tx
+        .select({ slug: posts.slug })
+        .from(posts)
+        .where(eq(posts.id, postId))
+        .limit(1);
+
+      postSlug = existingPost?.slug || (await resolveUniquePostSlug(title));
+
+      await tx
+        .update(posts)
+        .set({
+          title,
+          category,
+          excerpt,
+          content: contentTiptapJson,
+          coverImage: mirroredCoverImageUrl,
+          authorId,
+          status,
+          isCoverStory,
+          updatedAt: modifiedDate,
+        })
+        .where(eq(posts.id, postId));
+
+      // Clear old Post-Artist relations
+      await tx.delete(postArtists).where(eq(postArtists.postId, postId));
+    } else {
+      // 4b. Generate post slug and insert post
+      postSlug = await resolveUniquePostSlug(title);
+      const [insertedPost] = await tx
+        .insert(posts)
+        .values({
+          title,
+          slug: postSlug,
+          category,
+          excerpt,
+          content: contentTiptapJson,
+          coverImage: mirroredCoverImageUrl,
+          authorId,
+          status,
+          isCoverStory,
+          publishedAt: publishedDate,
+          createdAt: publishedDate,
+          updatedAt: modifiedDate,
+        })
+        .returning({ id: posts.id });
+
+      if (!insertedPost) {
+        throw new Error("Failed to insert backfilled post");
+      }
+      postId = insertedPost.id;
+
+      // Save Import Source record
+      await tx.insert(postImportSources).values({
+        postId,
+        sourceAuthorSlug,
+        sourceCategoriesJson: JSON.stringify(rawCategories),
+        sourcePublishedAt: publishedDate,
+        sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
+        sourceUrl,
+      });
     }
-
-    const postId = insertedPost.id;
 
     // 5. Link Post-Artist relations
     if (artistIds.length > 0) {
@@ -287,17 +408,7 @@ export async function importWordPressPostAction(payload: ImportWordPressPostPayl
       await tx.insert(postArtists).values(relationValues);
     }
 
-    // 6. Save Import Source record
-    await tx.insert(postImportSources).values({
-      postId,
-      sourceAuthorSlug,
-      sourceCategoriesJson: JSON.stringify(rawCategories),
-      sourcePublishedAt: publishedDate,
-      sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
-      sourceUrl,
-    });
-
-    // 7. Revalidate
+    // 6. Revalidate
     revalidatePath("/admin/posts");
     revalidatePath("/admin/posts/wordpress");
     revalidatePath("/");

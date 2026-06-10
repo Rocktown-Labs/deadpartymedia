@@ -35,8 +35,10 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
+import { SpotifySearch } from "@/components/spotify-search";
 import { analyzeWordPressPostAction, importWordPressPostAction } from "./actions";
 import type { BackfillAnalysis } from "./actions";
+import type { SpotifyArtist } from "@/lib/api/artists";
 
 interface WordPressPostFeedItem {
   id: number;
@@ -51,6 +53,7 @@ interface WordPressPostFeedItem {
   coverImage: string | null;
   rawCategories: string[];
   importedPostId: number | null;
+  localStatus: "draft" | "published" | "archived" | null;
 }
 
 interface AuthorOption {
@@ -85,6 +88,7 @@ export default function WordpressBackfillClient({
     "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER"
   >("OTHER");
   const [selectedAuthorId, setSelectedAuthorId] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<"draft" | "published">("published");
   const [isCoverStory, setIsCoverStory] = useState(false);
 
   // Artist stub selection
@@ -97,6 +101,9 @@ export default function WordpressBackfillClient({
         genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
         location: string;
         bio: string;
+        spotifyUrl?: string;
+        spotifyArtistId?: string;
+        image?: string;
       }
     >
   >({});
@@ -114,13 +121,27 @@ export default function WordpressBackfillClient({
     setEditedExcerpt("");
     setIsCoverStory(false);
 
+    // Find default author that matches "pettyvandalism"
+    const pettyAuthor = authorOptions.find(
+      (opt) =>
+        opt.clerkId.toLowerCase().includes("pettyvandalism") ||
+        opt.name.toLowerCase().includes("pettyvandalism"),
+    );
+
     // Find default author that matches the post author slug
     const matchingAuthor = authorOptions.find(
       (opt) =>
         opt.clerkId.includes(post.authorSlug) ||
         opt.name.toLowerCase().includes(post.authorSlug.toLowerCase()),
     );
-    setSelectedAuthorId(matchingAuthor?.clerkId || authorOptions[0]?.clerkId || "");
+    setSelectedAuthorId(
+      pettyAuthor?.clerkId || matchingAuthor?.clerkId || authorOptions[0]?.clerkId || "",
+    );
+    setSelectedStatus(
+      post.localStatus === "draft" || post.localStatus === "published"
+        ? post.localStatus
+        : "published",
+    );
 
     try {
       const result = await analyzeWordPressPostAction(post.title, post.content);
@@ -140,6 +161,9 @@ export default function WordpressBackfillClient({
             genre: artist.genre,
             location: artist.location || "Arkansas",
             name: artist.name,
+            spotifyUrl: artist.spotifyUrl || "",
+            spotifyArtistId: artist.spotifyArtistId || "",
+            image: artist.spotifyImageUrl || "",
           };
         }
       }
@@ -156,7 +180,7 @@ export default function WordpressBackfillClient({
 
   const handleArtistDetailChange = (
     artistName: string,
-    field: "genre" | "location" | "bio",
+    field: "genre" | "location" | "bio" | "spotifyUrl" | "spotifyArtistId" | "image",
     value: string,
   ) => {
     setArtistDetails((previous) => {
@@ -180,7 +204,11 @@ export default function WordpressBackfillClient({
     }
 
     setImporting(true);
-    const toastId = toast.loading("Backfilling post & mirroring images...");
+    const toastId = toast.loading(
+      selectedPost.localStatus === "draft"
+        ? "Updating post & mirroring images..."
+        : "Backfilling post & mirroring images...",
+    );
 
     try {
       // Gather linked artist IDs
@@ -191,8 +219,18 @@ export default function WordpressBackfillClient({
       // Gather missing artists to create
       const newArtistsToCreate = Object.entries(artistsToCreate)
         .filter(([_, create]) => create)
-        .map(([name]) => artistDetails[name])
-        .filter((details): details is NonNullable<typeof details> => details !== undefined);
+        .map(([name]) => {
+          const details = artistDetails[name];
+          return {
+            name: details?.name || name,
+            genre: details?.genre || "OTHER",
+            location: details?.location || "Arkansas",
+            bio: details?.bio || "",
+            spotifyUrl: details?.spotifyUrl || null,
+            spotifyArtistId: details?.spotifyArtistId || null,
+            image: details?.image || null,
+          };
+        });
 
       const payload = {
         authorId: selectedAuthorId,
@@ -210,18 +248,26 @@ export default function WordpressBackfillClient({
         sourcePublishedAt: selectedPost.date,
         sourceUrl: selectedPost.url,
         title: editedTitle,
+        status: selectedStatus,
       };
 
       const result = await importWordPressPostAction(payload);
 
       if (result.success) {
-        toast.success("Article backfilled successfully!", { id: toastId });
+        toast.success(
+          selectedPost.localStatus === "draft"
+            ? "Draft article backfilled and updated successfully!"
+            : "Article backfilled successfully!",
+          { id: toastId },
+        );
         setIsDrawerOpen(false);
 
-        // Update local status so it renders as Imported
+        // Update local status so it renders correctly
         setPostsList((previous) =>
           previous.map((p) =>
-            p.url === selectedPost.url ? { ...p, importedPostId: result.postId } : p,
+            p.url === selectedPost.url
+              ? { ...p, importedPostId: result.postId, localStatus: selectedStatus }
+              : p,
           ),
         );
         router.refresh();
@@ -273,8 +319,10 @@ export default function WordpressBackfillClient({
                   </TableCell>
                 </TableRow>
               ) : (
-                postsList.map((post) => {
-                  const isImported = post.importedPostId !== null;
+                postsList.map((post, index) => {
+                  const isDraft = post.localStatus === "draft";
+                  const isPublished = post.localStatus === "published";
+                  const isNewest = index === 0;
 
                   return (
                     <TableRow key={post.id} className="border-gray-800 hover:bg-gray-900/40">
@@ -286,6 +334,11 @@ export default function WordpressBackfillClient({
                               .replaceAll("&#8220;", '"')
                               .replaceAll("&#8221;", '"')}
                           </span>
+                          {isNewest && (
+                            <Badge className="bg-red-950/80 text-red-400 border border-red-800 text-[10px] py-0 px-1.5 font-bold uppercase shrink-0">
+                              Latest / Featured Candidate
+                            </Badge>
+                          )}
                           <a
                             href={post.url}
                             target="_blank"
@@ -307,9 +360,13 @@ export default function WordpressBackfillClient({
                         })}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-center">
-                        {isImported ? (
+                        {isPublished ? (
                           <Badge className="bg-green-950/80 text-green-400 border border-green-800 hover:bg-green-950/80">
-                            Imported
+                            Published
+                          </Badge>
+                        ) : isDraft ? (
+                          <Badge className="bg-yellow-950/80 text-yellow-400 border border-yellow-800 hover:bg-yellow-950/80">
+                            Draft (Unpublished)
                           </Badge>
                         ) : (
                           <Badge
@@ -321,13 +378,30 @@ export default function WordpressBackfillClient({
                         )}
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
-                        {isImported ? (
+                        {isPublished ? (
                           <Link href={`/admin/posts/${post.importedPostId}`}>
                             <Button variant="outline" size="sm" className="gap-2">
                               <BookOpen className="h-3.5 w-3.5" />
                               Edit Post
                             </Button>
                           </Link>
+                        ) : isDraft ? (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white gap-2 font-semibold"
+                              onClick={() => handleStartBackfill(post)}
+                            >
+                              <Sparkles className="h-3.5 w-3.5" />
+                              Backfill with AI
+                            </Button>
+                            <Link href={`/admin/posts/${post.importedPostId}`}>
+                              <Button variant="outline" size="sm" className="gap-2">
+                                <BookOpen className="h-3.5 w-3.5" />
+                                Edit Post
+                              </Button>
+                            </Link>
+                          </div>
                         ) : (
                           <Button
                             size="sm"
@@ -425,6 +499,24 @@ export default function WordpressBackfillClient({
                               {opt.name} ({opt.role})
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="backfill-status">Publish Status</Label>
+                      <Select
+                        value={selectedStatus}
+                        onValueChange={(value: any) => setSelectedStatus(value)}
+                      >
+                        <SelectTrigger className="bg-[#111111] border-gray-800">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#111111] border-gray-800">
+                          <SelectItem value="published">Published</SelectItem>
+                          <SelectItem value="draft">Draft (Unpublished)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -541,6 +633,33 @@ export default function WordpressBackfillClient({
                                   />
                                 </div>
                                 <div className="col-span-2 space-y-1.5">
+                                  <Label className="text-gray-400">
+                                    Spotify Search / Integration
+                                  </Label>
+                                  <SpotifySearch
+                                    value={artistDetails[artist.name]?.spotifyUrl || ""}
+                                    onSelect={(spotifyArtist: SpotifyArtist) => {
+                                      handleArtistDetailChange(
+                                        artist.name,
+                                        "spotifyUrl",
+                                        spotifyArtist.external_urls.spotify || "",
+                                      );
+                                      handleArtistDetailChange(
+                                        artist.name,
+                                        "spotifyArtistId",
+                                        spotifyArtist.id,
+                                      );
+                                      if (spotifyArtist.images && spotifyArtist.images.length > 0) {
+                                        handleArtistDetailChange(
+                                          artist.name,
+                                          "image",
+                                          spotifyArtist.images[0].url,
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                <div className="col-span-2 space-y-1.5">
                                   <Label className="text-gray-400">AI Generated Bio</Label>
                                   <Textarea
                                     value={artistDetails[artist.name]?.bio || artist.bio}
@@ -579,6 +698,8 @@ export default function WordpressBackfillClient({
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           Importing...
                         </>
+                      ) : selectedPost?.localStatus === "draft" ? (
+                        "Update & Re-publish Post"
                       ) : (
                         "Import & Publish Post"
                       )}
