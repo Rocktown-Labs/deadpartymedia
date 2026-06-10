@@ -36,7 +36,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { SpotifySearch } from "@/components/spotify-search";
-import { analyzeWordPressPostAction, importWordPressPostAction } from "./actions";
+import { analyzeWordPressPostAction, importWordPressPostAction, syncExistingArtistsSpotifyAction } from "./actions";
 import type { BackfillAnalysis } from "./actions";
 import type { SpotifyArtist } from "@/lib/api/artists";
 
@@ -107,6 +107,80 @@ export default function WordpressBackfillClient({
       }
     >
   >({});
+
+  // Bulk / Sync states
+  const pettyAuthor = authorOptions.find(
+    (opt) =>
+      opt.clerkId.toLowerCase().includes("pettyvandalism") ||
+      opt.name.toLowerCase().includes("pettyvandalism"),
+  );
+
+  const [bulkAuthorId, setBulkAuthorId] = useState(
+    pettyAuthor?.clerkId || authorOptions[0]?.clerkId || "",
+  );
+  const [bulkStatus, setBulkStatus] = useState<"draft" | "published">("published");
+  const [bulkLimit, setBulkLimit] = useState(40);
+  const [bulkOffset, setBulkOffset] = useState(0);
+  const [isBulkStarting, setIsBulkStarting] = useState(false);
+  const [isSyncingSpotify, setIsSyncingSpotify] = useState(false);
+
+  const handleBulkBackfill = async () => {
+    if (!bulkAuthorId) {
+      toast.error("Please select an author for bulk backfill.");
+      return;
+    }
+    setIsBulkStarting(true);
+    const toastId = toast.loading("Starting WordPress backfill background workflow...");
+    try {
+      const response = await fetch("/api/workflow/backfill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          limit: bulkLimit,
+          offset: bulkOffset,
+          authorId: bulkAuthorId,
+          status: bulkStatus,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to start workflow");
+      }
+
+      toast.success(
+        `Workflow started successfully! Run ID: ${data.runId}. Ingesting posts in the background...`,
+        { id: toastId, duration: 8000 }
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to start bulk backfill", {
+        id: toastId,
+      });
+    } finally {
+      setIsBulkStarting(false);
+    }
+  };
+
+  const handleSyncExistingArtistsSpotify = async () => {
+    setIsSyncingSpotify(true);
+    const toastId = toast.loading("Syncing Spotify details for existing database artists...");
+    try {
+      const result = await syncExistingArtistsSpotifyAction();
+      if (result.success) {
+        toast.success(
+          `Sync completed! Checked ${result.total} artists. Matched and updated ${result.updatedCount} profiles.`,
+          { id: toastId, duration: 8000 }
+        );
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to sync artists Spotify", {
+        id: toastId,
+      });
+    } finally {
+      setIsSyncingSpotify(false);
+    }
+  };
 
   const handleStartBackfill = async (post: WordPressPostFeedItem) => {
     setSelectedPost(post);
@@ -297,6 +371,122 @@ export default function WordpressBackfillClient({
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Bulk Backfill Card */}
+        <Card className="p-6 border-gray-800 bg-[#141414] text-white space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[#7CFC00]" />
+            <h2 className="text-lg font-bold">Bulk Ingest Background Workflow</h2>
+          </div>
+          <p className="text-xs text-gray-400">
+            Triggers a background execution with retries to import WordPress posts in bulk.
+          </p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-300">Default Writer</Label>
+              <Select value={bulkAuthorId} onValueChange={setBulkAuthorId}>
+                <SelectTrigger className="bg-black border-gray-800 text-xs">
+                  <SelectValue placeholder="Select writer..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#111111] border-gray-800 text-xs">
+                  {authorOptions.map((author) => (
+                    <SelectItem key={author.clerkId} value={author.clerkId}>
+                      {author.name} ({author.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-gray-300">Status</Label>
+              <Select
+                value={bulkStatus}
+                onValueChange={(val: "draft" | "published") => setBulkStatus(val)}
+              >
+                <SelectTrigger className="bg-black border-gray-800 text-xs">
+                  <SelectValue placeholder="Select status..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#111111] border-gray-800 text-xs">
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft (Unpublished)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 pt-1">
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-300">Limit</Label>
+              <Input
+                type="number"
+                value={bulkLimit}
+                onChange={(e) => setBulkLimit(parseInt(e.target.value) || 40)}
+                className="bg-black border-gray-800 text-xs h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-gray-300">Offset</Label>
+              <Input
+                type="number"
+                value={bulkOffset}
+                onChange={(e) => setBulkOffset(parseInt(e.target.value) || 0)}
+                className="bg-black border-gray-800 text-xs h-9"
+              />
+            </div>
+          </div>
+          <Button
+            className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/95 text-black font-bold text-xs py-2 h-9 gap-2 mt-2"
+            disabled={isBulkStarting}
+            onClick={handleBulkBackfill}
+          >
+            {isBulkStarting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                Start Background Backfill
+              </>
+            )}
+          </Button>
+        </Card>
+
+        {/* Sync Spotify Card */}
+        <Card className="p-6 border-gray-800 bg-[#141414] text-white flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <h2 className="text-lg font-bold">Sync Existing Artists Spotify</h2>
+            </div>
+            <p className="text-sm text-gray-400">
+              Scan all profiles in the database with missing Spotify connections, search Spotify, and automatically link their profile details and images.
+            </p>
+            <p className="text-xs text-gray-500">
+              This will solve the issue for previously published articles where the created artist profile didn't get a Spotify link automatically.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full border-gray-800 hover:bg-gray-900 text-white font-semibold text-xs py-2 h-9 gap-2 mt-4"
+            disabled={isSyncingSpotify}
+            onClick={handleSyncExistingArtistsSpotify}
+          >
+            {isSyncingSpotify ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-3.5 w-3.5 text-green-400" />
+                Sync Spotify Details
+              </>
+            )}
+          </Button>
+        </Card>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">

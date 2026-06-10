@@ -15,7 +15,7 @@ import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_GATEWAY_API_KEY,
 });
 
 const backfillAnalysisSchema = z.object({
@@ -153,18 +153,14 @@ async function resolveUniquePostSlug(title: string): Promise<string> {
   }
 }
 
-export async function analyzeWordPressPostAction(
+export async function analyzePostInternal(
   title: string,
   contentHtml: string,
 ): Promise<BackfillAnalysis> {
-  if (!(await checkRole("super_admin"))) {
-    throw new Error("Unauthorized: Only super admins can run AI analysis");
-  }
-
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_GATEWAY_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "Missing API key: Please configure GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY in the environment.",
+      "Missing API key: Please configure GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or AI_GATEWAY_API_KEY in the environment.",
     );
   }
 
@@ -217,6 +213,16 @@ Perform the following tasks:
   };
 }
 
+export async function analyzeWordPressPostAction(
+  title: string,
+  contentHtml: string,
+): Promise<BackfillAnalysis> {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can run AI analysis");
+  }
+  return analyzePostInternal(title, contentHtml);
+}
+
 interface ImportWordPressPostPayload {
   title: string;
   excerpt: string;
@@ -243,11 +249,7 @@ interface ImportWordPressPostPayload {
   status?: "draft" | "published";
 }
 
-export async function importWordPressPostAction(payload: ImportWordPressPostPayload) {
-  if (!(await checkRole("super_admin"))) {
-    throw new Error("Unauthorized: Only super admins can import posts");
-  }
-
+export async function importPostInternal(payload: ImportWordPressPostPayload) {
   const {
     title,
     excerpt,
@@ -417,3 +419,61 @@ export async function importWordPressPostAction(payload: ImportWordPressPostPayl
     return { success: true, postId };
   });
 }
+
+export async function importWordPressPostAction(payload: ImportWordPressPostPayload) {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can import posts");
+  }
+  return importPostInternal(payload);
+}
+
+export async function syncExistingArtistsSpotifyAction() {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can sync Spotify");
+  }
+
+  // Fetch all artists with missing Spotify ID
+  const artistsToSync = await db
+    .select({
+      id: artists.id,
+      name: artists.name,
+      image: artists.image,
+    })
+    .from(artists)
+    .where(
+      sql`${artists.spotifyArtistId} IS NULL OR ${artists.spotifyArtistId} = ''`
+    );
+
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  for (const artist of artistsToSync) {
+    const match = await searchSpotifyArtist(artist.name);
+    if (match) {
+      await db
+        .update(artists)
+        .set({
+          spotifyArtistId: match.spotifyArtistId,
+          spotifyUrl: match.spotifyUrl,
+          image: artist.image || match.imageUrl || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(artists.id, artist.id));
+      updatedCount++;
+    } else {
+      skippedCount++;
+    }
+  }
+
+  revalidatePath("/admin/artists");
+  revalidatePath("/artists");
+
+  return {
+    success: true,
+    total: artistsToSync.length,
+    updatedCount,
+    skippedCount,
+  };
+}
+
+
