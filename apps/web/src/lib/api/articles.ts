@@ -20,6 +20,11 @@ export interface Article {
     slug: string;
     name: string;
     image: string | null;
+    bio?: string;
+    location?: string;
+    genre?: string;
+    spotifyUrl?: string | null;
+    spotifyArtistId?: string | null;
   }[];
   status: "draft" | "published" | "archived";
   published_at: string | null;

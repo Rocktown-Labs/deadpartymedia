@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Bookmark, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, User, Share2, Bookmark, Edit, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -325,6 +325,41 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                 className="prose prose-invert prose-lg max-w-none"
                 dangerouslySetInnerHTML={{ __html: String(article.content || "") }}
               />
+
+              {/* Tagged Artists */}
+              {article.artists && article.artists.length > 0 && (
+                <div className="mt-12 pt-8 border-t border-gray-800 space-y-6">
+                  <h3 className="text-lg font-black tracking-wider uppercase text-gray-400">Featured Artists</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {article.artists.map((artist) => (
+                      <Link key={artist.id} href={`/artists/${artist.slug}`}>
+                        <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer flex flex-row group h-32">
+                          <div className="relative w-28 h-full overflow-hidden shrink-0 border-r border-gray-800">
+                            <Image
+                              src={artist.image || "/placeholder.svg"}
+                              alt={artist.name}
+                              fill
+                              className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="p-4 flex-1 flex flex-col justify-center min-w-0">
+                            <h4 className="text-base font-black mb-1 group-hover:text-[#7CFC00] transition-colors line-clamp-1">
+                              {artist.name}
+                            </h4>
+                            <div className="flex items-center text-xs text-gray-400 mb-1.5">
+                              <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+                              <span className="truncate">{artist.location || "Arkansas"}</span>
+                            </div>
+                            <p className="text-xs text-gray-300 line-clamp-2">
+                              {artist.bio || "Profile pending update."}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <ArticleComments
                 slug={slug}
