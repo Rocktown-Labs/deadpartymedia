@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { postImportSources, users } from "@/lib/db/schema";
-import { inArray, asc } from "drizzle-orm";
+import { postImportSources, users, posts } from "@/lib/db/schema";
+import { inArray, asc, eq } from "drizzle-orm";
 import { checkRole } from "@/lib/auth/roles";
+import { AdminPagination } from "@/components/admin/admin-pagination";
+import { getOffsetFromPage, parsePageParam, buildSearchParams } from "@/lib/admin/table-state";
 import WordpressBackfillClient from "./wordpress-backfill-client";
 
 interface WordPressRestPost {
@@ -23,23 +25,34 @@ interface WordPressRestPost {
 
 export const dynamic = "force-dynamic";
 
-export default async function WordPressBackfillPage() {
+interface WordPressBackfillPageProps {
+  searchParams: Promise<{ wp_page?: string }>;
+}
+
+export default async function WordPressBackfillPage({ searchParams }: WordPressBackfillPageProps) {
   // 1. Role verification
   const isSuperAdmin = await checkRole("super_admin");
   if (!isSuperAdmin) {
     redirect("/");
   }
 
-  // 2. Fetch latest WordPress posts from WordPress REST API
+  const params = await searchParams;
+  const wpPage = parsePageParam(params.wp_page);
+  const limit = 40;
+  const offset = getOffsetFromPage(wpPage, limit);
+
+  // 2. Fetch WordPress posts from WordPress REST API
   let wordpressPosts: any[] = [];
+  let totalPosts = 0;
   try {
     const response = await fetch(
-      "https://public-api.wordpress.com/rest/v1.1/sites/deadpartymedia.wordpress.com/posts?number=40",
+      `https://public-api.wordpress.com/rest/v1.1/sites/deadpartymedia.wordpress.com/posts?number=${limit}&offset=${offset}`,
       { cache: "no-store" },
     );
 
     if (response.ok) {
       const data = await response.json();
+      totalPosts = data.found || 0;
       if (data && Array.isArray(data.posts)) {
         wordpressPosts = data.posts.map((post: WordPressRestPost) => {
           const coverImage = post.featured_image || null;
@@ -55,6 +68,7 @@ export default async function WordPressBackfillPage() {
             id: post.ID,
             // to be populated
             importedPostId: null,
+            localStatus: null,
             modified: post.modified,
             rawCategories,
             title: post.title,
@@ -67,24 +81,33 @@ export default async function WordPressBackfillPage() {
     console.error("Failed to fetch WordPress articles feed:", error);
   }
 
-  // 3. Query already backfilled sources to match url status
-  let importedUrlMap = new Map<string, number>();
+  // 3. Query already backfilled sources to match url status and local status (draft vs published)
+  let importedUrlMap = new Map<string, { postId: number; status: string }>();
   try {
     const importedSources = await db
       .select({
         postId: postImportSources.postId,
         sourceUrl: postImportSources.sourceUrl,
+        status: posts.status,
       })
-      .from(postImportSources);
+      .from(postImportSources)
+      .leftJoin(posts, eq(postImportSources.postId, posts.id));
 
-    importedUrlMap = new Map(importedSources.map((row) => [row.sourceUrl, row.postId]));
+    importedUrlMap = new Map(
+      importedSources.map((row) => [
+        row.sourceUrl,
+        { postId: row.postId, status: row.status || "draft" },
+      ]),
+    );
   } catch (error) {
     console.error("Failed to query import sources:", error);
   }
 
-  // Map database post IDs to WordPress feed posts
+  // Map database post IDs and statuses to WordPress feed posts
   for (const post of wordpressPosts) {
-    post.importedPostId = importedUrlMap.get(post.url) || null;
+    const importInfo = importedUrlMap.get(post.url);
+    post.importedPostId = importInfo ? importInfo.postId : null;
+    post.localStatus = importInfo ? importInfo.status : null;
   }
 
   // 4. Fetch author options
@@ -113,8 +136,20 @@ export default async function WordPressBackfillPage() {
   }
 
   return (
-    <div className="py-6">
+    <div className="py-6 space-y-6">
       <WordpressBackfillClient posts={wordpressPosts} authorOptions={authorOptions} />
+      {totalPosts > limit && (
+        <div className="mt-6 flex justify-center">
+          <AdminPagination
+            pathname="/admin/posts/wordpress"
+            page={wpPage}
+            pageParam="wp_page"
+            searchParams={buildSearchParams({ wp_page: String(wpPage) })}
+            totalItems={totalPosts}
+            pageSize={limit}
+          />
+        </div>
+      )}
     </div>
   );
 }

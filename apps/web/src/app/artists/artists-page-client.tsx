@@ -15,8 +15,8 @@ export default function ArtistsPageClient() {
   const completeArtists = (artists ?? []).filter((artist) => {
     const hasSpotify =
       Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
-    const hasInstagram = Boolean(artist.instagram?.trim());
-    return Boolean(artist.claimed) && hasSpotify && hasInstagram;
+    const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
+    return hasSpotify && hasBio;
   });
 
   const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];

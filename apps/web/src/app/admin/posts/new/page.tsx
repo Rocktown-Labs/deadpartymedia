@@ -42,11 +42,18 @@ export default async function NewPostPage() {
         )
     : [];
 
+  const pettyAuthor = authorOptions.find(
+    (opt) =>
+      opt.clerkId.toLowerCase().includes("pettyvandalism") ||
+      opt.name.toLowerCase().includes("pettyvandalism"),
+  );
+  const defaultAuthorId = pettyAuthor?.clerkId || userId;
+
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Create New Post</h1>
       <PostEditor
-        initialData={{ authorId: userId }}
+        initialData={{ authorId: defaultAuthorId }}
         canManageAuthor={isSuperAdmin}
         authorOptions={authorOptions}
         onCreateAuthorStub={isSuperAdmin ? createUserProfileStub : undefined}
