@@ -4,7 +4,8 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import FileHandler from "@tiptap/extension-file-handler";
-import { useMemo, useState, useRef } from "react";
+import Link from "@tiptap/extension-link";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useArtists } from "@/lib/api/artists";
 import type { Artist } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
-import { X, Upload } from "lucide-react";
+import {
+  X,
+  Upload,
+  Bold,
+  Italic,
+  Strikethrough,
+  Code,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Link as LinkIcon,
+  Unlink,
+  Undo2,
+  Redo2,
+} from "lucide-react";
 import { toast } from "sonner";
 import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
@@ -84,6 +101,256 @@ interface PostEditorProps {
 }
 
 const categories = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
+
+function LinkButton({ editor }: { editor: any }) {
+  const [url, setUrl] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const currentUrl = editor.getAttributes("link").href || "";
+      setUrl(currentUrl);
+    }
+  }, [open, editor]);
+
+  const handleApply = (e: React.FormEvent) => {
+    e.preventDefault();
+    let formattedUrl = url.trim();
+    if (!formattedUrl) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    } else {
+      if (!/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+      editor.chain().focus().extendMarkRange("link").setLink({ href: formattedUrl }).run();
+    }
+    setOpen(false);
+  };
+
+  const handleRemove = () => {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    setOpen(false);
+  };
+
+  const isActive = editor.isActive("link");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+            isActive ? "text-red-500 bg-gray-800" : "text-gray-400"
+          }`}
+          title="Add Link"
+        >
+          <LinkIcon className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-80 p-3 bg-[#18181B] border border-gray-800 shadow-xl"
+        align="start"
+      >
+        <form onSubmit={handleApply} className="space-y-3">
+          <h4 className="text-xs font-semibold text-gray-300">Insert Link</h4>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="h-8 text-xs bg-[#09090B] border-gray-800 text-white focus-visible:ring-red-500"
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2 text-xs">
+            {isActive && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="h-7 px-2 text-xs bg-red-900/50 hover:bg-red-900 text-red-200 border-none"
+                onClick={handleRemove}
+              >
+                Remove
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs border-gray-800 text-gray-400 hover:text-white"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
+            >
+              Apply
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function EditorToolbar({ editor }: { editor: any }) {
+  if (!editor) {
+    return null;
+  }
+
+  const toggleHeading = (level: 2 | 3) => {
+    editor.chain().focus().toggleHeading({ level }).run();
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 border-b border-gray-800 bg-[#151516] p-2 rounded-t-lg select-none">
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("bold") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Bold (Cmd+B)"
+      >
+        <Bold className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("italic") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Italic (Cmd+I)"
+      >
+        <Italic className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("strike") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Strikethrough (Cmd+Shift+X)"
+      >
+        <Strikethrough className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("code") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Inline Code (Cmd+E)"
+      >
+        <Code className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-6 bg-gray-800 mx-1" />
+
+      <button
+        type="button"
+        onClick={() => toggleHeading(2)}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("heading", { level: 2 }) ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Heading 2 (Cmd+Alt+2)"
+      >
+        <Heading2 className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => toggleHeading(3)}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("heading", { level: 3 }) ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Heading 3 (Cmd+Alt+3)"
+      >
+        <Heading3 className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-6 bg-gray-800 mx-1" />
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("bulletList") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Bullet List (Cmd+Shift+8)"
+      >
+        <List className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("orderedList") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Numbered List (Cmd+Shift+9)"
+      >
+        <ListOrdered className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
+          editor.isActive("blockquote") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        }`}
+        title="Blockquote (Cmd+Shift+B)"
+      >
+        <Quote className="w-4 h-4" />
+      </button>
+
+      <div className="w-px h-6 bg-gray-800 mx-1" />
+
+      <LinkButton editor={editor} />
+
+      {editor.isActive("link") && (
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}
+          className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
+          title="Remove Link"
+        >
+          <Unlink className="w-4 h-4" />
+        </button>
+      )}
+
+      <div className="w-px h-6 bg-gray-800 mx-1" />
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        className="p-2 rounded hover:bg-gray-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        title="Undo (Cmd+Z)"
+      >
+        <Undo2 className="w-4 h-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        className="p-2 rounded hover:bg-gray-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        title="Redo (Cmd+Shift+Z)"
+      >
+        <Redo2 className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 export function PostEditor({
   initialData,
@@ -155,6 +422,12 @@ export function PostEditor({
     extensions: [
       StarterKit,
       Image,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-red-500 hover:text-red-400 underline font-medium cursor-pointer",
+        },
+      }),
       FileHandler.configure({
         allowedMimeTypes: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
         onDrop: (editor, files, pos) => {
@@ -604,7 +877,8 @@ export function PostEditor({
 
       <div>
         <Label>Content</Label>
-        <div className="mt-1 border border-gray-800 rounded-lg bg-[#111111]">
+        <div className="mt-1 border border-gray-800 rounded-lg bg-[#111111] overflow-hidden">
+          <EditorToolbar editor={editor} />
           <EditorContent editor={editor} />
         </div>
       </div>
