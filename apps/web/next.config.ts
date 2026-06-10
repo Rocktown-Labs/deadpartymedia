@@ -1,4 +1,5 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import { withWorkflow } from "workflow/next";
 import "@dpmedia/env/web";
 import type { NextConfig } from "next";
 import path from "node:path";
@@ -92,4 +93,5 @@ const sentryConfig = withSentryConfig(nextConfig, {
   },
 });
 
-export default process.env.NODE_ENV === "development" ? nextConfig : sentryConfig;
+export default withWorkflow(process.env.NODE_ENV === "development" ? nextConfig : sentryConfig);
+
