@@ -590,6 +590,41 @@ export async function updateLocalUserRole(formData: FormData) {
     return { error: "Invalid role update payload", success: false };
   }
 
+  const [profile] = await db
+    .select({ clerkId: users.clerkId })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  if (!profile) {
+    return { error: "User profile not found", success: false };
+  }
+
+  const isPlaceholder =
+    profile.clerkId.startsWith("local_placeholder:") ||
+    profile.clerkId.startsWith("wp_placeholder:");
+
+  if (!isPlaceholder) {
+    try {
+      const client = await clerkClient();
+      const clerkUser = await client.users.getUser(profile.clerkId);
+      const currentMetadata = clerkUser.publicMetadata || {};
+      await client.users.updateUserMetadata(profile.clerkId, {
+        publicMetadata: {
+          ...currentMetadata,
+          onboardingComplete: role === "writer" || role === "super_admin",
+          role,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to sync role change to Clerk:", error);
+      return {
+        error: "Failed to update role in Clerk (Identity Server).",
+        success: false,
+      };
+    }
+  }
+
   await db
     .update(users)
     .set({

@@ -109,10 +109,7 @@ export default function WordpressBackfillClient({
 
     // Setup initial details before AI response
     setEditedTitle(
-      post.title
-        .replaceAll('&#8217;', "'")
-        .replaceAll('&#8220;', '"')
-        .replaceAll('&#8221;', '"'),
+      post.title.replaceAll("&#8217;", "'").replaceAll("&#8220;", '"').replaceAll("&#8221;", '"'),
     );
     setEditedExcerpt("");
     setIsCoverStory(false);
@@ -164,7 +161,9 @@ export default function WordpressBackfillClient({
   ) => {
     setArtistDetails((previous) => {
       const existing = previous[artistName];
-      if (!existing) {return previous;}
+      if (!existing) {
+        return previous;
+      }
       return {
         ...previous,
         [artistName]: {
@@ -283,9 +282,9 @@ export default function WordpressBackfillClient({
                         <div className="font-bold flex items-center gap-2">
                           <span className="truncate">
                             {post.title
-                              .replaceAll('&#8217;', "'")
-                              .replaceAll('&#8220;', '"')
-                              .replaceAll('&#8221;', '"')}
+                              .replaceAll("&#8217;", "'")
+                              .replaceAll("&#8220;", '"')
+                              .replaceAll("&#8221;", '"')}
                           </span>
                           <a
                             href={post.url}
