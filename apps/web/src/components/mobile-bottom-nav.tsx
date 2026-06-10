@@ -9,6 +9,10 @@ import { cn } from "@/lib/utils";
 export default function MobileBottomNav() {
   const pathname = usePathname();
 
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
+    return null;
+  }
+
   const navItems = [
     { href: "/" as Route, icon: Home, label: "Home" },
     { href: "/music" as Route, icon: Music, label: "Music" },

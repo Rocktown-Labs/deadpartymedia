@@ -51,7 +51,7 @@ describe("postEditor Image Upload", () => {
   it("should render cover image upload button", () => {
     renderWithProviders(<PostEditor onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
-    expect(screen.getByText("Upload Image")).toBeInTheDocument();
+    expect(screen.getByText("Click to upload cover image")).toBeInTheDocument();
   });
 
   it("should allow switching between upload and URL input", async () => {

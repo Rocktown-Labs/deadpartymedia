@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useArtists } from "@/lib/api/artists";
 import type { Artist } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   X,
   Upload,
@@ -38,6 +39,7 @@ import {
   Unlink,
   Undo2,
   Redo2,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import NextImage from "next/image";
@@ -139,8 +141,8 @@ function LinkButton({ editor }: { editor: any }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-            isActive ? "text-red-500 bg-gray-800" : "text-gray-400"
+          className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+            isActive ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
           }`}
           title="Add Link"
         >
@@ -148,18 +150,18 @@ function LinkButton({ editor }: { editor: any }) {
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-80 p-3 bg-[#18181B] border border-gray-800 shadow-xl"
+        className="w-80 p-3 bg-zinc-950 border border-zinc-850 shadow-xl"
         align="start"
       >
         <form onSubmit={handleApply} className="space-y-3">
-          <h4 className="text-xs font-semibold text-gray-300">Insert Link</h4>
+          <h4 className="text-xs font-semibold text-zinc-300">Insert Link</h4>
           <div className="flex gap-2">
             <Input
               type="text"
               placeholder="https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="h-8 text-xs bg-[#09090B] border-gray-800 text-white focus-visible:ring-red-500"
+              className="h-8 text-xs bg-zinc-900 border-zinc-800 text-white focus-visible:ring-[#7CFC00]"
               autoFocus
             />
           </div>
@@ -167,9 +169,9 @@ function LinkButton({ editor }: { editor: any }) {
             {isActive && (
               <Button
                 type="button"
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs bg-red-900/50 hover:bg-red-900 text-red-200 border-none"
+                className="h-7 px-2 text-xs border-red-900/50 hover:bg-red-950/20 text-red-400"
                 onClick={handleRemove}
               >
                 Remove
@@ -179,7 +181,7 @@ function LinkButton({ editor }: { editor: any }) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs border-gray-800 text-gray-400 hover:text-white"
+              className="h-7 px-2 text-xs border-zinc-800 text-zinc-400 hover:text-white"
               onClick={() => setOpen(false)}
             >
               Cancel
@@ -187,7 +189,7 @@ function LinkButton({ editor }: { editor: any }) {
             <Button
               type="submit"
               size="sm"
-              className="h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
+              className="h-7 px-3 text-xs bg-[#7CFC00] hover:bg-[#6edc00] text-black font-semibold"
             >
               Apply
             </Button>
@@ -208,12 +210,12 @@ function EditorToolbar({ editor }: { editor: any }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-gray-800 bg-[#151516] p-2 rounded-t-lg select-none">
+    <div className="flex flex-wrap items-center gap-1 border-b border-zinc-800 bg-zinc-900/60 p-2 rounded-t-lg select-none">
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("bold") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("bold") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Bold (Cmd+B)"
       >
@@ -223,8 +225,8 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("italic") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("italic") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Italic (Cmd+I)"
       >
@@ -234,8 +236,8 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("strike") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("strike") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Strikethrough (Cmd+Shift+X)"
       >
@@ -245,21 +247,21 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleCode().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("code") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("code") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Inline Code (Cmd+E)"
       >
         <Code className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-6 bg-gray-800 mx-1" />
+      <div className="w-px h-6 bg-zinc-800 mx-1" />
 
       <button
         type="button"
         onClick={() => toggleHeading(2)}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("heading", { level: 2 }) ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("heading", { level: 2 }) ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Heading 2 (Cmd+Alt+2)"
       >
@@ -269,21 +271,21 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => toggleHeading(3)}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("heading", { level: 3 }) ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("heading", { level: 3 }) ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Heading 3 (Cmd+Alt+3)"
       >
         <Heading3 className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-6 bg-gray-800 mx-1" />
+      <div className="w-px h-6 bg-zinc-800 mx-1" />
 
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("bulletList") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("bulletList") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Bullet List (Cmd+Shift+8)"
       >
@@ -293,8 +295,8 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("orderedList") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("orderedList") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Numbered List (Cmd+Shift+9)"
       >
@@ -304,15 +306,15 @@ function EditorToolbar({ editor }: { editor: any }) {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={`p-2 rounded hover:bg-gray-800 transition-colors ${
-          editor.isActive("blockquote") ? "text-red-500 bg-gray-800" : "text-gray-400"
+        className={`p-2 rounded hover:bg-zinc-800 transition-colors ${
+          editor.isActive("blockquote") ? "text-[#7CFC00] bg-zinc-800" : "text-gray-400"
         }`}
         title="Blockquote (Cmd+Shift+B)"
       >
         <Quote className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-6 bg-gray-800 mx-1" />
+      <div className="w-px h-6 bg-zinc-800 mx-1" />
 
       <LinkButton editor={editor} />
 
@@ -320,20 +322,20 @@ function EditorToolbar({ editor }: { editor: any }) {
         <button
           type="button"
           onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}
-          className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
+          className="p-2 rounded hover:bg-zinc-800 text-gray-400 hover:text-red-405 transition-colors"
           title="Remove Link"
         >
           <Unlink className="w-4 h-4" />
         </button>
       )}
 
-      <div className="w-px h-6 bg-gray-800 mx-1" />
+      <div className="w-px h-6 bg-zinc-800 mx-1" />
 
       <button
         type="button"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
-        className="p-2 rounded hover:bg-gray-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="p-2 rounded hover:bg-zinc-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         title="Undo (Cmd+Z)"
       >
         <Undo2 className="w-4 h-4" />
@@ -343,7 +345,7 @@ function EditorToolbar({ editor }: { editor: any }) {
         type="button"
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().redo()}
-        className="p-2 rounded hover:bg-gray-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="p-2 rounded hover:bg-zinc-800 text-gray-400 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         title="Redo (Cmd+Shift+Z)"
       >
         <Redo2 className="w-4 h-4" />
@@ -425,7 +427,7 @@ export function PostEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-red-500 hover:text-red-400 underline font-medium cursor-pointer",
+          class: "text-[#7CFC00] hover:text-[#6edc00] underline font-medium cursor-pointer",
         },
       }),
       FileHandler.configure({
@@ -700,328 +702,431 @@ export function PostEditor({
   const selectedArtists = allArtists.filter((artist) => selectedArtistIds.includes(artist.id));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          className="mt-1"
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="slug">Slug</Label>
-        <Input
-          id="slug"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          placeholder="Auto-generated from title"
-          className="mt-1"
-        />
-      </div>
-
-      {canManageAuthor && (
-        <div className="space-y-3 rounded-lg border border-gray-800 bg-[#111111] p-4">
-          <div>
-            <Label htmlFor="authorId">Author</Label>
-            <Select value={selectedAuthorId} onValueChange={setSelectedAuthorId}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select author" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableAuthors.length === 0 ? (
-                  <SelectItem value="__none__" disabled>
-                    No authors available
-                  </SelectItem>
-                ) : (
-                  availableAuthors.map((author) => (
-                    <SelectItem key={author.clerkId} value={author.clerkId}>
-                      {author.name} ({author.role})
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          {onCreateAuthorStub && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <Input
-                value={newAuthorName}
-                onChange={(event) => setNewAuthorName(event.target.value)}
-                placeholder="New author name"
-                className="md:col-span-2"
-              />
-              <Input
-                value={newAuthorEmail}
-                onChange={(event) => setNewAuthorEmail(event.target.value)}
-                placeholder="Email (optional)"
-                type="email"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCreateAuthorStub}
-                disabled={creatingAuthor}
-              >
-                {creatingAuthor ? "Creating..." : "Quick Create Author"}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div>
-        <Label htmlFor="category">Category</Label>
-        <Select value={category} onValueChange={setCategory} required>
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="excerpt">Excerpt</Label>
-        <Textarea
-          id="excerpt"
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-          required
-          className="mt-1"
-          rows={3}
-        />
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label htmlFor="coverImage">Cover Image</Label>
-          {allowCoverImageUrl && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setUseCoverImageUrl(!useCoverImageUrl)}
-              className="text-xs"
-            >
-              {useCoverImageUrl ? "Upload File" : "Use URL"}
-            </Button>
-          )}
-        </div>
-
-        {allowCoverImageUrl && useCoverImageUrl ? (
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Left Column - Main Content */}
+      <div className="lg:col-span-8 space-y-6">
+        <div className="space-y-2">
+          <Label
+            htmlFor="title"
+            className="text-zinc-400 font-semibold uppercase text-xs tracking-wider"
+          >
+            Title
+          </Label>
           <Input
-            id="coverImage"
-            type="url"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
-            className="mt-1"
-            placeholder="https://example.com/image.jpg"
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            className="text-lg md:text-xl font-medium bg-zinc-900/40 border-zinc-800 text-white focus-visible:ring-[#7CFC00] focus-visible:border-zinc-700 py-6"
+            placeholder="Enter post title..."
           />
-        ) : (
-          <div className="space-y-2">
-            <input
-              id="coverImage"
-              ref={coverImageInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-              aria-label="Cover Image"
-              data-testid="cover-image-input"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  handleCoverImageUpload(file);
-                }
-              }}
-              className="hidden"
-            />
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => coverImageInputRef.current?.click()}
-                disabled={coverImageUploading}
-                className="mt-1"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {coverImageUploading ? "Uploading..." : "Upload Image"}
-              </Button>
-              {coverImage && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCoverImage("")}
-                  className="mt-1"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-            {coverImage && (
-              <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                <NextImage src={coverImage} alt="Cover preview" fill className="object-cover" />
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        </div>
 
-      <div>
-        <Label>Content</Label>
-        <div className="mt-1 border border-gray-800 rounded-lg bg-[#111111] overflow-hidden">
-          <EditorToolbar editor={editor} />
-          <EditorContent editor={editor} />
+        <div className="space-y-2">
+          <Label
+            htmlFor="slug"
+            className="text-zinc-400 font-semibold uppercase text-xs tracking-wider"
+          >
+            Slug
+          </Label>
+          <Input
+            id="slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="Auto-generated from title"
+            className="bg-zinc-900/40 border-zinc-800 text-zinc-300 text-sm focus-visible:ring-[#7CFC00] focus-visible:border-zinc-700"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="excerpt"
+            className="text-zinc-400 font-semibold uppercase text-xs tracking-wider"
+          >
+            Excerpt
+          </Label>
+          <Textarea
+            id="excerpt"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            required
+            placeholder="Write a short teaser/excerpt for the post..."
+            className="bg-zinc-900/40 border-zinc-800 text-zinc-300 text-sm focus-visible:ring-[#7CFC00] focus-visible:border-zinc-700 min-h-[80px] resize-none"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-zinc-400 font-semibold uppercase text-xs tracking-wider">
+            Content
+          </Label>
+          <div className="border border-zinc-800 rounded-lg bg-zinc-950 overflow-hidden focus-within:border-zinc-700 transition-colors">
+            <EditorToolbar editor={editor} />
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={status}
-          onValueChange={(value: "draft" | "published" | "archived") => setStatus(value)}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Right Column - Sidebar */}
+      <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-[var(--sidebar-offset-top,80px)]">
+        {/* Actions & Status Card */}
+        <Card className="bg-zinc-900/40 border-zinc-800/80 shadow-md">
+          <CardHeader className="pb-3 border-b border-zinc-850/50">
+            <CardTitle className="text-xs uppercase tracking-wider text-zinc-400 font-bold">
+              Publish settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-xs text-zinc-400 font-medium">
+                Post Status
+              </Label>
+              <Select
+                value={status}
+                onValueChange={(value: "draft" | "published" | "archived") => setStatus(value)}
+              >
+                <SelectTrigger className="bg-zinc-950/80 border-zinc-800 text-zinc-200 focus:ring-[#7CFC00]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border-zinc-850 text-zinc-200">
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="isCoverStory"
-          checked={isCoverStory}
-          onCheckedChange={(checked) => setIsCoverStory(checked === true)}
-        />
-        <Label htmlFor="isCoverStory" className="cursor-pointer">
-          Set as cover story
-        </Label>
-      </div>
+            <div className="flex items-center space-x-2 py-1">
+              <Checkbox
+                id="isCoverStory"
+                checked={isCoverStory}
+                onCheckedChange={(checked) => setIsCoverStory(checked === true)}
+                className="border-zinc-700 data-[state=checked]:bg-[#7CFC00] data-[state=checked]:border-[#7CFC00] data-[state=checked]:text-black"
+              />
+              <Label htmlFor="isCoverStory" className="cursor-pointer text-sm text-zinc-300">
+                Set as cover story
+              </Label>
+            </div>
 
-      <div>
-        <Label>Featured Artists</Label>
-        <div className="mt-1 space-y-2">
-          <Popover open={artistPopoverOpen} onOpenChange={setArtistPopoverOpen}>
-            <PopoverTrigger asChild>
+            <div className="flex flex-col gap-2 pt-3 border-t border-zinc-850/50">
+              <Button
+                type="submit"
+                disabled={isSubmitting || isSaving || coverImageUploading}
+                className="w-full bg-[#7CFC00] hover:bg-[#6edc00] text-black font-bold"
+              >
+                {coverImageUploading
+                  ? "Uploading cover..."
+                  : isSubmitting || isSaving
+                    ? "Saving..."
+                    : "Save Post"}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full justify-start"
-                disabled={artistsLoading}
+                className="w-full border-zinc-800 hover:bg-zinc-800 text-zinc-300"
+                onClick={() => router.push(cancelHref)}
               >
-                {artistsLoading
-                  ? "Loading artists..."
-                  : selectedArtists.length > 0
-                    ? `${selectedArtists.length} artist(s) selected`
-                    : "Select artists"}
+                Cancel
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[400px] p-0" align="start">
-              <div className="max-h-[300px] overflow-y-auto p-2">
-                {allArtists.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-400">No artists available</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cover Image Card */}
+        <Card className="bg-zinc-900/40 border-zinc-800/80 shadow-md">
+          <CardHeader className="pb-3 border-b border-zinc-850/50 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs uppercase tracking-wider text-zinc-400 font-bold">
+              Cover Image
+            </CardTitle>
+            {allowCoverImageUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setUseCoverImageUrl(!useCoverImageUrl)}
+                className="text-[10px] text-zinc-400 hover:text-white h-6 px-2"
+              >
+                {useCoverImageUrl ? "Upload File" : "Use URL"}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="pt-4">
+            {allowCoverImageUrl && useCoverImageUrl ? (
+              <div className="space-y-2">
+                <Label htmlFor="coverImage" className="text-xs text-zinc-400 font-medium">
+                  Image URL
+                </Label>
+                <Input
+                  id="coverImage"
+                  type="url"
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                  className="bg-zinc-950/80 border-zinc-800 text-zinc-300 focus-visible:ring-[#7CFC00]"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <input
+                  id="coverImage"
+                  ref={coverImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                  aria-label="Cover Image"
+                  data-testid="cover-image-input"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleCoverImageUpload(file);
+                    }
+                  }}
+                  className="hidden"
+                />
+                {!coverImage ? (
+                  <div
+                    className="border-2 border-dashed border-zinc-850 hover:border-zinc-700 rounded-lg p-6 text-center cursor-pointer transition-colors bg-zinc-950/20 group"
+                    onClick={() => coverImageInputRef.current?.click()}
+                  >
+                    <Upload className="w-7 h-7 mx-auto mb-2 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
+                    <p className="text-xs text-zinc-400 font-medium">Click to upload cover image</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">JPEG, PNG, WEBP, GIF (Max 5MB)</p>
+                  </div>
                 ) : (
-                  <div className="space-y-2">
-                    {allArtists.map((artist) => (
-                      <div
-                        key={artist.id}
-                        className="flex items-center space-x-2 p-2 hover:bg-gray-800 rounded"
-                      >
-                        <Checkbox
-                          id={`artist-${artist.id}`}
-                          checked={selectedArtistIds.includes(artist.id)}
-                          onCheckedChange={() => handleArtistToggle(artist.id)}
-                        />
-                        <Label
-                          htmlFor={`artist-${artist.id}`}
-                          className="flex-1 cursor-pointer text-sm"
-                        >
-                          {artist.name} ({artist.genre})
-                        </Label>
-                      </div>
-                    ))}
+                  <div className="relative aspect-video border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
+                    <NextImage src={coverImage} alt="Cover preview" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setCoverImage("")}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-black text-zinc-400 hover:text-white transition-colors"
+                      title="Remove image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
               </div>
-            </PopoverContent>
-          </Popover>
-          {selectedArtists.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {selectedArtists.map((artist) => (
-                <Badge key={artist.id} variant="secondary" className="flex items-center gap-1">
-                  {artist.name}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveArtist(artist.id)}
-                    className="ml-1 hover:text-red-400"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
-          {onCreateArtistStub && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-3">
-              <Input
-                value={newArtistName}
-                onChange={(event) => setNewArtistName(event.target.value)}
-                placeholder="New artist name"
-                className="md:col-span-2"
-              />
-              <select
-                value={newArtistGenre}
-                onChange={(event) => setNewArtistGenre(event.target.value)}
-                className="bg-[#0A0A0A] border border-gray-800 rounded px-3 py-2 text-sm"
-              >
-                {categories.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-              <Input
-                value={newArtistLocation}
-                onChange={(event) => setNewArtistLocation(event.target.value)}
-                placeholder="Location (optional)"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCreateArtistStub}
-                disabled={creatingArtist}
-              >
-                {creatingArtist ? "Creating..." : "Quick Create"}
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <div className="flex gap-4">
-        <Button type="submit" disabled={isSubmitting || isSaving || coverImageUploading}>
-          {coverImageUploading
-            ? "Uploading cover..."
-            : isSubmitting || isSaving
-              ? "Saving..."
-              : "Save Post"}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
-          Cancel
-        </Button>
+        {/* Post Details Card */}
+        <Card className="bg-zinc-900/40 border-zinc-800/80 shadow-md">
+          <CardHeader className="pb-3 border-b border-zinc-850/50">
+            <CardTitle className="text-xs uppercase tracking-wider text-zinc-400 font-bold">
+              Category & Author
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="category" className="text-xs text-zinc-400 font-medium">
+                Category
+              </Label>
+              <Select value={category} onValueChange={setCategory} required>
+                <SelectTrigger className="bg-zinc-950/80 border-zinc-800 text-zinc-200 focus:ring-[#7CFC00]">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-950 border-zinc-850 text-zinc-200">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {canManageAuthor && (
+              <div className="space-y-3 pt-3 border-t border-zinc-850/50">
+                <div className="space-y-2">
+                  <Label htmlFor="authorId" className="text-xs text-zinc-400 font-medium">
+                    Author
+                  </Label>
+                  <Select value={selectedAuthorId} onValueChange={setSelectedAuthorId}>
+                    <SelectTrigger className="bg-zinc-950/80 border-zinc-800 text-zinc-200 focus:ring-[#7CFC00]">
+                      <SelectValue placeholder="Select author" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-950 border-zinc-850 text-zinc-200">
+                      {availableAuthors.length === 0 ? (
+                        <SelectItem value="__none__" disabled>
+                          No authors available
+                        </SelectItem>
+                      ) : (
+                        availableAuthors.map((author) => (
+                          <SelectItem key={author.clerkId} value={author.clerkId}>
+                            {author.name} ({author.role})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {onCreateAuthorStub && (
+                  <div className="space-y-2 pt-2">
+                    <Label className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
+                      Quick Create Author
+                    </Label>
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        value={newAuthorName}
+                        onChange={(event) => setNewAuthorName(event.target.value)}
+                        placeholder="New author name"
+                        className="bg-zinc-950/80 border-zinc-800 text-zinc-300 text-xs focus-visible:ring-[#7CFC00]"
+                      />
+                      <Input
+                        value={newAuthorEmail}
+                        onChange={(event) => setNewAuthorEmail(event.target.value)}
+                        placeholder="Email (optional)"
+                        type="email"
+                        className="bg-zinc-950/80 border-zinc-800 text-zinc-300 text-xs focus-visible:ring-[#7CFC00]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCreateAuthorStub}
+                        disabled={creatingAuthor}
+                        className="text-xs border-zinc-800 hover:bg-zinc-800 hover:text-white"
+                      >
+                        {creatingAuthor ? "Creating..." : "Quick Create"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Featured Artists Card */}
+        <Card className="bg-zinc-900/40 border-zinc-800/80 shadow-md">
+          <CardHeader className="pb-3 border-b border-zinc-850/50">
+            <CardTitle className="text-xs uppercase tracking-wider text-zinc-400 font-bold">
+              Featured Artists
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs text-zinc-400 font-medium">Select Artists</Label>
+              <Popover open={artistPopoverOpen} onOpenChange={setArtistPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                    disabled={artistsLoading}
+                  >
+                    <span className="truncate">
+                      {artistsLoading
+                        ? "Loading artists..."
+                        : selectedArtists.length > 0
+                          ? `${selectedArtists.length} artist(s) selected`
+                          : "Select artists"}
+                    </span>
+                    <ChevronRight className="w-4 h-4 ml-2 text-zinc-500 transform rotate-90" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[300px] p-0 bg-zinc-950 border border-zinc-850 shadow-xl"
+                  align="start"
+                >
+                  <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
+                    {allArtists.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-zinc-500">
+                        No artists available
+                      </div>
+                    ) : (
+                      allArtists.map((artist) => (
+                        <div
+                          key={artist.id}
+                          className="flex items-center space-x-2 p-1.5 hover:bg-zinc-900 rounded cursor-pointer"
+                        >
+                          <Checkbox
+                            id={`artist-${artist.id}`}
+                            checked={selectedArtistIds.includes(artist.id)}
+                            onCheckedChange={() => handleArtistToggle(artist.id)}
+                            className="border-zinc-700 data-[state=checked]:bg-[#7CFC00] data-[state=checked]:border-[#7CFC00] data-[state=checked]:text-black"
+                          />
+                          <Label
+                            htmlFor={`artist-${artist.id}`}
+                            className="flex-1 cursor-pointer text-xs text-zinc-300"
+                          >
+                            {artist.name}{" "}
+                            <span className="text-[10px] text-zinc-500 font-light">
+                              ({artist.genre})
+                            </span>
+                          </Label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {selectedArtists.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {selectedArtists.map((artist) => (
+                  <Badge
+                    key={artist.id}
+                    variant="secondary"
+                    className="bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center gap-1 py-0.5 text-xs"
+                  >
+                    {artist.name}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveArtist(artist.id)}
+                      className="ml-1 hover:text-red-400 focus:outline-none"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {onCreateArtistStub && (
+              <div className="space-y-2 pt-3 border-t border-zinc-850/50">
+                <Label className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
+                  Quick Create Artist
+                </Label>
+                <div className="flex flex-col gap-2">
+                  <Input
+                    value={newArtistName}
+                    onChange={(event) => setNewArtistName(event.target.value)}
+                    placeholder="Artist name"
+                    className="bg-zinc-950/80 border-zinc-800 text-zinc-300 text-xs focus-visible:ring-[#7CFC00]"
+                  />
+                  <select
+                    value={newArtistGenre}
+                    onChange={(event) => setNewArtistGenre(event.target.value)}
+                    className="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+                  >
+                    {categories.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                  <Input
+                    value={newArtistLocation}
+                    onChange={(event) => setNewArtistLocation(event.target.value)}
+                    placeholder="Location (optional)"
+                    className="bg-zinc-950/80 border-zinc-800 text-zinc-300 text-xs focus-visible:ring-[#7CFC00]"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCreateArtistStub}
+                    disabled={creatingArtist}
+                    className="text-xs border-zinc-800 hover:bg-zinc-800 hover:text-white"
+                  >
+                    {creatingArtist ? "Creating..." : "Quick Create"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </form>
   );
