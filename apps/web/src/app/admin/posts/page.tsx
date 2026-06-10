@@ -105,9 +105,16 @@ export default async function PostsPage({
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-black">Posts</h1>
-        <Link href="/admin/posts/new">
-          <Button>Create New Post</Button>
-        </Link>
+        <div className="flex gap-4">
+          {isSuperAdmin && (
+            <Link href="/admin/posts/wordpress">
+              <Button variant="outline">WordPress Backfill</Button>
+            </Link>
+          )}
+          <Link href="/admin/posts/new">
+            <Button>Create New Post</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">

@@ -1,0 +1,308 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { posts, postArtists, artists, postImportSources } from "@/lib/db/schema";
+import { eq, sql } from "drizzle-orm";
+import { checkRole } from "@/lib/auth/roles";
+import { revalidatePath } from "next/cache";
+import { generateJSON } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { generateObject } from "ai";
+import { z } from "zod";
+import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
+});
+
+const backfillAnalysisSchema = z.object({
+  category: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
+  excerpt: z.string(),
+  detectedArtists: z.array(
+    z.object({
+      name: z.string(),
+      genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
+      location: z.string(),
+      bio: z.string(),
+    }),
+  ),
+});
+
+export type BackfillAnalysis = z.infer<typeof backfillAnalysisSchema> & {
+  artistsMapping: {
+    name: string;
+    genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
+    location: string;
+    bio: string;
+    existingId: number | null;
+  }[];
+};
+
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replaceAll(/\s+/g, "-")
+    .replaceAll(/-+/g, "-");
+}
+
+async function resolveUniqueArtistSlug(name: string): Promise<string> {
+  const baseSlug = slugify(name);
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const [existing] = await db
+      .select({ id: artists.id })
+      .from(artists)
+      .where(eq(artists.slug, candidate))
+      .limit(1);
+
+    if (!existing) {
+      return candidate;
+    }
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+async function resolveUniquePostSlug(title: string): Promise<string> {
+  const baseSlug = slugify(title);
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const [existing] = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.slug, candidate))
+      .limit(1);
+
+    if (!existing) {
+      return candidate;
+    }
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+export async function analyzeWordPressPostAction(
+  title: string,
+  contentHtml: string,
+): Promise<BackfillAnalysis> {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can run AI analysis");
+  }
+
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Missing API key: Please configure GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY in the environment.",
+    );
+  }
+
+  // Strip HTML tags to make the prompt cleaner and save tokens
+  const cleanText = contentHtml
+    .replaceAll(/<[^>]*>/g, " ")
+    .replaceAll(/\s+/g, " ")
+    .trim();
+
+  const prompt = `Analyze this WordPress blog post titled "${title}".
+Content body excerpt:
+${cleanText.slice(0, 4000)}
+
+Perform the following tasks:
+1. Classify this post under one of our music categories: COUNTRY, EDM, HARDCORE & ROCK, HIP-HOP & R&B, or OTHER.
+2. Generate a concise, engaging summary/excerpt of the post in 2-3 sentences.
+3. Identify all music artists, bands, or DJs mentioned prominently in the post.
+4. For each detected artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
+
+  const { object } = await generateObject({
+    model: google("gemini-1.5-flash"),
+    schema: backfillAnalysisSchema,
+    prompt,
+  });
+
+  const artistsMapping = [];
+
+  for (const artist of object.detectedArtists) {
+    // Try to find the artist in the local database by name (case-insensitive)
+    const [existingArtist] = await db
+      .select({ id: artists.id })
+      .from(artists)
+      .where(sql`lower(${artists.name}) = ${artist.name.toLowerCase()}`)
+      .limit(1);
+
+    artistsMapping.push({
+      ...artist,
+      existingId: existingArtist?.id ?? null,
+    });
+  }
+
+  return {
+    ...object,
+    artistsMapping,
+  };
+}
+
+interface ImportWordPressPostPayload {
+  title: string;
+  excerpt: string;
+  category: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
+  contentHtml: string;
+  coverImageUrl: string | null;
+  authorId: string;
+  isCoverStory: boolean;
+  sourceUrl: string;
+  sourceAuthorSlug: string;
+  sourcePublishedAt: string;
+  sourceModifiedAt: string | null;
+  rawCategories: string[];
+  selectedArtistIds: number[];
+  newArtistsToCreate: {
+    name: string;
+    genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
+    location: string;
+    bio: string;
+  }[];
+}
+
+export async function importWordPressPostAction(payload: ImportWordPressPostPayload) {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can import posts");
+  }
+
+  const {
+    title,
+    excerpt,
+    category,
+    contentHtml,
+    coverImageUrl,
+    authorId,
+    isCoverStory,
+    sourceUrl,
+    sourceAuthorSlug,
+    sourcePublishedAt,
+    sourceModifiedAt,
+    rawCategories,
+    selectedArtistIds,
+    newArtistsToCreate,
+  } = payload;
+
+  return await db.transaction(async (tx) => {
+    // 1. Create missing artists
+    const artistIds = [...selectedArtistIds];
+
+    for (const newArtist of newArtistsToCreate) {
+      const slug = await resolveUniqueArtistSlug(newArtist.name);
+      const [insertedArtist] = await tx
+        .insert(artists)
+        .values({
+          name: newArtist.name,
+          slug,
+          genre: newArtist.genre,
+          location: newArtist.location || "Arkansas",
+          bio: newArtist.bio,
+          claimed: false,
+        })
+        .returning({ id: artists.id });
+
+      if (insertedArtist) {
+        artistIds.push(insertedArtist.id);
+      }
+    }
+
+    // 2. Mirror cover and content images
+    const imageMirror = createImageMirror();
+    let mirroredCoverImageUrl = coverImageUrl;
+
+    if (coverImageUrl) {
+      try {
+        mirroredCoverImageUrl = await imageMirror.mirrorImageUrl(coverImageUrl, "cover");
+      } catch (error) {
+        console.error("Failed to mirror cover image during import:", error);
+      }
+    }
+
+    let mirroredContentHtml = contentHtml;
+    try {
+      const inlineResult = await imageMirror.mirrorInlineImagesInHtml(contentHtml, sourceUrl);
+      mirroredContentHtml = inlineResult.html;
+    } catch (error) {
+      console.error("Failed to mirror inline images during import:", error);
+    }
+
+    // Convert HTML to Tiptap JSON
+    const contentTiptapJson = JSON.stringify(
+      generateJSON(mirroredContentHtml, [StarterKit, Image, Link]),
+    );
+
+    // 3. Enforce single Cover Story constraint if checked
+    if (isCoverStory) {
+      await tx.update(posts).set({ isCoverStory: false }).where(eq(posts.isCoverStory, true));
+    }
+
+    // 4. Generate post slug and insert post
+    const postSlug = await resolveUniquePostSlug(title);
+    const publishedDate = new Date(sourcePublishedAt);
+    const modifiedDate = sourceModifiedAt ? new Date(sourceModifiedAt) : publishedDate;
+
+    const [insertedPost] = await tx
+      .insert(posts)
+      .values({
+        title,
+        slug: postSlug,
+        category,
+        excerpt,
+        content: contentTiptapJson,
+        coverImage: mirroredCoverImageUrl,
+        authorId,
+        status: "published",
+        isCoverStory,
+        publishedAt: publishedDate,
+        createdAt: publishedDate,
+        updatedAt: modifiedDate,
+      })
+      .returning({ id: posts.id });
+
+    if (!insertedPost) {
+      throw new Error("Failed to insert backfilled post");
+    }
+
+    const postId = insertedPost.id;
+
+    // 5. Link Post-Artist relations
+    if (artistIds.length > 0) {
+      const relationValues = artistIds.map((artistId) => ({
+        artistId,
+        postId,
+      }));
+      await tx.insert(postArtists).values(relationValues);
+    }
+
+    // 6. Save Import Source record
+    await tx.insert(postImportSources).values({
+      postId,
+      sourceAuthorSlug,
+      sourceCategoriesJson: JSON.stringify(rawCategories),
+      sourcePublishedAt: publishedDate,
+      sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
+      sourceUrl,
+    });
+
+    // 7. Revalidate
+    revalidatePath("/admin/posts");
+    revalidatePath("/admin/posts/wordpress");
+    revalidatePath("/");
+    revalidatePath(`/posts/${postSlug}`);
+
+    return { success: true, postId };
+  });
+}
