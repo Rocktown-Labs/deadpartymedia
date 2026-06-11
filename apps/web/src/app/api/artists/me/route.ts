@@ -24,20 +24,20 @@ export async function GET(request: NextRequest) {
       .select({
         article_count: sql<number>`(
           SELECT COUNT(*)::int
-          FROM ${postArtists}
-          INNER JOIN ${posts} ON ${postArtists.postId} = ${posts.id}
-          WHERE ${postArtists.artistId} = ${artists.id}
-          AND ${posts.status} = 'published'
+          FROM post_artists
+          INNER JOIN posts ON post_artists.post_id = posts.id
+          WHERE post_artists.artist_id = artists.id
+          AND posts.status = 'published'
         )`.as("article_count"),
         bio: artists.bio,
         claimed: artists.claimed,
         created_at: artists.createdAt,
         event_count: sql<number>`(
           SELECT COUNT(*)::int
-          FROM ${eventArtists}
-          INNER JOIN ${events} ON ${eventArtists.eventId} = ${events.id}
-          WHERE ${eventArtists.artistId} = ${artists.id}
-          AND ${events.status} = 'published'
+          FROM event_artists
+          INNER JOIN events ON event_artists.event_id = events.id
+          WHERE event_artists.artist_id = artists.id
+          AND events.status = 'published'
         )`.as("event_count"),
         genre: artists.genre,
         id: artists.id,
@@ -189,20 +189,20 @@ export async function PATCH(request: NextRequest) {
       .select({
         article_count: sql<number>`(
           SELECT COUNT(*)::int
-          FROM ${postArtists}
-          INNER JOIN ${posts} ON ${postArtists.postId} = ${posts.id}
-          WHERE ${postArtists.artistId} = ${artists.id}
-          AND ${posts.status} = 'published'
+          FROM post_artists
+          INNER JOIN posts ON post_artists.post_id = posts.id
+          WHERE post_artists.artist_id = artists.id
+          AND posts.status = 'published'
         )`.as("article_count"),
         bio: artists.bio,
         claimed: artists.claimed,
         created_at: artists.createdAt,
         event_count: sql<number>`(
           SELECT COUNT(*)::int
-          FROM ${eventArtists}
-          INNER JOIN ${events} ON ${eventArtists.eventId} = ${events.id}
-          WHERE ${eventArtists.artistId} = ${artists.id}
-          AND ${events.status} = 'published'
+          FROM event_artists
+          INNER JOIN events ON event_artists.event_id = events.id
+          WHERE event_artists.artist_id = artists.id
+          AND events.status = 'published'
         )`.as("event_count"),
         genre: artists.genre,
         id: artists.id,

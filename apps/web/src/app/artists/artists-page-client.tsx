@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useArtists } from "@/lib/api/artists";
 import { PageTitleHeader } from "@/components/page-title-header";
+import { Spotify } from "@/components/ui/svgs/spotify";
 
 export default function ArtistsPageClient() {
   const [filterGenre, setFilterGenre] = useState<string>("ALL");
@@ -16,7 +17,8 @@ export default function ArtistsPageClient() {
     const hasSpotify =
       Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
     const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
-    return hasSpotify && hasBio;
+    const hasImage = Boolean(artist.image?.trim());
+    return (artist.claimed && hasBio) || (hasSpotify && hasImage);
   });
 
   const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
@@ -76,9 +78,16 @@ export default function ArtistsPageClient() {
                       />
                     </div>
                     <div className="p-4 md:p-6 flex-1 flex flex-col justify-center md:justify-start min-w-0">
-                      <h3 className="text-lg md:text-xl font-black mb-1 md:mb-2 group-hover:text-[#7CFC00] transition-colors line-clamp-1 md:line-clamp-none">
-                        {artist.name}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1 md:mb-2">
+                        <h3 className="text-lg md:text-xl font-black group-hover:text-[#7CFC00] transition-colors line-clamp-1 md:line-clamp-none">
+                          {artist.name}
+                        </h3>
+                        {artist.spotify_url && (
+                          <span className="shrink-0 text-[#1DB954]" title="Spotify connected">
+                            <Spotify className="w-4 h-4 fill-current" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center text-xs md:text-sm text-gray-400 mb-2 md:mb-3">
                         <MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 shrink-0" />
                         <span className="truncate">{artist.location}</span>
