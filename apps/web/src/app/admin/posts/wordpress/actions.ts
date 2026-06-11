@@ -247,6 +247,7 @@ interface ImportWordPressPostPayload {
     image?: string | null;
   }[];
   status?: "draft" | "published";
+  tags?: string[];
 }
 
 export async function importPostInternal(payload: ImportWordPressPostPayload) {
@@ -266,6 +267,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     selectedArtistIds,
     newArtistsToCreate,
     status = "published",
+    tags = [],
   } = payload;
 
   return await db.transaction(async (tx) => {
@@ -358,6 +360,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
           authorId,
           status,
           isCoverStory,
+          tags,
           updatedAt: modifiedDate,
         })
         .where(eq(posts.id, postId));
@@ -379,6 +382,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
           authorId,
           status,
           isCoverStory,
+          tags,
           publishedAt: publishedDate,
           createdAt: publishedDate,
           updatedAt: modifiedDate,

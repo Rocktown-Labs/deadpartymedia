@@ -2,6 +2,8 @@ import { start } from "workflow/api";
 import { wordpressBackfillWorkflow } from "@/app/workflows/wordpress-backfill";
 import { checkRole } from "@/lib/auth/roles";
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { backfillRuns } from "@/lib/db/schema";
 
 export async function POST(request: Request) {
   // Verify super admin role (since this triggers bulk background import)
@@ -18,17 +20,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "authorId is required" }, { status: 400 });
     }
 
-    // Trigger the workflow
+    // Generate our own unique tracker runId
+    const runId = crypto.randomUUID();
+
+    // Record the run in the database
+    await db.insert(backfillRuns).values({
+      runId,
+      status: "running",
+      totalPosts: limit,
+      processedPosts: 0,
+      results: [],
+    });
+
+    // Trigger the workflow and pass our runId
     const run = await start(wordpressBackfillWorkflow, [{
       limit,
       offset,
       authorId,
       status,
+      runId,
     }]);
 
     return NextResponse.json({
       success: true,
-      runId: run.runId,
+      runId,
+      workflowRunId: run.runId,
       message: "WordPress backfill background workflow started successfully.",
     });
   } catch (error) {
