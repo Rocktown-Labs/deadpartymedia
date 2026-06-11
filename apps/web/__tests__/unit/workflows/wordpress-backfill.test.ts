@@ -3,6 +3,7 @@ import {
   shouldReprocessImportedPost,
 } from "@/lib/admin/wordpress-backfill";
 import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
+import { getImportedEventStatus, isPastEventDate } from "@/lib/admin/event-flyer-import";
 
 describe(shouldReprocessImportedPost, () => {
   it("reprocesses imported drafts and archived posts", () => {
@@ -66,5 +67,17 @@ describe(selectPrimarySubjectArtists, () => {
     );
 
     expect(artists).toStrictEqual([{ name: "Campocalyspe" }]);
+  });
+});
+
+describe("event flyer import publication rules", () => {
+  it("publishes valid imported event dates, including past dates", () => {
+    expect(getImportedEventStatus("2025-01-15")).toBe("published");
+    expect(isPastEventDate("2025-01-15", new Date("2026-06-11T12:00:00"))).toBeTruthy();
+  });
+
+  it("keeps invalid imported dates as drafts", () => {
+    expect(getImportedEventStatus("not-a-date")).toBe("draft");
+    expect(isPastEventDate("not-a-date")).toBeFalsy();
   });
 });
