@@ -1,9 +1,14 @@
 import { analyzePostInternal, importPostInternal } from "../admin/posts/wordpress/actions";
 import { db } from "@/lib/db";
 import { postImportSources, postArtists, artists, backfillRuns, posts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { shouldReprocessImportedPost } from "./wordpress-backfill-policy";
+import { and, desc, eq } from "drizzle-orm";
+import { generateHTML } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
+import { shouldReprocessImportedPost } from "@/lib/admin/wordpress-backfill";
 import { decodeHtmlEntities } from "@/lib/utils/html";
+import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
 interface BackfillInput {
   limit: number;
@@ -11,14 +16,18 @@ interface BackfillInput {
   authorId: string;
   status: "draft" | "published";
   runId: string;
+  source?: "wordpress" | "local_drafts";
 }
 
 export async function wordpressBackfillWorkflow(input: BackfillInput) {
   "use workflow";
 
   try {
-    // 1. Fetch posts from WordPress REST API (step)
-    const wpPosts = await fetchWordPressPostsStep(input.limit, input.offset);
+    // 1. Fetch posts from the requested source (step)
+    const wpPosts =
+      input.source === "local_drafts"
+        ? await fetchImportedDraftPostsStep(input.limit, input.offset)
+        : await fetchWordPressPostsStep(input.limit, input.offset);
 
     // Update total posts in DB
     await updateRunTotalPostsStep(input.runId, wpPosts.length);
@@ -140,6 +149,65 @@ async function fetchWordPressPostsStep(limit: number, offset: number) {
     rawCategories: Object.keys(post.categories || {}),
     rawTags: Object.keys(post.tags || {}),
   }));
+}
+
+async function fetchImportedDraftPostsStep(limit: number, offset: number) {
+  "use step";
+
+  const rows = await db
+    .select({
+      content: posts.content,
+      coverImage: posts.coverImage,
+      excerpt: posts.excerpt,
+      modifiedAt: posts.updatedAt,
+      postId: posts.id,
+      rawTags: posts.tags,
+      sourceAuthorSlug: postImportSources.sourceAuthorSlug,
+      sourceCategoriesJson: postImportSources.sourceCategoriesJson,
+      sourceModifiedAt: postImportSources.sourceModifiedAt,
+      sourcePublishedAt: postImportSources.sourcePublishedAt,
+      sourceUrl: postImportSources.sourceUrl,
+      title: posts.title,
+    })
+    .from(postImportSources)
+    .innerJoin(posts, eq(postImportSources.postId, posts.id))
+    .where(and(eq(posts.status, "draft")))
+    .orderBy(desc(posts.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows.map((row) => ({
+    id: row.postId,
+    title: decodeHtmlEntities(row.title),
+    url: row.sourceUrl,
+    excerpt: row.excerpt,
+    content: storedContentToHtml(row.content),
+    date: row.sourcePublishedAt.toISOString(),
+    modified: (row.sourceModifiedAt ?? row.modifiedAt).toISOString(),
+    authorName: "Petty Vandalism",
+    authorSlug: row.sourceAuthorSlug || "pettyvandalism",
+    coverImage: row.coverImage || null,
+    rawCategories: parseSourceCategories(row.sourceCategoriesJson),
+    rawTags: row.rawTags || [],
+  }));
+}
+
+function storedContentToHtml(content: string) {
+  const normalizedContent = normalizeStoredPostContent(content);
+  if (!normalizedContent.tiptapDoc) {
+    return content;
+  }
+
+  return generateHTML(normalizedContent.tiptapDoc, [StarterKit, Image, Link]);
+}
+
+function parseSourceCategories(sourceCategoriesJson: string) {
+  try {
+    const parsed = JSON.parse(sourceCategoriesJson);
+    return Array.isArray(parsed) ? parsed.filter((category) => typeof category === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 async function processPostStep(post: any, authorId: string, status: "draft" | "published") {

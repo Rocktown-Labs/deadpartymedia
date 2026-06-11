@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { posts, postArtists, artists, postImportSources } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { checkRole } from "@/lib/auth/roles";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -438,6 +438,14 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     }
 
     // 6. Revalidate
+    if (status === "published") {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (artistIds.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
+
     revalidatePath("/admin/posts");
     revalidatePath("/admin/posts/wordpress");
     revalidatePath("/");
