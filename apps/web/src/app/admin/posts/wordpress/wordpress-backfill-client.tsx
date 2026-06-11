@@ -68,6 +68,7 @@ interface WordPressPostFeedItem {
   authorSlug: string;
   coverImage: string | null;
   rawCategories: string[];
+  rawTags?: string[];
   importedPostId: number | null;
   localStatus: "draft" | "published" | "archived" | null;
 }
@@ -397,6 +398,7 @@ export default function WordpressBackfillClient({
         sourceUrl: selectedPost.url,
         title: editedTitle,
         status: selectedStatus,
+        tags: selectedPost.rawTags || [],
       };
 
       const result = await importWordPressPostAction(payload);

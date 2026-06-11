@@ -4,8 +4,8 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { db } from "@/lib/db";
-import { artists } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { artists, eventArtists, postArtists } from "@/lib/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { canCreate, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -238,5 +238,105 @@ export async function deleteArtist(id: number) {
   await db.delete(artists).where(eq(artists.id, id));
 
   revalidateTag("artists", "max");
+  revalidatePath("/admin/artists");
+}
+
+export async function mergeArtistRecords(sourceArtistId: number, formData: FormData) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canDelete())) {
+    throw new Error("Unauthorized: Only super admins can merge artists");
+  }
+
+  const targetArtistId = Number.parseInt(String(formData.get("targetArtistId") ?? ""), 10);
+  if (!Number.isInteger(targetArtistId) || targetArtistId <= 0) {
+    throw new Error("Choose a valid artist to merge into");
+  }
+  if (sourceArtistId === targetArtistId) {
+    throw new Error("Choose a different artist to merge into");
+  }
+
+  await db.transaction(async (tx) => {
+    const records = await tx
+      .select()
+      .from(artists)
+      .where(inArray(artists.id, [sourceArtistId, targetArtistId]));
+    const sourceArtist = records.find((artist) => artist.id === sourceArtistId);
+    const targetArtist = records.find((artist) => artist.id === targetArtistId);
+
+    if (!sourceArtist || !targetArtist) {
+      throw new Error("One or both artists could not be found");
+    }
+
+    const [sourcePostRelations, targetPostRelations, sourceEventRelations, targetEventRelations] =
+      await Promise.all([
+        tx
+          .select({ postId: postArtists.postId })
+          .from(postArtists)
+          .where(eq(postArtists.artistId, sourceArtistId)),
+        tx
+          .select({ postId: postArtists.postId })
+          .from(postArtists)
+          .where(eq(postArtists.artistId, targetArtistId)),
+        tx
+          .select({ eventId: eventArtists.eventId })
+          .from(eventArtists)
+          .where(eq(eventArtists.artistId, sourceArtistId)),
+        tx
+          .select({ eventId: eventArtists.eventId })
+          .from(eventArtists)
+          .where(eq(eventArtists.artistId, targetArtistId)),
+      ]);
+
+    const targetPostIds = new Set(targetPostRelations.map((relation) => relation.postId));
+    const missingPostRelations = sourcePostRelations
+      .filter((relation) => !targetPostIds.has(relation.postId))
+      .map((relation) => ({ artistId: targetArtistId, postId: relation.postId }));
+    if (missingPostRelations.length > 0) {
+      await tx.insert(postArtists).values(missingPostRelations);
+    }
+
+    const targetEventIds = new Set(targetEventRelations.map((relation) => relation.eventId));
+    const missingEventRelations = sourceEventRelations
+      .filter((relation) => !targetEventIds.has(relation.eventId))
+      .map((relation) => ({ artistId: targetArtistId, eventId: relation.eventId }));
+    if (missingEventRelations.length > 0) {
+      await tx.insert(eventArtists).values(missingEventRelations);
+    }
+
+    await tx.delete(postArtists).where(eq(postArtists.artistId, sourceArtistId));
+    await tx.delete(eventArtists).where(eq(eventArtists.artistId, sourceArtistId));
+
+    await tx
+      .update(artists)
+      .set({
+        bio:
+          targetArtist.bio && targetArtist.bio !== "Profile pending update."
+            ? targetArtist.bio
+            : sourceArtist.bio,
+        claimed: targetArtist.claimed || sourceArtist.claimed,
+        claimedById: targetArtist.claimedById || sourceArtist.claimedById,
+        email: targetArtist.email || sourceArtist.email,
+        image: targetArtist.image || sourceArtist.image,
+        instagram: targetArtist.instagram || sourceArtist.instagram,
+        phoneNumber: targetArtist.phoneNumber || sourceArtist.phoneNumber,
+        profileViews: targetArtist.profileViews + sourceArtist.profileViews,
+        spotifyArtistId: targetArtist.spotifyArtistId || sourceArtist.spotifyArtistId,
+        spotifyUrl: targetArtist.spotifyUrl || sourceArtist.spotifyUrl,
+        tiktok: targetArtist.tiktok || sourceArtist.tiktok,
+        twitter: targetArtist.twitter || sourceArtist.twitter,
+        updatedAt: new Date(),
+        website: targetArtist.website || sourceArtist.website,
+      })
+      .where(eq(artists.id, targetArtistId));
+
+    await tx.delete(artists).where(eq(artists.id, sourceArtistId));
+  });
+
+  revalidateTag("artists", "max");
+  revalidateTag("posts", "max");
   revalidatePath("/admin/artists");
 }

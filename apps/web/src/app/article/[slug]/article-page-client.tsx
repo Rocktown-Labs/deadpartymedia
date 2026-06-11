@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, User, Share2, Bookmark, Edit, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  Share2,
+  Bookmark,
+  Edit,
+  MapPin,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -326,10 +335,26 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                 dangerouslySetInnerHTML={{ __html: String(article.content || "") }}
               />
 
+              {article.tags && article.tags.length > 0 && (
+                <div className="mt-10 flex flex-wrap gap-2 border-t border-gray-800 pt-6">
+                  {article.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/music?tag=${encodeURIComponent(tag)}`}
+                      className="border border-gray-800 bg-[#111111] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                    >
+                      #{tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               {/* Tagged Artists */}
               {article.artists && article.artists.length > 0 && (
                 <div className="mt-12 pt-8 border-t border-gray-800 space-y-6">
-                  <h3 className="text-lg font-black tracking-wider uppercase text-gray-400">Featured Artists</h3>
+                  <h3 className="text-lg font-black tracking-wider uppercase text-gray-400">
+                    Featured Artists
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {article.artists.map((artist) => (
                       <Link key={artist.id} href={`/artists/${artist.slug}`}>
@@ -353,6 +378,12 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                             <p className="text-xs text-gray-300 line-clamp-2">
                               {artist.bio || "Profile pending update."}
                             </p>
+                            {artist.spotifyUrl && (
+                              <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#1DB954]">
+                                Spotify
+                                <ExternalLink className="h-3 w-3" />
+                              </span>
+                            )}
                           </div>
                         </div>
                       </Link>

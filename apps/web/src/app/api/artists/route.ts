@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { artists, postArtists, eventArtists, posts, events } from "@/lib/db/schema";
+import { artists } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
+    const paginated = searchParams.get("paginated") === "true";
+    const limit = Math.max(1, Math.min(Number.parseInt(searchParams.get("limit") || "24", 10), 48));
+    const offset = Math.max(0, Number.parseInt(searchParams.get("offset") || "0", 10));
+    const sort = searchParams.get("sort") === "name" ? "name" : "created_at";
+    const order = searchParams.get("order") === "asc" ? "asc" : "desc";
 
     // Build where conditions
     const conditions = [];
@@ -107,26 +112,50 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match existing Artist interface
-    const artistList = [...uniqueArtists.values()].map((artist) => ({
-      article_count: artist.article_count || 0,
-      bio: artist.bio,
-      claimed: artist.claimed,
-      created_at: artist.created_at.toISOString(),
-      event_count: artist.event_count || 0,
-      genre: artist.genre,
-      id: artist.id,
-      image: artist.image,
-      instagram: artist.instagram,
-      location: artist.location,
-      name: artist.name,
-      profile_views: artist.profile_views,
-      slug: artist.slug,
-      spotify_artist_id: artist.spotify_artist_id,
-      spotify_url: artist.spotify_url,
-      tiktok: artist.tiktok,
-      twitter: artist.twitter,
-      website: artist.website,
-    }));
+    const artistList = [...uniqueArtists.values()]
+      .map((artist) => ({
+        article_count: artist.article_count || 0,
+        bio: artist.bio,
+        claimed: artist.claimed,
+        created_at: artist.created_at.toISOString(),
+        event_count: artist.event_count || 0,
+        genre: artist.genre,
+        id: artist.id,
+        image: artist.image,
+        instagram: artist.instagram,
+        location: artist.location,
+        name: artist.name,
+        profile_views: artist.profile_views,
+        slug: artist.slug,
+        spotify_artist_id: artist.spotify_artist_id,
+        spotify_url: artist.spotify_url,
+        tiktok: artist.tiktok,
+        twitter: artist.twitter,
+        website: artist.website,
+      }))
+      .toSorted((a, b) => {
+        const direction = order === "asc" ? 1 : -1;
+        if (sort === "name") {
+          return a.name.localeCompare(b.name) * direction;
+        }
+        return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * direction;
+      });
+
+    if (paginated) {
+      const pageResults = artistList.slice(offset, offset + limit);
+      return NextResponse.json(
+        {
+          count: artistList.length,
+          hasMore: offset + limit < artistList.length,
+          results: pageResults,
+        },
+        {
+          headers: {
+            "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=300",
+          },
+        },
+      );
+    }
 
     return NextResponse.json(artistList, {
       headers: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapPin, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,9 +57,8 @@ export default function HomepageClient({
 }: HomepageClientProps) {
   const router = useRouter();
   const { data: monthlyStats, isLoading: isStatsLoading } = useMonthlyHomepageStats();
-  const [visibleArticles, setVisibleArticles] = useState(9);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const latestArticles = useMemo(() => articlesData.slice(3, 12), [articlesData]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -72,14 +71,6 @@ export default function HomepageClient({
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
-
-  const loadMoreArticles = () => {
-    setIsLoadingMore(true);
-    setTimeout(() => {
-      setVisibleArticles((prev) => prev + 6);
-      setIsLoadingMore(false);
-    }, 1000);
-  };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">
@@ -367,9 +358,9 @@ export default function HomepageClient({
                 </div>
               ))}
             </div>
-          ) : articlesData.length > 3 ? (
+          ) : latestArticles.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-              {articlesData.slice(3, visibleArticles).map((article) => (
+              {latestArticles.map((article) => (
                 <Link key={article.id} href={`/article/${article.slug}`} prefetch={false}>
                   <article className="group cursor-pointer">
                     {/* Image */}
@@ -428,15 +419,13 @@ export default function HomepageClient({
             </div>
           )}
 
-          {articlesData.length > 3 && visibleArticles < articlesData.length && (
+          {articlesData.length > 12 && (
             <div className="text-center mt-16">
-              <Button
-                onClick={loadMoreArticles}
-                disabled={isLoadingMore}
-                className="bg-transparent border-2 border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black font-black tracking-wider uppercase px-12 py-6 text-sm"
-              >
-                {isLoadingMore ? "Loading..." : "Read More Stories"}
-              </Button>
+              <Link href="/music">
+                <Button className="bg-transparent border-2 border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black font-black tracking-wider uppercase px-12 py-6 text-sm">
+                  View All Music
+                </Button>
+              </Link>
             </div>
           )}
         </div>

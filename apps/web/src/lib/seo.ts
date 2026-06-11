@@ -144,9 +144,13 @@ export function generateArticleMetadata(article: Article): Metadata {
   const url = getAbsoluteUrl(`/article/${article.slug}`);
 
   const artistNames = article.artists?.map((a) => a.name) ?? [];
-  const keywords = [article.category, ...artistNames, "arkansas music", "dead party media"].filter(
-    Boolean,
-  );
+  const keywords = [
+    article.category,
+    ...artistNames,
+    ...(article.tags ?? []),
+    "arkansas music",
+    "dead party media",
+  ].filter(Boolean);
 
   return {
     alternates: {

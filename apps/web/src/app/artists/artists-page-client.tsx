@@ -1,27 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useArtists } from "@/lib/api/artists";
+import { useArtistsPage } from "@/lib/api/artists";
 import { PageTitleHeader } from "@/components/page-title-header";
 import { Spotify } from "@/components/ui/svgs/spotify";
+import { Button } from "@/components/ui/button";
+
+const PAGE_SIZE = 6;
 
 export default function ArtistsPageClient() {
   const [filterGenre, setFilterGenre] = useState<string>("ALL");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const artistGenreFilter = filterGenre === "ALL" ? undefined : filterGenre;
-  const { data: artists, isLoading } = useArtists(artistGenreFilter);
-
-  const completeArtists = (artists ?? []).filter((artist) => {
-    const hasSpotify =
-      Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
-    const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
-    const hasImage = Boolean(artist.image?.trim());
-    return (artist.claimed && hasBio) || (hasSpotify && hasImage);
+  const { data, isLoading } = useArtistsPage({
+    genre: artistGenreFilter,
+    limit: visibleCount,
+    offset: 0,
+    order: sortOrder,
+    sort: "name",
   });
 
+  const completeArtists = useMemo(
+    () =>
+      (data?.results ?? []).filter((artist) => {
+        const hasSpotify =
+          Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
+        const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
+        const hasImage = Boolean(artist.image?.trim());
+        return (artist.claimed && hasBio) || (hasSpotify && hasImage);
+      }),
+    [data?.results],
+  );
+
   const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
+  const resetGenre = (genre: string) => {
+    setFilterGenre(genre);
+    setVisibleCount(PAGE_SIZE);
+  };
 
   if (isLoading) {
     return (
@@ -47,20 +66,51 @@ export default function ArtistsPageClient() {
           <PageTitleHeader title="ARTISTS" description="Explore Arkansas music artists" />
 
           {/* Genre Filters */}
-          <div className="mb-8 flex gap-2 overflow-x-auto pb-4">
-            {genres.map((genre) => (
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+              {genres.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => resetGenre(genre)}
+                  className={`px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
+                    filterGenre === genre
+                      ? "bg-[#7CFC00] text-black"
+                      : "bg-[#111111] border border-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+            <div className="flex rounded-lg border border-gray-800 bg-[#111111] p-1">
               <button
-                key={genre}
-                onClick={() => setFilterGenre(genre)}
-                className={`px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
-                  filterGenre === genre
-                    ? "bg-[#7CFC00] text-black"
-                    : "bg-[#111111] border border-gray-800 text-gray-400 hover:text-white"
+                type="button"
+                onClick={() => {
+                  setSortOrder("asc");
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  sortOrder === "asc" ? "bg-[#7CFC00] text-black" : "text-gray-400 hover:text-white"
                 }`}
               >
-                {genre}
+                A-Z
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setSortOrder("desc");
+                  setVisibleCount(PAGE_SIZE);
+                }}
+                className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  sortOrder === "desc"
+                    ? "bg-[#7CFC00] text-black"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Z-A
+              </button>
+            </div>
           </div>
 
           {/* Artists Grid */}
@@ -119,6 +169,19 @@ export default function ArtistsPageClient() {
               </div>
             )}
           </div>
+
+          {data?.hasMore && (
+            <div className="mt-12 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black"
+                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+              >
+                Load 6 More
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
         protocol: "https",
       },
+      {
+        hostname: "i.scdn.co",
+        pathname: "/image/**",
+        protocol: "https",
+      },
     ],
   },
   // PostHog reverse proxy rewrites
@@ -94,4 +99,3 @@ const sentryConfig = withSentryConfig(nextConfig, {
 });
 
 export default withWorkflow(process.env.NODE_ENV === "development" ? nextConfig : sentryConfig);
-

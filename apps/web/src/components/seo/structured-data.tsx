@@ -21,6 +21,7 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
     description: article.excerpt,
     headline: article.title,
     image: getImageUrl(article.cover_image),
+    keywords: article.tags?.join(", "),
     mainEntityOfPage: {
       "@id": getAbsoluteUrl(`/article/${article.slug}`),
       "@type": "WebPage",

@@ -2,6 +2,7 @@ import {
   findDefaultBackfillAuthorId,
   shouldReprocessImportedPost,
 } from "@/lib/admin/wordpress-backfill";
+import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
 
 describe(shouldReprocessImportedPost, () => {
   it("reprocesses imported drafts and archived posts", () => {
@@ -34,5 +35,36 @@ describe(findDefaultBackfillAuthorId, () => {
         "fallback",
       ),
     ).toBe("fallback");
+  });
+});
+
+describe(selectPrimarySubjectArtists, () => {
+  it("keeps the artist named in the title and drops inspiration references", () => {
+    const artists = selectPrimarySubjectArtists(
+      '"2001;" Growing up with Campocalyspe',
+      `
+        <p>Debut Mixtape "2001" by Campocalyspe.</p>
+        <p>If you listen to the rapper JID, you will definitely be entranced by these songs.</p>
+        <p>Slick, the main producer of this mixtape, takes the song into his own hands.</p>
+        <p>You can keep up with new posts and releases from Campocalyspe by following his Instagram.</p>
+      `,
+      [{ name: "Campocalyspe" }, { name: "JID" }, { name: "Slick" }],
+    );
+
+    expect(artists).toStrictEqual([{ name: "Campocalyspe" }]);
+  });
+
+  it("falls back to intro/outro subject mentions when the title does not include a candidate", () => {
+    const artists = selectPrimarySubjectArtists(
+      "A debut mixtape finds its voice",
+      `
+        <p>Campocalyspe opens the project with a sharp sense of place.</p>
+        <p>If you listen to JID, you may like the first two songs.</p>
+        <p>Follow Campocalyspe for new releases.</p>
+      `,
+      [{ name: "JID" }, { name: "Campocalyspe" }],
+    );
+
+    expect(artists).toStrictEqual([{ name: "Campocalyspe" }]);
   });
 });

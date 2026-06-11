@@ -21,6 +21,7 @@ interface WordPressRestPost {
   };
   featured_image?: string;
   categories?: Record<string, any>;
+  tags?: Record<string, any>;
 }
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export default async function WordPressBackfillPage({ searchParams }: WordPressB
         wordpressPosts = data.posts.map((post: WordPressRestPost) => {
           const coverImage = post.featured_image || null;
           const rawCategories = Object.keys(post.categories || {});
+          const rawTags = Object.keys(post.tags || {});
 
           return {
             authorName: post.author?.name || "Petty Vandalism",
@@ -71,6 +73,7 @@ export default async function WordPressBackfillPage({ searchParams }: WordPressB
             localStatus: null,
             modified: post.modified,
             rawCategories,
+            rawTags,
             title: post.title,
             url: post.URL,
           };
