@@ -4,7 +4,18 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, ExternalLink, Loader2, CheckCircle, BookOpen, AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Sparkles,
+  ArrowLeft,
+  ExternalLink,
+  Loader2,
+  CheckCircle,
+  BookOpen,
+  AlertTriangle,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -36,7 +47,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { SpotifySearch } from "@/components/spotify-search";
-import { analyzeWordPressPostAction, importWordPressPostAction, syncExistingArtistsSpotifyAction } from "./actions";
+import {
+  analyzeWordPressPostAction,
+  importWordPressPostAction,
+  syncExistingArtistsSpotifyAction,
+} from "./actions";
 import type { BackfillAnalysis } from "./actions";
 import type { SpotifyArtist } from "@/lib/api/artists";
 
@@ -123,6 +138,7 @@ export default function WordpressBackfillClient({
   const [bulkOffset, setBulkOffset] = useState(0);
   const [isBulkStarting, setIsBulkStarting] = useState(false);
   const [isSyncingSpotify, setIsSyncingSpotify] = useState(false);
+  const [isDedupeStarting, setIsDedupeStarting] = useState(false);
 
   // Background Runs States
   const [runs, setRuns] = useState<any[]>([]);
@@ -182,7 +198,7 @@ export default function WordpressBackfillClient({
 
       toast.success(
         `Workflow started successfully! Run ID: ${data.runId}. Ingesting posts in the background...`,
-        { id: toastId, duration: 8000 }
+        { id: toastId, duration: 8000 },
       );
       fetchRuns();
     } catch (error) {
@@ -202,7 +218,7 @@ export default function WordpressBackfillClient({
       if (result.success) {
         toast.success(
           `Sync completed! Checked ${result.total} artists. Matched and updated ${result.updatedCount} profiles.`,
-          { id: toastId, duration: 8000 }
+          { id: toastId, duration: 8000 },
         );
         router.refresh();
       }
@@ -212,6 +228,34 @@ export default function WordpressBackfillClient({
       });
     } finally {
       setIsSyncingSpotify(false);
+    }
+  };
+
+  const handleDedupe = async () => {
+    setIsDedupeStarting(true);
+    const toastId = toast.loading("Starting post deduplication & title decoding workflow...");
+    try {
+      const response = await fetch("/api/workflow/dedupe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to start workflow");
+      }
+
+      toast.success(
+        `Workflow started successfully! Run ID: ${data.runId}. Running in the background...`,
+        { id: toastId, duration: 8000 },
+      );
+      fetchRuns();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to start deduplication", {
+        id: toastId,
+      });
+    } finally {
+      setIsDedupeStarting(false);
     }
   };
 
@@ -406,7 +450,7 @@ export default function WordpressBackfillClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Bulk Backfill Card */}
         <Card className="p-6 border-gray-800 bg-[#141414] text-white space-y-4">
           <div className="flex items-center gap-2">
@@ -495,10 +539,12 @@ export default function WordpressBackfillClient({
               <h2 className="text-lg font-bold">Sync Existing Artists Spotify</h2>
             </div>
             <p className="text-sm text-gray-400">
-              Scan all profiles in the database with missing Spotify connections, search Spotify, and automatically link their profile details and images.
+              Scan all profiles in the database with missing Spotify connections, search Spotify,
+              and automatically link their profile details and images.
             </p>
             <p className="text-xs text-gray-500">
-              This will solve the issue for previously published articles where the created artist profile didn't get a Spotify link automatically.
+              This will solve the issue for previously published articles where the created artist
+              profile didn't get a Spotify link automatically.
             </p>
           </div>
           <Button
@@ -520,13 +566,51 @@ export default function WordpressBackfillClient({
             )}
           </Button>
         </Card>
+
+        {/* Deduplicate & Clean Titles Card */}
+        <Card className="p-6 border-gray-800 bg-[#141414] text-white flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-indigo-400" />
+              <h2 className="text-lg font-bold">Deduplicate & Decode Titles</h2>
+            </div>
+            <p className="text-sm text-gray-400">
+              Scans all database posts, decodes HTML entities in titles (like quotes and
+              apostrophes), and merges any duplicate posts created during backfill.
+            </p>
+            <p className="text-xs text-gray-500">
+              This will merge comments, artist relations, reads, and saves, and clean up duplicate
+              post records.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full border-gray-800 hover:bg-gray-900 text-white font-semibold text-xs py-2 h-9 gap-2 mt-4"
+            disabled={isDedupeStarting}
+            onClick={handleDedupe}
+          >
+            {isDedupeStarting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 text-indigo-400" />
+                Deduplicate & Decode
+              </>
+            )}
+          </Button>
+        </Card>
       </div>
 
       {/* Background Workflow runs dashboard */}
       <Card className="p-6 border-gray-800 bg-[#141414] text-white space-y-6 mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <RefreshCw className={`h-5 w-5 text-[#7CFC00] ${runs.some(r => r.status === "running") ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-5 w-5 text-[#7CFC00] ${runs.some((r) => r.status === "running") ? "animate-spin" : ""}`}
+            />
             <h2 className="text-lg font-bold">Background Workflow Logs & Status</h2>
           </div>
           <Button
@@ -542,20 +626,32 @@ export default function WordpressBackfillClient({
 
         {runs.length === 0 ? (
           <div className="py-6 text-center text-gray-400 text-xs border border-dashed border-gray-800 rounded-lg">
-            No background backfill runs recorded yet. Use the card above to start a background ingestion.
+            No background backfill runs recorded yet. Use the card above to start a background
+            ingestion.
           </div>
         ) : (
           <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
             {runs.map((run) => {
-              const percent = run.totalPosts > 0 ? Math.round((run.processedPosts / run.totalPosts) * 100) : 0;
+              const percent =
+                run.totalPosts > 0 ? Math.round((run.processedPosts / run.totalPosts) * 100) : 0;
               const isExpanded = expandedRunId === run.runId;
-              const hasSpotify403 = Array.isArray(run.results) && run.results.some((res: any) => 
-                (res.error && (res.error.includes("403") || res.error.toLowerCase().includes("spotify"))) ||
-                (res.warnings && res.warnings.some((w: any) => w.includes("403") || w.toLowerCase().includes("spotify")))
-              );
+              const hasSpotify403 =
+                Array.isArray(run.results) &&
+                run.results.some(
+                  (res: any) =>
+                    (res.error &&
+                      (res.error.includes("403") || res.error.toLowerCase().includes("spotify"))) ||
+                    (res.warnings &&
+                      res.warnings.some(
+                        (w: any) => w.includes("403") || w.toLowerCase().includes("spotify"),
+                      )),
+                );
 
               return (
-                <div key={run.runId} className="border border-gray-800 rounded-lg p-4 bg-black/40 space-y-3">
+                <div
+                  key={run.runId}
+                  className="border border-gray-800 rounded-lg p-4 bg-black/40 space-y-3"
+                >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       {run.status === "running" ? (
@@ -568,11 +664,11 @@ export default function WordpressBackfillClient({
                           Completed
                         </Badge>
                       ) : (
-                        <Badge className="bg-red-900 text-red-200 border-red-800">
-                          Failed
-                        </Badge>
+                        <Badge className="bg-red-900 text-red-200 border-red-800">Failed</Badge>
                       )}
-                      <span className="text-xs font-mono text-gray-400">ID: {run.runId.slice(0, 8)}...</span>
+                      <span className="text-xs font-mono text-gray-400">
+                        ID: {run.runId.slice(0, 8)}...
+                      </span>
                       <span className="text-xs text-gray-500">
                         {new Date(run.createdAt).toLocaleString()}
                       </span>
@@ -587,7 +683,11 @@ export default function WordpressBackfillClient({
                         className="h-7 w-7 p-0"
                         onClick={() => setExpandedRunId(isExpanded ? null : run.runId)}
                       >
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -596,7 +696,11 @@ export default function WordpressBackfillClient({
                   <div className="w-full bg-gray-900 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
-                        run.status === "failed" ? "bg-red-600" : run.status === "completed" ? "bg-green-500" : "bg-[#7CFC00]"
+                        run.status === "failed"
+                          ? "bg-red-600"
+                          : run.status === "completed"
+                            ? "bg-green-500"
+                            : "bg-[#7CFC00]"
                       }`}
                       style={{ width: `${percent}%` }}
                     />
@@ -611,12 +715,23 @@ export default function WordpressBackfillClient({
                           <div>
                             <p className="font-bold">Spotify Web API 403 Forbidden Detected</p>
                             <p className="mt-0.5 text-gray-300">
-                              Some artist profiles could not be linked because Spotify returned a 403 Forbidden. To fix this:
+                              Some artist profiles could not be linked because Spotify returned a
+                              403 Forbidden. To fix this:
                             </p>
                             <ul className="list-disc list-inside mt-1 space-y-0.5 text-gray-400">
-                              <li>Verify your Spotify Client ID and Client Secret in development/production environment config.</li>
-                              <li>In your Spotify Developer Dashboard under application settings, ensure the <strong>"Web API"</strong> option is enabled.</li>
-                              <li>If your application is in development/sandbox mode, ensure the accounts running this backfill are added as Team members or explicit users, and have Spotify Premium.</li>
+                              <li>
+                                Verify your Spotify Client ID and Client Secret in
+                                development/production environment config.
+                              </li>
+                              <li>
+                                In your Spotify Developer Dashboard under application settings,
+                                ensure the <strong>"Web API"</strong> option is enabled.
+                              </li>
+                              <li>
+                                If your application is in development/sandbox mode, ensure the
+                                accounts running this backfill are added as Team members or explicit
+                                users, and have Spotify Premium.
+                              </li>
                             </ul>
                           </div>
                         </div>
@@ -624,51 +739,111 @@ export default function WordpressBackfillClient({
 
                       <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1 text-xs">
                         <p className="font-bold text-gray-400 mb-1">Execution Log Details:</p>
-                        {Array.isArray(run.results) && run.results.length > 0 ? (
-                          (run.results as any[]).map((res, rIdx) => {
-                            if (res.status === "error") {
+                        {run.runId.startsWith("dedupe-") &&
+                          run.results &&
+                          typeof run.results === "object" &&
+                          !Array.isArray(run.results) && (
+                            <div className="text-indigo-300 font-semibold mb-2 bg-indigo-950/20 p-2 border border-indigo-900/40 rounded">
+                              Decoded and cleaned up {(run.results as any).decodedTitlesCount || 0}{" "}
+                              post titles!
+                            </div>
+                          )}
+                        {(() => {
+                          const resultsArray = Array.isArray(run.results)
+                            ? run.results
+                            : run.results &&
+                                typeof run.results === "object" &&
+                                Array.isArray((run.results as any).dedupeResults)
+                              ? (run.results as any).dedupeResults
+                              : [];
+
+                          return resultsArray.length > 0 ? (
+                            resultsArray.map((res: any, rIdx: number) => {
+                              if (run.runId.startsWith("dedupe-")) {
+                                return (
+                                  <div
+                                    key={rIdx}
+                                    className="flex items-start gap-1.5 text-gray-300 py-0.5"
+                                  >
+                                    {res.status === "deduped" ? (
+                                      <span className="text-indigo-400 font-bold">✓</span>
+                                    ) : (
+                                      <span className="text-red-500 font-bold">•</span>
+                                    )}
+                                    <div>
+                                      Merged duplicate for:{" "}
+                                      <span className="font-semibold text-gray-200">
+                                        {res.dupeTitle}
+                                      </span>
+                                      {res.status === "error" && (
+                                        <span className="text-red-400 ml-1">({res.error})</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              if (res.status === "error") {
+                                return (
+                                  <div
+                                    key={rIdx}
+                                    className="flex items-start gap-1.5 text-red-400 bg-red-950/10 p-1.5 rounded"
+                                  >
+                                    <span className="text-red-500 font-bold">•</span>
+                                    <div>
+                                      <span className="font-semibold">{res.title || "Post"}</span>:
+                                      Failed - {res.error}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              const isReprocessed = res.status?.startsWith("reprocessed_");
+                              const isImported = res.status === "imported";
+
                               return (
-                                <div key={rIdx} className="flex items-start gap-1.5 text-red-400 bg-red-950/10 p-1.5 rounded">
-                                  <span className="text-red-500 font-bold">•</span>
+                                <div
+                                  key={rIdx}
+                                  className="flex items-start gap-1.5 text-gray-300 py-0.5"
+                                >
+                                  {isImported ? (
+                                    <span className="text-green-500 font-bold">✓</span>
+                                  ) : isReprocessed ? (
+                                    <span className="text-blue-400 font-bold">ℹ</span>
+                                  ) : (
+                                    <span className="text-gray-500 font-bold">•</span>
+                                  )}
                                   <div>
-                                    <span className="font-semibold">{res.title || "Post"}</span>: Failed - {res.error}
+                                    <span className="font-semibold text-gray-200">{res.title}</span>
+                                    :{" "}
+                                    {isImported ? (
+                                      <span className="text-green-400">
+                                        Successfully imported (ID: {res.postId})
+                                      </span>
+                                    ) : isReprocessed ? (
+                                      <span className="text-blue-400">
+                                        Reprocessed with AI and set to {bulkStatus} (ID:{" "}
+                                        {res.postId})
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Already published, skipped AI rewrite
+                                      </span>
+                                    )}
+                                    {res.updatedArtistsCount > 0 && (
+                                      <span className="text-xs text-gray-500 ml-1">
+                                        ({res.updatedArtistsCount} Spotify artists updated)
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               );
-                            }
-                            const isReprocessed = res.status?.startsWith("reprocessed_");
-                            const isImported = res.status === "imported";
-
-                            return (
-                              <div key={rIdx} className="flex items-start gap-1.5 text-gray-300 py-0.5">
-                                {isImported ? (
-                                  <span className="text-green-500 font-bold">✓</span>
-                                ) : isReprocessed ? (
-                                  <span className="text-blue-400 font-bold">ℹ</span>
-                                ) : (
-                                  <span className="text-gray-500 font-bold">•</span>
-                                )}
-                                <div>
-                                  <span className="font-semibold text-gray-200">{res.title}</span>:{" "}
-                                  {isImported ? (
-                                    <span className="text-green-400">Successfully imported (ID: {res.postId})</span>
-                                  ) : isReprocessed ? (
-                                    <span className="text-blue-400">Reprocessed with AI and set to {bulkStatus} (ID: {res.postId})</span>
-                                  ) : (
-                                    <span className="text-gray-400">Already published, skipped AI rewrite</span>
-                                  )}
-                                  {res.updatedArtistsCount > 0 && (
-                                    <span className="text-xs text-gray-500 ml-1">
-                                      ({res.updatedArtistsCount} Spotify artists updated)
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <p className="text-gray-500 italic">No logs recorded yet. Ingestion starting...</p>
-                        )}
+                            })
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              No logs recorded yet. Ingestion starting...
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

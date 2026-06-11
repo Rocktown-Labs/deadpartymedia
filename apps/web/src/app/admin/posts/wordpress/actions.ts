@@ -338,6 +338,30 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     let postId = existingImport?.postId ?? null;
     let postSlug = "";
 
+    if (!postId) {
+      const baseSlug = slugify(title);
+      const [existingPost] = await tx
+        .select({ id: posts.id, slug: posts.slug })
+        .from(posts)
+        .where(sql`lower(${posts.title}) = ${title.toLowerCase()} OR ${posts.slug} = ${baseSlug}`)
+        .limit(1);
+
+      if (existingPost) {
+        postId = existingPost.id;
+        postSlug = existingPost.slug;
+
+        // Insert a postImportSources record so we track it going forward
+        await tx.insert(postImportSources).values({
+          postId,
+          sourceAuthorSlug,
+          sourceCategoriesJson: JSON.stringify(rawCategories),
+          sourcePublishedAt: publishedDate,
+          sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
+          sourceUrl,
+        });
+      }
+    }
+
     if (postId) {
       // 4a. Update existing post
       const [existingPost] = await tx
