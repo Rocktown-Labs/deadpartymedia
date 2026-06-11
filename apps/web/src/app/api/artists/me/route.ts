@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { artists, postArtists, eventArtists, posts, events } from "@/lib/db/schema";
+import { artists } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";

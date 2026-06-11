@@ -89,7 +89,10 @@ export function PostsTable({
   const router = useRouter();
   const [selectedPostIds, setSelectedPostIds] = useState<number[]>([]);
   const [isPending, startTransition] = useTransition();
-  const searchParams = useMemo(() => new URLSearchParams(currentSearchParams), [currentSearchParams]);
+  const searchParams = useMemo(
+    () => new URLSearchParams(currentSearchParams),
+    [currentSearchParams],
+  );
   const selectedPostIdSet = useMemo(() => new Set(selectedPostIds), [selectedPostIds]);
   const visiblePostIds = posts.map((post) => post.id);
   const hasRows = posts.length > 0;
@@ -281,9 +284,7 @@ export function PostsTable({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-sm text-gray-400">
-                    {post.category}
-                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-gray-400">{post.category}</TableCell>
                   <TableCell className="px-6 py-4">
                     {post.isCoverStory ? (
                       <span className="font-bold text-[#7CFC00]">★</span>
