@@ -8,6 +8,7 @@ import type { Roles } from "@/types/globals";
 import { revalidatePath } from "next/cache";
 import { inviteUserSchema } from "@/lib/validations/user";
 import { upsertUserAuthState } from "@/lib/auth/user-state";
+import { buildInvitationRedirectUrl } from "@/lib/auth/invitations";
 import { db } from "@/lib/db";
 import { artists, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -74,6 +75,9 @@ function getInviteRedirectUrl(role: Roles): string {
   if (role === "writer") {
     return "/sign-up?role=writer";
   }
+  if (role === "super_admin") {
+    return "/sign-up?role=super_admin";
+  }
   if (role === "artist") {
     return "/sign-up?role=artist";
   }
@@ -108,15 +112,7 @@ export async function inviteUser(
   const validatedData = validationResult.data;
   const client = await clerkClient();
 
-  // Determine redirect URL based on role
-  let defaultRedirectUrl = "/sign-up";
-  if (validatedData.role === "writer") {
-    defaultRedirectUrl = "/sign-up?role=writer";
-  } else if (validatedData.role === "artist") {
-    defaultRedirectUrl = "/sign-up?role=artist";
-  } else if (validatedData.role === "fan") {
-    defaultRedirectUrl = "/sign-up?role=fan";
-  }
+  const defaultRedirectUrl = getInviteRedirectUrl(validatedData.role);
 
   try {
     // For super_admin and writer roles, set onboardingComplete to true
@@ -135,7 +131,7 @@ export async function inviteUser(
     const invitation = await client.invitations.createInvitation({
       emailAddress: validatedData.email,
       publicMetadata,
-      redirectUrl: redirectUrl || defaultRedirectUrl,
+      redirectUrl: buildInvitationRedirectUrl(redirectUrl || defaultRedirectUrl),
     });
 
     revalidatePath("/admin/users");
@@ -407,7 +403,7 @@ export async function inviteArtistProfile(formData: FormData) {
         artistId: String(artist.id),
         role: "artist",
       },
-      redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
+      redirectUrl: buildInvitationRedirectUrl(`/sign-up?role=artist&artistId=${artist.id}`),
     });
     revalidatePath("/admin/users");
     revalidatePath("/admin/artists");

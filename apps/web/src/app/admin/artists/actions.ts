@@ -14,6 +14,7 @@ import { logger } from "@/lib/logger";
 import { withUserContext, withOperationContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { getErrorMessage } from "@/lib/utils/error";
+import { buildInvitationRedirectUrl } from "@/lib/auth/invitations";
 
 type ArtistGenre = (typeof artists.$inferInsert)["genre"];
 
@@ -93,7 +94,7 @@ export async function createArtist(formData: FormData) {
           artistId: artist.id.toString(),
           role: "artist",
         },
-        redirectUrl: `/sign-up?role=artist&artistId=${artist.id}`,
+        redirectUrl: buildInvitationRedirectUrl(`/sign-up?role=artist&artistId=${artist.id}`),
       });
     } catch (error) {
       withOperationContext(log, "send_artist_invitation", "artist", artist.id).error(
@@ -208,7 +209,7 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
         artistId: artistId.toString(),
         role: "artist",
       },
-      redirectUrl: `/sign-up?role=artist&artistId=${artistId}`,
+      redirectUrl: buildInvitationRedirectUrl(`/sign-up?role=artist&artistId=${artistId}`),
     });
 
     // Update artist email if different
