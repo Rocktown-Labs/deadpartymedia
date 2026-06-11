@@ -9,6 +9,7 @@ import {
   serial,
   index,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -69,6 +70,7 @@ export const posts = pgTable("posts", {
   views: integer("views").notNull().default(0),
   deleteRequested: boolean("delete_requested").notNull().default(false),
   deleteRequestedAt: timestamp("delete_requested_at"),
+  tags: text("tags").array(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -309,3 +311,15 @@ export const postImportSourcesRelations = relations(postImportSources, ({ one })
     references: [posts.id],
   }),
 }));
+
+export const backfillRuns = pgTable("backfill_runs", {
+  id: serial("id").primaryKey(),
+  runId: text("run_id").notNull().unique(),
+  // status can be 'running', 'completed', or 'failed'
+  status: text("status").notNull(),
+  totalPosts: integer("total_posts").notNull().default(0),
+  processedPosts: integer("processed_posts").notNull().default(0),
+  results: jsonb("results"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

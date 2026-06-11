@@ -57,6 +57,13 @@
       "when": 1772211864792,
       "tag": "0007_sharp_chimera",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781140638210,
+      "tag": "0008_gifted_legion",
+      "breakpoints": true
     }
   ]
 }

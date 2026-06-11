@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, ExternalLink, Loader2, CheckCircle, BookOpen } from "lucide-react";
+import { Sparkles, ArrowLeft, ExternalLink, Loader2, CheckCircle, BookOpen, AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -124,6 +124,38 @@ export default function WordpressBackfillClient({
   const [isBulkStarting, setIsBulkStarting] = useState(false);
   const [isSyncingSpotify, setIsSyncingSpotify] = useState(false);
 
+  // Background Runs States
+  const [runs, setRuns] = useState<any[]>([]);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+
+  const fetchRuns = async () => {
+    try {
+      const response = await fetch("/api/workflow/backfill/runs");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setRuns(data.runs || []);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch backfill runs:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRuns();
+  }, []);
+
+  useEffect(() => {
+    const hasRunning = runs.some((run) => run.status === "running");
+    if (hasRunning) {
+      const interval = setInterval(() => {
+        fetchRuns();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [runs]);
+
   const handleBulkBackfill = async () => {
     if (!bulkAuthorId) {
       toast.error("Please select an author for bulk backfill.");
@@ -152,6 +184,7 @@ export default function WordpressBackfillClient({
         `Workflow started successfully! Run ID: ${data.runId}. Ingesting posts in the background...`,
         { id: toastId, duration: 8000 }
       );
+      fetchRuns();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to start bulk backfill", {
         id: toastId,
@@ -421,7 +454,7 @@ export default function WordpressBackfillClient({
               <Input
                 type="number"
                 value={bulkLimit}
-                onChange={(e) => setBulkLimit(parseInt(e.target.value) || 40)}
+                onChange={(e) => setBulkLimit(Number.parseInt(e.target.value) || 40)}
                 className="bg-black border-gray-800 text-xs h-9"
               />
             </div>
@@ -430,7 +463,7 @@ export default function WordpressBackfillClient({
               <Input
                 type="number"
                 value={bulkOffset}
-                onChange={(e) => setBulkOffset(parseInt(e.target.value) || 0)}
+                onChange={(e) => setBulkOffset(Number.parseInt(e.target.value) || 0)}
                 className="bg-black border-gray-800 text-xs h-9"
               />
             </div>
@@ -488,6 +521,163 @@ export default function WordpressBackfillClient({
           </Button>
         </Card>
       </div>
+
+      {/* Background Workflow runs dashboard */}
+      <Card className="p-6 border-gray-800 bg-[#141414] text-white space-y-6 mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <RefreshCw className={`h-5 w-5 text-[#7CFC00] ${runs.some(r => r.status === "running") ? "animate-spin" : ""}`} />
+            <h2 className="text-lg font-bold">Background Workflow Logs & Status</h2>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchRuns}
+            className="border-gray-800 hover:bg-gray-900 text-xs gap-1 text-white"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Refresh
+          </Button>
+        </div>
+
+        {runs.length === 0 ? (
+          <div className="py-6 text-center text-gray-400 text-xs border border-dashed border-gray-800 rounded-lg">
+            No background backfill runs recorded yet. Use the card above to start a background ingestion.
+          </div>
+        ) : (
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            {runs.map((run) => {
+              const percent = run.totalPosts > 0 ? Math.round((run.processedPosts / run.totalPosts) * 100) : 0;
+              const isExpanded = expandedRunId === run.runId;
+              const hasSpotify403 = Array.isArray(run.results) && run.results.some((res: any) => 
+                (res.error && (res.error.includes("403") || res.error.toLowerCase().includes("spotify"))) ||
+                (res.warnings && res.warnings.some((w: any) => w.includes("403") || w.toLowerCase().includes("spotify")))
+              );
+
+              return (
+                <div key={run.runId} className="border border-gray-800 rounded-lg p-4 bg-black/40 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      {run.status === "running" ? (
+                        <Badge className="bg-blue-900 text-blue-200 border-blue-800 animate-pulse gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Running
+                        </Badge>
+                      ) : run.status === "completed" ? (
+                        <Badge className="bg-green-900 text-green-200 border-green-800">
+                          Completed
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-900 text-red-200 border-red-800">
+                          Failed
+                        </Badge>
+                      )}
+                      <span className="text-xs font-mono text-gray-400">ID: {run.runId.slice(0, 8)}...</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(run.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-300">
+                        Progress: {run.processedPosts} / {run.totalPosts} ({percent}%)
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => setExpandedRunId(isExpanded ? null : run.runId)}
+                      >
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-900 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        run.status === "failed" ? "bg-red-600" : run.status === "completed" ? "bg-green-500" : "bg-[#7CFC00]"
+                      }`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+
+                  {/* Expanded Logs & Diagnostics */}
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-gray-800 space-y-3">
+                      {hasSpotify403 && (
+                        <div className="p-3 bg-yellow-950/20 border border-yellow-800/40 rounded text-xs text-yellow-300 flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-bold">Spotify Web API 403 Forbidden Detected</p>
+                            <p className="mt-0.5 text-gray-300">
+                              Some artist profiles could not be linked because Spotify returned a 403 Forbidden. To fix this:
+                            </p>
+                            <ul className="list-disc list-inside mt-1 space-y-0.5 text-gray-400">
+                              <li>Verify your Spotify Client ID and Client Secret in development/production environment config.</li>
+                              <li>In your Spotify Developer Dashboard under application settings, ensure the <strong>"Web API"</strong> option is enabled.</li>
+                              <li>If your application is in development/sandbox mode, ensure the accounts running this backfill are added as Team members or explicit users, and have Spotify Premium.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1 text-xs">
+                        <p className="font-bold text-gray-400 mb-1">Execution Log Details:</p>
+                        {Array.isArray(run.results) && run.results.length > 0 ? (
+                          (run.results as any[]).map((res, rIdx) => {
+                            if (res.status === "error") {
+                              return (
+                                <div key={rIdx} className="flex items-start gap-1.5 text-red-400 bg-red-950/10 p-1.5 rounded">
+                                  <span className="text-red-500 font-bold">•</span>
+                                  <div>
+                                    <span className="font-semibold">{res.title || "Post"}</span>: Failed - {res.error}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            const isUpdatedStatus = res.status?.startsWith("updated_status");
+                            const isImported = res.status === "imported";
+
+                            return (
+                              <div key={rIdx} className="flex items-start gap-1.5 text-gray-300 py-0.5">
+                                {isImported ? (
+                                  <span className="text-green-500 font-bold">✓</span>
+                                ) : isUpdatedStatus ? (
+                                  <span className="text-blue-400 font-bold">ℹ</span>
+                                ) : (
+                                  <span className="text-gray-500 font-bold">•</span>
+                                )}
+                                <div>
+                                  <span className="font-semibold text-gray-200">{res.title}</span>:{" "}
+                                  {isImported ? (
+                                    <span className="text-green-400">Successfully imported (ID: {res.postId})</span>
+                                  ) : isUpdatedStatus ? (
+                                    <span className="text-blue-400">Updated status to {bulkStatus} (ID: {res.postId})</span>
+                                  ) : (
+                                    <span className="text-gray-400">Already imported, skipped AI analysis</span>
+                                  )}
+                                  {res.updatedArtistsCount > 0 && (
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      ({res.updatedArtistsCount} Spotify artists updated)
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-gray-500 italic">No logs recorded yet. Ingestion starting...</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
 
       <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">
         <div className="overflow-x-auto">

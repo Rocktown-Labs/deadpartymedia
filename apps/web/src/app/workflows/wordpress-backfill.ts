@@ -1,6 +1,6 @@
 import { analyzePostInternal, importPostInternal } from "../admin/posts/wordpress/actions";
 import { db } from "@/lib/db";
-import { postImportSources, postArtists, artists } from "@/lib/db/schema";
+import { postImportSources, postArtists, artists, backfillRuns, posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 interface BackfillInput {
@@ -8,25 +8,103 @@ interface BackfillInput {
   offset: number;
   authorId: string;
   status: "draft" | "published";
+  runId: string;
 }
 
 export async function wordpressBackfillWorkflow(input: BackfillInput) {
   "use workflow";
 
-  // 1. Fetch posts from WordPress REST API (step)
-  const wpPosts = await fetchWordPressPostsStep(input.limit, input.offset);
+  try {
+    // 1. Fetch posts from WordPress REST API (step)
+    const wpPosts = await fetchWordPressPostsStep(input.limit, input.offset);
+    
+    // Update total posts in DB
+    await updateRunTotalPostsStep(input.runId, wpPosts.length);
 
-  // 2. Loop through posts and process them
-  const results = [];
-  for (const post of wpPosts) {
-    const res = await processPostStep(post, input.authorId, input.status);
-    results.push(res);
+    // 2. Loop through posts and process them
+    const results = [];
+    let processedCount = 0;
+
+    for (const post of wpPosts) {
+      const res = await processPostStep(post, input.authorId, input.status);
+      results.push(res);
+      processedCount++;
+      // Update processed count and results in DB
+      await updateRunProgressStep(input.runId, processedCount, results);
+    }
+
+    // Update final status to completed
+    await completeRunStep(input.runId, results);
+
+    return {
+      processed: results.length,
+      results,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`WordPress backfill workflow failed for run ${input.runId}:`, errorMsg);
+    await failRunStep(input.runId, errorMsg);
+    throw error;
   }
+}
 
-  return {
-    processed: results.length,
-    results,
-  };
+async function updateRunTotalPostsStep(runId: string, totalPosts: number) {
+  "use step";
+  await db
+    .update(backfillRuns)
+    .set({
+      totalPosts,
+      updatedAt: new Date(),
+    })
+    .where(eq(backfillRuns.runId, runId));
+}
+
+async function updateRunProgressStep(runId: string, processedPosts: number, results: any[]) {
+  "use step";
+  await db
+    .update(backfillRuns)
+    .set({
+      processedPosts,
+      results,
+      updatedAt: new Date(),
+    })
+    .where(eq(backfillRuns.runId, runId));
+}
+
+async function completeRunStep(runId: string, results: any[]) {
+  "use step";
+  await db
+    .update(backfillRuns)
+    .set({
+      status: "completed",
+      results,
+      updatedAt: new Date(),
+    })
+    .where(eq(backfillRuns.runId, runId));
+}
+
+async function failRunStep(runId: string, errorMsg: string) {
+  "use step";
+  const [run] = await db
+    .select({ results: backfillRuns.results })
+    .from(backfillRuns)
+    .where(eq(backfillRuns.runId, runId))
+    .limit(1);
+
+  const currentResults = Array.isArray(run?.results) ? (run.results as any[]) : [];
+  const updatedResults = [
+    ...currentResults,
+    { status: "error", error: `Workflow failed: ${errorMsg}` },
+  ];
+
+  await db
+    .update(backfillRuns)
+    .set({
+      status: "failed",
+      results: updatedResults,
+      updatedAt: new Date(),
+    })
+    .where(eq(backfillRuns.runId, runId));
 }
 
 async function fetchWordPressPostsStep(limit: number, offset: number) {
@@ -58,6 +136,7 @@ async function fetchWordPressPostsStep(limit: number, offset: number) {
     authorSlug: post.author?.nice_name || "pettyvandalism",
     coverImage: post.featured_image || null,
     rawCategories: Object.keys(post.categories || {}),
+    rawTags: Object.keys(post.tags || {}),
   }));
 }
 
@@ -73,6 +152,31 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       .limit(1);
 
     if (existingImport) {
+      // Fetch the existing post status
+      const [existingPost] = await db
+        .select({
+          id: posts.id,
+          status: posts.status,
+          title: posts.title,
+        })
+        .from(posts)
+        .where(eq(posts.id, existingImport.postId))
+        .limit(1);
+
+      let statusUpdated = false;
+      if (existingPost) {
+        // Update status and tags if they changed/need to be synced
+        await db
+          .update(posts)
+          .set({
+            status,
+            tags: post.rawTags || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(posts.id, existingPost.id));
+        statusUpdated = true;
+      }
+
       // It's already imported. Let's find associated artists and update their Spotify info if null
       const associatedArtists = await db
         .select({
@@ -86,21 +190,27 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
         .where(eq(postArtists.postId, existingImport.postId));
 
       let updatedCount = 0;
+      const spotifyWarnings = [];
+
       for (const artist of associatedArtists) {
         if (!artist.spotifyArtistId) {
           // Attempt Spotify search
-          const spotifyMatch = await searchSpotifyArtistHelper(artist.name);
-          if (spotifyMatch) {
-            await db
-              .update(artists)
-              .set({
-                spotifyArtistId: spotifyMatch.spotifyArtistId,
-                spotifyUrl: spotifyMatch.spotifyUrl,
-                image: artist.image || spotifyMatch.imageUrl || null,
-                updatedAt: new Date(),
-              })
-              .where(eq(artists.id, artist.id));
-            updatedCount++;
+          try {
+            const spotifyMatch = await searchSpotifyArtistHelper(artist.name);
+            if (spotifyMatch) {
+              await db
+                .update(artists)
+                .set({
+                  spotifyArtistId: spotifyMatch.spotifyArtistId,
+                  spotifyUrl: spotifyMatch.spotifyUrl,
+                  image: artist.image || spotifyMatch.imageUrl || null,
+                  updatedAt: new Date(),
+                })
+                .where(eq(artists.id, artist.id));
+              updatedCount++;
+            }
+          } catch (error: any) {
+            spotifyWarnings.push(error.message || String(error));
           }
         }
       }
@@ -108,8 +218,10 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       return {
         url: post.url,
         title: post.title,
-        status: "already_imported",
+        status: statusUpdated ? `updated_status_to_${status}` : "already_imported",
         updatedArtistsCount: updatedCount,
+        postId: existingImport.postId,
+        warnings: spotifyWarnings.length > 0 ? spotifyWarnings : undefined,
       };
     }
 
@@ -150,6 +262,7 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       sourceUrl: post.url,
       title: post.title,
       status,
+      tags: post.rawTags,
     };
 
     const importRes = await importPostInternal(payload);
@@ -193,7 +306,7 @@ async function searchSpotifyArtistHelper(
       cache: "no-store",
     });
     if (!tokenResponse.ok) {
-      return null;
+      throw new Error(`Failed to fetch Spotify auth token: status ${tokenResponse.status}`);
     }
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
@@ -212,7 +325,11 @@ async function searchSpotifyArtistHelper(
       },
     );
     if (!searchResponse.ok) {
-      return null;
+      if (searchResponse.status === 403) {
+        console.warn("Spotify API returned 403 Forbidden. Check settings (Web API enabled) in Spotify Developer Dashboard.");
+        throw new Error("Spotify API returned 403 Forbidden. Please verify your Spotify configuration.");
+      }
+      throw new Error(`Spotify search failed: status ${searchResponse.status}`);
     }
     const searchData = await searchResponse.json();
     const artist = searchData.artists?.items?.[0];
@@ -226,6 +343,6 @@ async function searchSpotifyArtistHelper(
     };
   } catch (error) {
     console.error("Error searching Spotify in backfill workflow helper:", error);
-    return null;
+    throw error;
   }
 }
