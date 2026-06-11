@@ -24,38 +24,59 @@ async function runStartupSchemaSanityCheck() {
   }
   globalThis.__dbSanityCheckStarted = true;
 
-  const result = (await db.execute(sql`
-    SELECT column_name
+  const columnResult = (await db.execute(sql`
+    SELECT table_name, column_name
     FROM information_schema.columns
     WHERE table_schema = 'public'
-      AND table_name = 'users'
-      AND column_name IN ('role', 'onboarding_complete')
-  `)) as { rows?: { column_name: string }[] };
+      AND (
+        (table_name = 'users' AND column_name IN ('role', 'onboarding_complete'))
+        OR (table_name = 'posts' AND column_name = 'tags')
+      )
+  `)) as { rows?: { column_name: string; table_name: string }[] };
 
-  const foundColumns = new Set((result.rows ?? []).map((row) => row.column_name));
+  const foundColumns = new Set(
+    (columnResult.rows ?? []).map((row) => `${row.table_name}.${row.column_name}`),
+  );
 
-  const requiredColumns = ["role", "onboarding_complete"] as const;
+  const requiredColumns = ["users.role", "users.onboarding_complete", "posts.tags"] as const;
   const missingColumns = requiredColumns.filter((column) => !foundColumns.has(column));
 
-  if (missingColumns.length > 0) {
+  const tableResult = (await db.execute(sql`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+      AND table_name IN ('backfill_runs')
+  `)) as { rows?: { table_name: string }[] };
+
+  const foundTables = new Set((tableResult.rows ?? []).map((row) => row.table_name));
+  const requiredTables = ["backfill_runs"] as const;
+  const missingTables = requiredTables.filter((table) => !foundTables.has(table));
+
+  if (missingColumns.length > 0 || missingTables.length > 0) {
     logger.error(
       {
         missingColumns,
+        missingTables,
         operation: "startup_schema_sanity_check",
-        table: "users",
+        tables: ["users", "posts", "backfill_runs"],
       },
       "Database schema is out of sync. Run migrations before serving traffic.",
     );
 
     throw new Error(
-      `Startup schema sanity check failed: missing columns on users table: ${missingColumns.join(", ")}`,
+      `Startup schema sanity check failed: ${[
+        missingColumns.length > 0 ? `missing columns: ${missingColumns.join(", ")}` : null,
+        missingTables.length > 0 ? `missing tables: ${missingTables.join(", ")}` : null,
+      ]
+        .filter(Boolean)
+        .join("; ")}`,
     );
   }
 
   logger.info(
     {
       operation: "startup_schema_sanity_check",
-      table: "users",
+      tables: ["users", "posts", "backfill_runs"],
     },
     "Database schema sanity check passed",
   );
