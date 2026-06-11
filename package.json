@@ -28,6 +28,7 @@
     "web:db:migrate": "pnpm --filter web db:migrate",
     "web:db:push": "pnpm --filter web db:push",
     "web:db:studio": "pnpm --filter web db:studio",
+    "web:content:posts:decode-titles": "pnpm --filter web content:posts:decode-titles",
     "fix": "ultracite fix"
   },
   "dependencies": {

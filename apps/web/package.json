@@ -18,6 +18,7 @@
     "content:wordpress:remap-authors": "tsx scripts/remap-wordpress-authors.ts",
     "content:posts:normalize": "tsx scripts/normalize-post-content.ts",
     "content:posts:normalize:apply": "tsx scripts/normalize-post-content.ts --apply",
+    "content:posts:decode-titles": "tsx scripts/decode-post-titles.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
