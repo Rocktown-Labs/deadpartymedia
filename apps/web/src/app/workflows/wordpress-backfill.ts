@@ -18,7 +18,7 @@ export async function wordpressBackfillWorkflow(input: BackfillInput) {
   try {
     // 1. Fetch posts from WordPress REST API (step)
     const wpPosts = await fetchWordPressPostsStep(input.limit, input.offset);
-    
+
     // Update total posts in DB
     await updateRunTotalPostsStep(input.runId, wpPosts.length);
 
@@ -113,7 +113,7 @@ async function fetchWordPressPostsStep(limit: number, offset: number) {
 
   const response = await fetch(
     `https://public-api.wordpress.com/rest/v1.1/sites/deadpartymedia.wordpress.com/posts?number=${limit}&offset=${offset}`,
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
 
   if (!response.ok) {
@@ -253,6 +253,9 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
     };
   } catch (error) {
     console.error(`Error processing post ${post.title}:`, error);
+    if (isApiAccessError(error)) {
+      throw error;
+    }
     return {
       url: post.url,
       title: post.title,
@@ -343,8 +346,12 @@ async function searchSpotifyArtistHelper(
     );
     if (!searchResponse.ok) {
       if (searchResponse.status === 403) {
-        console.warn("Spotify API returned 403 Forbidden. Check settings (Web API enabled) in Spotify Developer Dashboard.");
-        throw new Error("Spotify API returned 403 Forbidden. Please verify your Spotify configuration.");
+        console.warn(
+          "Spotify API returned 403 Forbidden. Check settings (Web API enabled) in Spotify Developer Dashboard.",
+        );
+        throw new Error(
+          "Spotify API returned 403 Forbidden. Please verify your Spotify configuration.",
+        );
       }
       throw new Error(`Spotify search failed: status ${searchResponse.status}`);
     }
@@ -362,4 +369,24 @@ async function searchSpotifyArtistHelper(
     console.error("Error searching Spotify in backfill workflow helper:", error);
     throw error;
   }
+}
+
+function isApiAccessError(error: any): boolean {
+  if (!error) {return false;}
+  const message = error instanceof Error ? error.message : String(error);
+  const name = error instanceof Error && error.name ? error.name : "";
+  const lowerMsg = message.toLowerCase();
+
+  return (
+    name.includes("AI_APICallError") ||
+    lowerMsg.includes("api key") ||
+    lowerMsg.includes("api_key") ||
+    lowerMsg.includes("rate limit") ||
+    lowerMsg.includes("rate-limit") ||
+    lowerMsg.includes("free tier") ||
+    lowerMsg.includes("quota") ||
+    lowerMsg.includes("billing") ||
+    lowerMsg.includes("credits") ||
+    lowerMsg.includes("unauthorized")
+  );
 }
