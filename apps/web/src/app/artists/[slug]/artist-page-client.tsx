@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Spotify } from "@/components/ui/svgs/spotify";
 import { useRouter } from "next/navigation";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 import { ArtistStructuredData } from "@/components/seo/structured-data";
@@ -124,19 +125,33 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
               {/* Artist Info Card */}
               <div className="border border-gray-800 rounded-lg overflow-hidden mb-12 bg-[#0A0A0A]">
                 <div className="p-6">
-                  <div className="flex items-start justify-between mb-2">
-                    <h1 className="text-3xl font-bold">{artist.name}</h1>
-                    <span className="px-3 py-1 bg-[#7CFC00] text-black text-sm font-medium rounded whitespace-nowrap ml-4">
-                      {artist.genre}
-                    </span>
-                  </div>
-                  <p className="text-gray-400 mb-4">
-                    <MapPin className="w-4 h-4 inline mr-1" />
-                    {artist.location}
-                  </p>
+                  <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
+                    {artist.image && (
+                      <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden shrink-0 border border-gray-800 bg-[#0E0E0E]">
+                        <Image
+                          src={artist.image}
+                          alt={artist.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex items-start justify-between mb-2">
+                        <h1 className="text-3xl font-bold">{artist.name}</h1>
+                        <span className="px-3 py-1 bg-[#7CFC00] text-black text-sm font-medium rounded whitespace-nowrap ml-4">
+                          {artist.genre}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 mb-4">
+                        <MapPin className="w-4 h-4 inline mr-1" />
+                        {artist.location}
+                      </p>
 
-                  {/* Bio */}
-                  <p className="text-gray-300 leading-relaxed mb-4">{artist.bio}</p>
+                      {/* Bio */}
+                      <p className="text-gray-300 leading-relaxed">{artist.bio}</p>
+                    </div>
+                  </div>
 
                   {/* Divider */}
                   <div className="border-t border-gray-800 mb-4" />
@@ -175,6 +190,17 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                           onClick={() => handleSocialClick("tiktok", artist.tiktok)}
                         >
                           TT
+                        </a>
+                      )}
+                      {artist.spotify_url && (
+                        <a
+                          href={artist.spotify_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-[#1DB954] transition-colors"
+                          onClick={() => handleSocialClick("spotify", artist.spotify_url)}
+                        >
+                          <Spotify className="w-5 h-5 fill-current" />
                         </a>
                       )}
                       {artist.website && (
