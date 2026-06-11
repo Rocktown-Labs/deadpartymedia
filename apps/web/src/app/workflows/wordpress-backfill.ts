@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { postImportSources, postArtists, artists, backfillRuns, posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { shouldReprocessImportedPost } from "./wordpress-backfill-policy";
+import { decodeHtmlEntities } from "@/lib/utils/html";
 
 interface BackfillInput {
   limit: number;
@@ -127,7 +128,7 @@ async function fetchWordPressPostsStep(limit: number, offset: number) {
 
   return data.posts.map((post: any) => ({
     id: post.ID,
-    title: post.title,
+    title: decodeHtmlEntities(post.title),
     url: post.URL,
     excerpt: post.excerpt,
     content: post.content,
@@ -372,7 +373,9 @@ async function searchSpotifyArtistHelper(
 }
 
 function isApiAccessError(error: any): boolean {
-  if (!error) {return false;}
+  if (!error) {
+    return false;
+  }
   const message = error instanceof Error ? error.message : String(error);
   const name = error instanceof Error && error.name ? error.name : "";
   const lowerMsg = message.toLowerCase();
