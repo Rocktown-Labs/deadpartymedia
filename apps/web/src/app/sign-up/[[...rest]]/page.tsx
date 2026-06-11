@@ -11,10 +11,12 @@ export default function SignUpPage() {
   const role = searchParams.get("role");
   const artistId = searchParams.get("artistId");
 
-  // Build redirect URL based on role - always go to onboarding after sign-up
   const getRedirectUrl = () => {
     const redirectParam = searchParams.get("redirect_url") || searchParams.get("redirect");
     const suffix = redirectParam ? `&redirect_url=${encodeURIComponent(redirectParam)}` : "";
+    if (role === "super_admin" || role === "writer") {
+      return "/admin";
+    }
     if (role === "artist") {
       return `/onboarding?role=artist${suffix}`;
     }
