@@ -2,6 +2,7 @@ import { analyzePostInternal, importPostInternal } from "../admin/posts/wordpres
 import { db } from "@/lib/db";
 import { postImportSources, postArtists, artists, backfillRuns, posts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { shouldReprocessImportedPost } from "./wordpress-backfill-policy";
 
 interface BackfillInput {
   limit: number;
@@ -152,7 +153,8 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       .limit(1);
 
     if (existingImport) {
-      // Fetch the existing post status
+      // Fetch the existing post status. Draft/archived imports still need the
+      // full AI enrichment path so bulk runs can clean them up and publish them.
       const [existingPost] = await db
         .select({
           id: posts.id,
@@ -163,18 +165,34 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
         .where(eq(posts.id, existingImport.postId))
         .limit(1);
 
-      let statusUpdated = false;
+      if (!existingPost) {
+        throw new Error(`Imported source points to missing local post ${existingImport.postId}`);
+      }
+
+      if (shouldReprocessImportedPost(existingPost.status)) {
+        const importResult = await analyzeAndImportPost(post, authorId, status);
+
+        return {
+          url: post.url,
+          title: post.title,
+          status:
+            existingPost?.status === "draft"
+              ? `reprocessed_draft_to_${status}`
+              : `reprocessed_import_to_${status}`,
+          postId: importResult.postId,
+        };
+      }
+
       if (existingPost) {
-        // Update status and tags if they changed/need to be synced
+        // Already-published imports should not be rewritten during bulk runs.
+        // Keep the live status intact and only sync lightweight source metadata.
         await db
           .update(posts)
           .set({
-            status,
             tags: post.rawTags || null,
             updatedAt: new Date(),
           })
           .where(eq(posts.id, existingPost.id));
-        statusUpdated = true;
       }
 
       // It's already imported. Let's find associated artists and update their Spotify info if null
@@ -218,54 +236,14 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       return {
         url: post.url,
         title: post.title,
-        status: statusUpdated ? `updated_status_to_${status}` : "already_imported",
+        status: "already_published",
         updatedArtistsCount: updatedCount,
         postId: existingImport.postId,
         warnings: spotifyWarnings.length > 0 ? spotifyWarnings : undefined,
       };
     }
 
-    // Run AI analysis
-    const analysis = await analyzePostInternal(post.title, post.content);
-
-    // Prepare payload
-    const selectedArtistIds = analysis.artistsMapping
-      .filter((a) => a.existingId !== null)
-      .map((a) => a.existingId as number);
-
-    const newArtistsToCreate = analysis.artistsMapping
-      .filter((a) => a.existingId === null)
-      .map((a) => ({
-        name: a.name,
-        genre: a.genre || "OTHER",
-        location: a.location || "Arkansas",
-        bio: a.bio || "",
-        spotifyUrl: a.spotifyUrl || null,
-        spotifyArtistId: a.spotifyArtistId || null,
-        image: a.spotifyImageUrl || null,
-      }));
-
-    const payload = {
-      authorId,
-      category: analysis.category,
-      contentHtml: post.content,
-      coverImageUrl: post.coverImage,
-      excerpt: analysis.excerpt || post.excerpt,
-      isCoverStory: false,
-      newArtistsToCreate,
-      rawCategories: post.rawCategories,
-      selectedArtistIds,
-      slug: post.authorSlug,
-      sourceAuthorSlug: post.authorSlug,
-      sourceModifiedAt: post.modified,
-      sourcePublishedAt: post.date,
-      sourceUrl: post.url,
-      title: post.title,
-      status,
-      tags: post.rawTags,
-    };
-
-    const importRes = await importPostInternal(payload);
+    const importRes = await analyzeAndImportPost(post, authorId, status);
 
     return {
       url: post.url,
@@ -282,6 +260,45 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+async function analyzeAndImportPost(post: any, authorId: string, status: "draft" | "published") {
+  const analysis = await analyzePostInternal(post.title, post.content);
+
+  const selectedArtistIds = analysis.artistsMapping
+    .filter((artist) => artist.existingId !== null)
+    .map((artist) => artist.existingId as number);
+
+  const newArtistsToCreate = analysis.artistsMapping
+    .filter((artist) => artist.existingId === null)
+    .map((artist) => ({
+      name: artist.name,
+      genre: artist.genre || "OTHER",
+      location: artist.location || "Arkansas",
+      bio: artist.bio || "",
+      spotifyUrl: artist.spotifyUrl || null,
+      spotifyArtistId: artist.spotifyArtistId || null,
+      image: artist.spotifyImageUrl || null,
+    }));
+
+  return importPostInternal({
+    authorId,
+    category: analysis.category,
+    contentHtml: post.content,
+    coverImageUrl: post.coverImage,
+    excerpt: analysis.excerpt || post.excerpt,
+    isCoverStory: false,
+    newArtistsToCreate,
+    rawCategories: post.rawCategories,
+    selectedArtistIds,
+    sourceAuthorSlug: post.authorSlug,
+    sourceModifiedAt: post.modified,
+    sourcePublishedAt: post.date,
+    sourceUrl: post.url,
+    status,
+    tags: post.rawTags,
+    title: post.title,
+  });
 }
 
 // Helper Spotify search

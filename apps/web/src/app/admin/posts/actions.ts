@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { db } from "@/lib/db";
 import { posts, postArtists, users } from "@/lib/db/schema";
-import { eq, and, ne, inArray } from "drizzle-orm";
+import { eq, and, ne, inArray, sql } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -364,6 +364,98 @@ export async function updatePost(id: number, formData: FormData) {
   revalidatePath(`/admin/posts/${id}`);
   revalidatePath(`/article/${slug}`);
   redirect("/admin/posts");
+}
+
+export async function bulkUpdatePostStatus(formData: FormData) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  const statusInput = formData.get("status");
+  if (
+    statusInput !== "draft" &&
+    statusInput !== "published" &&
+    statusInput !== "archived"
+  ) {
+    throw new Error("Invalid post status");
+  }
+
+  const postIdsInput = formData.get("postIds");
+  const postIds =
+    typeof postIdsInput === "string"
+      ? [
+          ...new Set(
+            postIdsInput
+              .split(",")
+              .map((id) => Number.parseInt(id.trim(), 10))
+              .filter((id) => Number.isInteger(id) && id > 0),
+          ),
+        ]
+      : [];
+
+  if (postIds.length === 0) {
+    throw new Error("Select at least one post");
+  }
+
+  logger.info(
+    { count: postIds.length, operation: "bulk_update_post_status", status: statusInput, userId },
+    "Starting bulk post status update",
+  );
+
+  const selectedPosts = await db
+    .select({
+      authorId: posts.authorId,
+      id: posts.id,
+      publishedAt: posts.publishedAt,
+      slug: posts.slug,
+      status: posts.status,
+    })
+    .from(posts)
+    .where(inArray(posts.id, postIds));
+
+  if (selectedPosts.length !== postIds.length) {
+    throw new Error("One or more selected posts could not be found");
+  }
+
+  for (const post of selectedPosts) {
+    if (!(await canEdit(post.authorId))) {
+      logger.warn(
+        {
+          authorId: post.authorId,
+          operation: "bulk_update_post_status",
+          postId: post.id,
+          userId,
+        },
+        "Unauthorized bulk post status update attempt",
+      );
+      throw new Error("Unauthorized: You don't have permission to edit one or more posts");
+    }
+  }
+
+  await db
+    .update(posts)
+    .set({
+      publishedAt:
+        statusInput === "published" ? sql`coalesce(${posts.publishedAt}, now())` : undefined,
+      status: statusInput,
+      updatedAt: new Date(),
+    })
+    .where(inArray(posts.id, postIds));
+
+  const touchesPublishedState =
+    statusInput === "published" || selectedPosts.some((post) => post.status === "published");
+  if (touchesPublishedState) {
+    revalidateTag("posts", "max");
+    revalidateTag("stats-monthly", "max");
+    revalidateTag("artists", "max");
+  }
+
+  revalidatePath("/admin/posts");
+  for (const post of selectedPosts) {
+    revalidatePath(`/admin/posts/${post.id}`);
+    revalidatePath(`/article/${post.slug}`);
+  }
 }
 
 export async function requestDeletePost(id: number) {

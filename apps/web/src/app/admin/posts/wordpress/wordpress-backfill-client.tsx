@@ -414,7 +414,7 @@ export default function WordpressBackfillClient({
             <h2 className="text-lg font-bold">Bulk Ingest Background Workflow</h2>
           </div>
           <p className="text-xs text-gray-400">
-            Triggers a background execution with retries to import WordPress posts in bulk.
+            Imports new WordPress posts and fully reprocesses imported drafts before publishing.
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -636,14 +636,14 @@ export default function WordpressBackfillClient({
                                 </div>
                               );
                             }
-                            const isUpdatedStatus = res.status?.startsWith("updated_status");
+                            const isReprocessed = res.status?.startsWith("reprocessed_");
                             const isImported = res.status === "imported";
 
                             return (
                               <div key={rIdx} className="flex items-start gap-1.5 text-gray-300 py-0.5">
                                 {isImported ? (
                                   <span className="text-green-500 font-bold">✓</span>
-                                ) : isUpdatedStatus ? (
+                                ) : isReprocessed ? (
                                   <span className="text-blue-400 font-bold">ℹ</span>
                                 ) : (
                                   <span className="text-gray-500 font-bold">•</span>
@@ -652,10 +652,10 @@ export default function WordpressBackfillClient({
                                   <span className="font-semibold text-gray-200">{res.title}</span>:{" "}
                                   {isImported ? (
                                     <span className="text-green-400">Successfully imported (ID: {res.postId})</span>
-                                  ) : isUpdatedStatus ? (
-                                    <span className="text-blue-400">Updated status to {bulkStatus} (ID: {res.postId})</span>
+                                  ) : isReprocessed ? (
+                                    <span className="text-blue-400">Reprocessed with AI and set to {bulkStatus} (ID: {res.postId})</span>
                                   ) : (
-                                    <span className="text-gray-400">Already imported, skipped AI analysis</span>
+                                    <span className="text-gray-400">Already published, skipped AI rewrite</span>
                                   )}
                                   {res.updatedArtistsCount > 0 && (
                                     <span className="text-xs text-gray-500 ml-1">

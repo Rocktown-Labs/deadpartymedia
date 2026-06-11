@@ -3,19 +3,7 @@ import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { asc, count, desc, eq } from "drizzle-orm";
-import { AdminPagination } from "@/components/admin/admin-pagination";
-import { AdminSortHeader } from "@/components/admin/admin-sort-header";
-import { DeleteConfirm } from "@/components/admin/delete-confirm";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   ADMIN_PAGE_SIZE,
   buildSearchParams,
@@ -27,7 +15,7 @@ import {
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
-import { approveDeletePost, deletePost, denyDeletePost, requestDeletePost } from "./actions";
+import { PostsTable } from "./posts-table";
 
 const POST_SORT_FIELDS = ["title", "status", "category", "isCoverStory", "createdAt"] as const;
 
@@ -100,6 +88,16 @@ export default async function PostsPage({
   const currentSearchParams = buildSearchParams(
     params as Record<string, string | string[] | undefined>,
   );
+  const postRows = pagedPosts.map((post) => ({
+    authorId: post.authorId,
+    category: post.category,
+    createdAt: post.createdAt.toISOString(),
+    deleteRequested: post.deleteRequested,
+    id: post.id,
+    isCoverStory: post.isCoverStory,
+    status: post.status,
+    title: post.title,
+  }));
 
   return (
     <div>
@@ -117,171 +115,16 @@ export default async function PostsPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-[#0A0A0A]">
-              <TableRow className="border-gray-800 hover:bg-transparent">
-                <TableHead>
-                  <AdminSortHeader
-                    currentOrder={order}
-                    currentSort={params.sort}
-                    defaultSort="createdAt"
-                    field="title"
-                    label="Title"
-                    pathname="/admin/posts"
-                    searchParams={currentSearchParams}
-                  />
-                </TableHead>
-                <TableHead>
-                  <AdminSortHeader
-                    currentOrder={order}
-                    currentSort={params.sort}
-                    defaultSort="createdAt"
-                    field="status"
-                    label="Status"
-                    pathname="/admin/posts"
-                    searchParams={currentSearchParams}
-                  />
-                </TableHead>
-                <TableHead>
-                  <AdminSortHeader
-                    currentOrder={order}
-                    currentSort={params.sort}
-                    defaultSort="createdAt"
-                    field="category"
-                    label="Category"
-                    pathname="/admin/posts"
-                    searchParams={currentSearchParams}
-                  />
-                </TableHead>
-                <TableHead>
-                  <AdminSortHeader
-                    currentOrder={order}
-                    currentSort={params.sort}
-                    defaultSort="createdAt"
-                    field="isCoverStory"
-                    label="Cover Story"
-                    pathname="/admin/posts"
-                    searchParams={currentSearchParams}
-                  />
-                </TableHead>
-                <TableHead>
-                  <AdminSortHeader
-                    currentOrder={order}
-                    currentSort={params.sort}
-                    defaultSort="createdAt"
-                    field="createdAt"
-                    label="Created"
-                    pathname="/admin/posts"
-                    searchParams={currentSearchParams}
-                  />
-                </TableHead>
-                <TableHead className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagedPosts.length === 0 ? (
-                <TableRow className="border-gray-800">
-                  <TableCell colSpan={6} className="px-6 py-4 text-center text-gray-400">
-                    No posts found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                pagedPosts.map((post) => (
-                  <TableRow key={post.id} className="border-gray-800 hover:bg-gray-900">
-                    <TableCell className="px-6 py-4">
-                      <Link
-                        href={`/admin/posts/${post.id}`}
-                        className="font-bold transition-colors hover:text-[#7CFC00]"
-                      >
-                        {post.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`rounded px-2 py-1 text-xs font-bold ${
-                            post.status === "published"
-                              ? "bg-green-500/20 text-green-400"
-                              : post.status === "draft"
-                                ? "bg-yellow-500/20 text-yellow-400"
-                                : "bg-gray-500/20 text-gray-400"
-                          }`}
-                        >
-                          {post.status}
-                        </span>
-                        {post.deleteRequested && (
-                          <Badge variant="destructive" className="text-xs">
-                            Delete Requested
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">
-                      {post.category}
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      {post.isCoverStory ? (
-                        <span className="font-bold text-[#7CFC00]">★</span>
-                      ) : (
-                        <span className="text-gray-600">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="px-6 py-4 text-sm text-gray-400">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Link href={`/admin/posts/${post.id}`}>
-                          <Button variant="outline" size="sm">
-                            Edit
-                          </Button>
-                        </Link>
-                        {post.deleteRequested && isSuperAdmin ? (
-                          <>
-                            <form action={approveDeletePost.bind(null, post.id)} className="inline">
-                              <Button type="submit" variant="destructive" size="sm">
-                                Approve Delete
-                              </Button>
-                            </form>
-                            <form action={denyDeletePost.bind(null, post.id)} className="inline">
-                              <Button type="submit" variant="outline" size="sm">
-                                Deny
-                              </Button>
-                            </form>
-                          </>
-                        ) : isSuperAdmin ? (
-                          <DeleteConfirm
-                            action={deletePost.bind(null, post.id)}
-                            title="Delete Post"
-                            description={`Are you sure you want to delete "${post.title}"? This action cannot be undone.`}
-                          />
-                        ) : post.authorId === userId && !post.deleteRequested ? (
-                          <form action={requestDeletePost.bind(null, post.id)} className="inline">
-                            <Button type="submit" variant="outline" size="sm">
-                              Request Delete
-                            </Button>
-                          </form>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        <AdminPagination
-          pathname="/admin/posts"
-          searchParams={currentSearchParams}
-          page={page}
-          totalItems={totalCount}
-        />
-      </div>
+      <PostsTable
+        currentOrder={order}
+        currentSearchParams={currentSearchParams.toString()}
+        currentSort={params.sort}
+        isSuperAdmin={isSuperAdmin}
+        page={page}
+        posts={postRows}
+        totalCount={totalCount}
+        userId={userId}
+      />
     </div>
   );
 }
