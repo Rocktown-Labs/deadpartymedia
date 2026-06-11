@@ -26,6 +26,7 @@ export interface Article {
     spotifyUrl?: string | null;
     spotifyArtistId?: string | null;
   }[];
+  tags?: string[];
   status: "draft" | "published" | "archived";
   published_at: string | null;
   views: number;
@@ -50,6 +51,7 @@ export interface ArticleList {
     slug: string;
     name: string;
   }[];
+  tags?: string[];
   published_at: string | null;
   views: number;
   comment_count?: number;

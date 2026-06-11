@@ -128,12 +128,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                   <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
                     {artist.image && (
                       <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden shrink-0 border border-gray-800 bg-[#0E0E0E]">
-                        <Image
-                          src={artist.image}
-                          alt={artist.name}
-                          fill
-                          className="object-cover"
-                        />
+                        <Image src={artist.image} alt={artist.name} fill className="object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 w-full">

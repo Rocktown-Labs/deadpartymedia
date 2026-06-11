@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { asc, inArray } from "drizzle-orm";
 import { createArtistProfileStub, createUserProfileStub } from "@/app/admin/users/actions";
+import { findDefaultBackfillAuthorId } from "@/lib/admin/wordpress-backfill";
 
 export default async function NewPostPage() {
   const { userId } = await auth();
@@ -42,12 +43,7 @@ export default async function NewPostPage() {
         )
     : [];
 
-  const pettyAuthor = authorOptions.find(
-    (opt) =>
-      opt.clerkId.toLowerCase().includes("pettyvandalism") ||
-      opt.name.toLowerCase().includes("pettyvandalism"),
-  );
-  const defaultAuthorId = pettyAuthor?.clerkId || userId;
+  const defaultAuthorId = findDefaultBackfillAuthorId(authorOptions, userId);
 
   return (
     <div>

@@ -373,11 +373,7 @@ export async function bulkUpdatePostStatus(formData: FormData) {
   }
 
   const statusInput = formData.get("status");
-  if (
-    statusInput !== "draft" &&
-    statusInput !== "published" &&
-    statusInput !== "archived"
-  ) {
+  if (statusInput !== "draft" && statusInput !== "published" && statusInput !== "archived") {
     throw new Error("Invalid post status");
   }
 

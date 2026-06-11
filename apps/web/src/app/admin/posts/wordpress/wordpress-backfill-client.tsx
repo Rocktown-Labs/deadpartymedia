@@ -52,6 +52,7 @@ import {
   importWordPressPostAction,
   syncExistingArtistsSpotifyAction,
 } from "./actions";
+import { findDefaultBackfillAuthorId } from "@/lib/admin/wordpress-backfill";
 import type { BackfillAnalysis } from "./actions";
 import type { SpotifyArtist } from "@/lib/api/artists";
 
@@ -67,6 +68,7 @@ interface WordPressPostFeedItem {
   authorSlug: string;
   coverImage: string | null;
   rawCategories: string[];
+  rawTags?: string[];
   importedPostId: number | null;
   localStatus: "draft" | "published" | "archived" | null;
 }
@@ -124,14 +126,8 @@ export default function WordpressBackfillClient({
   >({});
 
   // Bulk / Sync states
-  const pettyAuthor = authorOptions.find(
-    (opt) =>
-      opt.clerkId.toLowerCase().includes("pettyvandalism") ||
-      opt.name.toLowerCase().includes("pettyvandalism"),
-  );
-
   const [bulkAuthorId, setBulkAuthorId] = useState(
-    pettyAuthor?.clerkId || authorOptions[0]?.clerkId || "",
+    findDefaultBackfillAuthorId(authorOptions, authorOptions[0]?.clerkId || ""),
   );
   const [bulkStatus, setBulkStatus] = useState<"draft" | "published">("published");
   const [bulkLimit, setBulkLimit] = useState(40);
@@ -172,13 +168,17 @@ export default function WordpressBackfillClient({
     }
   }, [runs]);
 
-  const handleBulkBackfill = async () => {
+  const handleBulkBackfill = async (source: "wordpress" | "local_drafts" = "wordpress") => {
     if (!bulkAuthorId) {
       toast.error("Please select an author for bulk backfill.");
       return;
     }
     setIsBulkStarting(true);
-    const toastId = toast.loading("Starting WordPress backfill background workflow...");
+    const toastId = toast.loading(
+      source === "local_drafts"
+        ? "Starting local draft publishing workflow..."
+        : "Starting WordPress backfill background workflow...",
+    );
     try {
       const response = await fetch("/api/workflow/backfill", {
         method: "POST",
@@ -187,7 +187,8 @@ export default function WordpressBackfillClient({
           limit: bulkLimit,
           offset: bulkOffset,
           authorId: bulkAuthorId,
-          status: bulkStatus,
+          status: source === "local_drafts" ? "published" : bulkStatus,
+          source,
         }),
       });
 
@@ -273,12 +274,6 @@ export default function WordpressBackfillClient({
     setIsCoverStory(false);
 
     // Find default author that matches "pettyvandalism"
-    const pettyAuthor = authorOptions.find(
-      (opt) =>
-        opt.clerkId.toLowerCase().includes("pettyvandalism") ||
-        opt.name.toLowerCase().includes("pettyvandalism"),
-    );
-
     // Find default author that matches the post author slug
     const matchingAuthor = authorOptions.find(
       (opt) =>
@@ -286,7 +281,10 @@ export default function WordpressBackfillClient({
         opt.name.toLowerCase().includes(post.authorSlug.toLowerCase()),
     );
     setSelectedAuthorId(
-      pettyAuthor?.clerkId || matchingAuthor?.clerkId || authorOptions[0]?.clerkId || "",
+      findDefaultBackfillAuthorId(
+        authorOptions,
+        matchingAuthor?.clerkId || authorOptions[0]?.clerkId || "",
+      ),
     );
     setSelectedStatus(
       post.localStatus === "draft" || post.localStatus === "published"
@@ -400,6 +398,7 @@ export default function WordpressBackfillClient({
         sourceUrl: selectedPost.url,
         title: editedTitle,
         status: selectedStatus,
+        tags: selectedPost.rawTags || [],
       };
 
       const result = await importWordPressPostAction(payload);
@@ -515,7 +514,7 @@ export default function WordpressBackfillClient({
           <Button
             className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/95 text-black font-bold text-xs py-2 h-9 gap-2 mt-2"
             disabled={isBulkStarting}
-            onClick={handleBulkBackfill}
+            onClick={() => handleBulkBackfill("wordpress")}
           >
             {isBulkStarting ? (
               <>
@@ -526,6 +525,24 @@ export default function WordpressBackfillClient({
               <>
                 <Sparkles className="h-3.5 w-3.5" />
                 Start Background Backfill
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full border-[#7CFC00]/40 hover:bg-[#7CFC00]/10 text-white font-semibold text-xs py-2 h-9 gap-2"
+            disabled={isBulkStarting}
+            onClick={() => handleBulkBackfill("local_drafts")}
+          >
+            {isBulkStarting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5 text-[#7CFC00]" />
+                Publish Local Draft Imports
               </>
             )}
           </Button>

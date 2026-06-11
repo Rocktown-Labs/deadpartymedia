@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { posts, postArtists, artists, postImportSources } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { checkRole } from "@/lib/auth/roles";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -13,6 +13,7 @@ import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
+import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
 
 const backfillAnalysisSchema = z.object({
   category: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
@@ -176,8 +177,8 @@ ${cleanText.slice(0, 4000)}
 Perform the following tasks:
 1. Classify this post under one of our music categories: COUNTRY, EDM, HARDCORE & ROCK, HIP-HOP & R&B, or OTHER.
 2. Generate a concise, engaging summary/excerpt of the post in 2-3 sentences.
-3. Identify all music artists, bands, or DJs mentioned prominently in the post.
-4. For each detected artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
+3. Identify only the primary subject artist(s), band(s), or DJ(s) the article is about. Prefer artists named in the title, opening paragraph, and final call-to-action. Exclude artists mentioned only as inspirations, comparisons, influences, playlist references, or one-off examples.
+4. For each primary subject artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
 
   const { object } = await generateObject({
     model: google("gemini-3.5-flash"),
@@ -187,7 +188,9 @@ Perform the following tasks:
 
   const artistsMapping = [];
 
-  for (const artist of object.detectedArtists) {
+  const subjectArtists = selectPrimarySubjectArtists(title, contentHtml, object.detectedArtists);
+
+  for (const artist of subjectArtists) {
     // Try to find the artist in the local database by name (case-insensitive)
     const [existingArtist] = await db
       .select({ id: artists.id })
@@ -438,6 +441,14 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     }
 
     // 6. Revalidate
+    if (status === "published") {
+      revalidateTag("posts", "max");
+      revalidateTag("stats-monthly", "max");
+      if (artistIds.length > 0) {
+        revalidateTag("artists", "max");
+      }
+    }
+
     revalidatePath("/admin/posts");
     revalidatePath("/admin/posts/wordpress");
     revalidatePath("/");

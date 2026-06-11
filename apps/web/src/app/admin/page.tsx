@@ -56,7 +56,11 @@ export default async function AdminDashboard() {
               recentPosts.map((post) => (
                 <div key={post.id} className="border-b border-gray-800 pb-2">
                   <Link
-                    href={post.status === "published" ? `/article/${post.slug}` : `/admin/posts/${post.id}`}
+                    href={
+                      post.status === "published"
+                        ? `/article/${post.slug}`
+                        : `/admin/posts/${post.id}`
+                    }
                     className="group inline-block"
                   >
                     <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">
@@ -81,7 +85,11 @@ export default async function AdminDashboard() {
               recentEvents.map((event) => (
                 <div key={event.id} className="border-b border-gray-800 pb-2">
                   <Link
-                    href={event.status === "published" ? `/events/${event.slug}` : `/admin/events/${event.id}`}
+                    href={
+                      event.status === "published"
+                        ? `/events/${event.slug}`
+                        : `/admin/events/${event.id}`
+                    }
                     className="group inline-block"
                   >
                     <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">
@@ -100,4 +108,3 @@ export default async function AdminDashboard() {
     </div>
   );
 }
-

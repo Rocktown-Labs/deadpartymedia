@@ -24,6 +24,12 @@ export interface Artist {
   created_at: string;
 }
 
+export interface ArtistsPageResult {
+  count: number;
+  hasMore: boolean;
+  results: Artist[];
+}
+
 export interface OnboardArtistData {
   artistName: string;
   location: string;
@@ -58,6 +64,41 @@ export function useArtists(genre?: string) {
       return response.json();
     },
     queryKey: ["artists", genre],
+  });
+}
+
+export function useArtistsPage({
+  genre,
+  limit,
+  offset,
+  order = "asc",
+  sort = "name",
+}: {
+  genre?: string;
+  limit: number;
+  offset: number;
+  order?: "asc" | "desc";
+  sort?: "name" | "created_at";
+}) {
+  return useQuery<ArtistsPageResult>({
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+        order,
+        paginated: "true",
+        sort,
+      });
+      if (genre) {
+        params.set("genre", genre);
+      }
+      const response = await fetch(`/api/artists?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch artists");
+      }
+      return response.json();
+    },
+    queryKey: ["artists", "page", genre, limit, offset, sort, order],
   });
 }
 

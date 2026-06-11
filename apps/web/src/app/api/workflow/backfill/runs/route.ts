@@ -29,7 +29,7 @@ export async function GET() {
     console.error("Failed to fetch WordPress backfill runs:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -26,12 +26,16 @@ import {
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
-import { deleteArtist } from "./actions";
+import { deleteArtist, mergeArtistRecords } from "./actions";
 import { InviteArtistForm } from "./invite-artist-form";
 
 const ARTIST_SORT_FIELDS = ["name", "genre", "location", "claimed", "email", "createdAt"] as const;
 
 type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
+
+function normalizeDuplicateKey(name: string) {
+  return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
+}
 
 interface ArtistsSearchParams {
   order?: string;
@@ -96,10 +100,33 @@ export default async function ArtistsPage({
       .limit(ADMIN_PAGE_SIZE)
       .offset(offset),
   ]);
+  const duplicateCandidates = await db
+    .select({
+      claimed: artists.claimed,
+      createdAt: artists.createdAt,
+      id: artists.id,
+      name: artists.name,
+    })
+    .from(artists)
+    .orderBy(asc(artists.name), asc(artists.createdAt));
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
   const currentSearchParams = buildSearchParams(
     params as Record<string, string | string[] | undefined>,
+  );
+  const duplicateGroups = duplicateCandidates.reduce<Record<string, typeof duplicateCandidates>>(
+    (groups, artist) => {
+      const key = normalizeDuplicateKey(artist.name);
+      groups[key] = [...(groups[key] ?? []), artist];
+      return groups;
+    },
+    {},
+  );
+  const duplicateOptionsByArtistId = new Map(
+    duplicateCandidates.map((artist) => {
+      const group = duplicateGroups[normalizeDuplicateKey(artist.name)] ?? [];
+      return [artist.id, group.filter((candidate) => candidate.id !== artist.id)];
+    }),
   );
 
   return (
@@ -241,6 +268,34 @@ export default async function ArtistsPage({
                             description={`Are you sure you want to delete "${artist.name}"? This action cannot be undone.`}
                           />
                         )}
+                        {isSuperAdmin &&
+                          (duplicateOptionsByArtistId.get(artist.id)?.length ?? 0) > 0 && (
+                            <form
+                              action={mergeArtistRecords.bind(null, artist.id)}
+                              className="flex flex-wrap items-center gap-2"
+                            >
+                              <select
+                                name="targetArtistId"
+                                className="h-9 border border-yellow-500/40 bg-black px-2 text-xs text-yellow-100"
+                                aria-label={`Merge ${artist.name} into duplicate artist`}
+                              >
+                                {duplicateOptionsByArtistId.get(artist.id)?.map((candidate) => (
+                                  <option key={candidate.id} value={candidate.id}>
+                                    Merge into #{candidate.id}
+                                    {candidate.claimed ? " claimed" : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              <Button
+                                type="submit"
+                                variant="outline"
+                                size="sm"
+                                className="border-yellow-500/50 text-yellow-300"
+                              >
+                                Merge
+                              </Button>
+                            </form>
+                          )}
                       </div>
                     </TableCell>
                   </TableRow>

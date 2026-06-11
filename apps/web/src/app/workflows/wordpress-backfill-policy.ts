@@ -1,3 +1,1 @@
-export function shouldReprocessImportedPost(existingStatus: string) {
-  return existingStatus !== "published";
-}
+export { shouldReprocessImportedPost } from "@/lib/admin/wordpress-backfill";

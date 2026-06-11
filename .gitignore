@@ -76,4 +76,9 @@ docker-compose.override.yml
 .vercel
 .firecrawl/
 
+# Local/generated Codex and Expo artifacts
+.agents/skills/neon-postgres/
+.agents/skills/workflow-init/
+apps/mobile/
+
 # Terraform (removed - using Vercel now)

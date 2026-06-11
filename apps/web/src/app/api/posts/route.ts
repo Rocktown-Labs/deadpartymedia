@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         publishedAt: posts.publishedAt,
         slug: posts.slug,
         status: posts.status,
+        tags: posts.tags,
         title: posts.title,
         updatedAt: posts.updatedAt,
         views: posts.views,
@@ -145,6 +146,7 @@ export async function GET(request: NextRequest) {
         is_cover_story: post.isCoverStory,
         published_at: post.publishedAt?.toISOString() || post.createdAt.toISOString(),
         slug: post.slug,
+        tags: post.tags ?? [],
         title: post.title,
         views: post.views,
       };
