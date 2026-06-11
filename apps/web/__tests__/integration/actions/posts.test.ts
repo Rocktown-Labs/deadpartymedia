@@ -1,6 +1,7 @@
 import {
   createPost,
   updatePost,
+  bulkUpdatePostStatus,
   deletePost,
   requestDeletePost,
   approveDeletePost,
@@ -376,6 +377,74 @@ describe(updatePost, () => {
     formData.append("isCoverStory", "false");
 
     await expect(updatePost(1, formData)).rejects.toThrow("Unauthorized");
+  });
+});
+
+describe(bulkUpdatePostStatus, () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(auth).mockResolvedValue({ userId: "user_test123" } as any);
+    vi.mocked(canEdit).mockResolvedValue(true);
+
+    mockSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([
+          {
+            authorId: "user_test123",
+            id: 1,
+            publishedAt: null,
+            slug: "first-post",
+            status: "draft",
+          },
+          {
+            authorId: "user_test123",
+            id: 2,
+            publishedAt: new Date("2026-01-01T00:00:00Z"),
+            slug: "second-post",
+            status: "draft",
+          },
+        ]),
+      }),
+    });
+
+    mockSet.mockReturnValue({ where: vi.fn().mockResolvedValue(null) });
+    mockUpdate.mockReturnValue({ set: mockSet });
+  });
+
+  it("publishes selected posts when the user can edit every selected post", async () => {
+    const formData = new FormData();
+    formData.append("postIds", "1,2");
+    formData.append("status", "published");
+
+    await bulkUpdatePostStatus(formData);
+
+    expect(canEdit).toHaveBeenCalledTimes(2);
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "published",
+      }),
+    );
+  });
+
+  it("rejects bulk updates when any selected post is not editable", async () => {
+    vi.mocked(canEdit).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    const formData = new FormData();
+    formData.append("postIds", "1,2");
+    formData.append("status", "published");
+
+    await expect(bulkUpdatePostStatus(formData)).rejects.toThrow("Unauthorized");
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid target statuses", async () => {
+    const formData = new FormData();
+    formData.append("postIds", "1");
+    formData.append("status", "deleted");
+
+    await expect(bulkUpdatePostStatus(formData)).rejects.toThrow("Invalid post status");
+    expect(mockSelect).not.toHaveBeenCalled();
   });
 });
 
