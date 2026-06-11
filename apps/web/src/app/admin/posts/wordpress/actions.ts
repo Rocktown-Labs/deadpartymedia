@@ -9,14 +9,9 @@ import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
-
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.AI_GATEWAY_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
 
 const backfillAnalysisSchema = z.object({
   category: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
@@ -157,7 +152,10 @@ export async function analyzePostInternal(
   title: string,
   contentHtml: string,
 ): Promise<BackfillAnalysis> {
-  const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey =
+    process.env.AI_GATEWAY_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
       "Missing API key: Please configure GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or AI_GATEWAY_API_KEY in the environment.",
@@ -181,7 +179,7 @@ Perform the following tasks:
 4. For each detected artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
 
   const { object } = await generateObject({
-    model: google("gemini-1.5-flash"),
+    model: "google/gemini-3.5-flash",
     schema: backfillAnalysisSchema,
     prompt,
   });
@@ -444,9 +442,7 @@ export async function syncExistingArtistsSpotifyAction() {
       image: artists.image,
     })
     .from(artists)
-    .where(
-      sql`${artists.spotifyArtistId} IS NULL OR ${artists.spotifyArtistId} = ''`
-    );
+    .where(sql`${artists.spotifyArtistId} IS NULL OR ${artists.spotifyArtistId} = ''`);
 
   let updatedCount = 0;
   let skippedCount = 0;
@@ -479,5 +475,3 @@ export async function syncExistingArtistsSpotifyAction() {
     skippedCount,
   };
 }
-
-
