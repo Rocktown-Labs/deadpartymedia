@@ -9,6 +9,7 @@ import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
@@ -179,7 +180,7 @@ Perform the following tasks:
 4. For each detected artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
 
   const { object } = await generateObject({
-    model: "google/gemini-3.5-flash",
+    model: google("gemini-3.5-flash"),
     schema: backfillAnalysisSchema,
     prompt,
   });
