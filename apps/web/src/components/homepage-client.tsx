@@ -419,7 +419,7 @@ export default function HomepageClient({
             </div>
           )}
 
-          {articlesData.length > 12 && (
+          {articlesData.length > 3 && (
             <div className="text-center mt-16">
               <Link href="/music">
                 <Button className="bg-transparent border-2 border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black font-black tracking-wider uppercase px-12 py-6 text-sm">

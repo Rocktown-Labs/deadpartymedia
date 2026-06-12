@@ -8,7 +8,11 @@ import type { EventList } from "@/lib/api/events";
 import { useProducts } from "@/lib/api/products";
 
 export default function DeadPartyMedia() {
-  const { data: articles, isLoading: articlesLoading, error: articlesError } = useArticles();
+  const {
+    data: articles,
+    isLoading: articlesLoading,
+    error: articlesError,
+  } = useArticles(undefined, { limit: 12 });
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
   const {
     data: products,

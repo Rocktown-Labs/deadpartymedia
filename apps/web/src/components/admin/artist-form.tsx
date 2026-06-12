@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,12 +13,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { toast } from "sonner";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 import { SpotifySearch } from "@/components/spotify-search";
 import type { SpotifyArtist } from "@/lib/api/artists";
+import { ArrowLeft } from "lucide-react";
+import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface ArtistFormProps {
   initialData?: {
@@ -50,7 +51,6 @@ export function ArtistForm({
   cancelHref,
   isSubmitting = false,
 }: ArtistFormProps) {
-  const router = useRouter();
   const [name, setName] = useState(initialData?.name || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [bio, setBio] = useState(initialData?.bio || "");
@@ -67,6 +67,46 @@ export function ArtistForm({
   const [phoneNumber, setPhoneNumber] = useState(initialData?.phoneNumber || "");
   const [inviteArtist, setInviteArtist] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const initialSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        bio: initialData?.bio || "",
+        email: initialData?.email || "",
+        genre: initialData?.genre || "",
+        image: initialData?.image || "",
+        instagram: initialData?.instagram || "",
+        location: initialData?.location || "",
+        name: initialData?.name || "",
+        phoneNumber: initialData?.phoneNumber || "",
+        slug: initialData?.slug || "",
+        spotifyArtistId: initialData?.spotifyArtistId || "",
+        spotifyUrl: initialData?.spotifyUrl || "",
+        tiktok: initialData?.tiktok || "",
+        twitter: initialData?.twitter || "",
+        website: initialData?.website || "",
+      }),
+    [initialData],
+  );
+  const currentSnapshot = JSON.stringify({
+    bio,
+    email,
+    genre,
+    image,
+    instagram,
+    location,
+    name,
+    phoneNumber,
+    slug,
+    spotifyArtistId,
+    spotifyUrl,
+    tiktok,
+    twitter,
+    website,
+  });
+  const { UnsavedChangesDialog, navigateAway } = useUnsavedChangesGuard(
+    currentSnapshot !== initialSnapshot,
+    cancelHref,
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,6 +142,19 @@ export function ArtistForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {UnsavedChangesDialog}
+      <div className="flex items-center justify-between gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigateAway(cancelHref)}
+          className="gap-2 px-0 text-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]/80"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Artists
+        </Button>
+      </div>
+
       <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800 space-y-4">
         <h3 className="text-sm font-medium text-zinc-400">Spotify Integration</h3>
         <SpotifySearch
@@ -310,7 +363,7 @@ export function ArtistForm({
         <Button type="submit" disabled={isSubmitting || isSaving}>
           {isSubmitting || isSaving ? "Saving..." : "Save Artist"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
+        <Button type="button" variant="outline" onClick={() => navigateAway(cancelHref)}>
           Cancel
         </Button>
       </div>

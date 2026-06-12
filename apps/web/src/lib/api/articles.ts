@@ -58,18 +58,31 @@ export interface ArticleList {
   created_at: string;
 }
 
-export function buildPostsApiPath(category?: string) {
-  if (!category) {
-    return "/api/posts";
-  }
-
-  return `/api/posts?category=${encodeURIComponent(category)}`;
+interface UseArticlesOptions {
+  limit?: number;
+  offset?: number;
 }
 
-export function useArticles(category?: string) {
+export function buildPostsApiPath(category?: string, options: UseArticlesOptions = {}) {
+  const searchParams: string[] = [];
+  if (category) {
+    searchParams.push(`category=${encodeURIComponent(category)}`);
+  }
+  if (typeof options.limit === "number") {
+    searchParams.push(`limit=${encodeURIComponent(String(options.limit))}`);
+  }
+  if (typeof options.offset === "number") {
+    searchParams.push(`offset=${encodeURIComponent(String(options.offset))}`);
+  }
+
+  const query = searchParams.join("&");
+  return query ? `/api/posts?${query}` : "/api/posts";
+}
+
+export function useArticles(category?: string, options: UseArticlesOptions = {}) {
   return useQuery<ArticleList[]>({
     queryFn: async () => {
-      const response = await fetch(buildPostsApiPath(category));
+      const response = await fetch(buildPostsApiPath(category, options));
       const data = await response.json();
       // Handle pagination format: {results: [], count: 0}
       if (Array.isArray(data)) {
@@ -80,7 +93,7 @@ export function useArticles(category?: string) {
       }
       return [];
     },
-    queryKey: ["articles", category],
+    queryKey: ["articles", category, options.limit, options.offset],
   });
 }
 
