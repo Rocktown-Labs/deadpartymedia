@@ -1,4 +1,5 @@
 import {
+  findMatchingImportSource,
   findDefaultBackfillAuthorId,
   normalizeImportSourceUrl,
   normalizeImportTitle,
@@ -58,6 +59,51 @@ describe(normalizeImportTitle, () => {
     expect(normalizeImportTitle("“2001;” Growing up with Campocalyspe")).toBe(
       "2001growingupwithcampocalyspe",
     );
+  });
+});
+
+describe(findMatchingImportSource, () => {
+  const importRows = [
+    {
+      postId: 40,
+      sourceUrl: "https://deadpartymedia.wordpress.com/2026/02/02/the-hours-devour-us/",
+      title: "Learning to Let Go: Welcome to “The Hours Devour Us”",
+    },
+    {
+      postId: 41,
+      sourceUrl: "https://www.deadpartymedia.com/article/2001-growing-up-with-campocalyspe/",
+      title: "“2001;” Growing up with Campocalyspe",
+    },
+  ];
+
+  it("prefers exact source URL matches", () => {
+    expect(
+      findMatchingImportSource(
+        importRows,
+        "https://deadpartymedia.wordpress.com/2026/02/02/the-hours-devour-us/",
+        "Different Title",
+      )?.postId,
+    ).toBe(40);
+  });
+
+  it("matches older source URL variants after normalization", () => {
+    expect(
+      findMatchingImportSource(
+        importRows,
+        "https://deadpartymedia.com/article/2001-growing-up-with-campocalyspe",
+        "Different Title",
+      )?.postId,
+    ).toBe(41);
+  });
+
+  it("falls back to normalized titles when URLs differ", () => {
+    expect(
+      findMatchingImportSource(
+        importRows,
+        "https://public-api.wordpress.com/rest/unrelated",
+        '"2001" Growing up with Campocalyspe',
+      )?.postId,
+    ).toBe(41);
   });
 });
 
