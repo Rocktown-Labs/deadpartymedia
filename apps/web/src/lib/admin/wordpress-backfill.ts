@@ -4,6 +4,12 @@ interface AuthorOption {
   role?: string;
 }
 
+interface ImportSourceLookupRow {
+  postId: number;
+  sourceUrl: string | null;
+  title: string | null;
+}
+
 function normalizeLookupText(value: string) {
   return value.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
 }
@@ -28,6 +34,26 @@ export function normalizeImportSourceUrl(value: string | null | undefined) {
 
 export function normalizeImportTitle(value: string | null | undefined) {
   return normalizeLookupText(value ?? "");
+}
+
+export function findMatchingImportSource(
+  rows: ImportSourceLookupRow[],
+  sourceUrl: string,
+  title: string,
+) {
+  const exactMatch = rows.find((row) => row.sourceUrl === sourceUrl);
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const normalizedUrl = normalizeImportSourceUrl(sourceUrl);
+  const normalizedTitle = normalizeImportTitle(title);
+
+  return rows.find(
+    (row) =>
+      normalizeImportSourceUrl(row.sourceUrl) === normalizedUrl ||
+      normalizeImportTitle(row.title) === normalizedTitle,
+  );
 }
 
 export function findDefaultBackfillAuthorId(authorOptions: AuthorOption[], fallbackAuthorId = "") {

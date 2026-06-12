@@ -14,7 +14,11 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
 import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
-import { normalizeImportSourceUrl, normalizeImportTitle } from "@/lib/admin/wordpress-backfill";
+import {
+  findMatchingImportSource,
+  normalizeImportSourceUrl,
+  normalizeImportTitle,
+} from "@/lib/admin/wordpress-backfill";
 import { decodeHtmlEntities } from "@/lib/utils/html";
 
 const backfillAnalysisSchema = z.object({
@@ -339,12 +343,25 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     const publishedDate = new Date(sourcePublishedAt);
     const modifiedDate = sourceModifiedAt ? new Date(sourceModifiedAt) : publishedDate;
 
-    // Check if the post was already imported
-    const [existingImport] = await tx
-      .select({ postId: postImportSources.postId })
+    const importSourceValues = {
+      sourceAuthorSlug,
+      sourceCategoriesJson: JSON.stringify(rawCategories),
+      sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
+      sourcePublishedAt: publishedDate,
+      sourceUrl,
+      updatedAt: new Date(),
+    };
+
+    const importRows = await tx
+      .select({
+        postId: postImportSources.postId,
+        sourceUrl: postImportSources.sourceUrl,
+        title: posts.title,
+      })
       .from(postImportSources)
-      .where(eq(postImportSources.sourceUrl, sourceUrl))
-      .limit(1);
+      .leftJoin(posts, eq(postImportSources.postId, posts.id));
+
+    const existingImport = findMatchingImportSource(importRows, sourceUrl, title);
 
     let postId = existingImport?.postId ?? null;
     let postSlug = "";
@@ -360,16 +377,6 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
       if (existingPost) {
         postId = existingPost.id;
         postSlug = existingPost.slug;
-
-        // Insert a postImportSources record so we track it going forward
-        await tx.insert(postImportSources).values({
-          postId,
-          sourceAuthorSlug,
-          sourceCategoriesJson: JSON.stringify(rawCategories),
-          sourcePublishedAt: publishedDate,
-          sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
-          sourceUrl,
-        });
       }
     }
 
@@ -401,6 +408,17 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
 
       // Clear old Post-Artist relations
       await tx.delete(postArtists).where(eq(postArtists.postId, postId));
+
+      await tx
+        .insert(postImportSources)
+        .values({
+          postId,
+          ...importSourceValues,
+        })
+        .onConflictDoUpdate({
+          target: postImportSources.postId,
+          set: importSourceValues,
+        });
     } else {
       // 4b. Generate post slug and insert post
       postSlug = await resolveUniquePostSlug(title);
@@ -431,11 +449,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
       // Save Import Source record
       await tx.insert(postImportSources).values({
         postId,
-        sourceAuthorSlug,
-        sourceCategoriesJson: JSON.stringify(rawCategories),
-        sourcePublishedAt: publishedDate,
-        sourceModifiedAt: sourceModifiedAt ? new Date(sourceModifiedAt) : null,
-        sourceUrl,
+        ...importSourceValues,
       });
     }
 
