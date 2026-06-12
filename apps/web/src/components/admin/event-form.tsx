@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
 import { Badge } from "@/components/ui/badge";
-import { Upload, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import type { Route } from "next";
 import { toast } from "sonner";
 import { validateImageFile } from "@/lib/upload";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface EventFormProps {
   initialData?: {
@@ -55,7 +55,6 @@ export function EventForm({
   allowImageUrl = true,
   isSubmitting = false,
 }: EventFormProps) {
-  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [description, setDescription] = useState(initialData?.description || "");
@@ -78,6 +77,44 @@ export function EventForm({
   const [useImageUrl, setUseImageUrl] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const initialSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        artistIds: [...(initialData?.artistIds || [])].toSorted((a, b) => a - b),
+        date: initialData?.date || "",
+        description: initialData?.description || "",
+        genre: initialData?.genre || "",
+        image: initialData?.image || "",
+        location: initialData?.location || "",
+        price: initialData?.price || "",
+        slug: initialData?.slug || "",
+        status: initialData?.status || "draft",
+        ticketLink: initialData?.ticketLink || "",
+        time: initialData?.time || "",
+        title: initialData?.title || "",
+        venue: initialData?.venue || "",
+      }),
+    [initialData],
+  );
+  const currentSnapshot = JSON.stringify({
+    artistIds: [...selectedArtistIds].toSorted((a, b) => a - b),
+    date,
+    description,
+    genre,
+    image,
+    location,
+    price,
+    slug,
+    status,
+    ticketLink,
+    time,
+    title,
+    venue,
+  });
+  const { UnsavedChangesDialog, navigateAway } = useUnsavedChangesGuard(
+    currentSnapshot !== initialSnapshot,
+    cancelHref,
+  );
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
 
@@ -167,6 +204,19 @@ export function EventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {UnsavedChangesDialog}
+      <div className="flex items-center justify-between gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigateAway(cancelHref)}
+          className="gap-2 px-0 text-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]/80"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Events
+        </Button>
+      </div>
+
       <div>
         <Label htmlFor="title">Title</Label>
         <Input
@@ -448,7 +498,7 @@ export function EventForm({
               ? "Saving..."
               : "Save Event"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push(cancelHref)}>
+        <Button type="button" variant="outline" onClick={() => navigateAway(cancelHref)}>
           Cancel
         </Button>
       </div>

@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   X,
   Upload,
+  ArrowLeft,
   Bold,
   Italic,
   Strikethrough,
@@ -44,10 +45,10 @@ import {
 import { toast } from "sonner";
 import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
-import { useRouter } from "next/navigation";
 import type { Route } from "next";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface AuthorOption {
   clerkId: string;
@@ -365,7 +366,6 @@ export function PostEditor({
   allowCoverImageUrl = true,
   isSubmitting = false,
 }: PostEditorProps) {
-  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [category, setCategory] = useState(initialData?.category || "");
@@ -400,6 +400,25 @@ export function PostEditor({
   const normalizedInitialContent = useMemo(
     () => normalizeStoredPostContent(initialData?.content || ""),
     [initialData?.content],
+  );
+  const [editorContentSnapshot, setEditorContentSnapshot] = useState(
+    normalizedInitialContent.editorValue,
+  );
+  const initialSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        artistIds: [...(initialData?.artistIds || [])].toSorted((a, b) => a - b),
+        authorId: initialData?.authorId || "",
+        category: initialData?.category || "",
+        content: normalizedInitialContent.editorValue,
+        coverImage: initialData?.coverImage || "",
+        excerpt: initialData?.excerpt || "",
+        isCoverStory: initialData?.isCoverStory || false,
+        slug: initialData?.slug || "",
+        status: initialData?.status || "draft",
+        title: initialData?.title || "",
+      }),
+    [initialData, normalizedInitialContent.editorValue],
   );
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
@@ -444,6 +463,9 @@ export function PostEditor({
         },
       }),
     ],
+    onUpdate: ({ editor }) => {
+      setEditorContentSnapshot(editor.getJSON());
+    },
   });
 
   const handleImageUpload = async (
@@ -700,9 +722,38 @@ export function PostEditor({
   };
 
   const selectedArtists = allArtists.filter((artist) => selectedArtistIds.includes(artist.id));
+  const currentSnapshot = JSON.stringify({
+    artistIds: [...selectedArtistIds].toSorted((a, b) => a - b),
+    authorId: selectedAuthorId,
+    category,
+    content: editorContentSnapshot,
+    coverImage,
+    excerpt,
+    isCoverStory,
+    slug,
+    status,
+    title,
+  });
+  const { UnsavedChangesDialog, navigateAway } = useUnsavedChangesGuard(
+    currentSnapshot !== initialSnapshot,
+    cancelHref,
+  );
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {UnsavedChangesDialog}
+      <div className="lg:col-span-12">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => navigateAway(cancelHref)}
+          className="gap-2 px-0 text-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]/80"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Posts
+        </Button>
+      </div>
+
       {/* Left Column - Main Content */}
       <div className="lg:col-span-8 space-y-6">
         <div className="space-y-2">
@@ -824,7 +875,7 @@ export function PostEditor({
                 type="button"
                 variant="outline"
                 className="w-full border-zinc-800 hover:bg-zinc-800 text-zinc-300"
-                onClick={() => router.push(cancelHref)}
+                onClick={() => navigateAway(cancelHref)}
               >
                 Cancel
               </Button>

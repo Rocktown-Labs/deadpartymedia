@@ -16,7 +16,7 @@ const categoryRouteMap: Record<string, Route> = {
 };
 
 export default function MusicPage() {
-  const { data: allArticles, isLoading } = useArticles();
+  const { data: allArticles, isLoading } = useArticles(undefined, { limit: 100 });
 
   if (isLoading) {
     return (
