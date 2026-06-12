@@ -5,6 +5,7 @@ import { inArray, asc, eq } from "drizzle-orm";
 import { checkRole } from "@/lib/auth/roles";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { getOffsetFromPage, parsePageParam, buildSearchParams } from "@/lib/admin/table-state";
+import { normalizeImportSourceUrl, normalizeImportTitle } from "@/lib/admin/wordpress-backfill";
 import WordpressBackfillClient from "./wordpress-backfill-client";
 
 interface WordPressRestPost {
@@ -86,21 +87,31 @@ export default async function WordPressBackfillPage({ searchParams }: WordPressB
 
   // 3. Query already backfilled sources to match url status and local status (draft vs published)
   let importedUrlMap = new Map<string, { postId: number; status: string }>();
+  let importedTitleMap = new Map<string, { postId: number; status: string }>();
   try {
     const importedSources = await db
       .select({
         postId: postImportSources.postId,
         sourceUrl: postImportSources.sourceUrl,
         status: posts.status,
+        title: posts.title,
       })
       .from(postImportSources)
       .leftJoin(posts, eq(postImportSources.postId, posts.id));
 
     importedUrlMap = new Map(
       importedSources.map((row) => [
-        row.sourceUrl,
+        normalizeImportSourceUrl(row.sourceUrl),
         { postId: row.postId, status: row.status || "draft" },
       ]),
+    );
+    importedTitleMap = new Map(
+      importedSources
+        .filter((row) => row.title)
+        .map((row) => [
+          normalizeImportTitle(row.title),
+          { postId: row.postId, status: row.status || "draft" },
+        ]),
     );
   } catch (error) {
     console.error("Failed to query import sources:", error);
@@ -108,7 +119,9 @@ export default async function WordPressBackfillPage({ searchParams }: WordPressB
 
   // Map database post IDs and statuses to WordPress feed posts
   for (const post of wordpressPosts) {
-    const importInfo = importedUrlMap.get(post.url);
+    const importInfo =
+      importedUrlMap.get(normalizeImportSourceUrl(post.url)) ??
+      importedTitleMap.get(normalizeImportTitle(post.title));
     post.importedPostId = importInfo ? importInfo.postId : null;
     post.localStatus = importInfo ? importInfo.status : null;
   }

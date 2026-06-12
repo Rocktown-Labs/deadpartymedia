@@ -51,6 +51,7 @@ import {
   analyzeWordPressPostAction,
   importWordPressPostAction,
   syncExistingArtistsSpotifyAction,
+  syncPublishedWordPressTagsAction,
 } from "./actions";
 import { findDefaultBackfillAuthorId } from "@/lib/admin/wordpress-backfill";
 import type { BackfillAnalysis } from "./actions";
@@ -134,6 +135,7 @@ export default function WordpressBackfillClient({
   const [bulkOffset, setBulkOffset] = useState(0);
   const [isBulkStarting, setIsBulkStarting] = useState(false);
   const [isSyncingSpotify, setIsSyncingSpotify] = useState(false);
+  const [isSyncingTags, setIsSyncingTags] = useState(false);
   const [isDedupeStarting, setIsDedupeStarting] = useState(false);
 
   // Background Runs States
@@ -229,6 +231,27 @@ export default function WordpressBackfillClient({
       });
     } finally {
       setIsSyncingSpotify(false);
+    }
+  };
+
+  const handleSyncPublishedTags = async () => {
+    setIsSyncingTags(true);
+    const toastId = toast.loading("Syncing WordPress tags for published imports...");
+    try {
+      const result = await syncPublishedWordPressTagsAction();
+      if (result.success) {
+        toast.success(
+          `Tag sync completed! Checked ${result.total} WordPress posts, matched ${result.matchedCount}, updated ${result.updatedCount}.`,
+          { id: toastId, duration: 8000 },
+        );
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to sync WordPress tags", {
+        id: toastId,
+      });
+    } finally {
+      setIsSyncingTags(false);
     }
   };
 
@@ -543,6 +566,24 @@ export default function WordpressBackfillClient({
               <>
                 <Sparkles className="h-3.5 w-3.5 text-[#7CFC00]" />
                 Publish Local Draft Imports
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full border-blue-500/40 hover:bg-blue-500/10 text-white font-semibold text-xs py-2 h-9 gap-2"
+            disabled={isSyncingTags}
+            onClick={handleSyncPublishedTags}
+          >
+            {isSyncingTags ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 text-blue-400" />
+                Sync Published Tags
               </>
             )}
           </Button>
