@@ -14,6 +14,8 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
 import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
+import { normalizeImportSourceUrl, normalizeImportTitle } from "@/lib/admin/wordpress-backfill";
+import { decodeHtmlEntities } from "@/lib/utils/html";
 
 const backfillAnalysisSchema = z.object({
   category: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
@@ -97,6 +99,12 @@ export type BackfillAnalysis = z.infer<typeof backfillAnalysisSchema> & {
     spotifyImageUrl: string | null;
   }[];
 };
+
+interface WordPressTagsFeedItem {
+  title: string;
+  url: string;
+  rawTags: string[];
+}
 
 function slugify(text: string): string {
   return text
@@ -510,4 +518,133 @@ export async function syncExistingArtistsSpotifyAction() {
     updatedCount,
     skippedCount,
   };
+}
+
+export async function syncPublishedWordPressTagsAction() {
+  if (!(await checkRole("super_admin"))) {
+    throw new Error("Unauthorized: Only super admins can sync WordPress tags");
+  }
+
+  const wordpressPosts = await fetchAllWordPressTags();
+  const importedPosts = await db
+    .select({
+      postId: posts.id,
+      slug: posts.slug,
+      sourceUrl: postImportSources.sourceUrl,
+      status: posts.status,
+      tags: posts.tags,
+      title: posts.title,
+    })
+    .from(postImportSources)
+    .innerJoin(posts, eq(postImportSources.postId, posts.id));
+
+  const importedByUrl = new Map(
+    importedPosts.map((post) => [normalizeImportSourceUrl(post.sourceUrl), post]),
+  );
+  const importedByTitle = new Map(
+    importedPosts.map((post) => [normalizeImportTitle(post.title), post]),
+  );
+
+  let matchedCount = 0;
+  let updatedCount = 0;
+  let skippedCount = 0;
+  const touchedSlugs = new Set<string>();
+
+  for (const wordpressPost of wordpressPosts) {
+    const importedPost =
+      importedByUrl.get(normalizeImportSourceUrl(wordpressPost.url)) ??
+      importedByTitle.get(normalizeImportTitle(wordpressPost.title));
+
+    if (!importedPost || importedPost.status !== "published") {
+      skippedCount++;
+      continue;
+    }
+
+    matchedCount++;
+    const nextTags = normalizeTags(wordpressPost.rawTags);
+    const currentTags = normalizeTags(importedPost.tags ?? []);
+    if (sameTags(currentTags, nextTags)) {
+      continue;
+    }
+
+    await db
+      .update(posts)
+      .set({
+        tags: nextTags,
+        updatedAt: new Date(),
+      })
+      .where(eq(posts.id, importedPost.postId));
+
+    updatedCount++;
+    touchedSlugs.add(importedPost.slug);
+  }
+
+  revalidateTag("posts", "max");
+  revalidatePath("/");
+  revalidatePath("/music");
+  revalidatePath("/admin/posts");
+  revalidatePath("/admin/posts/wordpress");
+  for (const slug of touchedSlugs) {
+    revalidatePath(`/article/${slug}`);
+  }
+
+  return {
+    success: true,
+    total: wordpressPosts.length,
+    matchedCount,
+    updatedCount,
+    skippedCount,
+  };
+}
+
+async function fetchAllWordPressTags() {
+  const postsWithTags: WordPressTagsFeedItem[] = [];
+  const pageSize = 100;
+  let offset = 0;
+  let found = Number.POSITIVE_INFINITY;
+
+  while (offset < found && offset < 1000) {
+    const response = await fetch(
+      `https://public-api.wordpress.com/rest/v1.1/sites/deadpartymedia.wordpress.com/posts?number=${pageSize}&offset=${offset}`,
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch WordPress tags: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const feedPosts = Array.isArray(data.posts) ? data.posts : [];
+    found = typeof data.found === "number" ? data.found : offset + feedPosts.length;
+
+    postsWithTags.push(
+      ...feedPosts.map((post: any) => ({
+        title: decodeHtmlEntities(post.title || ""),
+        url: post.URL || "",
+        rawTags: Object.keys(post.tags || {}),
+      })),
+    );
+
+    if (feedPosts.length === 0) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  return postsWithTags;
+}
+
+function normalizeTags(tags: string[]) {
+  return [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))];
+}
+
+function sameTags(left: string[], right: string[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const sortedLeft = [...left].toSorted();
+  const sortedRight = [...right].toSorted();
+  return sortedLeft.every((tag, index) => tag === sortedRight[index]);
 }

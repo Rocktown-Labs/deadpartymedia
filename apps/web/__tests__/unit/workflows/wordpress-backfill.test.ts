@@ -1,5 +1,7 @@
 import {
   findDefaultBackfillAuthorId,
+  normalizeImportSourceUrl,
+  normalizeImportTitle,
   shouldReprocessImportedPost,
 } from "@/lib/admin/wordpress-backfill";
 import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
@@ -36,6 +38,26 @@ describe(findDefaultBackfillAuthorId, () => {
         "fallback",
       ),
     ).toBe("fallback");
+  });
+});
+
+describe(normalizeImportSourceUrl, () => {
+  it("normalizes protocol, www, case, and trailing slashes", () => {
+    expect(normalizeImportSourceUrl("HTTPS://www.DeadPartyMedia.com/article/test-post/")).toBe(
+      "deadpartymedia.com/article/test-post",
+    );
+  });
+
+  it("normalizes fallback URL-like strings", () => {
+    expect(normalizeImportSourceUrl("https://www.example.com/path/")).toBe("example.com/path");
+  });
+});
+
+describe(normalizeImportTitle, () => {
+  it("normalizes titles for imported post fallback matching", () => {
+    expect(normalizeImportTitle("“2001;” Growing up with Campocalyspe")).toBe(
+      "2001growingupwithcampocalyspe",
+    );
   });
 });
 

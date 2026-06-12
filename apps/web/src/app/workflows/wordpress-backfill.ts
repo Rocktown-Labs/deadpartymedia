@@ -6,7 +6,11 @@ import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { shouldReprocessImportedPost } from "@/lib/admin/wordpress-backfill";
+import {
+  normalizeImportSourceUrl,
+  normalizeImportTitle,
+  shouldReprocessImportedPost,
+} from "@/lib/admin/wordpress-backfill";
 import { decodeHtmlEntities } from "@/lib/utils/html";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 
@@ -215,11 +219,7 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
 
   try {
     // Check if the post is already imported
-    const [existingImport] = await db
-      .select({ postId: postImportSources.postId })
-      .from(postImportSources)
-      .where(eq(postImportSources.sourceUrl, post.url))
-      .limit(1);
+    const existingImport = await findExistingImportForPost(post.url, post.title);
 
     if (existingImport) {
       // Fetch the existing post status. Draft/archived imports still need the
@@ -332,6 +332,41 @@ async function processPostStep(post: any, authorId: string, status: "draft" | "p
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+async function findExistingImportForPost(sourceUrl: string, title: string) {
+  const exactMatches = await db
+    .select({
+      postId: postImportSources.postId,
+      sourceUrl: postImportSources.sourceUrl,
+      title: posts.title,
+    })
+    .from(postImportSources)
+    .leftJoin(posts, eq(postImportSources.postId, posts.id))
+    .where(eq(postImportSources.sourceUrl, sourceUrl))
+    .limit(1);
+
+  if (exactMatches[0]) {
+    return exactMatches[0];
+  }
+
+  const importRows = await db
+    .select({
+      postId: postImportSources.postId,
+      sourceUrl: postImportSources.sourceUrl,
+      title: posts.title,
+    })
+    .from(postImportSources)
+    .leftJoin(posts, eq(postImportSources.postId, posts.id));
+
+  const normalizedUrl = normalizeImportSourceUrl(sourceUrl);
+  const normalizedTitle = normalizeImportTitle(title);
+
+  return importRows.find(
+    (row) =>
+      normalizeImportSourceUrl(row.sourceUrl) === normalizedUrl ||
+      normalizeImportTitle(row.title) === normalizedTitle,
+  );
 }
 
 async function analyzeAndImportPost(post: any, authorId: string, status: "draft" | "published") {
