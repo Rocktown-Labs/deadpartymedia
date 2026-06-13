@@ -37,7 +37,7 @@ export default function MusicPage() {
   const ArticleCard = ({ article }: { article: ArticleList }) => (
     <Link href={`/article/${article.slug}`}>
       <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
-        <div className="relative overflow-hidden bg-[#111111] h-40">
+        <div className="relative h-52 overflow-hidden bg-[#111111]">
           <img
             src={article.cover_image || "/placeholder.svg"}
             alt={article.title}

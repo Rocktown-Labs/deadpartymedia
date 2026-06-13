@@ -25,13 +25,16 @@ export default function ArtistsPageClient() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const artistGenreFilter = filterGenre === "ALL" ? undefined : filterGenre;
-  const { data, isLoading } = useArtistsPage({
+  const { data, isFetching, isLoading, isPlaceholderData } = useArtistsPage({
     genre: artistGenreFilter,
     limit: visibleCount,
     offset: 0,
     order: sortOrder,
     sort: "name",
   });
+  const hasArtistsData = Boolean(data);
+  const isReplacingGrid =
+    (isLoading && !hasArtistsData) || (isPlaceholderData && visibleCount === INITIAL_PAGE_SIZE);
 
   const completeArtists = useMemo(
     () =>
@@ -52,7 +55,7 @@ export default function ArtistsPageClient() {
 
   useEffect(() => {
     const node = loadMoreRef.current;
-    if (!node || !data?.hasMore || isLoading) {
+    if (!node || !data?.hasMore || isFetching) {
       return;
     }
 
@@ -67,15 +70,7 @@ export default function ArtistsPageClient() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [data?.hasMore, isLoading]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
-  }
+  }, [data?.hasMore, isFetching]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -142,7 +137,11 @@ export default function ArtistsPageClient() {
 
           {/* Artists Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {completeArtists.length > 0 ? (
+            {isReplacingGrid ? (
+              Array.from({ length: INITIAL_PAGE_SIZE }).map((_, index) => (
+                <ArtistCardSkeleton key={`artist-skeleton-${index}`} />
+              ))
+            ) : completeArtists.length > 0 ? (
               completeArtists.map((artist) => (
                 <Link key={artist.id} href={`/artists/${artist.slug}`}>
                   <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-row md:flex-col group">
@@ -198,14 +197,42 @@ export default function ArtistsPageClient() {
           </div>
 
           <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
-            {data?.hasMore && (
+            {isFetching && hasArtistsData && !isReplacingGrid ? (
+              <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <ArtistCardSkeleton key={`append-skeleton-${index}`} compact />
+                ))}
+              </div>
+            ) : data?.hasMore ? (
               <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
                 Loading more artists
               </span>
-            )}
+            ) : null}
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function ArtistCardSkeleton({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="h-full overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">
+      <div className="flex h-full flex-row md:flex-col">
+        <div className="h-28 w-24 shrink-0 animate-pulse border-r border-gray-800 bg-gray-900 md:aspect-square md:h-auto md:w-full md:border-r-0 md:border-b" />
+        <div className="flex flex-1 flex-col gap-3 p-4 md:p-6">
+          <div className="h-5 w-2/3 animate-pulse rounded bg-gray-900" />
+          <div className="h-4 w-1/2 animate-pulse rounded bg-gray-900" />
+          {!compact && (
+            <>
+              <div className="h-3 w-full animate-pulse rounded bg-gray-900" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-gray-900" />
+            </>
+          )}
+          <div className="mt-auto h-px w-full bg-gray-800" />
+          <div className="h-3 w-3/4 animate-pulse rounded bg-gray-900" />
+        </div>
+      </div>
     </div>
   );
 }

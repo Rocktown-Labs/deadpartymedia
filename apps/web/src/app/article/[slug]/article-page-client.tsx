@@ -325,7 +325,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   alt={article.title}
                   width={800}
                   height={500}
-                  className="w-full h-96 object-cover rounded-lg"
+                  className="max-h-[80vh] w-full rounded-lg bg-black object-contain"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {article.artists.map((artist) => (
                       <Link key={artist.id} href={`/artists/${artist.slug}`}>
-                        <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer flex flex-row group h-32">
+                        <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer flex flex-row group min-h-36">
                           <div className="relative w-28 h-full overflow-hidden shrink-0 border-r border-gray-800">
                             <Image
                               src={artist.image || "/placeholder.svg"}
@@ -367,7 +367,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                               className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
-                          <div className="p-4 flex-1 flex flex-col justify-center min-w-0">
+                          <div className="p-5 flex-1 flex flex-col justify-center min-w-0">
                             <h4 className="text-base font-black mb-1 group-hover:text-[#7CFC00] transition-colors line-clamp-1">
                               {artist.name}
                             </h4>
@@ -375,7 +375,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                               <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
                               <span className="truncate">{artist.location || "Arkansas"}</span>
                             </div>
-                            <p className="text-xs text-gray-300 line-clamp-2">
+                            <p className="text-xs text-gray-300 line-clamp-3 leading-relaxed">
                               {artist.bio || "Profile pending update."}
                             </p>
                             {artist.spotifyUrl && (

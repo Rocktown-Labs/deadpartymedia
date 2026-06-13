@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 import type { EventList } from "./events";
 
@@ -81,6 +81,7 @@ export function useArtistsPage({
   sort?: "name" | "created_at";
 }) {
   return useQuery<ArtistsPageResult>({
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const params = new URLSearchParams({
         limit: String(limit),
