@@ -1,0 +1,1 @@
+ALTER TABLE "artists" ADD COLUMN "hidden" boolean DEFAULT false NOT NULL;

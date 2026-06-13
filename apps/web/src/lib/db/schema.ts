@@ -184,6 +184,7 @@ export const artists = pgTable("artists", {
   email: text("email"),
   phoneNumber: text("phone_number"),
   claimed: boolean("claimed").notNull().default(false),
+  hidden: boolean("hidden").notNull().default(false),
   // Clerk user ID of artist who claimed
   claimedById: text("claimed_by_id"),
   profileViews: integer("profile_views").notNull().default(0),

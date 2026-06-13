@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -32,6 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           AND events.status = 'published'
         )`.as("event_count"),
         genre: artists.genre,
+        hidden: artists.hidden,
         id: artists.id,
         image: artists.image,
         instagram: artists.instagram,
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         website: artists.website,
       })
       .from(artists)
-      .where(eq(artists.slug, slug))
+      .where(and(eq(artists.slug, slug), eq(artists.hidden, false)))
       .limit(1);
 
     if (!artist) {
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       created_at: artist.created_at.toISOString(),
       event_count: artist.event_count || 0,
       genre: artist.genre,
+      hidden: artist.hidden,
       id: artist.id,
       image: artist.image,
       instagram: artist.instagram,

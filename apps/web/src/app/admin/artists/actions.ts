@@ -241,6 +241,23 @@ export async function deleteArtist(id: number) {
   revalidatePath("/admin/artists");
 }
 
+export async function setArtistHidden(id: number, hidden: boolean) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canDelete())) {
+    throw new Error("Unauthorized: Only super admins can change artist visibility");
+  }
+
+  await db.update(artists).set({ hidden, updatedAt: new Date() }).where(eq(artists.id, id));
+
+  revalidateTag("artists", "max");
+  revalidatePath("/admin/artists");
+  revalidatePath("/artists");
+}
+
 export async function mergeArtistRecords(sourceArtistId: number, formData: FormData) {
   const { userId } = await auth();
   if (!userId) {
@@ -320,6 +337,7 @@ export async function mergeArtistRecords(sourceArtistId: number, formData: FormD
         claimed: targetArtist.claimed || sourceArtist.claimed,
         claimedById: targetArtist.claimedById || sourceArtist.claimedById,
         email: targetArtist.email || sourceArtist.email,
+        hidden: targetArtist.hidden && sourceArtist.hidden,
         image: targetArtist.image || sourceArtist.image,
         instagram: targetArtist.instagram || sourceArtist.instagram,
         phoneNumber: targetArtist.phoneNumber || sourceArtist.phoneNumber,

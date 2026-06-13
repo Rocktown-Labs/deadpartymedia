@@ -64,6 +64,13 @@
       "when": 1781140638210,
       "tag": "0008_gifted_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781386215791,
+      "tag": "0009_salty_champions",
+      "breakpoints": true
     }
   ]
 }

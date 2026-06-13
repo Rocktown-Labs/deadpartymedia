@@ -43,7 +43,14 @@ export default function ArtistsPageClient() {
           Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
         const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
         const hasImage = Boolean(artist.image?.trim());
-        return (artist.claimed && hasBio) || (hasSpotify && hasImage);
+        const hasOtherLink = Boolean(
+          artist.instagram?.trim() ||
+          artist.twitter?.trim() ||
+          artist.tiktok?.trim() ||
+          artist.website?.trim(),
+        );
+        const hasActivity = artist.article_count > 0 || artist.event_count > 0;
+        return hasImage && hasBio && (hasSpotify || hasOtherLink || hasActivity || artist.claimed);
       }),
     [data?.results],
   );
