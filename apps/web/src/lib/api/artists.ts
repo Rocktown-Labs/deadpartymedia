@@ -10,6 +10,7 @@ export interface Artist {
   image: string | null;
   location: string;
   genre: "COUNTRY" | "EDM" | "HARDCORE & ROCK" | "HIP-HOP & R&B" | "OTHER";
+  hidden: boolean;
   spotify_url: string | null;
   spotify_artist_id: string | null;
   instagram: string | null;

@@ -660,6 +660,7 @@ export function PostEditor({
           created_at: new Date().toISOString(),
           event_count: 0,
           genre: artist.genre as Artist["genre"],
+          hidden: false,
           id: artist.id,
           image: null,
           instagram: null,

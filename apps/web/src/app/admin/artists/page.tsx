@@ -27,7 +27,7 @@ import {
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { artists } from "@/lib/db/schema";
-import { deleteArtist, mergeArtistRecords } from "./actions";
+import { deleteArtist, mergeArtistRecords, setArtistHidden } from "./actions";
 import { InviteArtistForm } from "./invite-artist-form";
 
 const ARTIST_SORT_FIELDS = ["name", "genre", "location", "claimed", "email", "createdAt"] as const;
@@ -134,9 +134,16 @@ export default async function ArtistsPage({
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-black">Artists</h1>
-        <Link href="/admin/artists/new">
-          <Button>Create New Artist</Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {isSuperAdmin && (
+            <Link href="/admin/artists/import">
+              <Button variant="outline">Import Artist List</Button>
+            </Link>
+          )}
+          <Link href="/admin/artists/new">
+            <Button>Create New Artist</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">
@@ -252,6 +259,13 @@ export default async function ArtistsPage({
                       >
                         {artist.name}
                       </Link>
+                      {artist.hidden && (
+                        <div className="mt-1">
+                          <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
+                            Hidden
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-400">
                       {artist.genre}
@@ -281,6 +295,22 @@ export default async function ArtistsPage({
                         </Link>
                         {!artist.claimed && artist.email && (
                           <InviteArtistForm artistId={artist.id} email={artist.email} />
+                        )}
+                        {isSuperAdmin && (
+                          <form action={setArtistHidden.bind(null, artist.id, !artist.hidden)}>
+                            <Button
+                              type="submit"
+                              variant="outline"
+                              size="sm"
+                              className={
+                                artist.hidden
+                                  ? "border-green-500/50 text-green-300"
+                                  : "border-yellow-500/50 text-yellow-300"
+                              }
+                            >
+                              {artist.hidden ? "Unhide" : "Hide"}
+                            </Button>
+                          </form>
                         )}
                         {isSuperAdmin && (
                           <DeleteConfirm

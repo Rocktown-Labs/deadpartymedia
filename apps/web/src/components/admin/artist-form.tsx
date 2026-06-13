@@ -177,7 +177,8 @@ export function ArtistForm({
           }}
         />
         <p className="text-xs text-zinc-500">
-          Search for an artist to automatically sync their Spotify ID, URL, and profile image.
+          Optional. Search Spotify when the artist uses streaming, or leave it blank and use another
+          profile link below.
         </p>
       </div>
 
@@ -349,7 +350,7 @@ export function ArtistForm({
       </div>
 
       <div>
-        <Label htmlFor="website">Website URL</Label>
+        <Label htmlFor="website">Website / Bandcamp / SoundCloud / YouTube URL</Label>
         <Input
           id="website"
           type="url"

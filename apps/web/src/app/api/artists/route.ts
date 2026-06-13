@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const order = searchParams.get("order") === "asc" ? "asc" : "desc";
 
     // Build where conditions
-    const conditions = [];
+    const conditions = [eq(artists.hidden, false)];
     if (genre && isArtistGenre(genre)) {
       conditions.push(eq(artists.genre, genre));
     }
@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
           AND events.status = 'published'
         )`.as("event_count"),
         genre: artists.genre,
+        hidden: artists.hidden,
         id: artists.id,
         image: artists.image,
         instagram: artists.instagram,
@@ -120,6 +121,7 @@ export async function GET(request: NextRequest) {
         created_at: artist.created_at.toISOString(),
         event_count: artist.event_count || 0,
         genre: artist.genre,
+        hidden: artist.hidden,
         id: artist.id,
         image: artist.image,
         instagram: artist.instagram,
