@@ -103,8 +103,8 @@ export function EventPageClient({ slug }: EventPageClientProps) {
 
               {/* Event Image */}
               {event.image && (
-                <div className="relative h-96 md:h-125 rounded-lg overflow-hidden mb-8">
-                  <Image src={event.image} alt={event.title} fill className="object-cover" />
+                <div className="relative mb-8 flex max-h-[80vh] min-h-[320px] items-center justify-center overflow-hidden rounded-lg border border-gray-800 bg-black md:min-h-[560px]">
+                  <Image src={event.image} alt={event.title} fill className="object-contain" />
                 </div>
               )}
 

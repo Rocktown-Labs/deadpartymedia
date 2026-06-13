@@ -69,12 +69,12 @@ export default function EventsPage() {
             {displayEvents.map((event) => (
               <Link key={event.id} href={`/events/${event.slug}`}>
                 <article className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-col">
-                  <div className="relative h-64 overflow-hidden">
+                  <div className="relative h-72 overflow-hidden bg-black">
                     <Image
                       src={event.image || "/placeholder.svg"}
                       alt={event.title}
                       fill
-                      className="object-cover hover:scale-110 transition-transform duration-300"
+                      className="object-contain transition-transform duration-300 hover:scale-105"
                     />
                   </div>
                   <div className="p-6 flex-1 flex flex-col">
