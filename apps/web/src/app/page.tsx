@@ -5,6 +5,7 @@ import { useArticles } from "@/lib/api/articles";
 import type { ArticleList } from "@/lib/api/articles";
 import { useEvents } from "@/lib/api/events";
 import type { EventList } from "@/lib/api/events";
+import { isActiveEventDate } from "@/lib/events/date-state";
 import { useProducts } from "@/lib/api/products";
 
 export default function DeadPartyMedia() {
@@ -50,13 +51,7 @@ export default function DeadPartyMedia() {
 
   // Transform events for the homepage format
   const upcomingEvents: HomepageEvent[] = eventsArray
-    .filter((event) => {
-      try {
-        return new Date(event.date) >= new Date();
-      } catch {
-        return false;
-      }
-    })
+    .filter((event) => isActiveEventDate(event.date))
     .slice(0, 3)
     .map((event) => ({
       artist: (event.artists || []).map((artist) => artist.name).join(" & ") || "Various Artists",

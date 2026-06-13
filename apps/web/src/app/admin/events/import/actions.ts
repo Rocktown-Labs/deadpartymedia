@@ -6,7 +6,7 @@ import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { checkRole } from "@/lib/auth/roles";
+import { canCreate } from "@/lib/auth/access";
 import { db } from "@/lib/db";
 import { artists, eventArtists, events } from "@/lib/db/schema";
 import { eventSchema } from "@/lib/validations/event";
@@ -116,8 +116,8 @@ async function enrichEventAnalysis(
 }
 
 export async function analyzeEventFlyerAction(imageUrl: string): Promise<EventFlyerAnalysis> {
-  if (!(await checkRole("super_admin"))) {
-    throw new Error("Unauthorized: Only super admins can analyze event flyers");
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized: Only event creators can analyze event flyers");
   }
   requireAiKey();
 
@@ -135,9 +135,12 @@ export async function analyzeEventFlyerAction(imageUrl: string): Promise<EventFl
 
 Return only visible or strongly implied information. Use Arkansas/Little Rock context if the city is missing.
 For ambiguous dates without a visible year, choose the most plausible year near ${currentYear}; include a warning.
-Performing artists must be actual performers on the bill. Do not include venues, sponsors, vendors, presenters, record labels, age restrictions, or social handles as artists.
+Performing artists must be actual performers on the bill. Read stage names from lineups, names next to "with", "featuring", "and", stacked performer lists, and large billing text. Do not include venues, sponsors, vendors, presenters, record labels, age restrictions, prices, addresses, or social handles as artists.
+If the flyer says "Dead Party presents", do not treat Dead Party as a performer unless it is explicitly listed as an artist.
+If a name appears near a venue/address/date block only, treat it as a venue/vendor warning instead of a performer.
 If multiple events are shown, extract the primary flyer event and add a warning.
 Use date as YYYY-MM-DD and time as 24-hour HH:mm. Use an empty string for time if no time is visible.
+Infer a concise title from the headliner/event name and venue when no formal title exists.
 Use genre OTHER unless the flyer clearly indicates a music genre.`,
           },
           {
@@ -157,8 +160,8 @@ export async function createEventFromFlyerImportAction(formData: FormData) {
   if (!userId) {
     throw new Error("Unauthorized");
   }
-  if (!(await checkRole("super_admin"))) {
-    throw new Error("Unauthorized: Only super admins can create imported events");
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized: Only event creators can create imported events");
   }
 
   const rawDate = String(formData.get("date") ?? "");
@@ -253,4 +256,81 @@ export async function createEventFromFlyerImportAction(formData: FormData) {
     eventIsPast: isPastEventDate(validated.date),
     success: true,
   };
+}
+
+export async function createEventImportArtistStubAction(formData: FormData) {
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized: Only event creators can create artist stubs");
+  }
+
+  const displayName = String(formData.get("displayName") ?? "")
+    .trim()
+    .replaceAll(/\s+/g, " ")
+    .slice(0, 150);
+  if (!displayName) {
+    return { error: "Artist name is required", success: false };
+  }
+
+  const genreRaw = String(formData.get("genre") ?? "OTHER");
+  const genre = EVENT_GENRES.includes(genreRaw as (typeof EVENT_GENRES)[number])
+    ? (genreRaw as (typeof EVENT_GENRES)[number])
+    : "OTHER";
+  const location =
+    String(formData.get("location") ?? "")
+      .trim()
+      .replaceAll(/\s+/g, " ")
+      .slice(0, 150) || "Arkansas";
+
+  const [existingArtist] = await db
+    .select({
+      email: artists.email,
+      genre: artists.genre,
+      id: artists.id,
+      location: artists.location,
+      name: artists.name,
+    })
+    .from(artists)
+    .where(
+      sql`regexp_replace(lower(${artists.name}), '[^a-z0-9]', '', 'g') = ${normalizeName(displayName)}`,
+    )
+    .limit(1);
+
+  if (existingArtist) {
+    return { artist: existingArtist, success: true };
+  }
+
+  const slug = await ensureUniqueSlug(generateSlug(displayName), undefined, "artists");
+  const [artist] = await db
+    .insert(artists)
+    .values({
+      bio: "Profile pending update.",
+      claimed: false,
+      claimedById: null,
+      email: null,
+      genre,
+      image: null,
+      instagram: null,
+      location,
+      name: displayName,
+      phoneNumber: null,
+      slug,
+      spotifyArtistId: null,
+      spotifyUrl: null,
+      tiktok: null,
+      twitter: null,
+      website: null,
+    })
+    .returning({
+      email: artists.email,
+      genre: artists.genre,
+      id: artists.id,
+      location: artists.location,
+      name: artists.name,
+    });
+
+  revalidateTag("artists", "max");
+  revalidatePath("/admin/events/import");
+  revalidatePath("/artists");
+
+  return { artist, success: true };
 }

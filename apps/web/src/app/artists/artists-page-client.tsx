@@ -1,20 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useArtistsPage } from "@/lib/api/artists";
 import { PageTitleHeader } from "@/components/page-title-header";
 import { Spotify } from "@/components/ui/svgs/spotify";
-import { Button } from "@/components/ui/button";
 
-const PAGE_SIZE = 6;
+const INITIAL_PAGE_SIZE = 24;
+const PAGE_SIZE = 12;
+const genreFilters = [
+  { label: "ALL", value: "ALL" },
+  { label: "Country", value: "COUNTRY" },
+  { label: "EDM", value: "EDM" },
+  { label: "Hardcore & Rock", value: "HARDCORE & ROCK" },
+  { label: "Hip-Hop & R&B", value: "HIP-HOP & R&B" },
+  { label: "Other", value: "OTHER" },
+] as const;
 
 export default function ArtistsPageClient() {
   const [filterGenre, setFilterGenre] = useState<string>("ALL");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_PAGE_SIZE);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const artistGenreFilter = filterGenre === "ALL" ? undefined : filterGenre;
   const { data, isLoading } = useArtistsPage({
     genre: artistGenreFilter,
@@ -36,11 +45,29 @@ export default function ArtistsPageClient() {
     [data?.results],
   );
 
-  const genres = ["ALL", "Country", "EDM", "Hardcore & Rock", "Hip-Hop & R&B", "Other"];
   const resetGenre = (genre: string) => {
     setFilterGenre(genre);
-    setVisibleCount(PAGE_SIZE);
+    setVisibleCount(INITIAL_PAGE_SIZE);
   };
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !data?.hasMore || isLoading) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => count + PAGE_SIZE);
+        }
+      },
+      { rootMargin: "480px 0px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [data?.hasMore, isLoading]);
 
   if (isLoading) {
     return (
@@ -68,18 +95,18 @@ export default function ArtistsPageClient() {
           {/* Genre Filters */}
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {genres.map((genre) => (
+              {genreFilters.map((genre) => (
                 <button
-                  key={genre}
+                  key={genre.value}
                   type="button"
-                  onClick={() => resetGenre(genre)}
+                  onClick={() => resetGenre(genre.value)}
                   className={`px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${
-                    filterGenre === genre
+                    filterGenre === genre.value
                       ? "bg-[#7CFC00] text-black"
                       : "bg-[#111111] border border-gray-800 text-gray-400 hover:text-white"
                   }`}
                 >
-                  {genre}
+                  {genre.label}
                 </button>
               ))}
             </div>
@@ -88,7 +115,7 @@ export default function ArtistsPageClient() {
                 type="button"
                 onClick={() => {
                   setSortOrder("asc");
-                  setVisibleCount(PAGE_SIZE);
+                  setVisibleCount(INITIAL_PAGE_SIZE);
                 }}
                 className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
                   sortOrder === "asc" ? "bg-[#7CFC00] text-black" : "text-gray-400 hover:text-white"
@@ -100,7 +127,7 @@ export default function ArtistsPageClient() {
                 type="button"
                 onClick={() => {
                   setSortOrder("desc");
-                  setVisibleCount(PAGE_SIZE);
+                  setVisibleCount(INITIAL_PAGE_SIZE);
                 }}
                 className={`px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
                   sortOrder === "desc"
@@ -170,18 +197,13 @@ export default function ArtistsPageClient() {
             )}
           </div>
 
-          {data?.hasMore && (
-            <div className="mt-12 flex justify-center">
-              <Button
-                type="button"
-                variant="outline"
-                className="border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black"
-                onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-              >
-                Load 6 More
-              </Button>
-            </div>
-          )}
+          <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
+            {data?.hasMore && (
+              <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                Loading more artists
+              </span>
+            )}
+          </div>
         </div>
       </main>
     </div>

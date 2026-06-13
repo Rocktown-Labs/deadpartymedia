@@ -79,6 +79,10 @@ function statusLabel(status: QueueStatus) {
   return status.replaceAll("_", " ");
 }
 
+function isTerminalStatus(status: QueueStatus) {
+  return status === "needs_review" || status === "approved" || status === "failed";
+}
+
 function buildItemFromAnalysis(item: QueueItem, analysis: EventFlyerAnalysis): QueueItem {
   return {
     ...item,
@@ -108,14 +112,32 @@ export default function EventFlyerImportClient({
   const [items, setItems] = useState<QueueItem[]>([]);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [activeSpotifyName, setActiveSpotifyName] = useState<string | null>(null);
 
   const activeItem = items.find((item) => item.id === activeItemId) ?? items[0] ?? null;
+  const activeItemIndex = activeItem ? items.findIndex((item) => item.id === activeItem.id) : -1;
   const selectedArtists = useMemo(() => {
     if (!activeItem) {
       return [];
     }
     return artists.filter((artist) => activeItem.fields.artistIds.includes(artist.id));
   }, [activeItem, artists]);
+  const completedCount = items.filter((item) => isTerminalStatus(item.status)).length;
+  const progressPercent = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
+  const statusCounts = items.reduce<Record<QueueStatus, number>>(
+    (counts, item) => {
+      counts[item.status] += 1;
+      return counts;
+    },
+    {
+      approved: 0,
+      analyzing: 0,
+      failed: 0,
+      needs_review: 0,
+      queued: 0,
+      uploading: 0,
+    },
+  );
 
   const updateItem = (id: string, updater: (item: QueueItem) => QueueItem) => {
     setItems((previous) => previous.map((item) => (item.id === id ? updater(item) : item)));
@@ -133,6 +155,11 @@ export default function EventFlyerImportClient({
         [field]: value,
       },
     }));
+  };
+
+  const setActiveItem = (itemId: string) => {
+    setActiveItemId(itemId);
+    setActiveSpotifyName(null);
   };
 
   const uploadImage = async (file: File) => {
@@ -294,6 +321,12 @@ export default function EventFlyerImportClient({
     try {
       const result = await createEventFromFlyerImportAction(formData);
       updateItem(activeItem.id, (item) => ({ ...item, status: "approved" }));
+      const nextItem =
+        items.slice(activeItemIndex + 1).find((item) => item.status !== "approved") ??
+        items.find((item) => item.status !== "approved" && item.id !== activeItem.id);
+      if (nextItem) {
+        setActiveItem(nextItem.id);
+      }
       toast.success(
         result.eventIsPast
           ? "Past event published and will appear under Past."
@@ -351,12 +384,33 @@ export default function EventFlyerImportClient({
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-          <div className="space-y-3">
+          <div className="space-y-3 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-lg border border-gray-800 bg-[#111111] p-4">
+              <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-gray-400">
+                <span>Batch Progress</span>
+                <span>
+                  {completedCount}/{items.length}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-gray-900">
+                <div
+                  className="h-full bg-[#7CFC00] transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] uppercase tracking-wider text-gray-500">
+                <span>{statusCounts.uploading} uploading</span>
+                <span>{statusCounts.analyzing} analyzing</span>
+                <span>{statusCounts.needs_review} review</span>
+                <span>{statusCounts.approved} approved</span>
+                <span>{statusCounts.failed} failed</span>
+              </div>
+            </div>
             {items.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setActiveItemId(item.id)}
+                onClick={() => setActiveItem(item.id)}
                 className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
                   activeItem?.id === item.id
                     ? "border-[#7CFC00] bg-[#7CFC00]/10"
@@ -382,7 +436,18 @@ export default function EventFlyerImportClient({
           </div>
 
           {activeItem && (
-            <div className="rounded-lg border border-gray-800 bg-[#111111] p-5">
+            <div className="rounded-lg border border-gray-800 bg-[#111111] p-4 sm:p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 pb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-gray-500">
+                    Flyer {activeItemIndex + 1} of {items.length}
+                  </p>
+                  <h2 className="text-lg font-black">{activeItem.fileName}</h2>
+                </div>
+                <Badge variant="outline" className="uppercase">
+                  {statusLabel(activeItem.status)}
+                </Badge>
+              </div>
               <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
                 <div className="space-y-4">
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-800 bg-black">
@@ -561,6 +626,18 @@ export default function EventFlyerImportClient({
                                 type="button"
                                 variant="outline"
                                 size="sm"
+                                onClick={() =>
+                                  setActiveSpotifyName((current) =>
+                                    current === name ? null : name,
+                                  )
+                                }
+                              >
+                                {activeSpotifyName === name ? "Close Search" : "Find Spotify"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
                                 onClick={() => createArtistStub(name)}
                               >
                                 Create Stub
@@ -575,10 +652,12 @@ export default function EventFlyerImportClient({
                               </Button>
                             </div>
                           </div>
-                          <SpotifySearch
-                            value={name}
-                            onSelect={(spotifyArtist) => createArtistStub(name, spotifyArtist)}
-                          />
+                          {activeSpotifyName === name && (
+                            <SpotifySearch
+                              value={name}
+                              onSelect={(spotifyArtist) => createArtistStub(name, spotifyArtist)}
+                            />
+                          )}
                         </div>
                       ))}
                   </div>

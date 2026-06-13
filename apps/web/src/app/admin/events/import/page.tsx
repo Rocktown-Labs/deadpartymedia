@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
-import { checkRole } from "@/lib/auth/roles";
-import { createArtistProfileStub } from "@/app/admin/users/actions";
+import { canCreate } from "@/lib/auth/access";
+import { createEventImportArtistStubAction } from "./actions";
 import EventFlyerImportClient from "./event-flyer-import-client";
 
 export default async function EventFlyerImportPage() {
-  const isSuperAdmin = await checkRole("super_admin");
-  if (!isSuperAdmin) {
+  if (!(await canCreate())) {
     redirect("/admin/events");
   }
 
-  return <EventFlyerImportClient onCreateArtistStub={createArtistProfileStub} />;
+  return <EventFlyerImportClient onCreateArtistStub={createEventImportArtistStubAction} />;
 }

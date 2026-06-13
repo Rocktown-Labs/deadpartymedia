@@ -109,7 +109,7 @@ export default async function EventsPage({
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-black">Events</h1>
         <div className="flex flex-wrap gap-3">
-          {isSuperAdmin && (
+          {(isSuperAdmin || isWriter) && (
             <Link href="/admin/events/import">
               <Button variant="outline">AI Flyer Import</Button>
             </Link>
