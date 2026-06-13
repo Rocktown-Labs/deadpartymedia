@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEvents } from "@/lib/api/events";
+import { isActiveEventDate, isPastEventDateKey } from "@/lib/events/date-state";
 import { PageTitleHeader } from "@/components/page-title-header";
 
 export default function EventsPage() {
@@ -19,9 +20,8 @@ export default function EventsPage() {
     );
   }
 
-  const now = new Date();
-  const upcomingEvents = (events || []).filter((event) => new Date(event.date) >= now);
-  const pastEvents = (events || []).filter((event) => new Date(event.date) < now);
+  const upcomingEvents = (events || []).filter((event) => isActiveEventDate(event.date));
+  const pastEvents = (events || []).filter((event) => isPastEventDateKey(event.date));
 
   const displayEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents;
 
@@ -68,7 +68,7 @@ export default function EventsPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {displayEvents.map((event) => (
               <Link key={event.id} href={`/events/${event.slug}`}>
-                <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-col">
+                <article className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-col">
                   <div className="relative h-64 overflow-hidden">
                     <Image
                       src={event.image || "/placeholder.svg"}
@@ -93,14 +93,16 @@ export default function EventsPage() {
                     </div>
                     {event.artists && event.artists.length > 0 && (
                       <div className="mt-auto pt-4 border-t border-gray-800">
-                        <p className="text-xs text-gray-500 mb-1">Featuring:</p>
-                        <p className="text-sm text-gray-300">
-                          {event.artists.map((a) => a.name).join(", ")}
+                        <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+                          Featuring
+                        </p>
+                        <p className="min-h-[2.5rem] text-sm leading-5 text-gray-300 line-clamp-2">
+                          {event.artists.map((artist) => artist.name).join(", ")}
                         </p>
                       </div>
                     )}
                   </div>
-                </div>
+                </article>
               </Link>
             ))}
           </div>

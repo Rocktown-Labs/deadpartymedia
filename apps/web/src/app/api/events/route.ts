@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { events, eventArtists, artists } from "@/lib/db/schema";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, gte, lt } from "drizzle-orm";
+import { getLocalDateKey } from "@/lib/events/date-state";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -20,13 +21,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
     const status = searchParams.get("status");
-    const limit = Number.parseInt(searchParams.get("limit") || "10", 10);
+    const limit = Number.parseInt(searchParams.get("limit") || "100", 10);
     const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
 
     // Build where conditions
     const conditions = [eq(events.status, "published")];
     if (genre && isEventGenre(genre)) {
       conditions.push(eq(events.genre, genre));
+    }
+    const today = getLocalDateKey();
+    if (status === "upcoming") {
+      conditions.push(gte(events.date, today));
+    } else if (status === "past") {
+      conditions.push(lt(events.date, today));
     }
 
     const results = await db
@@ -37,17 +44,8 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Filter by date if status is specified
-    const now = new Date();
-    let filteredResults = results;
-    if (status === "upcoming") {
-      filteredResults = results.filter((event) => new Date(event.date) >= now);
-    } else if (status === "past") {
-      filteredResults = results.filter((event) => new Date(event.date) < now);
-    }
-
     // Get artist relations for all events
-    const eventIds = filteredResults.map((event) => event.id);
+    const eventIds = results.map((event) => event.id);
     const artistRelations: Record<
       number,
       {
@@ -82,7 +80,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform to match existing EventList interface
-    const eventList = filteredResults.map((event) => {
+    const eventList = results.map((event) => {
       const eventArtistsData = artistRelations[event.id] || [];
       return {
         artists: eventArtistsData.map((a) => ({
