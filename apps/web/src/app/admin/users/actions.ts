@@ -128,14 +128,14 @@ export async function inviteUser(
       publicMetadata.onboardingComplete = true;
     }
 
-    const invitation = await client.invitations.createInvitation({
+    await client.invitations.createInvitation({
       emailAddress: validatedData.email,
       publicMetadata,
       redirectUrl: buildInvitationRedirectUrl(redirectUrl || defaultRedirectUrl),
     });
 
     revalidatePath("/admin/users");
-    return { invitation, success: true };
+    return { success: true };
   } catch (error) {
     return {
       error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to send invitation"),

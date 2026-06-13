@@ -97,6 +97,7 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastInitializedValueRef = useRef<string | null>(null);
 
   // Handle fetched artist from URL (paste or value prop)
 
@@ -160,8 +161,6 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
       setSearchQuery(newValue);
       // Clear any pending paste
       setPastedArtistId(null);
-      // Allow re-initialization if needed
-      setHasInitializedFromValue(false);
 
       // Show dropdown if query is long enough or if user is typing
 
@@ -206,6 +205,14 @@ export function SpotifySearch({ value, onSelect, className }: SpotifySearchProps
   }, []);
 
   // Initialize from value prop (only once on mount or when value changes)
+
+  useEffect(() => {
+    const nextValue = value ?? null;
+    if (nextValue !== lastInitializedValueRef.current) {
+      lastInitializedValueRef.current = nextValue;
+      setHasInitializedFromValue(false);
+    }
+  }, [value]);
 
   useEffect(() => {
     if (value && !hasInitializedFromValue && !selectedArtist) {
