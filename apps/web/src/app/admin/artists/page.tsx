@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -144,6 +145,11 @@ export default async function ArtistsPage({
             <TableHeader className="bg-[#0A0A0A]">
               <TableRow className="border-gray-800 hover:bg-transparent">
                 <TableHead>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                    Image
+                  </span>
+                </TableHead>
+                <TableHead>
                   <AdminSortHeader
                     currentOrder={order}
                     currentSort={params.sort}
@@ -217,13 +223,28 @@ export default async function ArtistsPage({
             <TableBody>
               {allArtists.length === 0 ? (
                 <TableRow className="border-gray-800">
-                  <TableCell colSpan={7} className="px-6 py-4 text-center text-gray-400">
+                  <TableCell colSpan={8} className="px-6 py-4 text-center text-gray-400">
                     No artists found
                   </TableCell>
                 </TableRow>
               ) : (
                 allArtists.map((artist) => (
                   <TableRow key={artist.id} className="border-gray-800 hover:bg-gray-900">
+                    <TableCell className="px-6 py-3">
+                      <Link
+                        href={`/admin/artists/${artist.id}`}
+                        className="block h-11 w-11 overflow-hidden rounded-md border border-gray-800 bg-[#0A0A0A]"
+                        aria-label={`Edit ${artist.name}`}
+                      >
+                        <Image
+                          src={artist.image || "/placeholder.svg"}
+                          alt=""
+                          width={44}
+                          height={44}
+                          className="h-full w-full object-cover object-top"
+                        />
+                      </Link>
+                    </TableCell>
                     <TableCell className="px-6 py-4">
                       <Link
                         href={`/admin/artists/${artist.id}`}

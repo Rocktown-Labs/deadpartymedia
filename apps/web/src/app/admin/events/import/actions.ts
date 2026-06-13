@@ -280,6 +280,18 @@ export async function createEventImportArtistStubAction(formData: FormData) {
       .trim()
       .replaceAll(/\s+/g, " ")
       .slice(0, 150) || "Arkansas";
+  const spotifyArtistId =
+    String(formData.get("spotifyArtistId") ?? "")
+      .trim()
+      .slice(0, 150) || null;
+  const spotifyUrl =
+    String(formData.get("spotifyUrl") ?? "")
+      .trim()
+      .slice(0, 500) || null;
+  const image =
+    String(formData.get("image") ?? "")
+      .trim()
+      .slice(0, 1000) || null;
 
   const [existingArtist] = await db
     .select({
@@ -308,14 +320,14 @@ export async function createEventImportArtistStubAction(formData: FormData) {
       claimedById: null,
       email: null,
       genre,
-      image: null,
+      image,
       instagram: null,
       location,
       name: displayName,
       phoneNumber: null,
       slug,
-      spotifyArtistId: null,
-      spotifyUrl: null,
+      spotifyArtistId,
+      spotifyUrl,
       tiktok: null,
       twitter: null,
       website: null,

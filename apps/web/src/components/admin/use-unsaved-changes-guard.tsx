@@ -31,6 +31,54 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
+  useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+
+    const guardedUrl = window.location.href;
+
+    const handlePopState = () => {
+      window.history.pushState({ adminUnsavedGuard: true }, "", guardedUrl);
+      setPendingHref(fallbackHref);
+    };
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const target = event.target instanceof Element ? event.target : null;
+      const anchor = target?.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.target || anchor.hasAttribute("download")) {
+        return;
+      }
+
+      const nextUrl = new URL(anchor.href, window.location.href);
+      if (nextUrl.origin !== window.location.origin || nextUrl.href === window.location.href) {
+        return;
+      }
+
+      event.preventDefault();
+      setPendingHref(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}` as Route);
+    };
+
+    window.history.pushState({ adminUnsavedGuard: true }, "", guardedUrl);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("click", handleDocumentClick, true);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, [fallbackHref, isDirty]);
+
   const navigateAway = useCallback(
     (href: Route = fallbackHref) => {
       if (isDirty) {

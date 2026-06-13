@@ -113,6 +113,7 @@ export default function EventFlyerImportClient({
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
   const [activeSpotifyName, setActiveSpotifyName] = useState<string | null>(null);
+  const [artistSearchQuery, setArtistSearchQuery] = useState("");
 
   const activeItem = items.find((item) => item.id === activeItemId) ?? items[0] ?? null;
   const activeItemIndex = activeItem ? items.findIndex((item) => item.id === activeItem.id) : -1;
@@ -122,6 +123,20 @@ export default function EventFlyerImportClient({
     }
     return artists.filter((artist) => activeItem.fields.artistIds.includes(artist.id));
   }, [activeItem, artists]);
+  const artistSearchResults = useMemo(() => {
+    const query = artistSearchQuery.trim().toLowerCase();
+    if (query.length < 2) {
+      return [];
+    }
+
+    return artists
+      .filter((artist) => {
+        const searchable = [artist.name, artist.genre, artist.location].join(" ").toLowerCase();
+        return searchable.includes(query);
+      })
+      .slice(0, 8);
+  }, [artistSearchQuery, artists]);
+  const manualArtistName = artistSearchQuery.trim();
   const completedCount = items.filter((item) => isTerminalStatus(item.status)).length;
   const progressPercent = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0;
   const statusCounts = items.reduce<Record<QueueStatus, number>>(
@@ -160,6 +175,7 @@ export default function EventFlyerImportClient({
   const setActiveItem = (itemId: string) => {
     setActiveItemId(itemId);
     setActiveSpotifyName(null);
+    setArtistSearchQuery("");
   };
 
   const uploadImage = async (file: File) => {
@@ -274,6 +290,11 @@ export default function EventFlyerImportClient({
     formData.append("displayName", spotifyArtist?.name || name);
     formData.append("genre", activeItem.fields.genre);
     formData.append("location", activeItem.fields.location || "Arkansas");
+    if (spotifyArtist) {
+      formData.append("spotifyArtistId", spotifyArtist.id);
+      formData.append("spotifyUrl", spotifyArtist.external_urls.spotify);
+      formData.append("image", spotifyArtist.images[0]?.url || "");
+    }
 
     const result = await onCreateArtistStub(formData);
     if (!result.success || !result.artist) {
@@ -287,6 +308,8 @@ export default function EventFlyerImportClient({
       ...activeItem.fields.ignoredArtistNames,
       name,
     ]);
+    setActiveSpotifyName(null);
+    setArtistSearchQuery("");
     toast.success(`Added ${result.artist.name}`);
   };
 
@@ -576,10 +599,10 @@ export default function EventFlyerImportClient({
                   </div>
 
                   <div className="space-y-3 rounded-lg border border-gray-800 p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                       <h2 className="font-black">Performing Artists</h2>
                       <span className="text-xs text-gray-500">
-                        Select existing, create stubs, or ignore vendors/sponsors.
+                        Match performers to saved artists, Spotify, or a new profile.
                       </span>
                     </div>
                     {selectedArtists.length > 0 && (
@@ -599,20 +622,77 @@ export default function EventFlyerImportClient({
                       </div>
                     )}
 
-                    <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-gray-900 p-2">
-                      {artists.map((artist) => (
-                        <label
-                          key={artist.id}
-                          className="flex cursor-pointer items-center gap-2 rounded p-2 text-sm hover:bg-gray-900"
-                        >
-                          <Checkbox
-                            checked={activeItem.fields.artistIds.includes(artist.id)}
-                            onCheckedChange={(checked) => toggleArtist(artist.id, checked === true)}
-                          />
-                          <span>{artist.name}</span>
-                          <span className="text-xs text-gray-500">{artist.genre}</span>
-                        </label>
-                      ))}
+                    <div className="rounded border border-gray-900 p-3">
+                      <Label htmlFor="artist-search">Search Saved Artists</Label>
+                      <Input
+                        id="artist-search"
+                        value={artistSearchQuery}
+                        onChange={(event) => setArtistSearchQuery(event.target.value)}
+                        placeholder="Type an artist name, genre, or city..."
+                        className="mt-2"
+                      />
+                      {artistSearchQuery.trim().length > 0 && (
+                        <div className="mt-3 max-h-56 space-y-2 overflow-y-auto">
+                          {artistSearchResults.length > 0 ? (
+                            artistSearchResults.map((artist) => (
+                              <label
+                                key={artist.id}
+                                className="flex cursor-pointer items-center gap-2 rounded border border-gray-900 p-2 text-sm hover:bg-gray-900"
+                              >
+                                <Checkbox
+                                  checked={activeItem.fields.artistIds.includes(artist.id)}
+                                  onCheckedChange={(checked) =>
+                                    toggleArtist(artist.id, checked === true)
+                                  }
+                                />
+                                <span className="font-medium">{artist.name}</span>
+                                <span className="text-xs text-gray-500">{artist.genre}</span>
+                              </label>
+                            ))
+                          ) : (
+                            <p className="rounded border border-gray-900 p-3 text-sm text-gray-500">
+                              No saved artists found for "{manualArtistName}".
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {manualArtistName.length >= 2 && (
+                        <div className="mt-3 rounded border border-gray-900 p-3">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm text-gray-400">
+                              Need to add "{manualArtistName}"?
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActiveSpotifyName(`manual:${manualArtistName}`)}
+                              >
+                                Find on Spotify
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => createArtistStub(manualArtistName)}
+                              >
+                                Add New Artist
+                              </Button>
+                            </div>
+                          </div>
+                          {activeSpotifyName === `manual:${manualArtistName}` && (
+                            <div className="mt-3">
+                              <SpotifySearch
+                                value={manualArtistName}
+                                onSelect={(spotifyArtist) =>
+                                  createArtistStub(manualArtistName, spotifyArtist)
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {(activeItem.analysis?.unmatchedArtists ?? [])
@@ -622,6 +702,14 @@ export default function EventFlyerImportClient({
                           <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="text-sm font-bold">{name}</span>
                             <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setArtistSearchQuery(name)}
+                              >
+                                Search Saved
+                              </Button>
                               <Button
                                 type="button"
                                 variant="outline"
@@ -640,7 +728,7 @@ export default function EventFlyerImportClient({
                                 size="sm"
                                 onClick={() => createArtistStub(name)}
                               >
-                                Create Stub
+                                Add New Artist
                               </Button>
                               <Button
                                 type="button"
