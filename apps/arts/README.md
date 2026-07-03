@@ -25,7 +25,7 @@ PORTLESS=0 pnpm --filter arts dev:app
 Create `apps/arts/.env.local` with:
 
 ```env
-CLERK_PUBLISHABLE_KEY=
+VITE_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 DATABASE_URL=
 VITE_APP_TITLE="Dead Party Arts"
