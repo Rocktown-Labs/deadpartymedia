@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeCheck, ImageUp, Settings } from "lucide-react";
-import { getCurrentArtmaker, requireUser } from "#/lib/artmakers.functions.ts";
+import { getCurrentArtmaker, requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: () => requireUser(),
+  beforeLoad: () => requireArtmakerDashboardUser(),
   component: Dashboard,
   loader: () => getCurrentArtmaker(),
 });
