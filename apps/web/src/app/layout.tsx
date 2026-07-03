@@ -78,18 +78,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
-        <Providers>
-          <CartProvider>
-            <Suspense>
+        <Suspense>
+          <Providers>
+            <CartProvider>
               <Navbar />
               <div className="pb-16 lg:pb-0">{children}</div>
               <div className="pb-16 lg:pb-0">
                 <Footer />
               </div>
               <MobileBottomNav />
-            </Suspense>
-          </CartProvider>
-        </Providers>
+            </CartProvider>
+          </Providers>
+        </Suspense>
         <Analytics />
       </body>
     </html>
