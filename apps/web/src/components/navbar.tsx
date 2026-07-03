@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Route } from "next";
@@ -18,23 +18,37 @@ const MUSIC_GENRES = [
   { href: "/other" as Route, name: "Other" },
 ];
 
-// Compute dates outside render for performance
-const currentDate = new Date();
-const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+const DEFAULT_ISSUE_NUMBER = "7.2026";
+const DEFAULT_ISSUE_DATE = "JULY 2026";
+
+function getCurrentIssueLabel() {
+  const currentDate = new Date();
+
+  return {
+    date: currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase(),
+    number: `${currentDate.getMonth() + 1}.${currentDate.getFullYear()}`,
+  };
+}
 
 export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
+  const [issueLabel, setIssueLabel] = useState({
+    date: DEFAULT_ISSUE_DATE,
+    number: DEFAULT_ISSUE_NUMBER,
+  });
   const { user } = useUser();
   const dashboardHref: Route = getDashboardRouteFromMetadata(user?.publicMetadata?.role);
+
+  useEffect(() => {
+    setIssueLabel(getCurrentIssueLabel());
+  }, []);
 
   return (
     <header className="fixed top-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-gray-800">
       <div className="container mx-auto px-6">
         <div className="py-2 border-b border-gray-800/50 flex items-center justify-between text-xs tracking-widest text-gray-500">
-          <span>
-            ISSUE {currentDate.getMonth() + 1}.{currentDate.getFullYear()}
-          </span>
-          <span className="hidden md:block">{issueDate.toUpperCase()}</span>
+          <span>ISSUE {issueLabel.number}</span>
+          <span className="hidden md:block">{issueLabel.date}</span>
           <span className="hidden md:block">ARKANSAS MUSIC</span>
         </div>
         <nav className="py-6 flex items-center justify-between gap-6">

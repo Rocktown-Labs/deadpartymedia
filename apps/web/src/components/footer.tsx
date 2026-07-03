@@ -49,6 +49,8 @@ const EXTERNAL_LINK_PROPS = {
   target: "_blank",
 } as const;
 
+const COPYRIGHT_YEAR = "2026";
+
 export default function Footer() {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
@@ -140,7 +142,7 @@ export default function Footer() {
             </div>
           </div>
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500">
-            <span>© {new Date().getFullYear()} Dead Party Media. All rights reserved.</span>
+            <span>© {COPYRIGHT_YEAR} Dead Party Media. All rights reserved.</span>
             <span className="tracking-wider uppercase">Little Rock, Arkansas</span>
           </div>
         </div>
