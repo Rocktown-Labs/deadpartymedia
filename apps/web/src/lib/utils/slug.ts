@@ -30,7 +30,7 @@ export async function ensureUniqueSlug(
     const tableSchema = table === "posts" ? posts : table === "events" ? events : artists;
     while (true) {
       const existing = await db
-        .select()
+        .select({ id: tableSchema.id })
         .from(tableSchema)
         .where(
           excludeId
@@ -51,7 +51,7 @@ export async function ensureUniqueSlug(
 
     while (true) {
       const [existingPost] = await db
-        .select()
+        .select({ id: posts.id })
         .from(posts)
         .where(
           excludeId
@@ -61,13 +61,13 @@ export async function ensureUniqueSlug(
         .limit(1);
 
       const [existingEvent] = await db
-        .select()
+        .select({ id: events.id })
         .from(events)
         .where(eq(events.slug, uniqueSlug))
         .limit(1);
 
       const [existingArtist] = await db
-        .select()
+        .select({ id: artists.id })
         .from(artists)
         .where(eq(artists.slug, uniqueSlug))
         .limit(1);

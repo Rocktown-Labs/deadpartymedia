@@ -67,7 +67,21 @@ export async function listPublishedEvents({
   }
 
   const results = await db
-    .select()
+    .select({
+      createdAt: events.createdAt,
+      date: events.date,
+      description: events.description,
+      genre: events.genre,
+      id: events.id,
+      image: events.image,
+      location: events.location,
+      price: events.price,
+      slug: events.slug,
+      ticketLink: events.ticketLink,
+      time: events.time,
+      title: events.title,
+      venue: events.venue,
+    })
     .from(events)
     .where(conditions.length > 1 ? and(...conditions) : conditions[0])
     .orderBy(desc(events.date))
