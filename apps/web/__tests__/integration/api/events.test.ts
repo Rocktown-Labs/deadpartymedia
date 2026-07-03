@@ -74,6 +74,7 @@ vi.mock<typeof import("@/lib/logger/middleware")>(import("@/lib/logger/middlewar
 }));
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
+  cacheLife: vi.fn(),
   cacheTag: vi.fn(),
 }));
 

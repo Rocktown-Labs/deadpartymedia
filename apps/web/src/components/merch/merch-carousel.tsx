@@ -101,6 +101,7 @@ export function MerchCarousel({
                       src={product.featuredImage.url || "/placeholder.svg"}
                       alt={product.title}
                       fill
+                      sizes="300px"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />

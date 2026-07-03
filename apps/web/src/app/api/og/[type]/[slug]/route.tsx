@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { getArticle, getEvent, getArtist } from "@/lib/api/server";
 import { getImageUrl, getSiteDefaults } from "@/lib/seo";
 
-export const runtime = "edge";
-
 const SITE_NAME = "Dead Party Media";
 // Lime green brand color
 const BRAND_COLOR = "#7CFC00";

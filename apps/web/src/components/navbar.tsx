@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Route } from "next";
@@ -26,16 +26,6 @@ export default function Navbar() {
   const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
   const { user } = useUser();
   const dashboardHref: Route = getDashboardRouteFromMetadata(user?.publicMetadata?.role);
-
-  // Mount-only for global scroll listener (keep if adding scroll effects later)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      // If needed, add logic here (e.g., setIsScrolled(window.scrollY > 50))
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <header className="fixed top-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-gray-800">

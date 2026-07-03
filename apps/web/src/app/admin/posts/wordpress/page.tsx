@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { db } from "@/lib/db";
 import { postImportSources, users, posts } from "@/lib/db/schema";
 import { inArray, asc, eq } from "drizzle-orm";
@@ -25,13 +26,13 @@ interface WordPressRestPost {
   tags?: Record<string, any>;
 }
 
-export const dynamic = "force-dynamic";
-
 interface WordPressBackfillPageProps {
   searchParams: Promise<{ wp_page?: string }>;
 }
 
 export default async function WordPressBackfillPage({ searchParams }: WordPressBackfillPageProps) {
+  await connection();
+
   // 1. Role verification
   const isSuperAdmin = await checkRole("super_admin");
   if (!isSuperAdmin) {
