@@ -2,7 +2,14 @@
 // eslint-disable-next-line @typescript-eslint/no-useless-empty-export
 
 // Create a type for the Roles
-export type Roles = "artist" | "fan" | "super_admin" | "writer";
+export type Roles =
+  | "artist"
+  | "artmaker"
+  | "arts_admin"
+  | "arts_writer"
+  | "fan"
+  | "super_admin"
+  | "writer";
 
 declare global {
   interface CustomJwtSessionClaims {
@@ -10,6 +17,8 @@ declare global {
       role?: Roles;
       // For artists claiming their profile
       artistId?: number;
+      // For artmakers in the arts app
+      artmakerId?: number;
       // Track if user has completed onboarding
       onboardingComplete?: boolean;
     };

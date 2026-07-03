@@ -1,0 +1,12 @@
+{
+  "apps": {
+    "apps/arts": {
+      "name": "arts.deadpartymedia",
+      "script": "dev:app"
+    },
+    "apps/web": {
+      "name": "deadpartymedia",
+      "script": "dev:app"
+    }
+  }
+}

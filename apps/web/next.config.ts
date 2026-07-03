@@ -9,6 +9,7 @@ const turbopackRoot = path.resolve(process.cwd(), "../..");
 const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
+  allowedDevOrigins: ["deadpartymedia.localhost", "*.deadpartymedia.localhost"],
   turbopack: {
     root: turbopackRoot,
   },

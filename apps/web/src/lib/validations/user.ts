@@ -2,9 +2,12 @@ import { z } from "zod";
 
 export const inviteUserSchema = z.object({
   email: z.string().email("Must be a valid email address"),
-  role: z.enum(["super_admin", "writer", "artist", "fan"], {
-    message: "Please select a valid role",
-  }),
+  role: z.enum(
+    ["super_admin", "writer", "artist", "artmaker", "arts_admin", "arts_writer", "fan"],
+    {
+      message: "Please select a valid role",
+    },
+  ),
 });
 
 export type InviteUserFormData = z.infer<typeof inviteUserSchema>;

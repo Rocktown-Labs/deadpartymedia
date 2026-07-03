@@ -1,19 +1,31 @@
 {
   "name": "dpmedia",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "@better-auth/expo": "1.4.9",
+      "@convex-dev/better-auth": "^0.10.9",
+      "better-auth": "1.4.9",
+      "convex": "^1.31.2",
+      "dotenv": "17.2.3",
+      "typescript": "^5",
+      "zod": "^4.1.13"
+    }
+  },
   "type": "module",
   "scripts": {
     "dev": "turbo run dev --parallel -F web -F native",
     "dev:web": "turbo -F web dev",
+    "dev:arts": "turbo -F arts dev",
     "dev:native": "turbo -F native dev",
     "dev:all": "turbo run dev --parallel",
     "build": "turbo build",
     "check-types": "turbo check-types",
-    "check": "ultracite check",
+    "check": "vp check",
     "web:dev": "pnpm --filter web dev",
     "web:build": "pnpm --filter web build",
     "web:start": "pnpm --filter web start",
@@ -29,7 +41,15 @@
     "web:db:push": "pnpm --filter web db:push",
     "web:db:studio": "pnpm --filter web db:studio",
     "web:content:posts:decode-titles": "pnpm --filter web content:posts:decode-titles",
-    "fix": "ultracite fix"
+    "arts:dev": "pnpm --filter arts dev",
+    "arts:build": "pnpm --filter arts build",
+    "arts:start": "pnpm --filter arts start",
+    "arts:test": "pnpm --filter arts test",
+    "arts:db:generate": "pnpm --filter arts db:generate",
+    "arts:db:migrate": "pnpm --filter arts db:migrate",
+    "arts:db:push": "pnpm --filter arts db:push",
+    "arts:db:studio": "pnpm --filter arts db:studio",
+    "fix": "vp check --fix"
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",
@@ -41,17 +61,16 @@
     "@dpmedia/config": "workspace:*",
     "@types/node": "^20.19.28",
     "concurrently": "^9.2.1",
-    "oxfmt": "^0.35.0",
-    "oxlint": "^1.50.0",
+    "portless": "^0.15.1",
     "turbo": "^2.6.3",
     "typescript": "catalog:",
-    "ultracite": "7.2.4"
+    "ultracite": "7.2.4",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
-  "packageManager": "pnpm@10.19.0",
-  "pnpm": {
-    "overrides": {
-      "@types/react": "^19.2.7",
-      "@types/react-dom": "^19.2.3"
-    }
-  }
+  "overrides": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
+  },
+  "packageManager": "pnpm@10.19.0"
 }
