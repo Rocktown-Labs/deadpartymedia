@@ -72,5 +72,14 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3"
   },
-  "packageManager": "pnpm@10.19.0"
+  "packageManager": "pnpm@10.19.0",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "msw"
+    ],
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss"
+    ]
+  }
 }

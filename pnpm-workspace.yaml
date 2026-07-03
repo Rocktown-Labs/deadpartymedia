@@ -2,6 +2,11 @@ packages:
   - apps/*
   - packages/*
 
+allowBuilds:
+  esbuild: true
+  lightningcss: true
+  msw: false
+
 catalog:
   "@better-auth/expo": 1.4.9
   "@convex-dev/better-auth": ^0.10.9

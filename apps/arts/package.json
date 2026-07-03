@@ -9,7 +9,7 @@
     "dev": "dotenv -e .env.local -- portless",
     "dev:app": "NODE_OPTIONS='--import ./instrument.server.mjs' vp dev",
     "generate-routes": "tsr generate",
-    "build": "vp build && cp instrument.server.mjs .output/server",
+    "build": "vp build && if [ -d .output/server ]; then cp instrument.server.mjs .output/server/; fi",
     "preview": "vp preview",
     "test": "vp test run --passWithNoTests",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
@@ -83,12 +83,6 @@
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
   },
   "portless": {
     "name": "arts.deadpartymedia",
