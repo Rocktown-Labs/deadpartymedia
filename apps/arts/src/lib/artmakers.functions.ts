@@ -13,6 +13,12 @@ const slugInputSchema = z.object({
   slug: z.string().min(1),
 });
 
+function isArtsStaffRole(role: unknown) {
+  return (
+    role === "admin" || role === "arts_admin" || role === "arts_writer" || role === "super_admin"
+  );
+}
+
 function assertClerkServerConfigured() {
   if (!process.env.CLERK_SECRET_KEY) {
     throw new Error("CLERK_SECRET_KEY is required for protected arts routes.");
@@ -31,6 +37,26 @@ export const requireUser = createServerFn({ method: "GET" }).handler(async () =>
   return { userId };
 });
 
+export const requireArtmakerDashboardUser = createServerFn({ method: "GET" }).handler(async () => {
+  assertClerkServerConfigured();
+
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated || !userId) {
+    throw redirect({ to: "/" });
+  }
+
+  const client = clerkClient();
+  const user = await client.users.getUser(userId);
+  const role = user.publicMetadata.role;
+
+  if (isArtsStaffRole(role)) {
+    throw redirect({ to: "/admin" });
+  }
+
+  return { role, userId };
+});
+
 export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async () => {
   assertClerkServerConfigured();
 
@@ -44,7 +70,7 @@ export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async 
   const user = await client.users.getUser(userId);
   const role = user.publicMetadata.role;
 
-  if (role !== "arts_admin" && role !== "arts_writer" && role !== "super_admin") {
+  if (!isArtsStaffRole(role)) {
     throw redirect({ to: "/dashboard" });
   }
 

@@ -1,4 +1,4 @@
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/tanstack-react-start";
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/tanstack-react-start";
 import { Link, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Palette } from "lucide-react";
 
@@ -11,9 +11,18 @@ const navItems = [
 const currentDate = new Date();
 const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
+function isArtsStaffRole(role: unknown) {
+  return (
+    role === "admin" || role === "arts_admin" || role === "arts_writer" || role === "super_admin"
+  );
+}
+
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const shouldShowFooter = !(pathname.startsWith("/admin") || pathname.startsWith("/dashboard"));
+  const { user } = useUser();
+  const role = user?.publicMetadata.role;
+  const dashboardRoute = isArtsStaffRole(role) ? "/admin" : "/dashboard";
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -72,7 +81,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               </Link>
               <Show when="signed-in">
                 <Link
-                  to="/dashboard"
+                  to={dashboardRoute}
                   className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
                 >
                   <LayoutDashboard className="size-4" />
