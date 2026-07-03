@@ -1,17 +1,20 @@
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/tanstack-react-start";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, Palette } from "lucide-react";
 
 const navItems = [
   { label: "Artmakers", to: "/artmakers" },
-  { label: "Events", to: "/" },
-  { label: "Editorial", to: "/" },
+  { label: "Events", to: "/events" },
+  { label: "Articles", to: "/articles" },
 ] as const;
 
 const currentDate = new Date();
 const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const shouldShowFooter = !(pathname.startsWith("/admin") || pathname.startsWith("/dashboard"));
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <header className="fixed top-0 z-50 w-full border-gray-800 border-b bg-[#0A0A0A]/95 backdrop-blur-xl">
@@ -116,42 +119,88 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
       {children}
 
-      <footer className="border-gray-800 border-t px-6 py-12">
-        <div className="container mx-auto grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
-          <div>
-            <div className="font-black text-2xl tracking-tighter">
-              <span className="text-[#7CFC00]">DEAD</span> PARTY{" "}
-              <span className="text-fuchsia-500">ARTS</span>
+      {shouldShowFooter ? (
+        <>
+          <section className="border-gray-800 border-t px-6 py-20">
+            <div className="container mx-auto">
+              <div className="mb-12 text-center">
+                <div className="mb-4 font-bold text-gray-500 text-sm uppercase tracking-[0.4em]">
+                  Stay Connected
+                </div>
+                <h2 className="font-black text-4xl tracking-tight">Follow The Wall</h2>
+              </div>
+              <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-3">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className="rounded-lg border border-gray-800 px-5 py-4 text-center font-black text-white text-xs uppercase tracking-[0.2em] no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
-            <p className="mt-3 max-w-md text-neutral-400 text-sm leading-6">
-              A dedicated home for Arkansas painters, illustrators, tattooers, ceramicists,
-              designers, photographers, and beautifully hard to classify makers.
-            </p>
-          </div>
-          <div>
-            <h2 className="font-black text-neutral-500 text-xs uppercase tracking-[0.28em]">
-              Explore
-            </h2>
-            <div className="mt-4 grid gap-2">
-              <Link to="/artmakers" className="text-neutral-300 no-underline hover:text-[#7CFC00]">
-                Artmakers
-              </Link>
-              <Link to="/onboarding" className="text-neutral-300 no-underline hover:text-[#7CFC00]">
-                Join as an artist
-              </Link>
+          </section>
+
+          <footer className="border-gray-800 border-t px-6 py-12">
+            <div className="container mx-auto">
+              <div className="mb-12 grid gap-12 md:grid-cols-3">
+                <div>
+                  <div className="font-black text-2xl tracking-tighter">
+                    <span className="text-[#7CFC00]">DEAD</span>{" "}
+                    <span className="text-white">PARTY</span>{" "}
+                    <span className="text-fuchsia-500">ARTS</span>
+                  </div>
+
+                  <p className="mt-3 max-w-md text-gray-400 text-sm leading-relaxed">
+                    Documenting Arkansas visual artists, studios, pop-ups, and all the beautiful
+                    work that refuses to fit one category.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="mb-4 font-bold text-gray-500 text-xs uppercase tracking-[0.3em]">
+                    Editorial
+                  </h3>
+                  <div className="space-y-2">
+                    <Link
+                      to="/articles"
+                      className="block text-gray-400 text-sm no-underline transition-colors hover:text-[#7CFC00]"
+                    >
+                      Articles
+                    </Link>
+                    <Link
+                      to="/events"
+                      className="block text-gray-400 text-sm no-underline transition-colors hover:text-[#7CFC00]"
+                    >
+                      Events
+                    </Link>
+                    <Link
+                      to="/onboarding"
+                      className="block text-gray-400 text-sm no-underline transition-colors hover:text-[#7CFC00]"
+                    >
+                      Join as an artist
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="mb-4 font-bold text-gray-500 text-xs uppercase tracking-[0.3em]">
+                    Studio
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Built for Arkansas first, with artwork uploads, commissions, and connected
+                    payments queued up behind the profile foundation.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-between border-gray-800 border-t pt-8 text-gray-500 text-xs md:flex-row">
+                <span>© {new Date().getFullYear()} Dead Party Arts. All rights reserved.</span>
+                <span className="uppercase tracking-wider">Little Rock, Arkansas</span>
+              </div>
             </div>
-          </div>
-          <div>
-            <h2 className="font-black text-neutral-500 text-xs uppercase tracking-[0.28em]">
-              Studio
-            </h2>
-            <p className="mt-4 text-neutral-400 text-sm leading-6">
-              Built for Arkansas first, with uploads, commissions, and connected payments queued up
-              behind the profile foundation.
-            </p>
-          </div>
-        </div>
-      </footer>
+          </footer>
+        </>
+      ) : null}
     </div>
   );
 }

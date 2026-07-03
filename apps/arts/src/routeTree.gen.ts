@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ArtmakersRouteImport } from './routes/artmakers'
+import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
@@ -19,6 +21,11 @@ import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -29,6 +36,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ArtmakersRoute = ArtmakersRouteImport.update({
   id: '/artmakers',
   path: '/artmakers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArticlesRoute = ArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -50,16 +62,20 @@ const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/articles': typeof ArticlesRoute
   '/artmakers': typeof ArtmakersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/onboarding': typeof OnboardingRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/articles': typeof ArticlesRoute
   '/artmakers': typeof ArtmakersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/onboarding': typeof OnboardingRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
 }
@@ -67,8 +83,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/articles': typeof ArticlesRoute
   '/artmakers': typeof ArtmakersRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/onboarding': typeof OnboardingRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
 }
@@ -77,24 +95,30 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/articles'
     | '/artmakers'
     | '/dashboard'
+    | '/events'
     | '/onboarding'
     | '/artmakers/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/articles'
     | '/artmakers'
     | '/dashboard'
+    | '/events'
     | '/onboarding'
     | '/artmakers/$slug'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/articles'
     | '/artmakers'
     | '/dashboard'
+    | '/events'
     | '/onboarding'
     | '/artmakers/$slug'
   fileRoutesById: FileRoutesById
@@ -102,8 +126,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  ArticlesRoute: typeof ArticlesRoute
   ArtmakersRoute: typeof ArtmakersRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  EventsRoute: typeof EventsRoute
   OnboardingRoute: typeof OnboardingRoute
 }
 
@@ -114,6 +140,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -128,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/artmakers'
       fullPath: '/artmakers'
       preLoaderRoute: typeof ArtmakersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/articles': {
+      id: '/articles'
+      path: '/articles'
+      fullPath: '/articles'
+      preLoaderRoute: typeof ArticlesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -169,8 +209,10 @@ const ArtmakersRouteWithChildren = ArtmakersRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  ArticlesRoute: ArticlesRoute,
   ArtmakersRoute: ArtmakersRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  EventsRoute: EventsRoute,
   OnboardingRoute: OnboardingRoute,
 }
 export const routeTree = rootRouteImport

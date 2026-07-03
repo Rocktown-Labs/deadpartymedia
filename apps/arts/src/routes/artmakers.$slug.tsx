@@ -1,9 +1,49 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Instagram, MapPin } from "lucide-react";
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
+import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/artmakers/$slug")({
   component: ArtmakerProfile,
+  head: ({ loaderData }) => {
+    const description = loaderData
+      ? `${loaderData.name} is an Arkansas artmaker in ${loaderData.city}, ${loaderData.state}, working in ${loaderData.medium.join(", ")}.`
+      : "Arkansas artmaker profile on Dead Party Arts.";
+
+    return {
+      ...createSeoMeta({
+        description,
+        image: loaderData?.image,
+        path: loaderData ? `/artmakers/${loaderData.slug}` : "/artmakers",
+        title: loaderData?.name ?? "Artmaker",
+        type: "profile",
+      }),
+      scripts: loaderData
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Person",
+                description,
+                image: loaderData.image ?? undefined,
+                name: loaderData.name,
+                sameAs: [loaderData.instagramUrl],
+                url: getAbsoluteUrl(`/artmakers/${loaderData.slug}`),
+                workLocation: {
+                  "@type": "Place",
+                  address: {
+                    "@type": "PostalAddress",
+                    addressLocality: loaderData.city,
+                    addressRegion: loaderData.state,
+                  },
+                },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   loader: async ({ params }) => {
     const artmaker = await getArtmakerBySlug({ data: { slug: params.slug } });
 

@@ -3,9 +3,30 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram, MapPin, Sparkles } from "lucide-react";
 import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
+import { createSeoMeta, siteName, siteUrl } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/")({
   component: Home,
+  head: () => ({
+    ...createSeoMeta({
+      description:
+        "Dead Party Arts is an Arkansas visual art directory and editorial home for painters, ceramicists, illustrators, tattooers, photographers, designers, and makers.",
+      title: siteName,
+    }),
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          description:
+            "An Arkansas visual art directory and editorial home for artists, events, and creative culture.",
+          name: siteName,
+          url: siteUrl,
+        }),
+      },
+    ],
+  }),
   loader: () => listArtmakers(),
 });
 
@@ -24,19 +45,19 @@ function Home() {
               Arkansas artist index
             </div>
             <h1 className="max-w-4xl font-black text-5xl leading-[0.92] tracking-tighter md:text-7xl xl:text-8xl">
-              Visual artists deserve a louder wall.
+              Arkansas artists deserve a louder wall.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-neutral-300 leading-8 md:text-xl">
-              Dead Party Arts is the sibling archive for painters, ceramicists, illustrators,
-              tattooers, designers, photographers, muralists, and every Arkansas maker working
-              between categories.
+              Dead Party Arts is a living index for painters, ceramicists, illustrators, tattooers,
+              designers, photographers, muralists, and every Arkansas maker building the scene in
+              full color.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/artmakers"
                 className="inline-flex h-12 items-center gap-2 rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-5 font-black text-black text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:bg-[#a5ff43]"
               >
-                Browse Artmakers
+                Browse Artists
                 <ArrowRight className="size-4" />
               </Link>
               <Show when="signed-in">
@@ -52,7 +73,7 @@ function Home() {
                   to="/onboarding"
                   className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
                 >
-                  Join the List
+                  Create Artist Profile
                 </Link>
               </Show>
             </div>
@@ -148,7 +169,8 @@ function Home() {
           ) : (
             <div className="rounded-xl border border-gray-800 bg-[#101010] p-8">
               <p className="text-neutral-300">
-                The arts directory is ready for the first imported sheet rows and artist signups.
+                The directory is ready for imported sheet rows and the first wave of artist
+                profiles.
               </p>
             </div>
           )}
