@@ -1,6 +1,14 @@
 import type { Roles } from "@/types/globals";
 
-const VALID_ROLES: ReadonlySet<Roles> = new Set(["super_admin", "writer", "artist", "fan"]);
+const VALID_ROLES: ReadonlySet<Roles> = new Set([
+  "super_admin",
+  "writer",
+  "artist",
+  "artmaker",
+  "arts_admin",
+  "arts_writer",
+  "fan",
+]);
 
 const LEGACY_ROLE_ALIASES: Readonly<Record<string, Roles>> = {
   admin: "super_admin",

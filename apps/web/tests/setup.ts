@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi, beforeAll, afterAll } from "vitest";
+import { afterEach, vi, beforeAll, afterAll } from "vite-plus/test";
 
 // Mock env package FIRST to prevent server-side env access errors in tests
 // This must be hoisted (no vi.hoisted needed, just placed early)

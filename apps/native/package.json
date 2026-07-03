@@ -10,7 +10,7 @@
     "prebuild": "expo prebuild",
     "web": "expo start --web",
     "check-types": "tsc -p tsconfig.json --noEmit",
-    "lint": "oxlint"
+    "lint": "vp lint"
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",

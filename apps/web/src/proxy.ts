@@ -144,7 +144,8 @@ export default clerkMiddleware(async (auth, req) => {
     const isCorrectRoute =
       ((role === "super_admin" || role === "writer") && isAdminRoute(req)) ||
       (role === "artist" && isArtistDashboardRoute(req)) ||
-      (role === "fan" && isDashboardRoute(req));
+      ((role === "fan" || role === "artmaker" || role === "arts_admin" || role === "arts_writer") &&
+        isDashboardRoute(req));
 
     if (isCorrectRoute) {
       response = NextResponse.next();

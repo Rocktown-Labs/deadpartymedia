@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { vi } from "vite-plus/test";
 import type { artists, posts, events } from "@/lib/db/schema";
 
 export const createMockDb = () => {

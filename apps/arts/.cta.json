@@ -1,0 +1,34 @@
+{
+  "projectName": "arts",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "postgresql"
+    }
+  },
+  "envVarValues": {
+    "VITE_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuZGVhZHBhcnR5bWVkaWEuY29tJA"
+  },
+  "git": false,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "nitro",
+    "clerk",
+    "sentry",
+    "form",
+    "ai",
+    "shadcn",
+    "t3env",
+    "table",
+    "tanstack-query",
+    "drizzle",
+    "store"
+  ]
+}
