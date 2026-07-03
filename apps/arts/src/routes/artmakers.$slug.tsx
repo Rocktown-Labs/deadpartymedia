@@ -1,24 +1,26 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Instagram, MapPin } from "lucide-react";
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
+import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
 import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/artmakers/$slug")({
   component: ArtmakerProfile,
   head: ({ loaderData }) => {
-    const description = loaderData
-      ? `${loaderData.name} is an Arkansas artmaker in ${loaderData.city}, ${loaderData.state}, working in ${loaderData.medium.join(", ")}.`
+    const artmaker = loaderData?.artmaker;
+    const description = artmaker
+      ? `${artmaker.name} is an Arkansas artmaker in ${artmaker.city}, ${artmaker.state}, working in ${artmaker.medium.join(", ")}.`
       : "Arkansas artmaker profile on Dead Party Arts.";
 
     return {
       ...createSeoMeta({
         description,
-        image: loaderData?.image,
-        path: loaderData ? `/artmakers/${loaderData.slug}` : "/artmakers",
-        title: loaderData?.name ?? "Artmaker",
+        image: artmaker?.image,
+        path: artmaker ? `/artmakers/${artmaker.slug}` : "/artmakers",
+        title: artmaker?.name ?? "Artmaker",
         type: "profile",
       }),
-      scripts: loaderData
+      scripts: artmaker
         ? [
             {
               type: "application/ld+json",
@@ -26,16 +28,16 @@ export const Route = createFileRoute("/artmakers/$slug")({
                 "@context": "https://schema.org",
                 "@type": "Person",
                 description,
-                image: loaderData.image ?? undefined,
-                name: loaderData.name,
-                sameAs: [loaderData.instagramUrl],
-                url: getAbsoluteUrl(`/artmakers/${loaderData.slug}`),
+                image: artmaker.image ?? undefined,
+                name: artmaker.name,
+                sameAs: [artmaker.instagramUrl],
+                url: getAbsoluteUrl(`/artmakers/${artmaker.slug}`),
                 workLocation: {
                   "@type": "Place",
                   address: {
                     "@type": "PostalAddress",
-                    addressLocality: loaderData.city,
-                    addressRegion: loaderData.state,
+                    addressLocality: artmaker.city,
+                    addressRegion: artmaker.state,
                   },
                 },
               }),
@@ -45,18 +47,21 @@ export const Route = createFileRoute("/artmakers/$slug")({
     };
   },
   loader: async ({ params }) => {
-    const artmaker = await getArtmakerBySlug({ data: { slug: params.slug } });
+    const [artmaker, artworks] = await Promise.all([
+      getArtmakerBySlug({ data: { slug: params.slug } }),
+      listPublishedArtworksByArtmakerSlug({ data: { slug: params.slug } }),
+    ]);
 
     if (!artmaker) {
       throw notFound();
     }
 
-    return artmaker;
+    return { artmaker, artworks };
   },
 });
 
 function ArtmakerProfile() {
-  const artmaker = Route.useLoaderData();
+  const { artmaker, artworks } = Route.useLoaderData();
 
   return (
     <main className="px-5 pt-40 pb-20">
@@ -130,13 +135,40 @@ function ArtmakerProfile() {
             <p className="mt-2 text-neutral-500 text-sm uppercase tracking-[0.18em]">Artworks</p>
           </div>
           <div className="border border-neutral-800 bg-[#101010] p-5 md:col-span-2">
-            <h2 className="font-black text-xl">Artwork wall coming next</h2>
+            <h2 className="font-black text-xl">Artwork wall</h2>
             <p className="mt-2 text-neutral-400 text-sm leading-6">
-              The schema is ready for uploads, sale flags, and future Stripe Connect pricing. This
-              first profile pass keeps Instagram as the public discovery link.
+              Published uploads from this artist appear here and on the Exhibitions page.
             </p>
           </div>
         </section>
+
+        {artworks.length > 0 ? (
+          <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {artworks.map((artwork) => (
+              <article
+                key={artwork.id}
+                className="overflow-hidden rounded-lg border border-neutral-800 bg-[#101010]"
+              >
+                <img
+                  src={artwork.image}
+                  alt={artwork.title}
+                  className="aspect-square w-full object-cover"
+                />
+                <div className="p-5">
+                  <p className="text-[#7CFC00] text-xs uppercase tracking-[0.2em]">
+                    {artwork.medium ?? "Mixed practice"}
+                  </p>
+                  <h3 className="mt-2 font-black text-xl">{artwork.title}</h3>
+                  {artwork.description ? (
+                    <p className="mt-3 line-clamp-3 text-neutral-400 text-sm leading-6">
+                      {artwork.description}
+                    </p>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </section>
+        ) : null}
       </div>
     </main>
   );
