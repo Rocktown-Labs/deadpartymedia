@@ -1,6 +1,6 @@
 const siteUrl = "https://arts.deadpartymedia.com";
 const siteName = "Dead Party Arts";
-const defaultImage = `${siteUrl}/images/dead-party-arts-logo.jpeg`;
+const defaultImage = `${siteUrl}/images/deadpartyarts-trans.png`;
 
 interface SeoInput {
   title: string;

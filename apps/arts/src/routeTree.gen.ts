@@ -18,6 +18,7 @@ import { Route as ArtmakersRouteImport } from './routes/artmakers'
 import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
@@ -74,6 +75,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const DashboardProfileRoute = DashboardProfileRouteImport.update({
   id: '/profile',
@@ -151,11 +157,11 @@ export interface FileRoutesByFullPath {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/articles': typeof ArticlesRoute
   '/artmakers': typeof ArtmakersRouteWithChildren
   '/dashboard': typeof DashboardRouteWithChildren
@@ -173,6 +179,7 @@ export interface FileRoutesByTo {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/admin': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRoutesById {
@@ -196,6 +203,7 @@ export interface FileRoutesById {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRouteTypes {
@@ -220,11 +228,11 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/admin/'
     | '/admin/events/import'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/articles'
     | '/artmakers'
     | '/dashboard'
@@ -242,6 +250,7 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/admin'
     | '/admin/events/import'
   id:
     | '__root__'
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/admin/'
     | '/admin/events/import'
   fileRoutesById: FileRoutesById
 }
@@ -344,6 +354,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/dashboard/profile': {
       id: '/dashboard/profile'
@@ -443,6 +460,7 @@ interface AdminRouteChildren {
   AdminEventsRoute: typeof AdminEventsRouteWithChildren
   AdminExhibitionsRoute: typeof AdminExhibitionsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -451,6 +469,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEventsRoute: AdminEventsRouteWithChildren,
   AdminExhibitionsRoute: AdminExhibitionsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

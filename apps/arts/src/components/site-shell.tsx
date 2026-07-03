@@ -1,6 +1,7 @@
 import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/tanstack-react-start";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Image } from "@unpic/react";
 import { ExternalLink, Instagram, LayoutDashboard, ShoppingBag, Youtube } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type ArtsCart, getArtsCart, updateArtsCartItem } from "#/lib/fourthwall.functions.ts";
@@ -67,6 +68,21 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }, [isCartOpen]);
 
   useEffect(() => {
+    if (!isCartOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCartOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isCartOpen]);
+
+  useEffect(() => {
     const onCartUpdated = () => {
       void refreshCart();
       setIsCartOpen(true);
@@ -91,10 +107,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           <nav className="flex items-center justify-between gap-6 py-6">
             <div className="flex-1">
               <Link to="/" className="block no-underline" aria-label="Dead Party Arts home">
-                <img
-                  src="/images/dead-party-arts-logo.jpeg"
+                <Image
+                  src="/images/deadpartyarts-trans.png"
                   alt="Dead Party Arts"
-                  className="size-14 object-cover lg:hidden"
+                  width={56}
+                  height={56}
+                  className="size-14 object-contain lg:hidden"
                 />
                 <div className="hidden lg:block">
                   <div className="font-black text-3xl tracking-tighter">
@@ -185,9 +203,16 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       {children}
 
       {isCartOpen ? (
-        <div className="fixed inset-0 z-[80] bg-black/70 p-4 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-[80] bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setIsCartOpen(false)}
+          role="presentation"
+        >
           <div className="ml-auto flex min-h-full max-w-md items-center">
-            <div className="w-full rounded-lg border border-gray-800 bg-[#0A0A0A] p-6 shadow-2xl">
+            <div
+              className="w-full rounded-lg border border-gray-800 bg-[#0A0A0A] p-6 shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
@@ -217,9 +242,11 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                       >
                         <div className="aspect-square overflow-hidden rounded-md bg-black">
                           {line.image ? (
-                            <img
+                            <Image
                               src={line.image}
                               alt={line.productTitle}
+                              width={64}
+                              height={64}
                               className="h-full w-full object-cover"
                             />
                           ) : null}

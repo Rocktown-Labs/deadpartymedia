@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowLeft, Instagram, MapPin } from "lucide-react";
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
@@ -149,9 +150,11 @@ function ArtmakerProfile() {
                 key={artwork.id}
                 className="overflow-hidden rounded-lg border border-neutral-800 bg-[#101010]"
               >
-                <img
+                <Image
                   src={artwork.image}
                   alt={artwork.title}
+                  width={640}
+                  height={640}
                   className="aspect-square w-full object-cover"
                 />
                 <div className="p-5">

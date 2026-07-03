@@ -55,8 +55,8 @@ export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
   const visibleNavItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
   return (
-    <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+    <main className="container mx-auto px-6 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
+      <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-[calc(var(--navbar-offset)+1.5rem)] lg:self-start">
           <div className="rounded-lg border border-gray-800 bg-[#111111]">
             <div className="border-gray-800 border-b p-4">

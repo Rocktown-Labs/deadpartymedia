@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Image } from "@unpic/react";
 import { ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
@@ -57,9 +58,11 @@ function MerchPage() {
                 >
                   <div className="grid aspect-square place-items-center overflow-hidden bg-black">
                     {product.image ? (
-                      <img
+                      <Image
                         src={product.image}
                         alt={product.title}
+                        width={640}
+                        height={640}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
