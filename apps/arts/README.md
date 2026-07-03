@@ -44,6 +44,11 @@ pnpm --filter arts db:generate
 pnpm --filter arts db:migrate
 ```
 
+## Deployment
+
+Vercel is configured with `apps/arts` as the project root for
+`arts.deadpartymedia.com`.
+
 ## Data Model
 
 Shared schema lives in `packages/db`.
