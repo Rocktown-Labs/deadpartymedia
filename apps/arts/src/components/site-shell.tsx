@@ -1,7 +1,9 @@
 import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/tanstack-react-start";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ExternalLink, Instagram, LayoutDashboard, ShoppingBag, Youtube } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { type ArtsCart, getArtsCart, updateArtsCartItem } from "#/lib/fourthwall.functions.ts";
 
 const navItems = [
   { label: "Artmakers", to: "/artmakers" },
@@ -19,6 +21,7 @@ const socialLinks = [
 
 const currentDate = new Date();
 const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+const CART_STORAGE_KEY = "dead-party-arts-cart-id";
 
 function isArtsStaffRole(role: unknown) {
   return (
@@ -33,6 +36,45 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   const role = user?.publicMetadata.role;
   const dashboardRoute = isArtsStaffRole(role) ? "/admin" : "/dashboard";
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cart, setCart] = useState<ArtsCart | null>(null);
+  const [cartError, setCartError] = useState("");
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const loadCart = useServerFn(getArtsCart);
+  const updateCart = useServerFn(updateArtsCartItem);
+
+  const refreshCart = async () => {
+    const cartId = window.localStorage.getItem(CART_STORAGE_KEY) ?? undefined;
+    if (!cartId) {
+      setCart(null);
+      return;
+    }
+
+    setIsCartLoading(true);
+    setCartError("");
+    try {
+      setCart(await loadCart({ data: { cartId } }));
+    } catch (error) {
+      setCartError(error instanceof Error ? error.message : "Could not load the cart.");
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isCartOpen) {
+      void refreshCart();
+    }
+  }, [isCartOpen]);
+
+  useEffect(() => {
+    const onCartUpdated = () => {
+      void refreshCart();
+      setIsCartOpen(true);
+    };
+
+    window.addEventListener("arts-cart-updated", onCartUpdated);
+    return () => window.removeEventListener("arts-cart-updated", onCartUpdated);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -151,7 +193,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                   <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
                     Cart
                   </p>
-                  <h2 className="mt-2 font-black text-3xl tracking-tight">Arts merch soon</h2>
+                  <h2 className="mt-2 font-black text-3xl tracking-tight">Cart</h2>
                 </div>
                 <button
                   type="button"
@@ -161,17 +203,111 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                   Close
                 </button>
               </div>
-              <p className="mt-5 text-gray-400 leading-7">
-                This is where the Fourthwall cart will live. For now the arts storefront route is a
-                holding wall until the dedicated collection is ready.
-              </p>
-              <Link
-                to="/merch"
-                onClick={() => setIsCartOpen(false)}
-                className="mt-6 inline-flex rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline"
-              >
-                View merch wall
-              </Link>
+              {isCartLoading ? (
+                <p className="mt-5 text-gray-400 leading-7">Loading the Fourthwall cart...</p>
+              ) : cartError ? (
+                <p className="mt-5 text-red-300 leading-7">{cartError}</p>
+              ) : cart?.lines.length ? (
+                <>
+                  <div className="mt-6 grid gap-4">
+                    {cart.lines.map((line) => (
+                      <div
+                        key={line.id}
+                        className="grid grid-cols-[64px_1fr] gap-4 border-gray-800 border-b pb-4 last:border-b-0"
+                      >
+                        <div className="aspect-square overflow-hidden rounded-md bg-black">
+                          {line.image ? (
+                            <img
+                              src={line.image}
+                              alt={line.productTitle}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : null}
+                        </div>
+                        <div>
+                          <h3 className="font-black text-sm">{line.productTitle}</h3>
+                          <p className="mt-1 text-gray-500 text-xs">{line.variantTitle}</p>
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <div className="flex items-center rounded-md border border-gray-800">
+                              <button
+                                type="button"
+                                className="px-3 py-2 text-gray-400 hover:text-[#7CFC00]"
+                                onClick={async () => {
+                                  const updated = await updateCart({
+                                    data: {
+                                      cartId: cart.id,
+                                      merchandiseId: line.merchandiseId,
+                                      quantity: Math.max(0, line.quantity - 1),
+                                    },
+                                  });
+                                  setCart(updated);
+                                }}
+                              >
+                                -
+                              </button>
+                              <span className="min-w-8 text-center font-bold text-sm">
+                                {line.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                className="px-3 py-2 text-gray-400 hover:text-[#7CFC00]"
+                                onClick={async () => {
+                                  const updated = await updateCart({
+                                    data: {
+                                      cartId: cart.id,
+                                      merchandiseId: line.merchandiseId,
+                                      quantity: line.quantity + 1,
+                                    },
+                                  });
+                                  setCart(updated);
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                            <p className="font-black text-sm">
+                              ${line.total} {line.currency}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 flex items-center justify-between border-gray-800 border-t pt-5">
+                    <span className="font-black text-sm uppercase tracking-[0.18em]">Subtotal</span>
+                    <span className="font-black text-xl">
+                      ${cart.subtotal} {cart.currency}
+                    </span>
+                  </div>
+                  {cart.checkoutUrl ? (
+                    <a
+                      href={cart.checkoutUrl}
+                      className="mt-6 inline-flex w-full justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline"
+                    >
+                      Checkout
+                    </a>
+                  ) : (
+                    <p className="mt-5 text-gray-500 text-sm">
+                      Checkout URL is not configured yet. Add the Fourthwall checkout environment
+                      variable to enable checkout.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="mt-5 text-gray-400 leading-7">
+                    Your cart is empty. The merch wall will show the dedicated arts collection when
+                    it is available in Fourthwall.
+                  </p>
+                  <Link
+                    to="/merch"
+                    onClick={() => setIsCartOpen(false)}
+                    className="mt-6 inline-flex rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline"
+                  >
+                    View merch wall
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

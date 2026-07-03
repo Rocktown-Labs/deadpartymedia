@@ -1,7 +1,11 @@
+import { uploadFiles } from "@better-upload/client";
 import { createFileRoute } from "@tanstack/react-router";
+import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, ImageUp } from "lucide-react";
+import { CheckCircle2, ImageUp, Loader2, Upload } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -10,61 +14,138 @@ import { Textarea } from "#/components/ui/textarea.tsx";
 import { requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
 import { listCurrentArtworks, saveArtwork } from "#/lib/artworks.functions.ts";
 
+interface ArtworkDraft {
+  id: string;
+  fileName: string;
+  imageKey: string;
+  title: string;
+  medium: string;
+  year: string;
+  description: string;
+  forSale: boolean;
+  price: string;
+  status: "draft" | "published";
+}
+
+const batchArtworkSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        description: z.string().max(700).optional(),
+        fileName: z.string(),
+        forSale: z.boolean(),
+        id: z.string(),
+        imageKey: z.string().min(1),
+        medium: z.string().max(80).optional(),
+        price: z.string().optional(),
+        status: z.enum(["draft", "published"]),
+        title: z.string().min(1, "Title is required").max(120),
+        year: z.string().max(20).optional(),
+      }),
+    )
+    .min(1, "Upload at least one artwork image."),
+});
+
 export const Route = createFileRoute("/dashboard/artworks")({
   beforeLoad: () => requireArtmakerDashboardUser(),
   component: DashboardArtworks,
   loader: () => listCurrentArtworks(),
 });
 
+function getUploadedObjectKey(file: unknown) {
+  const candidate = file as {
+    objectInfo?: { key?: string };
+    uploadedObject?: { key?: string };
+    key?: string;
+  };
+  return candidate.objectInfo?.key ?? candidate.uploadedObject?.key ?? candidate.key ?? "";
+}
+
+function titleFromFileName(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, "")
+    .replaceAll(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function DashboardArtworks() {
   const initialArtworks = Route.useLoaderData();
   const save = useServerFn(saveArtwork);
   const [artworks, setArtworks] = useState(initialArtworks);
-  const [title, setTitle] = useState("");
-  const [image, setImage] = useState("");
-  const [medium, setMedium] = useState("");
-  const [year, setYear] = useState("");
-  const [description, setDescription] = useState("");
-  const [forSale, setForSale] = useState(false);
-  const [price, setPrice] = useState("");
-  const [status, setStatus] = useState<"draft" | "published">("published");
   const [error, setError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError("");
-    setIsSaving(true);
+  const form = useForm({
+    defaultValues: {
+      items: [] as ArtworkDraft[],
+    },
+    validators: {
+      onSubmit: batchArtworkSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setError("");
+      try {
+        for (const item of value.items) {
+          await save({
+            data: {
+              description: item.description,
+              forSale: item.forSale,
+              imageKey: item.imageKey,
+              medium: item.medium,
+              price: item.price,
+              status: item.status,
+              title: item.title,
+              year: item.year,
+            },
+          });
+        }
+        const refreshed = await listCurrentArtworks();
+        setArtworks(refreshed);
+        form.reset();
+      } catch (caughtError) {
+        setError(caughtError instanceof Error ? caughtError.message : "Could not save artwork.");
+      }
+    },
+  });
 
-    try {
-      await save({
-        data: {
-          description,
-          forSale,
-          image,
-          medium,
-          price,
-          status,
-          title,
-          year,
-        },
-      });
-      const refreshed = await listCurrentArtworks();
-      setArtworks(refreshed);
-      setTitle("");
-      setImage("");
-      setMedium("");
-      setYear("");
-      setDescription("");
-      setForSale(false);
-      setPrice("");
-      setStatus("published");
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Could not save artwork.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const uploadMutation = useMutation({
+    mutationFn: async (files: File[]) =>
+      uploadFiles({
+        files,
+        route: "artwork",
+      }),
+    onError: (caughtError) => {
+      setError(caughtError instanceof Error ? caughtError.message : "Artwork upload failed.");
+    },
+    onSuccess: (result) => {
+      const uploadedFiles = (result.files ?? []) as unknown[];
+      const drafts = uploadedFiles
+        .map((file, index) => {
+          const sourceFile = (file as { file?: File }).file;
+          const fileName = sourceFile?.name ?? `Artwork ${index + 1}`;
+          const imageKey = getUploadedObjectKey(file);
+
+          if (!imageKey) {
+            return null;
+          }
+
+          return {
+            description: "",
+            fileName,
+            forSale: false,
+            id: crypto.randomUUID(),
+            imageKey,
+            medium: "",
+            price: "",
+            status: "published" as const,
+            title: titleFromFileName(fileName),
+            year: "",
+          };
+        })
+        .filter((draft): draft is ArtworkDraft => Boolean(draft));
+
+      form.setFieldValue("items", [...form.state.values.items, ...drafts]);
+    },
+  });
 
   return (
     <ArtmakerDashboardShell>
@@ -74,104 +155,193 @@ function DashboardArtworks() {
         </p>
         <h1 className="mt-3 font-black text-4xl tracking-tight">Your Artworks</h1>
         <p className="mt-3 max-w-2xl text-gray-400">
-          Add pieces to the public exhibitions wall. Direct file uploads and Stripe Connect sale
-          flow can plug into this same screen next.
+          Upload multiple pieces, then add the metadata for each artwork before publishing to the
+          exhibitions wall.
         </p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <form onSubmit={submit} className="rounded-lg border border-gray-800 bg-[#111111] p-6">
+      <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+        <section className="rounded-lg border border-gray-800 bg-[#111111] p-6">
           <div className="mb-5 flex items-center gap-3">
             <div className="grid size-11 place-items-center rounded-md border border-[#7CFC00]/40 text-[#7CFC00]">
               <ImageUp className="size-5" />
             </div>
             <div>
-              <h2 className="font-black text-xl">Submit artwork</h2>
-              <p className="text-gray-500 text-sm">
-                Use a hosted image URL for this first version.
-              </p>
+              <h2 className="font-black text-xl">Batch artwork upload</h2>
+              <p className="text-gray-500 text-sm">Cloudflare R2 via Better Upload.</p>
             </div>
           </div>
 
-          <div className="grid gap-4">
-            <Field label="Title">
-              <Input value={title} onChange={(event) => setTitle(event.target.value)} required />
-            </Field>
-            <Field label="Image URL">
-              <Input
-                value={image}
-                onChange={(event) => setImage(event.target.value)}
-                placeholder="https://..."
-                required
-              />
-            </Field>
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Medium">
-                <Input
-                  value={medium}
-                  onChange={(event) => setMedium(event.target.value)}
-                  placeholder="Acrylic, digital, ceramic..."
-                />
-              </Field>
-              <Field label="Year">
-                <Input value={year} onChange={(event) => setYear(event.target.value)} />
-              </Field>
-            </div>
-            <Field label="Description">
-              <Textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={5}
-              />
-            </Field>
+          <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-700 bg-[#080808] p-6 text-center hover:border-[#7CFC00]">
+            {uploadMutation.isPending ? (
+              <Loader2 className="mb-3 size-8 animate-spin text-[#7CFC00]" />
+            ) : (
+              <Upload className="mb-3 size-8 text-[#7CFC00]" />
+            )}
+            <span className="font-black text-sm uppercase tracking-[0.18em]">
+              {uploadMutation.isPending ? "Uploading" : "Choose artwork images"}
+            </span>
+            <span className="mt-2 text-gray-500 text-sm">PNG, JPG, GIF, WebP. Up to 12 files.</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              disabled={uploadMutation.isPending}
+              onChange={(event) => {
+                const files = [...(event.target.files ?? [])];
+                if (files.length > 0) {
+                  uploadMutation.mutate(files);
+                }
+                event.target.value = "";
+              }}
+            />
+          </label>
 
-            <div className="grid gap-3 rounded-lg border border-gray-800 bg-[#080808] p-4">
-              <label className="flex items-center gap-3 text-gray-300 text-sm">
-                <input
-                  type="checkbox"
-                  checked={forSale}
-                  onChange={(event) => setForSale(event.target.checked)}
-                  className="size-4 accent-[#7CFC00]"
-                />
-                Mark as available for future sales
-              </label>
-              {forSale ? (
-                <Field label="Price">
-                  <Input
-                    value={price}
-                    onChange={(event) => setPrice(event.target.value)}
-                    placeholder="250"
-                  />
-                </Field>
-              ) : null}
-            </div>
-
-            <Field label="Visibility">
-              <select
-                value={status}
-                onChange={(event) => setStatus(event.target.value as "draft" | "published")}
-                className="h-10 rounded-md border border-gray-800 bg-[#0A0A0A] px-3 text-white"
-              >
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
-            </Field>
-          </div>
-
-          {error ? (
-            <div className="mt-5 rounded border border-red-500/50 bg-red-950/30 p-3 text-red-200 text-sm">
-              {error}
-            </div>
-          ) : null}
-
-          <Button
-            type="submit"
-            disabled={isSaving}
-            className="mt-6 h-12 rounded-lg bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
+          <form
+            className="mt-6"
+            onSubmit={(event) => {
+              event.preventDefault();
+              form.handleSubmit();
+            }}
           >
-            {isSaving ? "Saving" : "Publish artwork"}
-          </Button>
-        </form>
+            <form.Field
+              name="items"
+              children={(field) => (
+                <div className="grid gap-3">
+                  {field.state.value.length > 0 ? (
+                    field.state.value.map((item, index) => (
+                      <details
+                        key={item.id}
+                        open={index === 0}
+                        className="rounded-lg border border-gray-800 bg-[#080808]"
+                      >
+                        <summary className="cursor-pointer px-4 py-3 font-black text-sm uppercase tracking-[0.14em]">
+                          {item.title || item.fileName}
+                        </summary>
+                        <div className="grid gap-4 border-gray-800 border-t p-4">
+                          <Field label="Title">
+                            <Input
+                              value={item.title}
+                              onChange={(event) => {
+                                const next = [...field.state.value];
+                                next[index] = { ...item, title: event.target.value };
+                                field.handleChange(next);
+                              }}
+                            />
+                          </Field>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <Field label="Medium">
+                              <Input
+                                value={item.medium}
+                                onChange={(event) => {
+                                  const next = [...field.state.value];
+                                  next[index] = { ...item, medium: event.target.value };
+                                  field.handleChange(next);
+                                }}
+                              />
+                            </Field>
+                            <Field label="Year">
+                              <Input
+                                value={item.year}
+                                onChange={(event) => {
+                                  const next = [...field.state.value];
+                                  next[index] = { ...item, year: event.target.value };
+                                  field.handleChange(next);
+                                }}
+                              />
+                            </Field>
+                          </div>
+                          <Field label="Description">
+                            <Textarea
+                              value={item.description}
+                              rows={4}
+                              onChange={(event) => {
+                                const next = [...field.state.value];
+                                next[index] = { ...item, description: event.target.value };
+                                field.handleChange(next);
+                              }}
+                            />
+                          </Field>
+                          <div className="grid gap-3 rounded-lg border border-gray-800 p-3">
+                            <label className="flex items-center gap-3 text-gray-300 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={item.forSale}
+                                onChange={(event) => {
+                                  const next = [...field.state.value];
+                                  next[index] = { ...item, forSale: event.target.checked };
+                                  field.handleChange(next);
+                                }}
+                                className="size-4 accent-[#7CFC00]"
+                              />
+                              Mark available for future sales
+                            </label>
+                            {item.forSale ? (
+                              <Field label="Price">
+                                <Input
+                                  value={item.price}
+                                  onChange={(event) => {
+                                    const next = [...field.state.value];
+                                    next[index] = { ...item, price: event.target.value };
+                                    field.handleChange(next);
+                                  }}
+                                  placeholder="250"
+                                />
+                              </Field>
+                            ) : null}
+                          </div>
+                          <Field label="Visibility">
+                            <select
+                              value={item.status}
+                              onChange={(event) => {
+                                const next = [...field.state.value];
+                                next[index] = {
+                                  ...item,
+                                  status: event.target.value as "draft" | "published",
+                                };
+                                field.handleChange(next);
+                              }}
+                              className="h-10 rounded-md border border-gray-800 bg-[#0A0A0A] px-3 text-white"
+                            >
+                              <option value="published">Published</option>
+                              <option value="draft">Draft</option>
+                            </select>
+                          </Field>
+                        </div>
+                      </details>
+                    ))
+                  ) : (
+                    <p className="rounded-lg border border-gray-800 bg-[#080808] p-5 text-gray-400">
+                      Upload one or more artwork images to start a batch.
+                    </p>
+                  )}
+                </div>
+              )}
+            />
+
+            {error ? (
+              <div className="mt-5 rounded border border-red-500/50 bg-red-950/30 p-3 text-red-200 text-sm">
+                {error}
+              </div>
+            ) : null}
+
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting] as const}
+              children={([canSubmit, isSubmitting]) => (
+                <Button
+                  type="submit"
+                  disabled={!canSubmit || isSubmitting || form.state.values.items.length === 0}
+                  className="mt-6 h-12 rounded-lg bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
+                >
+                  {isSubmitting
+                    ? "Publishing"
+                    : `Publish batch (${form.state.values.items.length})`}
+                </Button>
+              )}
+            />
+          </form>
+        </section>
 
         <section className="rounded-lg border border-gray-800 bg-[#111111] p-6">
           <h2 className="font-black text-xl">Current wall</h2>

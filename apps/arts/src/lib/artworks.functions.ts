@@ -7,6 +7,7 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getMediumGroup } from "#/lib/mediums.ts";
 import { createSlug } from "#/lib/slug.ts";
+import { getPublicUploadUrl } from "#/lib/upload.ts";
 
 export interface ArtworkListItem {
   id: number;
@@ -27,20 +28,26 @@ export interface ArtworkListItem {
   createdAt: Date;
 }
 
-const artworkInputSchema = z.object({
-  description: z.string().max(700, "Description must stay under 700 characters").optional(),
-  forSale: z.boolean(),
-  image: z.string().url("Use a valid image URL"),
-  medium: z.string().max(80, "Medium must stay under 80 characters").optional(),
-  price: z.string().optional(),
-  status: z.enum(["draft", "published"]).default("published"),
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(120, "Title must stay under 120 characters")
-    .transform((value) => value.trim()),
-  year: z.string().max(20, "Year must stay under 20 characters").optional(),
-});
+const artworkInputSchema = z
+  .object({
+    description: z.string().max(700, "Description must stay under 700 characters").optional(),
+    forSale: z.boolean(),
+    image: z.string().optional(),
+    imageKey: z.string().min(1, "Upload an image or provide an image URL").optional(),
+    medium: z.string().max(80, "Medium must stay under 80 characters").optional(),
+    price: z.string().optional(),
+    status: z.enum(["draft", "published"]).default("published"),
+    title: z
+      .string()
+      .min(1, "Title is required")
+      .max(120, "Title must stay under 120 characters")
+      .transform((value) => value.trim()),
+    year: z.string().max(20, "Year must stay under 20 characters").optional(),
+  })
+  .refine((value) => Boolean(value.imageKey || value.image), {
+    message: "Upload an image or provide an image URL",
+    path: ["imageKey"],
+  });
 
 async function getCurrentArtmakerId() {
   const { isAuthenticated, userId } = await auth();
@@ -213,7 +220,7 @@ export const saveArtwork = createServerFn({ method: "POST" })
         artmakerId,
         description: data.description?.trim() || null,
         forSale: data.forSale,
-        image: data.image,
+        image: data.imageKey ? getPublicUploadUrl(data.imageKey) : (data.image ?? ""),
         medium: data.medium?.trim() || null,
         priceCents: data.forSale ? parsePriceCents(data.price) : null,
         slug,
