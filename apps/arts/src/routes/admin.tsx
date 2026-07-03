@@ -27,6 +27,19 @@ function ArtsAdmin() {
         </p>
       </div>
 
+      {overview.isDegraded ? (
+        <div className="mb-8 rounded-lg border border-yellow-500/40 bg-yellow-950/20 p-4 text-yellow-100">
+          <p className="font-black text-sm uppercase tracking-[0.2em]">Database needs attention</p>
+          <p className="mt-2 text-sm leading-6">
+            The arts admin shell loaded, but one or more arts tables could not be queried. Run the
+            arts database migration/push against the production database, then refresh.
+          </p>
+          {overview.error ? (
+            <p className="mt-2 text-yellow-200/80 text-xs">{overview.error}</p>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={<UsersRound className="size-6" />}

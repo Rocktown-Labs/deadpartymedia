@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listPublishedArtworks } from "#/lib/artworks.functions.ts";
+import { MEDIUM_GROUPS, getMediumGroup } from "#/lib/mediums.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/exhibitions")({
@@ -14,10 +15,22 @@ export const Route = createFileRoute("/exhibitions")({
       title: "Exhibitions",
     }),
   loader: () => listPublishedArtworks(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    medium: typeof search.medium === "string" ? search.medium : undefined,
+  }),
 });
 
 function ExhibitionsPage() {
   const artworks = Route.useLoaderData();
+  const { medium } = Route.useSearch();
+  const activeGroup = medium ? getMediumGroup(medium) : null;
+  const filteredArtworks = activeGroup
+    ? artworks.filter((artwork) =>
+        activeGroup.mediums.some((candidate) =>
+          (artwork.medium ?? "").toLowerCase().includes(candidate.toLowerCase()),
+        ),
+      )
+    : artworks;
 
   return (
     <main className="px-6 pt-[calc(var(--navbar-offset)+2rem)] pb-20">
@@ -28,9 +41,36 @@ function ExhibitionsPage() {
           description="A rolling gallery of Arkansas visual work from artmakers on the Dead Party Arts wall."
         />
 
-        {artworks.length > 0 ? (
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-800 bg-[#111111] p-4">
+          <div>
+            <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.22em]">
+              Medium filter
+            </p>
+            <p className="mt-1 text-gray-400 text-sm">
+              {activeGroup ? activeGroup.description : "Showing every published artwork."}
+            </p>
+          </div>
+          <select
+            value={medium ?? "all"}
+            onChange={(event) => {
+              const value = event.target.value;
+              window.location.href =
+                value === "all" ? "/exhibitions" : `/exhibitions?medium=${value}`;
+            }}
+            className="h-11 rounded-lg border border-gray-800 bg-[#0A0A0A] px-4 font-bold text-white text-sm"
+          >
+            <option value="all">All mediums</option>
+            {MEDIUM_GROUPS.map((group) => (
+              <option key={group.slug} value={group.slug}>
+                {group.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {filteredArtworks.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {artworks.map((artwork) => (
+            {filteredArtworks.map((artwork) => (
               <article
                 key={artwork.id}
                 className="group overflow-hidden rounded-lg border border-gray-800 bg-[#111111] transition-colors hover:border-[#7CFC00]"
@@ -74,7 +114,9 @@ function ExhibitionsPage() {
         ) : (
           <div className="rounded-lg border border-gray-800 bg-[#111111] px-6 py-12 text-center">
             <p className="text-gray-400 text-lg">
-              The exhibition wall is ready. Artist uploads will appear here first.
+              {activeGroup
+                ? `No ${activeGroup.label.toLowerCase()} artworks are published yet.`
+                : "The exhibition wall is ready. Artist uploads will appear here first."}
             </p>
           </div>
         )}

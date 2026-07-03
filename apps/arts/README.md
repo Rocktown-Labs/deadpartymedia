@@ -29,10 +29,30 @@ VITE_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 DATABASE_URL=
 VITE_APP_TITLE="Dead Party Arts"
+CLOUDFLARE_R2_ACCOUNT_ID=
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=
+CLOUDFLARE_R2_PUBLIC_URL=
 ```
 
 `CLERK_SECRET_KEY` is required because this app uses Clerk's TanStack Start
 server middleware and server-side `auth()`.
+
+Optional integrations:
+
+```env
+VITE_FW_STOREFRONT_TOKEN=
+VITE_FW_CHECKOUT=
+VITE_FW_ARTS_COLLECTION_ID=
+VITE_FW_API_URL=
+GOOGLE_GENERATIVE_AI_API_KEY=
+GEMINI_API_KEY=
+AI_GATEWAY_API_KEY=
+```
+
+Fourthwall also accepts the existing `NEXT_PUBLIC_FW_*` names. AI flyer import
+requires one of the listed AI keys.
 
 ## Commands
 
@@ -74,6 +94,8 @@ Arts roles:
 - `/onboarding`
 - `/dashboard`
 - `/admin`
+- `/admin/events/import`
+- `/exhibitions?medium=<slug>`
 
 ## Notes
 

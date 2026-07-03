@@ -24,13 +24,12 @@ function AdminEvents() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            type="button"
-            className="rounded-lg border border-gray-800 px-4 py-3 font-black text-gray-500 text-xs uppercase tracking-[0.18em]"
-            disabled
+          <Link
+            to="/admin/events/import"
+            className="rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline hover:bg-[#a5ff43]"
           >
-            AI Flyer Import Next
-          </button>
+            AI Flyer Import
+          </Link>
           <Link
             to="/events"
             className="rounded-lg border border-gray-800 px-4 py-3 font-black text-white text-xs uppercase tracking-[0.18em] no-underline hover:border-[#7CFC00] hover:text-[#7CFC00]"

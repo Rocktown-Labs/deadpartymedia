@@ -101,8 +101,8 @@ function Home() {
                 {MEDIUM_GROUPS.map((group, index) => (
                   <Link
                     key={group.slug}
-                    to="/mediums/$slug"
-                    params={{ slug: group.slug }}
+                    to="/exhibitions"
+                    search={{ medium: group.slug }}
                     className="min-h-20 rounded-lg border border-gray-800 bg-[#080808] p-3 transition-colors hover:border-[#7CFC00]/60"
                   >
                     <span className="text-gray-600 text-[10px]">
