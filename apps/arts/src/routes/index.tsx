@@ -1,5 +1,6 @@
 import { Show } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowRight, Instagram, MapPin } from "lucide-react";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
 import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
@@ -91,10 +92,12 @@ function Home() {
                   </p>
                   <h2 className="mt-1 font-black text-xl tracking-tight">What Arkansas makes</h2>
                 </div>
-                <img
-                  src="/images/dead-party-arts-logo.jpeg"
+                <Image
+                  src="/images/deadpartyarts-trans.png"
                   alt=""
-                  className="size-14 rounded-lg object-cover"
+                  width={56}
+                  height={56}
+                  className="size-14 object-contain"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">

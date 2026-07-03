@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Ticket } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
@@ -87,9 +88,11 @@ function EventsPage() {
               >
                 <div className="relative grid h-72 place-items-center overflow-hidden bg-black">
                   {event.image ? (
-                    <img
+                    <Image
                       src={event.image}
                       alt={event.title}
+                      width={640}
+                      height={576}
                       className="h-full w-full object-contain transition-transform duration-300 hover:scale-105"
                     />
                   ) : (

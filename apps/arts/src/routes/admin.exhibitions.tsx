@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworks } from "#/lib/artworks.functions.ts";
@@ -37,7 +38,13 @@ function AdminExhibitions() {
             className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]"
           >
             <div className="grid aspect-square place-items-center bg-black">
-              <img src={artwork.image} alt={artwork.title} className="h-full w-full object-cover" />
+              <Image
+                src={artwork.image}
+                alt={artwork.title}
+                width={640}
+                height={640}
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="p-5">
               <h2 className="font-black text-xl">{artwork.title}</h2>

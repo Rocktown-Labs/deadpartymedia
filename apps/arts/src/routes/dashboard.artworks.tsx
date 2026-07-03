@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Image } from "@unpic/react";
 import { CheckCircle2, ImageUp, Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
@@ -352,9 +353,11 @@ function DashboardArtworks() {
                   key={artwork.id}
                   className="grid gap-4 rounded-lg border border-gray-800 bg-[#080808] p-4 sm:grid-cols-[112px_minmax(0,1fr)]"
                 >
-                  <img
+                  <Image
                     src={artwork.image}
                     alt={artwork.title}
+                    width={112}
+                    height={112}
                     className="aspect-square w-full rounded-md object-cover"
                   />
                   <div>

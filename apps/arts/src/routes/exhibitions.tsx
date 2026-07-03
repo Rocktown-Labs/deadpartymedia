@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowRight } from "lucide-react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listPublishedArtworks } from "#/lib/artworks.functions.ts";
@@ -76,9 +77,11 @@ function ExhibitionsPage() {
                 className="group overflow-hidden rounded-lg border border-gray-800 bg-[#111111] transition-colors hover:border-[#7CFC00]"
               >
                 <div className="grid aspect-square place-items-center overflow-hidden bg-black">
-                  <img
+                  <Image
                     src={artwork.image}
                     alt={artwork.title}
+                    width={640}
+                    height={640}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>

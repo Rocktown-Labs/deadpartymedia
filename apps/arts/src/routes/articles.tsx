@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { ArrowLeft, ArrowRight, BookOpen, CalendarDays } from "lucide-react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listArtsArticles } from "#/lib/content.functions.ts";
@@ -56,9 +57,11 @@ function ArticlesPage() {
               >
                 <div className="grid h-60 place-items-center overflow-hidden bg-black">
                   {article.coverImage ? (
-                    <img
+                    <Image
                       src={article.coverImage}
                       alt={article.title}
+                      width={640}
+                      height={384}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (

@@ -38,6 +38,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "icon",
+        type: "image/png",
+        href: "/deadpartyarts-trans.png",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/deadpartyarts-trans.png",
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
+      },
     ],
   }),
   shellComponent: RootDocument,
