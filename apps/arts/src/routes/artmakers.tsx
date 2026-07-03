@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Instagram, MapPin, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
+import { createSeoMeta } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/artmakers")({
   component: Artmakers,
+  head: () =>
+    createSeoMeta({
+      description:
+        "Search Arkansas artmakers by name, city, Instagram, or medium on Dead Party Arts.",
+      path: "/artmakers",
+      title: "Artmakers",
+    }),
   loader: () => listArtmakers(),
 });
 
@@ -40,15 +49,11 @@ function Artmakers() {
       <div className="container mx-auto">
         <div className="mb-8 grid gap-6 lg:grid-cols-[1fr_420px] lg:items-end">
           <div>
-            <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
-              Directory
-            </p>
-            <h1 className="mt-3 font-black text-5xl tracking-tighter md:text-6xl">
-              Arkansas Artmakers
-            </h1>
-            <p className="mt-4 max-w-2xl text-neutral-400 leading-7 md:text-lg">
-              Search the first wave of visual artists by name, city, Instagram, or medium.
-            </p>
+            <PageTitleHeader
+              eyebrow="Directory"
+              title="ARTMAKERS"
+              description="Search the first wave of Arkansas visual artists by name, city, Instagram, or medium."
+            />
           </div>
           <div className="relative">
             <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-neutral-500" />
