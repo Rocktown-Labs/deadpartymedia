@@ -36,15 +36,17 @@ function Artmakers() {
   }, [artmakers, query]);
 
   return (
-    <main className="px-5 pt-40 pb-20">
-      <div className="mx-auto max-w-7xl">
+    <main className="px-6 pt-[calc(var(--navbar-offset)+2rem)] pb-20">
+      <div className="container mx-auto">
         <div className="mb-8 grid gap-6 lg:grid-cols-[1fr_420px] lg:items-end">
           <div>
             <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
               Directory
             </p>
-            <h1 className="mt-3 font-black text-5xl tracking-tighter">Arkansas Artmakers</h1>
-            <p className="mt-4 max-w-2xl text-neutral-400 leading-7">
+            <h1 className="mt-3 font-black text-5xl tracking-tighter md:text-6xl">
+              Arkansas Artmakers
+            </h1>
+            <p className="mt-4 max-w-2xl text-neutral-400 leading-7 md:text-lg">
               Search the first wave of visual artists by name, city, Instagram, or medium.
             </p>
           </div>
@@ -53,7 +55,7 @@ function Artmakers() {
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="h-12 rounded-none border-neutral-800 bg-[#101010] pl-10 text-white"
+              className="h-12 rounded-lg border-gray-800 bg-[#101010] pl-10 text-white"
               placeholder="Search artists, cities, mediums..."
             />
           </div>
@@ -66,7 +68,7 @@ function Artmakers() {
                 key={artmaker.id}
                 to="/artmakers/$slug"
                 params={{ slug: artmaker.slug }}
-                className="group border border-neutral-800 bg-[#101010] p-5 no-underline transition-colors hover:border-[#7CFC00]"
+                className="group rounded-xl border border-gray-800 bg-[#101010] p-5 no-underline transition-colors hover:border-[#7CFC00]"
               >
                 <div className="flex min-h-40 flex-col justify-between">
                   <div>
@@ -88,7 +90,7 @@ function Artmakers() {
                     {artmaker.medium.slice(0, 5).map((medium) => (
                       <span
                         key={medium}
-                        className="border border-neutral-800 px-2 py-1 text-neutral-300 text-xs"
+                        className="rounded-md border border-gray-800 px-2 py-1 text-neutral-300 text-xs"
                       >
                         {medium}
                       </span>
@@ -99,7 +101,7 @@ function Artmakers() {
             ))}
           </div>
         ) : (
-          <div className="border border-neutral-800 bg-[#101010] p-8 text-neutral-300">
+          <div className="rounded-xl border border-gray-800 bg-[#101010] p-8 text-neutral-300">
             No artmakers match that search yet.
           </div>
         )}

@@ -1,6 +1,6 @@
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/tanstack-react-start";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Palette } from "lucide-react";
 
 const navItems = [
   { label: "Artmakers", to: "/artmakers" },
@@ -8,79 +8,104 @@ const navItems = [
   { label: "Editorial", to: "/" },
 ] as const;
 
+const currentDate = new Date();
+const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#080808] text-white">
-      <header className="fixed top-0 right-0 left-0 z-50 border-neutral-800 border-b bg-[#080808]/94 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-5">
-          <div className="flex items-center justify-between border-neutral-800/70 border-b py-2 text-[10px] text-neutral-500 uppercase tracking-[0.32em]">
-            <span>Dead Party Arts</span>
-            <span className="hidden sm:inline">Arkansas Visual Culture</span>
-            <span>Est. 2026</span>
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <header className="fixed top-0 z-50 w-full border-gray-800 border-b bg-[#0A0A0A]/95 backdrop-blur-xl">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-between border-gray-800/50 border-b py-2 text-gray-500 text-xs tracking-widest">
+            <span>
+              ISSUE {currentDate.getMonth() + 1}.{currentDate.getFullYear()}
+            </span>
+            <span className="hidden md:block">{issueDate.toUpperCase()}</span>
+            <span className="hidden md:block">ARKANSAS ARTS</span>
           </div>
-          <nav className="flex items-center justify-between gap-6 py-5">
-            <Link
-              to="/"
-              className="group flex items-center gap-3 no-underline"
-              aria-label="Dead Party Arts home"
-            >
-              <img
-                src="/images/dead-party-arts-logo.jpeg"
-                alt="Dead Party Arts"
-                className="size-14 border border-[#7CFC00]/60 object-cover shadow-[0_0_28px_rgba(124,252,0,0.18)]"
-              />
-              <span className="hidden leading-none sm:block">
-                <span className="block font-black text-2xl tracking-tighter">
-                  <span className="text-[#7CFC00]">DEAD</span>{" "}
-                  <span className="text-white">PARTY</span>{" "}
-                  <span className="text-fuchsia-400">ARTS</span>
-                </span>
-                <span className="mt-1 block text-[10px] text-neutral-400 uppercase tracking-[0.34em]">
-                  Arkansas artists in full color
-                </span>
-              </span>
-            </Link>
 
-            <div className="hidden items-center gap-8 lg:flex">
+          <nav className="flex items-center justify-between gap-6 py-6">
+            <div className="flex-1">
+              <Link to="/" className="block no-underline" aria-label="Dead Party Arts home">
+                <img
+                  src="/images/dead-party-arts-logo.jpeg"
+                  alt="Dead Party Arts"
+                  className="size-14 object-cover lg:hidden"
+                />
+                <div className="hidden lg:block">
+                  <div className="font-black text-3xl tracking-tighter">
+                    <span className="text-[#7CFC00]">DEAD</span>
+                    <span className="text-white"> PARTY</span>
+                    <span className="text-fuchsia-500"> ARTS</span>
+                  </div>
+                  <div className="mt-1 font-light text-[10px] text-neutral-300 tracking-[0.4em]">
+                    YOUR #1 OUTLET FOR ARKANSAS ART
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
               {navItems.map((item) => (
                 <Link
                   key={item.label}
                   to={item.to}
                   activeProps={{ className: "text-[#7CFC00]" }}
-                  className="group relative font-bold text-neutral-300 text-xs uppercase tracking-[0.24em] no-underline transition-colors hover:text-[#7CFC00]"
+                  className="group relative font-medium text-sm uppercase tracking-wider text-white no-underline transition-colors hover:text-[#7CFC00]"
                 >
                   {item.label}
-                  <span className="-bottom-2 absolute left-0 h-px w-0 bg-[#7CFC00] transition-all group-hover:w-full" />
+                  <span className="-bottom-1 absolute left-0 h-px w-0 bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
                 </Link>
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-1 items-center justify-end gap-2 lg:gap-3">
+              <Link
+                to="/artmakers"
+                aria-label="Browse artmakers"
+                className="hidden size-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent text-white no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00] sm:flex"
+              >
+                <Palette className="size-4" />
+              </Link>
               <Show when="signed-in">
                 <Link
                   to="/dashboard"
-                  className="hidden h-10 items-center gap-2 border border-neutral-800 px-3 font-black text-[10px] text-white uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00] md:flex"
+                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
                 >
                   <LayoutDashboard className="size-4" />
-                  Dashboard
+                  <span className="ml-2 hidden font-bold text-xs uppercase tracking-wider md:inline">
+                    Dashboard
+                  </span>
                 </Link>
-                <UserButton />
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox:
+                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
+                      userButtonPopoverActionButtonText: "text-white",
+                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
+                    },
+                  }}
+                />
               </Show>
               <Show when="signed-out">
                 <SignInButton>
                   <button
                     type="button"
-                    className="h-10 border border-neutral-800 bg-transparent px-3 font-black text-[10px] text-white uppercase tracking-[0.18em] transition-colors hover:border-[#7CFC00]"
+                    className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
+                    aria-label="Sign in"
                   >
-                    Sign In
+                    <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
                   </button>
                 </SignInButton>
                 <SignUpButton>
                   <button
                     type="button"
-                    className="h-10 border border-[#7CFC00] bg-[#7CFC00] px-3 font-black text-[10px] text-black uppercase tracking-[0.18em] transition-colors hover:bg-[#a5ff43]"
+                    className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
+                    aria-label="Get started"
                   >
-                    Join
+                    <span className="font-bold text-xs uppercase tracking-wider">Get Started</span>
                   </button>
                 </SignUpButton>
               </Show>
@@ -91,12 +116,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
       {children}
 
-      <footer className="border-neutral-800 border-t px-5 py-12">
-        <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+      <footer className="border-gray-800 border-t px-6 py-12">
+        <div className="container mx-auto grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="font-black text-2xl tracking-tighter">
               <span className="text-[#7CFC00]">DEAD</span> PARTY{" "}
-              <span className="text-fuchsia-400">ARTS</span>
+              <span className="text-fuchsia-500">ARTS</span>
             </div>
             <p className="mt-3 max-w-md text-neutral-400 text-sm leading-6">
               A dedicated home for Arkansas painters, illustrators, tattooers, ceramicists,

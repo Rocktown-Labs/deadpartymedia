@@ -15,23 +15,18 @@ function Home() {
   const featuredMediums = MEDIUM_OPTIONS.slice(0, 12);
 
   return (
-    <main className="pt-36">
-      <section className="relative overflow-hidden px-5 py-16 md:py-24">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-14 left-[8%] h-40 w-40 border border-[#7CFC00]/40" />
-          <div className="absolute right-[10%] bottom-10 h-52 w-52 border border-fuchsia-400/30" />
-          <div className="absolute top-40 right-[28%] h-px w-56 rotate-[-18deg] bg-[#7CFC00]/50" />
-        </div>
-        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
+    <main className="pt-[calc(var(--navbar-offset)+1.25rem)]">
+      <section className="relative overflow-hidden px-6 py-12 md:py-16">
+        <div className="container relative mx-auto grid gap-10 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.74fr)] lg:items-center">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 border border-neutral-800 bg-neutral-950 px-3 py-2 font-black text-[#7CFC00] text-[10px] uppercase tracking-[0.28em]">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-lg border border-gray-800 bg-[#0F0F0F] px-3 py-2 font-black text-[#7CFC00] text-[10px] uppercase tracking-[0.28em]">
               <Sparkles className="size-3.5" />
               Arkansas artist index
             </div>
-            <h1 className="max-w-4xl font-black text-5xl leading-[0.92] tracking-tighter md:text-7xl lg:text-8xl">
+            <h1 className="max-w-4xl font-black text-5xl leading-[0.92] tracking-tighter md:text-7xl xl:text-8xl">
               Visual artists deserve a louder wall.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-neutral-300 leading-8">
+            <p className="mt-6 max-w-2xl text-lg text-neutral-300 leading-8 md:text-xl">
               Dead Party Arts is the sibling archive for painters, ceramicists, illustrators,
               tattooers, designers, photographers, muralists, and every Arkansas maker working
               between categories.
@@ -39,7 +34,7 @@ function Home() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/artmakers"
-                className="inline-flex h-12 items-center gap-2 border border-[#7CFC00] bg-[#7CFC00] px-5 font-black text-black text-xs uppercase tracking-[0.2em] no-underline hover:bg-[#a5ff43]"
+                className="inline-flex h-12 items-center gap-2 rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-5 font-black text-black text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:bg-[#a5ff43]"
               >
                 Browse Artmakers
                 <ArrowRight className="size-4" />
@@ -47,7 +42,7 @@ function Home() {
               <Show when="signed-in">
                 <Link
                   to="/onboarding"
-                  className="inline-flex h-12 items-center border border-neutral-700 px-5 font-black text-white text-xs uppercase tracking-[0.2em] no-underline hover:border-[#7CFC00]"
+                  className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
                 >
                   Build Profile
                 </Link>
@@ -55,7 +50,7 @@ function Home() {
               <Show when="signed-out">
                 <Link
                   to="/onboarding"
-                  className="inline-flex h-12 items-center border border-neutral-700 px-5 font-black text-white text-xs uppercase tracking-[0.2em] no-underline hover:border-[#7CFC00]"
+                  className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
                 >
                   Join the List
                 </Link>
@@ -63,23 +58,43 @@ function Home() {
             </div>
           </div>
 
-          <div className="border border-neutral-800 bg-[#101010] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.32)]">
-            <div className="grid grid-cols-2 gap-3">
-              {featuredMediums.map((medium, index) => (
-                <div key={medium} className="min-h-20 border border-neutral-800 bg-[#080808] p-3">
-                  <span className="text-neutral-600 text-[10px]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <p className="mt-3 font-black text-sm uppercase tracking-[0.12em]">{medium}</p>
+          <div className="relative">
+            <div className="-top-8 -left-8 absolute hidden size-28 border border-[#7CFC00]/30 lg:block" />
+            <div className="-right-8 -bottom-8 absolute hidden size-36 border border-fuchsia-500/25 lg:block" />
+            <div className="relative rounded-xl border border-gray-800 bg-[#101010]/95 p-4 shadow-[0_30px_80px_rgba(0,0,0,0.32)]">
+              <div className="mb-4 flex items-center justify-between border-gray-800 border-b pb-4">
+                <div>
+                  <p className="font-black text-[#7CFC00] text-[10px] uppercase tracking-[0.28em]">
+                    Mediums
+                  </p>
+                  <h2 className="mt-1 font-black text-xl tracking-tight">What Arkansas makes</h2>
                 </div>
-              ))}
+                <img
+                  src="/images/dead-party-arts-logo.jpeg"
+                  alt=""
+                  className="size-14 rounded-lg object-cover"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {featuredMediums.map((medium, index) => (
+                  <div
+                    key={medium}
+                    className="min-h-20 rounded-lg border border-gray-800 bg-[#080808] p-3 transition-colors hover:border-[#7CFC00]/60"
+                  >
+                    <span className="text-gray-600 text-[10px]">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <p className="mt-3 font-black text-sm uppercase tracking-[0.12em]">{medium}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-neutral-800 border-t px-5 py-14">
-        <div className="mx-auto max-w-7xl">
+      <section className="border-gray-800 border-t px-6 py-14">
+        <div className="container mx-auto">
           <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
@@ -131,7 +146,7 @@ function Home() {
               ))}
             </div>
           ) : (
-            <div className="border border-neutral-800 bg-[#101010] p-8">
+            <div className="rounded-xl border border-gray-800 bg-[#101010] p-8">
               <p className="text-neutral-300">
                 The arts directory is ready for the first imported sheet rows and artist signups.
               </p>
