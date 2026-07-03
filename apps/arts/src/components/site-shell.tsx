@@ -1,11 +1,20 @@
 import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/tanstack-react-start";
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, Palette } from "lucide-react";
+import { ExternalLink, Instagram, LayoutDashboard, ShoppingBag, Youtube } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
   { label: "Artmakers", to: "/artmakers" },
+  { label: "Exhibitions", to: "/exhibitions" },
   { label: "Events", to: "/events" },
   { label: "Articles", to: "/articles" },
+  { label: "Merch", to: "/merch" },
+] as const;
+
+const socialLinks = [
+  { href: "https://www.instagram.com/deadpartyy", icon: Instagram, label: "Instagram" },
+  { href: "https://www.youtube.com/@DeadPartyMedia", icon: Youtube, label: "YouTube" },
+  { href: "https://linktr.ee/deadpartyy", icon: ExternalLink, label: "All Links" },
 ] as const;
 
 const currentDate = new Date();
@@ -23,6 +32,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const role = user?.publicMetadata.role;
   const dashboardRoute = isArtsStaffRole(role) ? "/admin" : "/dashboard";
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -73,11 +83,15 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-1 items-center justify-end gap-2 lg:gap-3">
               <Link
-                to="/artmakers"
-                aria-label="Browse artmakers"
+                to="/merch"
+                aria-label="Open cart"
                 className="hidden size-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent text-white no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00] sm:flex"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setIsCartOpen(true);
+                }}
               >
-                <Palette className="size-4" />
+                <ShoppingBag className="size-4" />
               </Link>
               <Show when="signed-in">
                 <Link
@@ -128,6 +142,41 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
       {children}
 
+      {isCartOpen ? (
+        <div className="fixed inset-0 z-[80] bg-black/70 p-4 backdrop-blur-sm">
+          <div className="ml-auto flex min-h-full max-w-md items-center">
+            <div className="w-full rounded-lg border border-gray-800 bg-[#0A0A0A] p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
+                    Cart
+                  </p>
+                  <h2 className="mt-2 font-black text-3xl tracking-tight">Arts merch soon</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpen(false)}
+                  className="rounded-md border border-gray-800 px-3 py-2 text-gray-400 text-sm hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="mt-5 text-gray-400 leading-7">
+                This is where the Fourthwall cart will live. For now the arts storefront route is a
+                holding wall until the dedicated collection is ready.
+              </p>
+              <Link
+                to="/merch"
+                onClick={() => setIsCartOpen(false)}
+                className="mt-6 inline-flex rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline"
+              >
+                View merch wall
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {shouldShowFooter ? (
         <>
           <section className="border-gray-800 border-t px-6 py-20">
@@ -136,17 +185,25 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                 <div className="mb-4 font-bold text-gray-500 text-sm uppercase tracking-[0.4em]">
                   Stay Connected
                 </div>
-                <h2 className="font-black text-4xl tracking-tight">Follow The Wall</h2>
+                <h2 className="font-black text-4xl tracking-tight">Follow The Scene</h2>
               </div>
-              <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-3">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    className="rounded-lg border border-gray-800 px-5 py-4 text-center font-black text-white text-xs uppercase tracking-[0.2em] no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+              <div className="mx-auto grid max-w-3xl grid-cols-3 justify-items-center gap-6">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group text-center no-underline transition-transform duration-300 hover:scale-105"
+                    aria-label={social.label}
                   >
-                    {item.label}
-                  </Link>
+                    <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full border-2 border-gray-800 transition-colors group-hover:border-[#7CFC00]">
+                      <social.icon className="size-7 text-gray-400 transition-colors group-hover:text-[#7CFC00]" />
+                    </div>
+                    <span className="font-medium text-gray-500 text-xs uppercase tracking-wider transition-colors group-hover:text-[#7CFC00]">
+                      {social.label}
+                    </span>
+                  </a>
                 ))}
               </div>
             </div>

@@ -1,8 +1,8 @@
 import { Show } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Instagram, MapPin, Sparkles } from "lucide-react";
-import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import { ArrowRight, Instagram, MapPin } from "lucide-react";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
+import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 import { createSeoMeta, siteName, siteUrl } from "#/lib/seo.ts";
 
 export const Route = createFileRoute("/")({
@@ -33,17 +33,12 @@ export const Route = createFileRoute("/")({
 function Home() {
   const artmakers = Route.useLoaderData();
   const featuredArtmakers = artmakers.slice(0, 6);
-  const featuredMediums = MEDIUM_OPTIONS.slice(0, 12);
 
   return (
     <main className="pt-[calc(var(--navbar-offset)+1.25rem)]">
       <section className="relative overflow-hidden px-6 py-12 md:py-16">
         <div className="container relative mx-auto grid gap-10 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.74fr)] lg:items-center">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-lg border border-gray-800 bg-[#0F0F0F] px-3 py-2 font-black text-[#7CFC00] text-[10px] uppercase tracking-[0.28em]">
-              <Sparkles className="size-3.5" />
-              Arkansas artist index
-            </div>
             <h1 className="max-w-4xl font-black text-5xl leading-[0.92] tracking-tighter md:text-7xl xl:text-8xl">
               Arkansas artists deserve a louder wall.
             </h1>
@@ -54,11 +49,17 @@ function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                to="/artmakers"
+                to="/exhibitions"
                 className="inline-flex h-12 items-center gap-2 rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-5 font-black text-black text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:bg-[#a5ff43]"
               >
-                Browse Artists
+                View Exhibitions
                 <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to="/artmakers"
+                className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
+              >
+                Browse Artists
               </Link>
               <Show when="signed-in">
                 <Link
@@ -97,16 +98,21 @@ function Home() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {featuredMediums.map((medium, index) => (
-                  <div
-                    key={medium}
+                {MEDIUM_GROUPS.map((group, index) => (
+                  <Link
+                    key={group.slug}
+                    to="/mediums/$slug"
+                    params={{ slug: group.slug }}
                     className="min-h-20 rounded-lg border border-gray-800 bg-[#080808] p-3 transition-colors hover:border-[#7CFC00]/60"
                   >
                     <span className="text-gray-600 text-[10px]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <p className="mt-3 font-black text-sm uppercase tracking-[0.12em]">{medium}</p>
-                  </div>
+                    <p className="mt-3 font-black text-sm text-white uppercase tracking-[0.12em]">
+                      {group.label}
+                    </p>
+                    <p className="mt-2 line-clamp-2 text-gray-500 text-xs">{group.description}</p>
+                  </Link>
                 ))}
               </div>
             </div>
