@@ -1,4 +1,5 @@
 import type React from "react";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -79,12 +80,14 @@ export default function RootLayout({
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <Providers>
           <CartProvider>
-            <Navbar />
-            <div className="pb-16 lg:pb-0">{children}</div>
-            <div className="pb-16 lg:pb-0">
-              <Footer />
-            </div>
-            <MobileBottomNav />
+            <Suspense>
+              <Navbar />
+              <div className="pb-16 lg:pb-0">{children}</div>
+              <div className="pb-16 lg:pb-0">
+                <Footer />
+              </div>
+              <MobileBottomNav />
+            </Suspense>
           </CartProvider>
         </Providers>
         <Analytics />
