@@ -71,6 +71,13 @@
       "when": 1781386215791,
       "tag": "0009_salty_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783141323035,
+      "tag": "0010_arts_shared_schema",
+      "breakpoints": true
     }
   ]
 }
