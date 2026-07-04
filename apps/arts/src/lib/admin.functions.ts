@@ -136,5 +136,6 @@ export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(asyn
     })
     .from(users)
     .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin"]))
-    .orderBy(desc(users.updatedAt)),
+    .orderBy(desc(users.updatedAt))
+    .catch(() => []),
 );
