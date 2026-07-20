@@ -2,6 +2,8 @@ import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/reac
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
+import { Toaster } from "sonner";
+
 import ClerkProvider from "../integrations/clerk/provider";
 import { SiteShell } from "../components/site-shell";
 
@@ -65,6 +67,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ClerkProvider>
           <SiteShell>{children}</SiteShell>
+          <Toaster position="bottom-right" theme="dark" />
           <TanStackDevtools
             config={{
               position: "bottom-right",

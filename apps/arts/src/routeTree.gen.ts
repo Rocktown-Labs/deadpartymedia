@@ -19,6 +19,7 @@ import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
@@ -80,6 +81,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const MerchHandleRoute = MerchHandleRouteImport.update({
+  id: '/$handle',
+  path: '/$handle',
+  getParentRoute: () => MerchRoute,
 } as any)
 const DashboardProfileRoute = DashboardProfileRouteImport.update({
   id: '/profile',
@@ -145,7 +151,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
@@ -167,7 +174,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/admin': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
@@ -191,7 +199,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/events/import': typeof AdminEventsImportRoute
 }
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/merch/$handle'
     | '/admin/'
     | '/admin/events/import'
   fileRoutesByTo: FileRoutesByTo
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/merch/$handle'
     | '/admin'
     | '/admin/events/import'
   id:
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/merch/$handle'
     | '/admin/'
     | '/admin/events/import'
   fileRoutesById: FileRoutesById
@@ -285,7 +297,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   EventsRoute: typeof EventsRoute
   ExhibitionsRoute: typeof ExhibitionsRoute
-  MerchRoute: typeof MerchRoute
+  MerchRoute: typeof MerchRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   ApiUploadRoute: typeof ApiUploadRoute
 }
@@ -361,6 +373,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/merch/$handle': {
+      id: '/merch/$handle'
+      path: '/$handle'
+      fullPath: '/merch/$handle'
+      preLoaderRoute: typeof MerchHandleRouteImport
+      parentRoute: typeof MerchRoute
     }
     '/dashboard/profile': {
       id: '/dashboard/profile'
@@ -502,6 +521,16 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface MerchRouteChildren {
+  MerchHandleRoute: typeof MerchHandleRoute
+}
+
+const MerchRouteChildren: MerchRouteChildren = {
+  MerchHandleRoute: MerchHandleRoute,
+}
+
+const MerchRouteWithChildren = MerchRoute._addFileChildren(MerchRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -510,7 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   EventsRoute: EventsRoute,
   ExhibitionsRoute: ExhibitionsRoute,
-  MerchRoute: MerchRoute,
+  MerchRoute: MerchRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   ApiUploadRoute: ApiUploadRoute,
 }
