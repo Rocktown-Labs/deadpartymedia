@@ -117,7 +117,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
         <Sidebar
           mobileSide="bottom"
           collapsible="icon"
-          className="border-r border-gray-800/80 bg-[#111111] group-data-[variant=sidebar]:border-r"
+          className="border-r border-gray-800/80 bg-[#0A0A0A] group-data-[variant=sidebar]:border-r"
         >
           <SidebarHeader className="overflow-hidden border-b border-gray-800/80 p-4 group-data-[collapsible=icon]:p-2">
             {sidebarOpen ? (
