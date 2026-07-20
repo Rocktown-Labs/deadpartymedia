@@ -53,7 +53,6 @@ function draftFromAnalysis(analysis: ArtsFlyerAnalysis): EventDraftFields {
     price: analysis.price ?? "",
     ticketLink: analysis.ticketLink ?? "",
     time: analysis.time,
-    ticketLink: analysis.ticketLink ?? "",
     venue: analysis.venue,
   };
 }
