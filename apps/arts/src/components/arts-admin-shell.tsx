@@ -58,7 +58,7 @@ export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
     <main className="container mx-auto px-6 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
       <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-[calc(var(--navbar-offset)+1.5rem)] lg:self-start">
-          <div className="rounded-lg border border-gray-800 bg-[#111111]">
+          <div className="rounded-lg border border-gray-800 bg-[#0A0A0A]">
             <div className="border-gray-800 border-b p-4">
               <p className="font-black text-2xl text-[#7CFC00] leading-none">Admin</p>
               <div className="mt-3 flex items-center justify-between gap-3">
