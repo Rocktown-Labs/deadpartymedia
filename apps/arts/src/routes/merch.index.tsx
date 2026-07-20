@@ -12,7 +12,7 @@ import { stripHtml } from "#/lib/utils.ts";
 
 const CART_STORAGE_KEY = "dead-party-arts-cart-id";
 
-export const Route = createFileRoute("/merch")({
+export const Route = createFileRoute("/merch/")({
   component: MerchPage,
   head: () =>
     createSeoMeta({

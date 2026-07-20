@@ -295,3 +295,37 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
 
     return { artmaker: created, success: true };
   });
+
+export const createArtsArtmakerStub = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      city: z.string().optional(),
+      state: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    const slug = await makeUniqueArtmakerSlug(data.name);
+    const [created] = await db
+      .insert(artmakers)
+      .values({
+        name: data.name,
+        slug,
+        city: data.city || "Little Rock",
+        state: data.state || "AR",
+        bio: "",
+        medium: ["Visual Art"],
+        approvalStatus: "APPROVED",
+      })
+      .returning();
+
+    return {
+      artmaker: {
+        id: created.id,
+        name: created.name,
+        slug: created.slug,
+      },
+      success: true,
+    };
+  });

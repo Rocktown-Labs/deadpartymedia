@@ -114,6 +114,8 @@ export default function EventFlyerImportClient({
   const [isProcessingBatch, setIsProcessingBatch] = useState(false);
   const [activeSpotifyName, setActiveSpotifyName] = useState<string | null>(null);
   const [artistSearchQuery, setArtistSearchQuery] = useState("");
+  const [editedArtistNames, setEditedArtistNames] = useState<Record<string, string>>({});
+  const [customArtistName, setCustomArtistName] = useState("");
 
   const activeItem = items.find((item) => item.id === activeItemId) ?? items[0] ?? null;
   const activeItemIndex = activeItem ? items.findIndex((item) => item.id === activeItem.id) : -1;
@@ -695,59 +697,118 @@ export default function EventFlyerImportClient({
                       )}
                     </div>
 
+                    {/* Custom Artist Addition Row */}
+                    <div className="rounded border border-gray-800 bg-gray-950 p-3">
+                      <Label
+                        htmlFor="custom-artist-input"
+                        className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                      >
+                        + Add Custom Artist
+                      </Label>
+                      <div className="mt-2 flex gap-2">
+                        <Input
+                          id="custom-artist-input"
+                          value={customArtistName}
+                          onChange={(e) => setCustomArtistName(e.target.value)}
+                          placeholder="Type new artist name..."
+                          className="h-9 text-sm"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!customArtistName.trim()}
+                          onClick={async () => {
+                            const nameToCreate = customArtistName.trim();
+                            if (!nameToCreate) return;
+                            await createArtistStub(nameToCreate);
+                            setCustomArtistName("");
+                          }}
+                        >
+                          Create Artist Profile
+                        </Button>
+                      </div>
+                    </div>
+
                     {(activeItem.analysis?.unmatchedArtists ?? [])
                       .filter((name) => !activeItem.fields.ignoredArtistNames.includes(name))
-                      .map((name) => (
-                        <div key={name} className="rounded border border-gray-800 p-3">
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <span className="text-sm font-bold">{name}</span>
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setArtistSearchQuery(name)}
-                              >
-                                Search Saved
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  setActiveSpotifyName((current) =>
-                                    current === name ? null : name,
-                                  )
-                                }
-                              >
-                                {activeSpotifyName === name ? "Close Search" : "Find Spotify"}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => createArtistStub(name)}
-                              >
-                                Add New Artist
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => ignoreArtistName(name)}
-                              >
-                                Ignore
-                              </Button>
+                      .map((originalName) => {
+                        const currentName = editedArtistNames[originalName] ?? originalName;
+
+                        return (
+                          <div
+                            key={originalName}
+                            className="rounded border border-gray-800 p-3 space-y-3"
+                          >
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex-1 space-y-1">
+                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                                  Extracted Artist (Editable)
+                                </span>
+                                <Input
+                                  value={currentName}
+                                  onChange={(e) =>
+                                    setEditedArtistNames((prev) => ({
+                                      ...prev,
+                                      [originalName]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Edit artist name..."
+                                  className="h-9 font-bold text-sm"
+                                />
+                              </div>
+                              <div className="flex flex-wrap gap-2 pt-4 sm:pt-0">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setArtistSearchQuery(currentName)}
+                                >
+                                  Search Saved
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    setActiveSpotifyName((current) =>
+                                      current === originalName ? null : originalName,
+                                    )
+                                  }
+                                >
+                                  {activeSpotifyName === originalName
+                                    ? "Close Search"
+                                    : "Find Spotify"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => createArtistStub(currentName)}
+                                >
+                                  Create Artist Profile
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => ignoreArtistName(originalName)}
+                                >
+                                  Ignore
+                                </Button>
+                              </div>
                             </div>
+                            {activeSpotifyName === originalName && (
+                              <SpotifySearch
+                                value={currentName}
+                                onSelect={(spotifyArtist) =>
+                                  createArtistStub(currentName, spotifyArtist)
+                                }
+                              />
+                            )}
                           </div>
-                          {activeSpotifyName === name && (
-                            <SpotifySearch
-                              value={name}
-                              onSelect={(spotifyArtist) => createArtistStub(name, spotifyArtist)}
-                            />
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
 
                   <div className="flex flex-wrap gap-3">

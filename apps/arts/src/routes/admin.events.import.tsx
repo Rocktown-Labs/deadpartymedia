@@ -2,14 +2,14 @@ import { uploadFiles } from "@better-upload/client";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, CheckCircle2, Loader2, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Plus, Upload, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import {
   analyzeArtsEventFlyer,
   createArtsEventFromFlyer,
@@ -53,7 +53,7 @@ function draftFromAnalysis(analysis: ArtsFlyerAnalysis): EventDraftFields {
     price: analysis.price ?? "",
     ticketLink: analysis.ticketLink ?? "",
     time: analysis.time,
-    title: analysis.title,
+    ticketLink: analysis.ticketLink ?? "",
     venue: analysis.venue,
   };
 }
@@ -62,9 +62,15 @@ function AdminEventImport() {
   const staff = Route.useRouteContext();
   const analyze = useServerFn(analyzeArtsEventFlyer);
   const createEvent = useServerFn(createArtsEventFromFlyer);
+  const createArtmakerStub = useServerFn(createArtsArtmakerStub);
+
   const [analysis, setAnalysis] = useState<ArtsFlyerAnalysis | null>(null);
   const [fields, setFields] = useState<EventDraftFields | null>(null);
   const [manualImageUrl, setManualImageUrl] = useState("");
+  const [editedArtmakerNames, setEditedArtmakerNames] = useState<Record<string, string>>({});
+  const [customArtmakerName, setCustomArtmakerName] = useState("");
+  const [createdArtmakers, setCreatedArtmakers] = useState<Array<{ id: number; name: string }>>([]);
+  const [isCreatingArtmaker, setIsCreatingArtmaker] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -104,6 +110,39 @@ function AdminEventImport() {
     setFields((current) => (current ? { ...current, [key]: value } : current));
   };
 
+  const handleCreateArtmaker = async (nameToUse: string) => {
+    const trimmed = nameToUse.trim();
+    if (!trimmed || isCreatingArtmaker) {
+      return;
+    }
+    setIsCreatingArtmaker(true);
+    setError("");
+    try {
+      const result = await createArtmakerStub({
+        data: {
+          city: fields?.location || "Little Rock",
+          name: trimmed,
+          state: "AR",
+        },
+      });
+      if (result.success && result.artmaker) {
+        setCreatedArtmakers((prev) => [...prev, result.artmaker]);
+        if (fields) {
+          setField("artmakerIds", [...new Set([...fields.artmakerIds, result.artmaker.id])]);
+        }
+        setSuccess(`Created and attached artmaker profile: "${result.artmaker.name}"`);
+      }
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : "Failed to create artmaker stub.",
+      );
+    } finally {
+      setIsCreatingArtmaker(false);
+    }
+  };
+
+  const allMatchedArtmakers = [...(analysis?.matchedArtmakers ?? []), ...createdArtmakers];
+
   return (
     <ArtsAdminShell role={staff.role}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -111,8 +150,8 @@ function AdminEventImport() {
           <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">AI import</p>
           <h1 className="mt-3 font-black text-4xl tracking-tight">Event flyer import</h1>
           <p className="mt-3 max-w-2xl text-gray-400">
-            Upload an arts flyer, review the extracted event details, then publish it into the arts
-            event wall.
+            Upload an arts flyer, review the extracted event details, match or create artmakers,
+            then publish.
           </p>
         </div>
         <Link
@@ -198,7 +237,7 @@ function AdminEventImport() {
           </div>
 
           {analysis ? (
-            <div className="mt-6 rounded-lg border border-gray-800 bg-[#080808] p-4">
+            <div className="mt-6 rounded-lg border border-gray-800 bg-[#080808] p-4 space-y-4">
               <div className="flex items-center gap-2 text-[#7CFC00]">
                 <CheckCircle2 className="size-4" />
                 <span className="font-black text-xs uppercase tracking-[0.18em]">
@@ -206,13 +245,13 @@ function AdminEventImport() {
                 </span>
               </div>
               {analysis.possibleDuplicate ? (
-                <p className="mt-4 text-yellow-200 text-sm">
+                <p className="text-yellow-200 text-sm">
                   Possible duplicate: {analysis.possibleDuplicate.title} at{" "}
                   {analysis.possibleDuplicate.venue} on {analysis.possibleDuplicate.date}.
                 </p>
               ) : null}
               {analysis.warnings.length > 0 ? (
-                <div className="mt-4 grid gap-2">
+                <div className="grid gap-2">
                   {analysis.warnings.map((warning) => (
                     <p key={warning} className="flex gap-2 text-gray-400 text-sm">
                       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-yellow-300" />
@@ -221,11 +260,86 @@ function AdminEventImport() {
                   ))}
                 </div>
               ) : null}
+
+              {/* Editable Unmatched Artmakers */}
               {analysis.unmatchedArtmakers.length > 0 ? (
-                <p className="mt-4 text-gray-400 text-sm">
-                  Unmatched artmakers: {analysis.unmatchedArtmakers.join(", ")}
-                </p>
+                <div className="border-gray-800 border-t pt-4 space-y-3">
+                  <p className="font-black text-xs text-gray-400 uppercase tracking-wider">
+                    Unmatched Artmakers Extracted (Editable)
+                  </p>
+                  {analysis.unmatchedArtmakers.map((originalName) => {
+                    const currentName = editedArtmakerNames[originalName] ?? originalName;
+
+                    return (
+                      <div
+                        key={originalName}
+                        className="rounded-lg border border-gray-800 bg-[#111111] p-3 space-y-2"
+                      >
+                        <Label
+                          htmlFor={`unmatched-artmaker-${originalName}`}
+                          className="text-xs text-gray-400 font-medium"
+                        >
+                          Fix / Edit Name
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id={`unmatched-artmaker-${originalName}`}
+                            value={currentName}
+                            onChange={(e) =>
+                              setEditedArtmakerNames((prev) => ({
+                                ...prev,
+                                [originalName]: e.target.value,
+                              }))
+                            }
+                            className="h-9 font-bold text-sm"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isCreatingArtmaker || !currentName.trim()}
+                            onClick={() => handleCreateArtmaker(currentName)}
+                          >
+                            <UserPlus className="mr-1.5 size-3.5" />
+                            Create Profile
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : null}
+
+              {/* Add Custom Artmaker */}
+              <div className="border-gray-800 border-t pt-4 space-y-2">
+                <Label
+                  htmlFor="custom-artmaker-input"
+                  className="text-xs font-black text-[#7CFC00] uppercase tracking-wider"
+                >
+                  + Add Custom Artmaker
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="custom-artmaker-input"
+                    value={customArtmakerName}
+                    onChange={(e) => setCustomArtmakerName(e.target.value)}
+                    placeholder="Type artmaker name..."
+                    className="h-9 text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isCreatingArtmaker || !customArtmakerName.trim()}
+                    onClick={async () => {
+                      await handleCreateArtmaker(customArtmakerName);
+                      setCustomArtmakerName("");
+                    }}
+                  >
+                    <Plus className="mr-1.5 size-3.5" />
+                    Create Stub
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : null}
         </section>
@@ -307,16 +421,16 @@ function AdminEventImport() {
                   rows={7}
                 />
               </Field>
-              {analysis?.matchedArtmakers.length ? (
+              {allMatchedArtmakers.length > 0 ? (
                 <div className="rounded-lg border border-gray-800 bg-[#080808] p-4">
                   <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.18em]">
-                    Matched artmakers
+                    Matched & Attached Artmakers
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {analysis.matchedArtmakers.map((artmaker) => (
+                    {allMatchedArtmakers.map((artmaker) => (
                       <label
                         key={artmaker.id}
-                        className="inline-flex items-center gap-2 rounded-md border border-gray-800 px-3 py-2 text-sm"
+                        className="inline-flex items-center gap-2 rounded-md border border-gray-800 bg-[#111111] px-3 py-2 text-sm font-medium text-white"
                       >
                         <input
                           type="checkbox"
