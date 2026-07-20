@@ -49,6 +49,7 @@ export interface ArtsProduct {
   handle: string;
   description: string;
   image: string;
+  images: string[];
   availableForSale: boolean;
   minPrice: string;
   currency: string;
@@ -126,6 +127,16 @@ function transformProduct(product: FourthwallProduct): ArtsProduct {
   const firstImage = product.images?.[0];
   const currency = variants[0]?.unitPrice.currency ?? "USD";
 
+  const allImages = (product.images ?? [])
+    .map((img) => img.transformedUrl ?? img.url ?? "")
+    .filter(Boolean);
+  if (allImages.length === 0 && firstImage) {
+    const mainImg = firstImage.transformedUrl ?? firstImage.url ?? "";
+    if (mainImg) {
+      allImages.push(mainImg);
+    }
+  }
+
   return {
     availableForSale: variants.some(
       (variant) => variant.stock?.type === "UNLIMITED" || Number(variant.stock?.inStock ?? 0) > 0,
@@ -135,6 +146,7 @@ function transformProduct(product: FourthwallProduct): ArtsProduct {
     handle: product.slug,
     id: product.id,
     image: firstImage?.transformedUrl ?? firstImage?.url ?? "",
+    images: allImages,
     minPrice: formatAmount(minPrice),
     title: product.name,
     variants: variants.map((variant) => ({
@@ -227,6 +239,23 @@ export const getArtsProducts = createServerFn({ method: "GET" }).handler(async (
     return [] satisfies ArtsProduct[];
   }
 });
+
+export const getArtsProductByHandle = createServerFn({ method: "GET" })
+  .validator(z.object({ handle: z.string() }))
+  .handler(async ({ data }) => {
+    if (!data.handle) {
+      return null;
+    }
+
+    try {
+      const product = await fourthwallFetch<FourthwallProduct>(
+        `products/${data.handle}?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
+      );
+      return transformProduct(product);
+    } catch {
+      return null;
+    }
+  });
 
 export const getArtsCart = createServerFn({ method: "GET" })
   .validator(cartInputSchema)

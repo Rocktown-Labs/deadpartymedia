@@ -63,6 +63,7 @@
     "radix-ui": "^1.6.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "sonner": "^2.0.5",
     "streamdown": "^2.3.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.1.18",

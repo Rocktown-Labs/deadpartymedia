@@ -6,7 +6,7 @@ import { Input } from "#/components/ui/input.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
 
-export const Route = createFileRoute("/artmakers")({
+export const Route = createFileRoute("/artmakers/")({
   component: Artmakers,
   head: () =>
     createSeoMeta({

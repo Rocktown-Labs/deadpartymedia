@@ -52,6 +52,12 @@
       "sourceType": "github",
       "computedHash": "27156d103697411bba81520fef469e77bfba4c65d904c841e4965a158d531fbd"
     },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "skillPath": "skills/turborepo/SKILL.md",
+      "computedHash": "83fd96a9823bb56e81c802c67ed7826307c49380f1b8dd21d826b1df2d93bc13"
+    },
     "ultracite": {
       "source": "haydenbleasel/ultracite",
       "sourceType": "github",

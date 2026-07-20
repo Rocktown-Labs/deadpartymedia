@@ -33,7 +33,7 @@ export function ArtmakerDashboardShell({ children }: ArtmakerDashboardShellProps
     <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-[calc(var(--navbar-offset)+1.5rem)] lg:self-start">
-          <div className="rounded-lg border border-gray-800 bg-[#111111]">
+          <div className="rounded-lg border border-gray-800 bg-[#0A0A0A]">
             <div className="border-gray-800 border-b p-4">
               <div className="flex items-center gap-3">
                 <div className="grid size-10 place-items-center rounded-md border border-[#7CFC00]/40 text-[#7CFC00]">
