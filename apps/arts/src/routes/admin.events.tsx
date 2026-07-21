@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Edit, Eye, EyeOff, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
@@ -302,6 +302,21 @@ function AdminEvents() {
                     placeholder="Free / $10"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="event-image"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
+                  Flyer / Image URL (Optional)
+                </Label>
+                <Input
+                  id="event-image"
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  placeholder="https://..."
+                />
               </div>
 
               <div className="space-y-2">
