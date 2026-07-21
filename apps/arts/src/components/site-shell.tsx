@@ -176,7 +176,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                 />
               </Show>
               <Show when="signed-out">
-                <SignInButton>
+                <SignInButton mode="modal">
                   <button
                     type="button"
                     className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
@@ -185,7 +185,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                     <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
                   </button>
                 </SignInButton>
-                <SignUpButton>
+                <SignUpButton mode="modal">
                   <button
                     type="button"
                     className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
