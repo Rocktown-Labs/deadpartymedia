@@ -2,6 +2,7 @@ import { db } from "@dpmedia/db";
 import { artmakers, artworks, events, posts, users } from "@dpmedia/db/schema";
 import { createServerFn } from "@tanstack/react-start";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 
 export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(async () => {
   try {
