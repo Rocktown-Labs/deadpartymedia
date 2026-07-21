@@ -329,3 +329,68 @@ export const createArtsArtmakerStub = createServerFn({ method: "POST" })
       success: true,
     };
   });
+
+export const updateArtsArtmaker = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      bio: z.string().optional(),
+      city: z.string().min(1, "City is required"),
+      hidden: z.boolean().optional(),
+      id: z.number(),
+      instagramUsername: z.string().optional(),
+      medium: z.array(z.string()).optional(),
+      name: z.string().min(1, "Name is required"),
+      state: z.string().default("AR"),
+      status: z.enum(["draft", "published", "hidden"]).default("published"),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    const [updated] = await db
+      .update(artmakers)
+      .set({
+        bio: data.bio || null,
+        city: data.city,
+        hidden: data.hidden ?? false,
+        instagramUsername: data.instagramUsername || "",
+        medium: data.medium || [],
+        name: data.name,
+        state: data.state,
+        status: data.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(artmakers.id, data.id))
+      .returning();
+
+    return { artmaker: updated, success: true };
+  });
+
+export const toggleArtsArtmakerVisibility = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    const [existing] = await db.select().from(artmakers).where(eq(artmakers.id, data.id));
+    if (!existing) {
+      throw new Error("Artmaker not found");
+    }
+
+    const nextHidden = !existing.hidden;
+    const [updated] = await db
+      .update(artmakers)
+      .set({
+        hidden: nextHidden,
+        updatedAt: new Date(),
+      })
+      .where(eq(artmakers.id, data.id))
+      .returning();
+
+    return { artmaker: updated, success: true };
+  });
+
+export const deleteArtsArtmaker = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    await db.delete(artmakers).where(eq(artmakers.id, data.id));
+    return { success: true };
+  });

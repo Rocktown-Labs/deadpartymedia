@@ -135,7 +135,27 @@ export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(asyn
       updatedAt: users.updatedAt,
     })
     .from(users)
-    .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin"]))
+    .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin", "fan", "artmaker"]))
     .orderBy(desc(users.updatedAt))
     .catch(() => []),
 );
+
+export const updateArtsUserRole = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      role: z.enum(["artist", "artmaker", "arts_admin", "arts_writer", "fan", "super_admin", "writer"]),
+      userId: z.number(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const [updated] = await db
+      .update(users)
+      .set({
+        role: data.role,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, data.userId))
+      .returning();
+
+    return { success: true, user: updated };
+  });

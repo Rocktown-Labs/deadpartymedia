@@ -232,3 +232,111 @@ export const saveArtwork = createServerFn({ method: "POST" })
 
     return { artwork: created, success: true };
   });
+
+export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async () => {
+  const rows = await db
+    .select(artworkSelect())
+    .from(artworks)
+    .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+    .orderBy(desc(artworks.createdAt));
+
+  return rows satisfies ArtworkListItem[];
+});
+
+export const createArtsArtwork = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      artmakerId: z.number(),
+      description: z.string().optional(),
+      forSale: z.boolean().default(false),
+      image: z.string().min(1, "Image is required"),
+      medium: z.string().optional(),
+      priceCents: z.number().optional(),
+      status: z.enum(["draft", "published", "archived"]).default("published"),
+      title: z.string().min(1, "Title is required"),
+      year: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const slug = await makeUniqueArtworkSlug(data.title);
+    const [created] = await db
+      .insert(artworks)
+      .values({
+        artmakerId: data.artmakerId,
+        description: data.description || null,
+        forSale: data.forSale,
+        image: data.image,
+        medium: data.medium || null,
+        priceCents: data.priceCents || null,
+        slug,
+        status: data.status,
+        title: data.title,
+        year: data.year || null,
+      })
+      .returning();
+
+    return { artwork: created, success: true };
+  });
+
+export const updateArtsArtwork = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      description: z.string().optional(),
+      forSale: z.boolean().optional(),
+      id: z.number(),
+      image: z.string().min(1, "Image is required"),
+      medium: z.string().optional(),
+      priceCents: z.number().optional(),
+      status: z.enum(["draft", "published", "archived"]),
+      title: z.string().min(1, "Title is required"),
+      year: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const [updated] = await db
+      .update(artworks)
+      .set({
+        description: data.description || null,
+        forSale: data.forSale ?? false,
+        image: data.image,
+        medium: data.medium || null,
+        priceCents: data.priceCents || null,
+        status: data.status,
+        title: data.title,
+        updatedAt: new Date(),
+        year: data.year || null,
+      })
+      .where(eq(artworks.id, data.id))
+      .returning();
+
+    return { artwork: updated, success: true };
+  });
+
+export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    const [existing] = await db.select().from(artworks).where(eq(artworks.id, data.id));
+    if (!existing) {
+      throw new Error("Artwork not found");
+    }
+
+    const nextStatus = existing.status === "published" ? "draft" : "published";
+
+    const [updated] = await db
+      .update(artworks)
+      .set({
+        status: nextStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(artworks.id, data.id))
+      .returning();
+
+    return { artwork: updated, success: true };
+  });
+
+export const deleteArtsArtwork = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    await db.delete(artworks).where(eq(artworks.id, data.id));
+    return { success: true };
+  });
