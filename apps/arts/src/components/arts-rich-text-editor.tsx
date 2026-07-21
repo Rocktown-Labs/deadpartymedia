@@ -106,7 +106,9 @@ export function ArtsRichTextEditor({ content, onChange }: ArtsRichTextEditorProp
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={`grid size-8 place-items-center rounded hover:bg-gray-800 ${
-            editor.isActive("heading", { level: 2 }) ? "bg-[#7CFC00]/20 text-[#7CFC00]" : "text-gray-300"
+            editor.isActive("heading", { level: 2 })
+              ? "bg-[#7CFC00]/20 text-[#7CFC00]"
+              : "text-gray-300"
           }`}
           title="Heading 2"
         >
@@ -116,7 +118,9 @@ export function ArtsRichTextEditor({ content, onChange }: ArtsRichTextEditorProp
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={`grid size-8 place-items-center rounded hover:bg-gray-800 ${
-            editor.isActive("heading", { level: 3 }) ? "bg-[#7CFC00]/20 text-[#7CFC00]" : "text-gray-300"
+            editor.isActive("heading", { level: 3 })
+              ? "bg-[#7CFC00]/20 text-[#7CFC00]"
+              : "text-gray-300"
           }`}
           title="Heading 3"
         >

@@ -83,7 +83,10 @@ function AdminArtmakers() {
             city,
             id: editingArtmaker.id,
             instagramUsername: instagram.replace(/^@/, ""),
-            medium: medium.split(",").map((m) => m.trim()).filter(Boolean),
+            medium: medium
+              .split(",")
+              .map((m) => m.trim())
+              .filter(Boolean),
             name,
             state: stateName,
           },
@@ -207,7 +210,11 @@ function AdminArtmakers() {
                         onClick={() => handleToggleVisibility(artmaker.id)}
                         title={artmaker.hidden ? "Unhide Profile" : "Hide Profile"}
                       >
-                        {artmaker.hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                        {artmaker.hidden ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeOff className="size-4" />
+                        )}
                       </Button>
                       <Button
                         type="button"
@@ -255,7 +262,10 @@ function AdminArtmakers() {
 
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="artmaker-name" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artmaker-name"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Full Name / Studio Name
                 </Label>
                 <Input
@@ -269,7 +279,10 @@ function AdminArtmakers() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="artmaker-city" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artmaker-city"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     City
                   </Label>
                   <Input
@@ -280,7 +293,10 @@ function AdminArtmakers() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="artmaker-state" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artmaker-state"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     State
                   </Label>
                   <Input
@@ -293,7 +309,10 @@ function AdminArtmakers() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="artmaker-ig" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artmaker-ig"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Instagram Handle
                 </Label>
                 <Input
@@ -305,7 +324,10 @@ function AdminArtmakers() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="artmaker-medium" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artmaker-medium"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Mediums (Comma Separated)
                 </Label>
                 <Input
@@ -317,7 +339,10 @@ function AdminArtmakers() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="artmaker-bio" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artmaker-bio"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Artist Bio
                 </Label>
                 <Textarea
@@ -330,11 +355,7 @@ function AdminArtmakers() {
               </div>
 
               <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -342,7 +363,11 @@ function AdminArtmakers() {
                   disabled={isSubmitting}
                   className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
                 >
-                  {isSubmitting ? "Saving..." : editingArtmaker ? "Update Profile" : "Create Profile"}
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingArtmaker
+                      ? "Update Profile"
+                      : "Create Profile"}
                 </Button>
               </div>
             </form>

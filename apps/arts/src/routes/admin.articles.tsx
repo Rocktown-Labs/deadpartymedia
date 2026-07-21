@@ -156,7 +156,10 @@ function AdminArticles() {
         {articles.length > 0 ? (
           <div className="divide-y divide-gray-800">
             {articles.map((article) => (
-              <div key={article.id} className="flex flex-wrap items-center justify-between gap-4 p-5 hover:bg-gray-900/50">
+              <div
+                key={article.id}
+                className="flex flex-wrap items-center justify-between gap-4 p-5 hover:bg-gray-900/50"
+              >
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h2 className="font-bold text-lg text-white">{article.title}</h2>
@@ -172,7 +175,9 @@ function AdminArticles() {
                   </div>
                   <p className="line-clamp-1 text-gray-400 text-sm">{article.excerpt}</p>
                   <p className="text-gray-500 text-xs">
-                    {article.publishedAt ? `Published: ${new Date(article.publishedAt).toLocaleDateString()}` : "Draft"}
+                    {article.publishedAt
+                      ? `Published: ${new Date(article.publishedAt).toLocaleDateString()}`
+                      : "Draft"}
                   </p>
                 </div>
 
@@ -184,7 +189,11 @@ function AdminArticles() {
                     onClick={() => handleToggleStatus(article.id)}
                     title={article.status === "published" ? "Unpublish" : "Publish"}
                   >
-                    {article.status === "published" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {article.status === "published" ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
                   </Button>
                   <Button
                     type="button"
@@ -209,7 +218,9 @@ function AdminArticles() {
             ))}
           </div>
         ) : (
-          <p className="p-8 text-center text-gray-400">No arts articles created yet. Click "Create Article" to write one!</p>
+          <p className="p-8 text-center text-gray-400">
+            No arts articles created yet. Click "Create Article" to write one!
+          </p>
         )}
       </div>
 
@@ -232,7 +243,10 @@ function AdminArticles() {
 
             <form onSubmit={handleSave} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="title"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Article Title
                 </Label>
                 <Input
@@ -245,7 +259,10 @@ function AdminArticles() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="excerpt" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="excerpt"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Excerpt / Summary
                 </Label>
                 <Textarea
@@ -259,7 +276,10 @@ function AdminArticles() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="coverImage" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="coverImage"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Cover Image URL
                   </Label>
                   <Input
@@ -270,13 +290,18 @@ function AdminArticles() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status-select" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="status-select"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Publication Status
                   </Label>
                   <select
                     id="status-select"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as "draft" | "published" | "archived")}
+                    onChange={(e) =>
+                      setStatus(e.target.value as "draft" | "published" | "archived")
+                    }
                     className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
                   >
                     <option value="published">Published</option>
@@ -294,11 +319,7 @@ function AdminArticles() {
               </div>
 
               <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditorOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsEditorOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -306,7 +327,11 @@ function AdminArticles() {
                   disabled={isSubmitting}
                   className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
                 >
-                  {isSubmitting ? "Saving..." : editingArticle ? "Update Article" : "Publish Article"}
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingArticle
+                      ? "Update Article"
+                      : "Publish Article"}
                 </Button>
               </div>
             </form>

@@ -34,7 +34,14 @@ function AdminUsers() {
     try {
       await updateRoleFn({
         data: {
-          role: newRole as "artist" | "artmaker" | "arts_admin" | "arts_writer" | "fan" | "super_admin" | "writer",
+          role: newRole as
+            | "artist"
+            | "artmaker"
+            | "arts_admin"
+            | "arts_writer"
+            | "fan"
+            | "super_admin"
+            | "writer",
           userId,
         },
       });

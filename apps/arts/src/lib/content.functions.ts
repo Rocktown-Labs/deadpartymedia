@@ -259,7 +259,9 @@ export const createArtsEvent = createServerFn({ method: "POST" })
       artmakerIds: z.array(z.number()).optional(),
       date: z.string().min(1, "Date is required"),
       description: z.string().min(1, "Description is required"),
-      genre: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]).default("OTHER"),
+      genre: z
+        .enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"])
+        .default("OTHER"),
       image: z.string().optional(),
       location: z.string().min(1, "Location is required"),
       price: z.string().optional(),

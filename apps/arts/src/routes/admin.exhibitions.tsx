@@ -24,10 +24,7 @@ export const Route = createFileRoute("/admin/exhibitions")({
   beforeLoad: () => requireArtsStaff(),
   component: AdminExhibitions,
   loader: async () => {
-    const [artworks, artmakers] = await Promise.all([
-      listAdminArtworks(),
-      listAdminArtmakers(),
-    ]);
+    const [artworks, artmakers] = await Promise.all([listAdminArtworks(), listAdminArtmakers()]);
     return { artmakers, artworks };
   },
 });
@@ -209,7 +206,9 @@ function AdminExhibitions() {
                   <h2 className="font-black text-xl text-white tracking-tight">{artwork.title}</h2>
                   <p className="text-gray-400 text-sm">{artwork.medium ?? "Mixed practice"}</p>
                   {artwork.forSale && artwork.priceCents ? (
-                    <p className="font-black text-[#7CFC00] text-sm">${(artwork.priceCents / 100).toFixed(2)} USD</p>
+                    <p className="font-black text-[#7CFC00] text-sm">
+                      ${(artwork.priceCents / 100).toFixed(2)} USD
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -233,7 +232,11 @@ function AdminExhibitions() {
                     onClick={() => handleToggleStatus(artwork.id)}
                     title={artwork.status === "published" ? "Draft" : "Publish"}
                   >
-                    {artwork.status === "published" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {artwork.status === "published" ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
                   </Button>
                   <Button
                     type="button"
@@ -284,7 +287,10 @@ function AdminExhibitions() {
             <form onSubmit={handleSave} className="space-y-4">
               {!editingArtwork && artmakers.length > 0 ? (
                 <div className="space-y-2">
-                  <Label htmlFor="artmaker-select" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artmaker-select"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Select Artmaker
                   </Label>
                   <select
@@ -303,7 +309,10 @@ function AdminExhibitions() {
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="artwork-title" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artwork-title"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Artwork Title
                 </Label>
                 <Input
@@ -316,7 +325,10 @@ function AdminExhibitions() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="artwork-image" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artwork-image"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Image URL
                 </Label>
                 <Input
@@ -329,7 +341,10 @@ function AdminExhibitions() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="artwork-medium" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artwork-medium"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Medium
                   </Label>
                   <Input
@@ -340,7 +355,10 @@ function AdminExhibitions() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="artwork-year" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artwork-year"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Year Created
                   </Label>
                   <Input
@@ -367,7 +385,10 @@ function AdminExhibitions() {
 
               {forSale ? (
                 <div className="space-y-2">
-                  <Label htmlFor="artwork-price" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="artwork-price"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Price (USD $)
                   </Label>
                   <Input
@@ -380,7 +401,10 @@ function AdminExhibitions() {
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="artwork-desc" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="artwork-desc"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Description / Curator Statement
                 </Label>
                 <Textarea
@@ -393,11 +417,7 @@ function AdminExhibitions() {
               </div>
 
               <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
                 <Button

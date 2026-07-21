@@ -143,7 +143,15 @@ export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(asyn
 export const updateArtsUserRole = createServerFn({ method: "POST" })
   .validator(
     z.object({
-      role: z.enum(["artist", "artmaker", "arts_admin", "arts_writer", "fan", "super_admin", "writer"]),
+      role: z.enum([
+        "artist",
+        "artmaker",
+        "arts_admin",
+        "arts_writer",
+        "fan",
+        "super_admin",
+        "writer",
+      ]),
       userId: z.number(),
     }),
   )

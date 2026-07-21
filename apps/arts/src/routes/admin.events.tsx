@@ -140,7 +140,10 @@ function AdminEvents() {
         {events.length > 0 ? (
           <div className="divide-y divide-gray-800">
             {events.map((event) => (
-              <div key={event.id} className="flex flex-wrap items-center justify-between gap-4 p-5 hover:bg-gray-900/50">
+              <div
+                key={event.id}
+                className="flex flex-wrap items-center justify-between gap-4 p-5 hover:bg-gray-900/50"
+              >
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <h2 className="font-bold text-lg text-white">{event.title}</h2>
@@ -155,7 +158,8 @@ function AdminEvents() {
                     </span>
                   </div>
                   <p className="text-gray-400 text-sm">
-                    {event.venue}, {event.location} • {new Date(`${event.date}T00:00:00`).toLocaleDateString()}
+                    {event.venue}, {event.location} •{" "}
+                    {new Date(`${event.date}T00:00:00`).toLocaleDateString()}
                   </p>
                 </div>
 
@@ -167,7 +171,11 @@ function AdminEvents() {
                     onClick={() => handleToggleStatus(event.id)}
                     title={event.status === "published" ? "Unpublish" : "Publish"}
                   >
-                    {event.status === "published" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {event.status === "published" ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
                   </Button>
                   <Button
                     type="button"
@@ -183,7 +191,9 @@ function AdminEvents() {
             ))}
           </div>
         ) : (
-          <p className="p-8 text-center text-gray-400">No arts events created yet. Click "Create Event" to add one!</p>
+          <p className="p-8 text-center text-gray-400">
+            No arts events created yet. Click "Create Event" to add one!
+          </p>
         )}
       </div>
 
@@ -204,7 +214,10 @@ function AdminEvents() {
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="event-title" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="event-title"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Event Title
                 </Label>
                 <Input
@@ -217,7 +230,10 @@ function AdminEvents() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="event-venue" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="event-venue"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Venue
                   </Label>
                   <Input
@@ -228,7 +244,10 @@ function AdminEvents() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event-location" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="event-location"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     City, State
                   </Label>
                   <Input
@@ -242,7 +261,10 @@ function AdminEvents() {
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="event-date" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="event-date"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Date
                   </Label>
                   <Input
@@ -253,7 +275,10 @@ function AdminEvents() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event-time" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="event-time"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Time
                   </Label>
                   <Input
@@ -264,7 +289,10 @@ function AdminEvents() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event-price" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <Label
+                    htmlFor="event-price"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
                     Price
                   </Label>
                   <Input
@@ -277,7 +305,10 @@ function AdminEvents() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="event-ticket" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="event-ticket"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Ticket Link (Optional)
                 </Label>
                 <Input
@@ -289,7 +320,10 @@ function AdminEvents() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="event-desc" className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <Label
+                  htmlFor="event-desc"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
                   Description
                 </Label>
                 <Textarea
@@ -302,11 +336,7 @@ function AdminEvents() {
               </div>
 
               <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsFormOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                   Cancel
                 </Button>
                 <Button
