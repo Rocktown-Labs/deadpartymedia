@@ -1,6 +1,8 @@
+import { uploadFiles } from "@better-upload/client";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { Check, Edit, Eye, EyeOff, Loader2, Plus, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
@@ -8,6 +10,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import {
   createArtsArtmakerStub,
   deleteArtsArtmaker,
@@ -15,6 +18,8 @@ import {
   toggleArtsArtmakerVisibility,
   updateArtsArtmaker,
 } from "#/lib/artmakers.functions.ts";
+import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
+import { getPublicUploadUrl } from "#/lib/upload.ts";
 import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 
 export const Route = createFileRoute("/admin/artmakers")({
@@ -36,8 +41,9 @@ function AdminArtmakers() {
   const [city, setCity] = useState("Little Rock");
   const [stateName, setStateName] = useState("AR");
   const [bio, setBio] = useState("");
+  const [image, setImage] = useState("");
   const [instagram, setInstagram] = useState("");
-  const [medium, setMedium] = useState("Visual Art");
+  const [medium, setMedium] = useState<string[]>(["Visual Art"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createStubFn = useServerFn(createArtsArtmakerStub);
@@ -45,14 +51,37 @@ function AdminArtmakers() {
   const toggleVisibilityFn = useServerFn(toggleArtsArtmakerVisibility);
   const deleteArtmakerFn = useServerFn(deleteArtsArtmaker);
 
+  const profileImageUploadMutation = useMutation({
+    mutationFn: async (files: File[]) =>
+      uploadFiles({
+        files,
+        route: "profileImages",
+      }),
+    onError: (caughtError) => {
+      toast.error(caughtError instanceof Error ? caughtError.message : "Image upload failed");
+    },
+    onSuccess: (result) => {
+      const [uploadedFile] = (result.files ?? []) as unknown[];
+      const key = uploadedFile ? getUploadedObjectKey(uploadedFile) : "";
+
+      if (!key) {
+        toast.error("The image uploaded, but no object key came back from storage.");
+        return;
+      }
+
+      setImage(getPublicUploadUrl(key));
+    },
+  });
+
   const openNewModal = () => {
     setEditingArtmaker(null);
     setName("");
     setCity("Little Rock");
     setStateName("AR");
     setBio("");
+    setImage("");
     setInstagram("");
-    setMedium("Visual Art");
+    setMedium(["Visual Art"]);
     setIsModalOpen(true);
   };
 
@@ -62,8 +91,9 @@ function AdminArtmakers() {
     setCity(artmaker.city);
     setStateName(artmaker.state);
     setBio(artmaker.bio ?? "");
+    setImage(artmaker.image ?? "");
     setInstagram(artmaker.instagramUsername || "");
-    setMedium(artmaker.medium.join(", ") || "Visual Art");
+    setMedium(artmaker.medium.length ? artmaker.medium : ["Visual Art"]);
     setIsModalOpen(true);
   };
 
@@ -83,11 +113,9 @@ function AdminArtmakers() {
             city,
             hidden: editingArtmaker.hidden,
             id: editingArtmaker.id,
+            image,
             instagramUsername: instagram.replace(/^@/, ""),
-            medium: medium
-              .split(",")
-              .map((m) => m.trim())
-              .filter(Boolean),
+            medium,
             name,
             state: stateName,
             status: editingArtmaker.status,
@@ -98,6 +126,9 @@ function AdminArtmakers() {
         await createStubFn({
           data: {
             city,
+            image,
+            instagramUsername: instagram.replace(/^@/, ""),
+            medium,
             name,
             state: stateName,
           },
@@ -113,6 +144,12 @@ function AdminArtmakers() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const toggleMedium = (value: string) => {
+    setMedium((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
   };
 
   const handleToggleVisibility = async (id: number) => {
@@ -248,7 +285,7 @@ function AdminArtmakers() {
       {/* Artmaker Modal */}
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="my-8 w-full max-w-3xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
             <div className="flex items-center justify-between border-gray-800 border-b pb-4">
               <h2 className="font-black text-2xl text-white">
                 {editingArtmaker ? "Edit Artmaker Profile" : "Add New Artmaker"}
@@ -330,14 +367,74 @@ function AdminArtmakers() {
                   htmlFor="artmaker-medium"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Mediums (Comma Separated)
+                  Mediums
                 </Label>
-                <Input
-                  id="artmaker-medium"
-                  value={medium}
-                  onChange={(e) => setMedium(e.target.value)}
-                  placeholder="Painting, Sculpture, Photography"
-                />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {MEDIUM_OPTIONS.map((option) => {
+                    const selected = medium.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => toggleMedium(option)}
+                        className={`flex min-h-10 items-center justify-between gap-3 border px-3 text-left text-sm ${
+                          selected
+                            ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                            : "border-gray-800 bg-[#080808] text-gray-300 hover:border-gray-600"
+                        }`}
+                      >
+                        <span>{option}</span>
+                        {selected ? <Check className="size-4" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="artmaker-image"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
+                  Profile Image
+                </Label>
+                {image ? (
+                  <img
+                    src={image}
+                    alt=""
+                    className="aspect-video w-full rounded-lg border border-gray-800 object-cover"
+                  />
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Input
+                    id="artmaker-image"
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                    placeholder="https://..."
+                    className="min-w-64 flex-1"
+                  />
+                  <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-gray-800 px-3 font-black text-white text-xs uppercase tracking-[0.14em] hover:border-[#7CFC00] hover:text-[#7CFC00]">
+                    {profileImageUploadMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Upload className="size-4" />
+                    )}
+                    Upload
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      disabled={profileImageUploadMutation.isPending}
+                      onChange={(event) => {
+                        const files = [...(event.target.files ?? [])];
+                        if (files.length > 0) {
+                          profileImageUploadMutation.mutate(files);
+                        }
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-2">

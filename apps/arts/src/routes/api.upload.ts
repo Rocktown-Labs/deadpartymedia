@@ -41,6 +41,44 @@ function requireR2Router(): Router {
           };
         },
       }),
+      profileImages: route({
+        fileTypes: ["image/*"],
+        maxFileSize: 1024 * 1024 * 8,
+        maxFiles: 1,
+        multipleFiles: false,
+        onBeforeUpload() {
+          return {
+            generateObjectInfo: ({ file }) => {
+              const safeName = file.name
+                .toLowerCase()
+                .replaceAll(/[^a-z0-9.]+/g, "-")
+                .replaceAll(/^-|-$/g, "");
+              return {
+                key: `artmaker-profiles/${crypto.randomUUID()}-${safeName || "profile"}`,
+              };
+            },
+          };
+        },
+      }),
+      articleImages: route({
+        fileTypes: ["image/*"],
+        maxFileSize: 1024 * 1024 * 12,
+        maxFiles: 6,
+        multipleFiles: true,
+        onBeforeUpload() {
+          return {
+            generateObjectInfo: ({ file }) => {
+              const safeName = file.name
+                .toLowerCase()
+                .replaceAll(/[^a-z0-9.]+/g, "-")
+                .replaceAll(/^-|-$/g, "");
+              return {
+                key: `arts-articles/${crypto.randomUUID()}-${safeName || "image"}`,
+              };
+            },
+          };
+        },
+      }),
       eventFlyers: route({
         fileTypes: ["image/*"],
         maxFileSize: 1024 * 1024 * 12,
