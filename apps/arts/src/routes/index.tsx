@@ -1,4 +1,4 @@
-import { Show } from "@clerk/tanstack-react-start";
+import { Show, SignUpButton } from "@clerk/tanstack-react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { ArrowRight, Instagram, MapPin } from "lucide-react";
@@ -71,12 +71,14 @@ function Home() {
                 </Link>
               </Show>
               <Show when="signed-out">
-                <Link
-                  to="/onboarding"
-                  className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
-                >
-                  Create Artist Profile
-                </Link>
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    className="inline-flex h-12 cursor-pointer items-center rounded-lg border border-gray-800 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] transition-colors hover:border-[#7CFC00]"
+                  >
+                    Create Artist Profile
+                  </button>
+                </SignUpButton>
               </Show>
             </div>
           </div>

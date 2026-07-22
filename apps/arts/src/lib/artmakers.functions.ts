@@ -19,6 +19,10 @@ function isArtsStaffRole(role: unknown) {
   );
 }
 
+function getSerializableRole(role: unknown) {
+  return typeof role === "string" ? role : null;
+}
+
 function assertClerkServerConfigured() {
   if (!process.env.CLERK_SECRET_KEY) {
     throw new Error("CLERK_SECRET_KEY is required for protected arts routes.");
@@ -54,7 +58,7 @@ export const requireArtmakerDashboardUser = createServerFn({ method: "GET" }).ha
     throw redirect({ to: "/admin" });
   }
 
-  return { role, userId };
+  return { role: getSerializableRole(role), userId };
 });
 
 export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async () => {
@@ -75,7 +79,7 @@ export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async 
   }
 
   return {
-    role,
+    role: getSerializableRole(role),
     userId,
   };
 });
@@ -328,4 +332,82 @@ export const createArtsArtmakerStub = createServerFn({ method: "POST" })
       },
       success: true,
     };
+  });
+
+export const updateArtsArtmaker = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      bio: z.string().optional(),
+      city: z.string().min(1, "City is required"),
+      hidden: z.boolean().optional(),
+      id: z.number(),
+      instagramUsername: z.string().optional(),
+      medium: z.array(z.string()).optional(),
+      name: z.string().min(1, "Name is required"),
+      state: z.string().default("AR"),
+      status: z.enum(["draft", "published", "hidden"]).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    const [existing] = await db
+      .select({
+        hidden: artmakers.hidden,
+        status: artmakers.status,
+      })
+      .from(artmakers)
+      .where(eq(artmakers.id, data.id))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error("Artmaker not found");
+    }
+
+    const [updated] = await db
+      .update(artmakers)
+      .set({
+        bio: data.bio || null,
+        city: data.city,
+        hidden: data.hidden ?? existing.hidden,
+        instagramUsername: data.instagramUsername || "",
+        medium: data.medium || [],
+        name: data.name,
+        state: data.state,
+        status: data.status ?? existing.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(artmakers.id, data.id))
+      .returning();
+
+    return { artmaker: updated, success: true };
+  });
+
+export const toggleArtsArtmakerVisibility = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    const [existing] = await db.select().from(artmakers).where(eq(artmakers.id, data.id));
+    if (!existing) {
+      throw new Error("Artmaker not found");
+    }
+
+    const nextHidden = !existing.hidden;
+    const [updated] = await db
+      .update(artmakers)
+      .set({
+        hidden: nextHidden,
+        updatedAt: new Date(),
+      })
+      .where(eq(artmakers.id, data.id))
+      .returning();
+
+    return { artmaker: updated, success: true };
+  });
+
+export const deleteArtsArtmaker = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    await requireArtsStaff();
+    await db.delete(artmakers).where(eq(artmakers.id, data.id));
+    return { success: true };
   });
