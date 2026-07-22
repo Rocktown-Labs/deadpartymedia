@@ -19,6 +19,10 @@ function isArtsStaffRole(role: unknown) {
   );
 }
 
+function getSerializableRole(role: unknown) {
+  return typeof role === "string" ? role : null;
+}
+
 function assertClerkServerConfigured() {
   if (!process.env.CLERK_SECRET_KEY) {
     throw new Error("CLERK_SECRET_KEY is required for protected arts routes.");
@@ -54,7 +58,7 @@ export const requireArtmakerDashboardUser = createServerFn({ method: "GET" }).ha
     throw redirect({ to: "/admin" });
   }
 
-  return { role, userId };
+  return { role: getSerializableRole(role), userId };
 });
 
 export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async () => {
@@ -75,7 +79,7 @@ export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async 
   }
 
   return {
-    role,
+    role: getSerializableRole(role),
     userId,
   };
 });

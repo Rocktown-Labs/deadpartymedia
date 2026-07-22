@@ -13,35 +13,23 @@ import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
+import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
 import { listCurrentArtworks, saveArtwork } from "#/lib/artworks.functions.ts";
-
-interface ArtworkDraft {
-  id: string;
-  fileName: string;
-  imageKey: string;
-  title: string;
-  medium: string;
-  year: string;
-  description: string;
-  forSale: boolean;
-  price: string;
-  status: "draft" | "published";
-}
 
 const batchArtworkSchema = z.object({
   items: z
     .array(
       z.object({
-        description: z.string().max(700).optional(),
+        description: z.string().max(700),
         fileName: z.string(),
         forSale: z.boolean(),
         id: z.string(),
         imageKey: z.string().min(1),
-        medium: z.string().max(80).optional(),
-        price: z.string().optional(),
+        medium: z.string().max(80),
+        price: z.string(),
         status: z.enum(["draft", "published"]),
         title: z.string().min(1, "Title is required").max(120),
-        year: z.string().max(20).optional(),
+        year: z.string().max(20),
       }),
     )
     .min(1, "Upload at least one artwork image."),
@@ -52,22 +40,6 @@ export const Route = createFileRoute("/dashboard/artworks")({
   component: DashboardArtworks,
   loader: () => listCurrentArtworks(),
 });
-
-function getUploadedObjectKey(file: unknown) {
-  const candidate = file as {
-    objectInfo?: { key?: string };
-    uploadedObject?: { key?: string };
-    key?: string;
-  };
-  return candidate.objectInfo?.key ?? candidate.uploadedObject?.key ?? candidate.key ?? "";
-}
-
-function titleFromFileName(fileName: string) {
-  return fileName
-    .replace(/\.[^.]+$/, "")
-    .replaceAll(/[-_]+/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 function DashboardArtworks() {
   const initialArtworks = Route.useLoaderData();
@@ -119,30 +91,7 @@ function DashboardArtworks() {
     },
     onSuccess: (result) => {
       const uploadedFiles = (result.files ?? []) as unknown[];
-      const drafts = uploadedFiles
-        .map((file, index) => {
-          const sourceFile = (file as { file?: File }).file;
-          const fileName = sourceFile?.name ?? `Artwork ${index + 1}`;
-          const imageKey = getUploadedObjectKey(file);
-
-          if (!imageKey) {
-            return null;
-          }
-
-          return {
-            description: "",
-            fileName,
-            forSale: false,
-            id: crypto.randomUUID(),
-            imageKey,
-            medium: "",
-            price: "",
-            status: "published" as const,
-            title: titleFromFileName(fileName),
-            year: "",
-          };
-        })
-        .filter((draft): draft is ArtworkDraft => Boolean(draft));
+      const drafts = createArtworkDrafts(uploadedFiles);
 
       form.setFieldValue("items", [...form.state.values.items, ...drafts]);
     },
