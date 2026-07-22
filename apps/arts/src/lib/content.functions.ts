@@ -166,7 +166,7 @@ export const createArtsArticle = createServerFn({ method: "POST" })
     const [created] = await db
       .insert(posts)
       .values({
-        authorId: staff.clerkUserId,
+        authorId: staff.userId,
         category: "OTHER",
         content: data.content,
         coverImage: data.coverImage || null,
@@ -195,7 +195,10 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
-    const [existing] = await db.select().from(posts).where(eq(posts.id, data.id));
+    const [existing] = await db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     if (!existing) {
       throw new Error("Article not found");
     }
@@ -214,7 +217,7 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
         title: data.title,
         updatedAt: new Date(),
       })
-      .where(eq(posts.id, data.id))
+      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
       .returning();
 
     return { article: updated, success: true };
@@ -224,7 +227,10 @@ export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
-    const [existing] = await db.select().from(posts).where(eq(posts.id, data.id));
+    const [existing] = await db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     if (!existing) {
       throw new Error("Article not found");
     }
@@ -239,7 +245,7 @@ export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
         status: nextStatus,
         updatedAt: new Date(),
       })
-      .where(eq(posts.id, data.id))
+      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
       .returning();
 
     return { article: updated, success: true };
@@ -249,7 +255,7 @@ export const deleteArtsArticle = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
-    await db.delete(posts).where(eq(posts.id, data.id));
+    await db.delete(posts).where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     return { success: true };
   });
 
@@ -290,7 +296,7 @@ export const createArtsEvent = createServerFn({ method: "POST" })
     const [created] = await db
       .insert(events)
       .values({
-        createdById: staff.clerkUserId,
+        createdById: staff.userId,
         date: data.date,
         description: data.description,
         genre: data.genre,
@@ -323,7 +329,10 @@ export const toggleArtsEventStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
-    const [existing] = await db.select().from(events).where(eq(events.id, data.id));
+    const [existing] = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
     if (!existing) {
       throw new Error("Event not found");
     }
@@ -336,7 +345,7 @@ export const toggleArtsEventStatus = createServerFn({ method: "POST" })
         status: nextStatus,
         updatedAt: new Date(),
       })
-      .where(eq(events.id, data.id))
+      .where(and(eq(events.id, data.id), eq(events.vertical, "arts")))
       .returning();
 
     return { event: updated, success: true };
@@ -346,6 +355,6 @@ export const deleteArtsEvent = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
-    await db.delete(events).where(eq(events.id, data.id));
+    await db.delete(events).where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
     return { success: true };
   });

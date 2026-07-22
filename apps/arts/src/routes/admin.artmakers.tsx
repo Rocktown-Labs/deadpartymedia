@@ -61,7 +61,7 @@ function AdminArtmakers() {
     setName(artmaker.name);
     setCity(artmaker.city);
     setStateName(artmaker.state);
-    setBio("");
+    setBio(artmaker.bio ?? "");
     setInstagram(artmaker.instagramUsername || "");
     setMedium(artmaker.medium.join(", ") || "Visual Art");
     setIsModalOpen(true);
@@ -81,6 +81,7 @@ function AdminArtmakers() {
           data: {
             bio,
             city,
+            hidden: editingArtmaker.hidden,
             id: editingArtmaker.id,
             instagramUsername: instagram.replace(/^@/, ""),
             medium: medium
@@ -89,6 +90,7 @@ function AdminArtmakers() {
               .filter(Boolean),
             name,
             state: stateName,
+            status: editingArtmaker.status,
           },
         });
         toast.success("Artmaker profile updated");

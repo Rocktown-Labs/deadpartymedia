@@ -5,6 +5,7 @@ import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { getMediumGroup } from "#/lib/mediums.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl } from "#/lib/upload.ts";
@@ -234,6 +235,8 @@ export const saveArtwork = createServerFn({ method: "POST" })
   });
 
 export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async () => {
+  await requireArtsStaff();
+
   const rows = await db
     .select(artworkSelect())
     .from(artworks)
@@ -258,6 +261,8 @@ export const createArtsArtwork = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    await requireArtsStaff();
+
     const slug = await makeUniqueArtworkSlug(data.title);
     const [created] = await db
       .insert(artworks)
@@ -293,6 +298,8 @@ export const updateArtsArtwork = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    await requireArtsStaff();
+
     const [updated] = await db
       .update(artworks)
       .set({
@@ -315,6 +322,8 @@ export const updateArtsArtwork = createServerFn({ method: "POST" })
 export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
+    await requireArtsStaff();
+
     const [existing] = await db.select().from(artworks).where(eq(artworks.id, data.id));
     if (!existing) {
       throw new Error("Artwork not found");
@@ -337,6 +346,8 @@ export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
 export const deleteArtsArtwork = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
+    await requireArtsStaff();
+
     await db.delete(artworks).where(eq(artworks.id, data.id));
     return { success: true };
   });

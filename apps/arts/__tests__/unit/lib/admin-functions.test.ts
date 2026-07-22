@@ -1,5 +1,15 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 
+vi.mock("@clerk/tanstack-react-start/server", () => ({
+  auth: vi.fn(),
+  clerkClient: vi.fn(() => ({
+    users: {
+      getUser: vi.fn(),
+      updateUserMetadata: vi.fn(),
+    },
+  })),
+}));
+
 vi.mock("@dpmedia/db", () => ({
   db: {},
 }));
@@ -21,6 +31,10 @@ vi.mock("@tanstack/react-start", () => ({
 
     return builder;
   },
+}));
+
+vi.mock("#/lib/artmakers.functions.ts", () => ({
+  requireArtsStaff: vi.fn(),
 }));
 
 describe("arts admin server functions", () => {

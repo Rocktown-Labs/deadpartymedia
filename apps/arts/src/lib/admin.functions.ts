@@ -1,10 +1,33 @@
+import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { db } from "@dpmedia/db";
 import { artmakers, artworks, events, posts, users } from "@dpmedia/db/schema";
 import { createServerFn } from "@tanstack/react-start";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
+import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+
+function isSuperAdminRole(role: unknown) {
+  return role === "admin" || role === "super_admin";
+}
+
+async function requireSuperAdmin() {
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated || !userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const client = clerkClient();
+  const user = await client.users.getUser(userId);
+
+  if (!isSuperAdminRole(user.publicMetadata.role)) {
+    throw new Error("Unauthorized: Only super admins can change user roles");
+  }
+}
 
 export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(async () => {
+  await requireArtsStaff();
+
   try {
     const [artmakerCount] = await db
       .select({ count: count() })
@@ -105,9 +128,12 @@ export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(as
   }
 });
 
-export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(async () =>
-  db
+export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(async () => {
+  await requireArtsStaff();
+
+  return db
     .select({
+      bio: artmakers.bio,
       city: artmakers.city,
       createdAt: artmakers.createdAt,
       hidden: artmakers.hidden,
@@ -121,11 +147,13 @@ export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(asyn
     })
     .from(artmakers)
     .orderBy(desc(artmakers.createdAt))
-    .catch(() => []),
-);
+    .catch(() => []);
+});
 
-export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(async () =>
-  db
+export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(async () => {
+  await requireArtsStaff();
+
+  return db
     .select({
       clerkId: users.clerkId,
       email: users.email,
@@ -138,8 +166,8 @@ export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(asyn
     .from(users)
     .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin", "fan", "artmaker"]))
     .orderBy(desc(users.updatedAt))
-    .catch(() => []),
-);
+    .catch(() => []);
+});
 
 export const updateArtsUserRole = createServerFn({ method: "POST" })
   .validator(
@@ -157,9 +185,40 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
+    await requireSuperAdmin();
+
+    const [targetUser] = await db
+      .select({
+        clerkId: users.clerkId,
+      })
+      .from(users)
+      .where(eq(users.id, data.userId))
+      .limit(1);
+
+    if (!targetUser) {
+      throw new Error("User not found");
+    }
+
+    const client = clerkClient();
+    const clerkUser = await client.users.getUser(targetUser.clerkId);
+    const onboardingComplete =
+      data.role === "arts_admin" ||
+      data.role === "arts_writer" ||
+      data.role === "super_admin" ||
+      data.role === "writer";
+
+    await client.users.updateUserMetadata(targetUser.clerkId, {
+      publicMetadata: {
+        ...clerkUser.publicMetadata,
+        onboardingComplete,
+        role: data.role,
+      },
+    });
+
     const [updated] = await db
       .update(users)
       .set({
+        onboardingComplete,
         role: data.role,
         updatedAt: new Date(),
       })

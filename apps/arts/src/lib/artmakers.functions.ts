@@ -341,22 +341,35 @@ export const updateArtsArtmaker = createServerFn({ method: "POST" })
       medium: z.array(z.string()).optional(),
       name: z.string().min(1, "Name is required"),
       state: z.string().default("AR"),
-      status: z.enum(["draft", "published", "hidden"]).default("published"),
+      status: z.enum(["draft", "published", "hidden"]).optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+    const [existing] = await db
+      .select({
+        hidden: artmakers.hidden,
+        status: artmakers.status,
+      })
+      .from(artmakers)
+      .where(eq(artmakers.id, data.id))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error("Artmaker not found");
+    }
+
     const [updated] = await db
       .update(artmakers)
       .set({
         bio: data.bio || null,
         city: data.city,
-        hidden: data.hidden ?? false,
+        hidden: data.hidden ?? existing.hidden,
         instagramUsername: data.instagramUsername || "",
         medium: data.medium || [],
         name: data.name,
         state: data.state,
-        status: data.status,
+        status: data.status ?? existing.status,
         updatedAt: new Date(),
       })
       .where(eq(artmakers.id, data.id))
