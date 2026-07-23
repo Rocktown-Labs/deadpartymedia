@@ -1,8 +1,7 @@
 import { uploadFiles } from "@better-upload/client";
-import { Image as ImageIcon, Loader2, UploadCloud, X } from "lucide-react";
+import { Loader2, UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { getPublicUploadUrl } from "#/lib/upload.ts";
 
