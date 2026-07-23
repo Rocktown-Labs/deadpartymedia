@@ -4,6 +4,7 @@ import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
+import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
@@ -38,6 +39,7 @@ function AdminArtmakers() {
   const [bio, setBio] = useState("");
   const [instagram, setInstagram] = useState("");
   const [medium, setMedium] = useState("Visual Art");
+  const [image, setImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createStubFn = useServerFn(createArtsArtmakerStub);
@@ -53,6 +55,7 @@ function AdminArtmakers() {
     setBio("");
     setInstagram("");
     setMedium("Visual Art");
+    setImage("");
     setIsModalOpen(true);
   };
 
@@ -61,9 +64,10 @@ function AdminArtmakers() {
     setName(artmaker.name);
     setCity(artmaker.city);
     setStateName(artmaker.state);
-    setBio(artmaker.bio ?? "");
+    setBio("");
     setInstagram(artmaker.instagramUsername || "");
     setMedium(artmaker.medium.join(", ") || "Visual Art");
+    setImage(artmaker.image || "");
     setIsModalOpen(true);
   };
 
@@ -339,6 +343,8 @@ function AdminArtmakers() {
                   placeholder="Painting, Sculpture, Photography"
                 />
               </div>
+
+              <ArtsImageUploader label="Profile / Avatar Image" value={image} onChange={setImage} />
 
               <div className="space-y-2">
                 <Label

@@ -1,6 +1,14 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { CalendarDays, Images, LayoutDashboard, Newspaper, ShoppingBag, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Images,
+  LayoutDashboard,
+  MapPin,
+  Newspaper,
+  Users,
+  UsersRound,
+} from "lucide-react";
 
 interface ArtsAdminShellProps {
   children: React.ReactNode;
@@ -14,6 +22,7 @@ interface NavItem {
     | "/admin/articles"
     | "/admin/events"
     | "/admin/exhibitions"
+    | "/admin/venues"
     | "/admin/users";
   icon: LucideIcon;
   label: string;
@@ -24,9 +33,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/articles", icon: Newspaper, label: "Articles" },
   { href: "/admin/events", icon: CalendarDays, label: "Events" },
+  { href: "/admin/venues", icon: MapPin, label: "Venues" },
   { href: "/admin/artmakers", icon: Users, label: "Artmakers" },
   { href: "/admin/exhibitions", icon: Images, label: "Exhibitions" },
-  { href: "/admin/users", icon: ShoppingBag, label: "Staff", superAdminOnly: true },
+  { href: "/admin/users", icon: UsersRound, label: "Staff & Users", superAdminOnly: true },
 ];
 
 function isActiveRoute(pathname: string, href: NavItem["href"]) {
@@ -51,8 +61,8 @@ function formatRole(role: unknown) {
 
 export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const isSuperAdmin = role === "super_admin" || role === "admin";
-  const visibleNavItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin);
+  const canManageStaff = role === "super_admin" || role === "admin" || role === "arts_admin";
+  const visibleNavItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || canManageStaff);
 
   return (
     <main className="container mx-auto px-6 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">

@@ -4,6 +4,7 @@ import { Edit, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
+import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
 import { ArtsRichTextEditor } from "#/components/arts-rich-text-editor.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -275,20 +276,11 @@ function AdminArticles() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="coverImage"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Cover Image URL
-                  </Label>
-                  <Input
-                    id="coverImage"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
+                <ArtsImageUploader
+                  label="Cover Image"
+                  value={coverImage}
+                  onChange={setCoverImage}
+                />
                 <div className="space-y-2">
                   <Label
                     htmlFor="status-select"

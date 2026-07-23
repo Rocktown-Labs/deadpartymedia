@@ -25,12 +25,12 @@ import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
 import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
 import { Route as ApiUploadRouteImport } from './routes/api.upload'
+import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminExhibitionsRouteImport } from './routes/admin.exhibitions'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
 import { Route as AdminArticlesRouteImport } from './routes/admin.articles'
-import { Route as AdminEventsImportRouteImport } from './routes/admin.events.import'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -112,6 +112,11 @@ const ApiUploadRoute = ApiUploadRouteImport.update({
   path: '/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVenuesRoute = AdminVenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -137,11 +142,6 @@ const AdminArticlesRoute = AdminArticlesRouteImport.update({
   path: '/articles',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminEventsImportRoute = AdminEventsImportRouteImport.update({
-  id: '/import',
-  path: '/import',
-  getParentRoute: () => AdminEventsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -153,9 +153,10 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
-  '/admin/events': typeof AdminEventsRouteWithChildren
+  '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
@@ -165,7 +166,6 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
   '/merch/': typeof MerchIndexRoute
-  '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -176,9 +176,10 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
-  '/admin/events': typeof AdminEventsRouteWithChildren
+  '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
@@ -188,7 +189,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/artmakers': typeof ArtmakersIndexRoute
   '/merch': typeof MerchIndexRoute
-  '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,9 +201,10 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
-  '/admin/events': typeof AdminEventsRouteWithChildren
+  '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
   '/artmakers/$slug': typeof ArtmakersSlugRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
@@ -213,7 +214,6 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
   '/merch/': typeof MerchIndexRoute
-  '/admin/events/import': typeof AdminEventsImportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -230,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
+    | '/admin/venues'
     | '/api/upload'
     | '/artmakers/$slug'
     | '/dashboard/artworks'
@@ -239,7 +240,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artmakers/'
     | '/merch/'
-    | '/admin/events/import'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -253,6 +253,7 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
+    | '/admin/venues'
     | '/api/upload'
     | '/artmakers/$slug'
     | '/dashboard/artworks'
@@ -262,7 +263,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/artmakers'
     | '/merch'
-    | '/admin/events/import'
   id:
     | '__root__'
     | '/'
@@ -277,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
+    | '/admin/venues'
     | '/api/upload'
     | '/artmakers/$slug'
     | '/dashboard/artworks'
@@ -286,7 +287,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artmakers/'
     | '/merch/'
-    | '/admin/events/import'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -418,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/venues': {
+      id: '/admin/venues'
+      path: '/venues'
+      fullPath: '/admin/venues'
+      preLoaderRoute: typeof AdminVenuesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -453,43 +460,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArticlesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/import': {
-      id: '/admin/events/import'
-      path: '/import'
-      fullPath: '/admin/events/import'
-      preLoaderRoute: typeof AdminEventsImportRouteImport
-      parentRoute: typeof AdminEventsRoute
-    }
   }
 }
-
-interface AdminEventsRouteChildren {
-  AdminEventsImportRoute: typeof AdminEventsImportRoute
-}
-
-const AdminEventsRouteChildren: AdminEventsRouteChildren = {
-  AdminEventsImportRoute: AdminEventsImportRoute,
-}
-
-const AdminEventsRouteWithChildren = AdminEventsRoute._addFileChildren(
-  AdminEventsRouteChildren,
-)
 
 interface AdminRouteChildren {
   AdminArticlesRoute: typeof AdminArticlesRoute
   AdminArtmakersRoute: typeof AdminArtmakersRoute
-  AdminEventsRoute: typeof AdminEventsRouteWithChildren
+  AdminEventsRoute: typeof AdminEventsRoute
   AdminExhibitionsRoute: typeof AdminExhibitionsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminVenuesRoute: typeof AdminVenuesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminArticlesRoute: AdminArticlesRoute,
   AdminArtmakersRoute: AdminArtmakersRoute,
-  AdminEventsRoute: AdminEventsRouteWithChildren,
+  AdminEventsRoute: AdminEventsRoute,
   AdminExhibitionsRoute: AdminExhibitionsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminVenuesRoute: AdminVenuesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -528,13 +518,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
