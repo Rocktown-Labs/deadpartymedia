@@ -55,6 +55,10 @@ function AdminUsers() {
 
   const canManageStaff =
     staff.role === "super_admin" || staff.role === "admin" || staff.role === "arts_admin";
+  const isSuperAdmin = staff.role === "super_admin" || staff.role === "admin";
+  const availableRoleOptions = isSuperAdmin
+    ? ROLE_OPTIONS
+    : ROLE_OPTIONS.filter((opt) => opt.value !== "super_admin");
 
   const handleRoleChange = async (userId: number, newRole: string) => {
     try {
@@ -154,7 +158,7 @@ function AdminUsers() {
                           onChange={(e) => handleRoleChange(user.id, e.target.value)}
                           className="h-9 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-xs uppercase tracking-wider text-[#7CFC00] focus:outline-none"
                         >
-                          {ROLE_OPTIONS.map((opt) => (
+                          {availableRoleOptions.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
                             </option>

@@ -189,7 +189,11 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireArtsAdmin();
+    const caller = await requireArtsAdmin();
+
+    if (caller.role === "arts_admin" && data.role === "super_admin") {
+      throw new Error("Unauthorized: Only super admins can grant super_admin role");
+    }
 
     const [targetUser] = await db
       .select({
