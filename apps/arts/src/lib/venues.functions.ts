@@ -1,7 +1,7 @@
 import { db } from "@dpmedia/db";
 import { venues } from "@dpmedia/db/schema";
 import { createServerFn } from "@tanstack/react-start";
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { createSlug } from "#/lib/slug.ts";
