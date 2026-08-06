@@ -222,6 +222,9 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
     const slug = await makeUniqueArtmakerSlug(data.name, existing?.id);
     const instagramUsername = normalizeInstagramUsername(data.instagramUsername);
 
+    const client = clerkClient();
+    const clerkUser = await client.users.getUser(userId);
+
     const payload = {
       bio: data.bio?.trim() || null,
       city: data.city,
@@ -242,8 +245,6 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
       updatedAt: new Date(),
     };
 
-    const client = clerkClient();
-    const clerkUser = await client.users.getUser(userId);
     const primaryEmail =
       clerkUser.emailAddresses.find(
         (emailAddress) => emailAddress.id === clerkUser.primaryEmailAddressId,
