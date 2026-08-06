@@ -11,19 +11,25 @@ import {
   Link as LinkIcon,
   List,
   ListOrdered,
+  Loader2,
   Quote,
   Redo2,
   Strikethrough,
   Undo2,
+  Upload,
 } from "lucide-react";
+import { useRef, useState } from "react";
 
 interface ArtsRichTextEditorProps {
   content: string;
   onChange: (html: string) => void;
+  onUploadImage?: (file: File) => Promise<string>;
   placeholder?: string;
 }
 
-export function ArtsRichTextEditor({ content, onChange }: ArtsRichTextEditorProps) {
+export function ArtsRichTextEditor({ content, onChange, onUploadImage }: ArtsRichTextEditorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const editor = useEditor({
     content: content || "<p></p>",
     extensions: [
@@ -62,6 +68,20 @@ export function ArtsRichTextEditor({ content, onChange }: ArtsRichTextEditorProp
     const url = window.prompt("Enter image URL:");
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const uploadImage = async (file: File) => {
+    if (!onUploadImage) {
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const url = await onUploadImage(file);
+      editor.chain().focus().setImage({ src: url }).run();
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -190,6 +210,37 @@ export function ArtsRichTextEditor({ content, onChange }: ArtsRichTextEditorProp
         >
           <span className="font-bold text-xs">IMG</span>
         </button>
+        {onUploadImage ? (
+          <>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={isUploadingImage}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  void uploadImage(file);
+                }
+                event.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={isUploadingImage}
+              className="grid size-8 place-items-center rounded text-gray-300 hover:bg-gray-800 disabled:opacity-40"
+              title="Upload Image"
+            >
+              {isUploadingImage ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Upload className="size-4" />
+              )}
+            </button>
+          </>
+        ) : null}
 
         <div className="mx-1 h-4 w-px bg-gray-800" />
 

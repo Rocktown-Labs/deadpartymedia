@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { Check, Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
@@ -9,6 +9,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import {
   createArtsArtmakerStub,
   deleteArtsArtmaker,
@@ -37,9 +38,9 @@ function AdminArtmakers() {
   const [city, setCity] = useState("Little Rock");
   const [stateName, setStateName] = useState("AR");
   const [bio, setBio] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [medium, setMedium] = useState("Visual Art");
   const [image, setImage] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [medium, setMedium] = useState<string[]>(["Visual Art"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createStubFn = useServerFn(createArtsArtmakerStub);
@@ -53,9 +54,9 @@ function AdminArtmakers() {
     setCity("Little Rock");
     setStateName("AR");
     setBio("");
-    setInstagram("");
-    setMedium("Visual Art");
     setImage("");
+    setInstagram("");
+    setMedium(["Visual Art"]);
     setIsModalOpen(true);
   };
 
@@ -64,10 +65,10 @@ function AdminArtmakers() {
     setName(artmaker.name);
     setCity(artmaker.city);
     setStateName(artmaker.state);
-    setBio("");
+    setBio(artmaker.bio ?? "");
+    setImage(artmaker.image ?? "");
     setInstagram(artmaker.instagramUsername || "");
-    setMedium(artmaker.medium.join(", ") || "Visual Art");
-    setImage(artmaker.image || "");
+    setMedium(artmaker.medium.length ? artmaker.medium : ["Visual Art"]);
     setIsModalOpen(true);
   };
 
@@ -87,11 +88,9 @@ function AdminArtmakers() {
             city,
             hidden: editingArtmaker.hidden,
             id: editingArtmaker.id,
+            image,
             instagramUsername: instagram.replace(/^@/, ""),
-            medium: medium
-              .split(",")
-              .map((m) => m.trim())
-              .filter(Boolean),
+            medium,
             name,
             state: stateName,
             status: editingArtmaker.status,
@@ -102,6 +101,9 @@ function AdminArtmakers() {
         await createStubFn({
           data: {
             city,
+            image,
+            instagramUsername: instagram.replace(/^@/, ""),
+            medium,
             name,
             state: stateName,
           },
@@ -117,6 +119,12 @@ function AdminArtmakers() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const toggleMedium = (value: string) => {
+    setMedium((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
   };
 
   const handleToggleVisibility = async (id: number) => {
@@ -252,7 +260,7 @@ function AdminArtmakers() {
       {/* Artmaker Modal */}
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="my-8 w-full max-w-3xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
             <div className="flex items-center justify-between border-gray-800 border-b pb-4">
               <h2 className="font-black text-2xl text-white">
                 {editingArtmaker ? "Edit Artmaker Profile" : "Add New Artmaker"}
@@ -334,14 +342,28 @@ function AdminArtmakers() {
                   htmlFor="artmaker-medium"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Mediums (Comma Separated)
+                  Mediums
                 </Label>
-                <Input
-                  id="artmaker-medium"
-                  value={medium}
-                  onChange={(e) => setMedium(e.target.value)}
-                  placeholder="Painting, Sculpture, Photography"
-                />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {MEDIUM_OPTIONS.map((option) => {
+                    const selected = medium.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => toggleMedium(option)}
+                        className={`flex min-h-10 items-center justify-between gap-3 border px-3 text-left text-sm ${
+                          selected
+                            ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                            : "border-gray-800 bg-[#080808] text-gray-300 hover:border-gray-600"
+                        }`}
+                      >
+                        <span>{option}</span>
+                        {selected ? <Check className="size-4" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <ArtsImageUploader label="Profile / Avatar Image" value={image} onChange={setImage} />

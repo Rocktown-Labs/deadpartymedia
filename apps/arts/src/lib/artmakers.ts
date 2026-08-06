@@ -113,6 +113,8 @@ export const artmakerOnboardingSchema = z.object({
     .refine((value) => value.length > 0, {
       message: "Instagram username is required",
     }),
+  image: z.string().optional().or(z.literal("")),
+  imageKey: z.string().optional().or(z.literal("")),
   medium: z.array(z.string().min(1).max(80)).min(1, "Select at least one medium"),
   name: z
     .string()
@@ -139,6 +141,16 @@ export const artmakerOnboardingSchema = z.object({
 });
 
 export type ArtmakerOnboardingInput = z.infer<typeof artmakerOnboardingSchema>;
+
+export const fanOnboardingSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must stay under 100 characters")
+    .transform((value) => value.trim()),
+});
+
+export type FanOnboardingInput = z.infer<typeof fanOnboardingSchema>;
 
 export interface ArtmakerListItem {
   id: number;

@@ -31,6 +31,7 @@ import { Route as AdminExhibitionsRouteImport } from './routes/admin.exhibitions
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
 import { Route as AdminArticlesRouteImport } from './routes/admin.articles'
+import { Route as ArtmakersSlugGalleryRouteImport } from './routes/artmakers.$slug.gallery'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -142,6 +143,11 @@ const AdminArticlesRoute = AdminArticlesRouteImport.update({
   path: '/articles',
   getParentRoute: () => AdminRoute,
 } as any)
+const ArtmakersSlugGalleryRoute = ArtmakersSlugGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => ArtmakersSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -158,7 +164,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
-  '/artmakers/$slug': typeof ArtmakersSlugRoute
+  '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
   '/merch/': typeof MerchIndexRoute
+  '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -181,7 +188,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
-  '/artmakers/$slug': typeof ArtmakersSlugRoute
+  '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/artmakers': typeof ArtmakersIndexRoute
   '/merch': typeof MerchIndexRoute
+  '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -206,7 +214,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
   '/api/upload': typeof ApiUploadRoute
-  '/artmakers/$slug': typeof ArtmakersSlugRoute
+  '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
   '/merch/': typeof MerchIndexRoute
+  '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artmakers/'
     | '/merch/'
+    | '/artmakers/$slug/gallery'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/artmakers'
     | '/merch'
+    | '/artmakers/$slug/gallery'
   id:
     | '__root__'
     | '/'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artmakers/'
     | '/merch/'
+    | '/artmakers/$slug/gallery'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -298,7 +310,7 @@ export interface RootRouteChildren {
   ExhibitionsRoute: typeof ExhibitionsRoute
   OnboardingRoute: typeof OnboardingRoute
   ApiUploadRoute: typeof ApiUploadRoute
-  ArtmakersSlugRoute: typeof ArtmakersSlugRoute
+  ArtmakersSlugRoute: typeof ArtmakersSlugRouteWithChildren
   MerchHandleRoute: typeof MerchHandleRoute
   ArtmakersIndexRoute: typeof ArtmakersIndexRoute
   MerchIndexRoute: typeof MerchIndexRoute
@@ -460,6 +472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArticlesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/artmakers/$slug/gallery': {
+      id: '/artmakers/$slug/gallery'
+      path: '/gallery'
+      fullPath: '/artmakers/$slug/gallery'
+      preLoaderRoute: typeof ArtmakersSlugGalleryRouteImport
+      parentRoute: typeof ArtmakersSlugRoute
+    }
   }
 }
 
@@ -501,6 +520,18 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface ArtmakersSlugRouteChildren {
+  ArtmakersSlugGalleryRoute: typeof ArtmakersSlugGalleryRoute
+}
+
+const ArtmakersSlugRouteChildren: ArtmakersSlugRouteChildren = {
+  ArtmakersSlugGalleryRoute: ArtmakersSlugGalleryRoute,
+}
+
+const ArtmakersSlugRouteWithChildren = ArtmakersSlugRoute._addFileChildren(
+  ArtmakersSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -510,7 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExhibitionsRoute: ExhibitionsRoute,
   OnboardingRoute: OnboardingRoute,
   ApiUploadRoute: ApiUploadRoute,
-  ArtmakersSlugRoute: ArtmakersSlugRoute,
+  ArtmakersSlugRoute: ArtmakersSlugRouteWithChildren,
   MerchHandleRoute: MerchHandleRoute,
   ArtmakersIndexRoute: ArtmakersIndexRoute,
   MerchIndexRoute: MerchIndexRoute,

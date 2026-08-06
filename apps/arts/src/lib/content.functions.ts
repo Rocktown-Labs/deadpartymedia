@@ -1,7 +1,7 @@
 import { db } from "@dpmedia/db";
-import { eventArtmakers, events, posts } from "@dpmedia/db/schema";
+import { artmakers, eventArtmakers, events, postArtmakers, posts } from "@dpmedia/db/schema";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { createSlug } from "#/lib/slug.ts";
@@ -34,6 +34,12 @@ export interface ArtsArticleListItem {
   tags: string[] | null;
   authorId: string;
   createdAt: Date;
+  artmakerIds: number[];
+  artmakers: {
+    id: number;
+    name: string;
+    slug: string;
+  }[];
 }
 
 export const listArtsEvents = createServerFn({ method: "GET" }).handler(async () => {
@@ -109,7 +115,36 @@ export const listArtsArticles = createServerFn({ method: "GET" }).handler(async 
       .where(and(eq(posts.vertical, "arts"), eq(posts.status, "published")))
       .orderBy(desc(posts.publishedAt));
 
-    return rows satisfies ArtsArticleListItem[];
+    const links = rows.length
+      ? await db
+          .select({
+            artmakerId: postArtmakers.artmakerId,
+            name: artmakers.name,
+            postId: postArtmakers.postId,
+            slug: artmakers.slug,
+          })
+          .from(postArtmakers)
+          .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
+          .where(
+            inArray(
+              postArtmakers.postId,
+              rows.map((row) => row.id),
+            ),
+          )
+      : [];
+
+    return rows.map((row) => {
+      const rowLinks = links.filter((link) => link.postId === row.id);
+      return {
+        ...row,
+        artmakerIds: rowLinks.map((link) => link.artmakerId),
+        artmakers: rowLinks.map((link) => ({
+          id: link.artmakerId,
+          name: link.name,
+          slug: link.slug,
+        })),
+      };
+    }) satisfies ArtsArticleListItem[];
   } catch {
     return [] satisfies ArtsArticleListItem[];
   }
@@ -135,13 +170,43 @@ export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(a
     .where(eq(posts.vertical, "arts"))
     .orderBy(desc(posts.createdAt));
 
-  return rows satisfies ArtsArticleListItem[];
+  const links = rows.length
+    ? await db
+        .select({
+          artmakerId: postArtmakers.artmakerId,
+          name: artmakers.name,
+          postId: postArtmakers.postId,
+          slug: artmakers.slug,
+        })
+        .from(postArtmakers)
+        .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
+        .where(
+          inArray(
+            postArtmakers.postId,
+            rows.map((row) => row.id),
+          ),
+        )
+    : [];
+
+  return rows.map((row) => {
+    const rowLinks = links.filter((link) => link.postId === row.id);
+    return {
+      ...row,
+      artmakerIds: rowLinks.map((link) => link.artmakerId),
+      artmakers: rowLinks.map((link) => ({
+        id: link.artmakerId,
+        name: link.name,
+        slug: link.slug,
+      })),
+    };
+  }) satisfies ArtsArticleListItem[];
 });
 
 export const createArtsArticle = createServerFn({ method: "POST" })
   .validator(
     z.object({
       content: z.string().min(1, "Content is required"),
+      artmakerIds: z.array(z.number()).optional(),
       coverImage: z.string().optional(),
       excerpt: z.string().min(1, "Excerpt is required"),
       status: z.enum(["draft", "published", "archived"]).default("published"),
@@ -179,6 +244,15 @@ export const createArtsArticle = createServerFn({ method: "POST" })
       })
       .returning();
 
+    if (data.artmakerIds?.length) {
+      await db.insert(postArtmakers).values(
+        data.artmakerIds.map((artmakerId) => ({
+          artmakerId,
+          postId: created.id,
+        })),
+      );
+    }
+
     return { article: created, success: true };
   });
 
@@ -186,6 +260,7 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
   .validator(
     z.object({
       content: z.string().min(1, "Content is required"),
+      artmakerIds: z.array(z.number()).optional(),
       coverImage: z.string().optional(),
       excerpt: z.string().min(1, "Excerpt is required"),
       id: z.number(),
@@ -219,6 +294,17 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
       })
       .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
       .returning();
+
+    await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
+
+    if (data.artmakerIds?.length) {
+      await db.insert(postArtmakers).values(
+        data.artmakerIds.map((artmakerId) => ({
+          artmakerId,
+          postId: data.id,
+        })),
+      );
+    }
 
     return { article: updated, success: true };
   });
@@ -255,6 +341,7 @@ export const deleteArtsArticle = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+    await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
     await db.delete(posts).where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     return { success: true };
   });

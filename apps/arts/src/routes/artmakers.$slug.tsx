@@ -1,6 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowLeft, BadgeDollarSign, ImageIcon, Instagram, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeDollarSign,
+  CalendarPlus,
+  ImageIcon,
+  Instagram,
+  MapPin,
+} from "lucide-react";
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
 import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
@@ -64,6 +71,7 @@ export const Route = createFileRoute("/artmakers/$slug")({
 function ArtmakerProfile() {
   const { artmaker, artworks } = Route.useLoaderData();
   const featuredArtwork = artworks[0];
+  const galleryPreview = artworks.slice(0, 6);
 
   return (
     <main className="px-5 pt-32 pb-20">
@@ -115,6 +123,15 @@ function ArtmakerProfile() {
                   className="inline-flex h-11 items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline hover:border-[#7CFC00] hover:text-[#7CFC00]"
                 >
                   <Instagram className="size-4" />@{artmaker.instagramUsername}
+                </a>
+                <a
+                  href={artmaker.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center gap-2 border border-[#7CFC00] bg-[#7CFC00] px-4 font-black text-black text-xs uppercase tracking-[0.18em] no-underline hover:bg-[#a5ff43]"
+                >
+                  <CalendarPlus className="size-4" />
+                  Commission
                 </a>
                 <Link
                   to="/exhibitions"
@@ -205,7 +222,7 @@ function ArtmakerProfile() {
               ) : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {artworks.map((artwork) => (
+              {galleryPreview.map((artwork) => (
                 <article
                   key={artwork.id}
                   className="overflow-hidden border border-neutral-800 bg-[#101010]"
@@ -235,6 +252,18 @@ function ArtmakerProfile() {
                 </article>
               ))}
             </div>
+            {artworks.length > galleryPreview.length ? (
+              <div className="mt-6 flex justify-center">
+                <Link
+                  to="/artmakers/$slug/gallery"
+                  params={{ slug: artmaker.slug }}
+                  className="inline-flex h-11 items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                >
+                  View full gallery
+                  <ImageIcon className="size-4" />
+                </Link>
+              </div>
+            ) : null}
           </section>
         ) : null}
       </div>

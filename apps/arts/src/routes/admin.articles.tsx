@@ -1,6 +1,7 @@
+import { uploadFiles } from "@better-upload/client";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Edit, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Check, Edit, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
@@ -10,7 +11,11 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
+import { getPublicUploadUrl } from "#/lib/upload.ts";
+import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 import {
   createArtsArticle,
   deleteArtsArticle,
@@ -23,13 +28,20 @@ import {
 export const Route = createFileRoute("/admin/articles")({
   beforeLoad: () => requireArtsStaff(),
   component: AdminArticles,
-  loader: () => listArtsAdminArticles(),
+  loader: async () => {
+    const [articles, artmakers] = await Promise.all([
+      listArtsAdminArticles(),
+      listAdminArtmakers(),
+    ]);
+    return { articles, artmakers };
+  },
 });
 
 function AdminArticles() {
   const staff = Route.useRouteContext();
-  const initialArticles = Route.useLoaderData();
+  const { articles: initialArticles, artmakers: initialArtmakers } = Route.useLoaderData();
   const [articles, setArticles] = useState<ArtsArticleListItem[]>(initialArticles);
+  const [artmakers, setArtmakers] = useState(initialArtmakers);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<ArtsArticleListItem | null>(null);
 
@@ -37,13 +49,18 @@ function AdminArticles() {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [selectedArtmakerIds, setSelectedArtmakerIds] = useState<number[]>([]);
+  const [newArtmakerName, setNewArtmakerName] = useState("");
+  const [newArtmakerMedium, setNewArtmakerMedium] = useState<string[]>(["Visual Art"]);
   const [status, setStatus] = useState<"draft" | "published" | "archived">("published");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingArtmaker, setIsCreatingArtmaker] = useState(false);
 
   const createArticleFn = useServerFn(createArtsArticle);
   const updateArticleFn = useServerFn(updateArtsArticle);
   const toggleStatusFn = useServerFn(toggleArtsArticleStatus);
   const deleteArticleFn = useServerFn(deleteArtsArticle);
+  const createArtmakerFn = useServerFn(createArtsArtmakerStub);
 
   const openNewEditor = () => {
     setEditingArticle(null);
@@ -51,6 +68,7 @@ function AdminArticles() {
     setExcerpt("");
     setContent("");
     setCoverImage("");
+    setSelectedArtmakerIds([]);
     setStatus("published");
     setIsEditorOpen(true);
   };
@@ -61,8 +79,73 @@ function AdminArticles() {
     setExcerpt(article.excerpt);
     setContent(article.content || "");
     setCoverImage(article.coverImage || "");
+    setSelectedArtmakerIds(article.artmakerIds);
     setStatus(article.status);
     setIsEditorOpen(true);
+  };
+
+  const uploadArticleImage = async (file: File) => {
+    const result = await uploadFiles({
+      files: [file],
+      route: "articleImages",
+    });
+    const [uploadedFile] = (result.files ?? []) as unknown[];
+    const key = uploadedFile ? getUploadedObjectKey(uploadedFile) : "";
+
+    if (!key) {
+      throw new Error("The image uploaded, but no object key came back from storage.");
+    }
+
+    return getPublicUploadUrl(key);
+  };
+
+  const toggleArtmaker = (id: number) => {
+    setSelectedArtmakerIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const toggleNewArtmakerMedium = (value: string) => {
+    setNewArtmakerMedium((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
+  };
+
+  const handleQuickCreateArtmaker = async () => {
+    const displayName = newArtmakerName.trim();
+
+    if (!displayName) {
+      toast.error("Artmaker name is required.");
+      return;
+    }
+
+    setIsCreatingArtmaker(true);
+    try {
+      const result = await createArtmakerFn({
+        data: {
+          medium: newArtmakerMedium.length ? newArtmakerMedium : ["Visual Art"],
+          name: displayName,
+        },
+      });
+
+      if (!result.success || !result.artmaker) {
+        toast.error("Failed to create artmaker.");
+        return;
+      }
+
+      const updated = await listAdminArtmakers();
+      setArtmakers(updated);
+      setSelectedArtmakerIds((current) =>
+        current.includes(result.artmaker.id) ? current : [...current, result.artmaker.id],
+      );
+      setNewArtmakerName("");
+      setNewArtmakerMedium(["Visual Art"]);
+      toast.success("Artmaker profile created");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create artmaker");
+    } finally {
+      setIsCreatingArtmaker(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -81,6 +164,7 @@ function AdminArticles() {
             coverImage,
             excerpt,
             id: editingArticle.id,
+            artmakerIds: selectedArtmakerIds,
             status,
             title,
           },
@@ -92,6 +176,7 @@ function AdminArticles() {
             content,
             coverImage,
             excerpt,
+            artmakerIds: selectedArtmakerIds,
             status,
             title,
           },
@@ -175,6 +260,11 @@ function AdminArticles() {
                     </span>
                   </div>
                   <p className="line-clamp-1 text-gray-400 text-sm">{article.excerpt}</p>
+                  {article.artmakers.length > 0 ? (
+                    <p className="text-[#7CFC00] text-xs">
+                      Featuring {article.artmakers.map((artmaker) => artmaker.name).join(", ")}
+                    </p>
+                  ) : null}
                   <p className="text-gray-500 text-xs">
                     {article.publishedAt
                       ? `Published: ${new Date(article.publishedAt).toLocaleDateString()}`
@@ -302,12 +392,109 @@ function AdminArticles() {
                 </div>
               </div>
 
+              <div className="space-y-3 rounded-lg border border-gray-800 bg-[#0A0A0A] p-4">
+                <div>
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Featured Artmakers
+                  </Label>
+                  <p className="mt-1 text-gray-500 text-sm">
+                    Attach this story to public artmaker profiles.
+                  </p>
+                </div>
+                <div className="grid max-h-56 gap-2 overflow-y-auto sm:grid-cols-2">
+                  {artmakers.length > 0 ? (
+                    artmakers.map((artmaker) => {
+                      const selected = selectedArtmakerIds.includes(artmaker.id);
+                      return (
+                        <button
+                          key={artmaker.id}
+                          type="button"
+                          onClick={() => toggleArtmaker(artmaker.id)}
+                          className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm ${
+                            selected
+                              ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                              : "border-gray-800 bg-[#111111] text-gray-300 hover:border-gray-600"
+                          }`}
+                        >
+                          <span>{artmaker.name}</span>
+                          {selected ? <Check className="size-4" /> : null}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-gray-500 text-sm">No artmakers yet.</p>
+                  )}
+                </div>
+                {selectedArtmakerIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {artmakers
+                      .filter((artmaker) => selectedArtmakerIds.includes(artmaker.id))
+                      .map((artmaker) => (
+                        <span
+                          key={artmaker.id}
+                          className="inline-flex items-center gap-2 rounded bg-[#7CFC00]/15 px-2 py-1 text-[#7CFC00] text-xs"
+                        >
+                          {artmaker.name}
+                          <button type="button" onClick={() => toggleArtmaker(artmaker.id)}>
+                            <X className="size-3" />
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                ) : null}
+
+                <div className="border-gray-800 border-t pt-4">
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Quick Create Artmaker
+                  </Label>
+                  <div className="mt-3 grid gap-3">
+                    <Input
+                      value={newArtmakerName}
+                      onChange={(event) => setNewArtmakerName(event.target.value)}
+                      placeholder="Artmaker name"
+                    />
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {MEDIUM_OPTIONS.slice(0, 12).map((option) => {
+                        const selected = newArtmakerMedium.includes(option);
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => toggleNewArtmakerMedium(option)}
+                            className={`min-h-9 border px-2 text-left text-xs ${
+                              selected
+                                ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                                : "border-gray-800 bg-[#111111] text-gray-300 hover:border-gray-600"
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleQuickCreateArtmaker}
+                      disabled={isCreatingArtmaker}
+                      className="w-fit"
+                    >
+                      {isCreatingArtmaker ? "Creating..." : "Create and attach"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               {/* Tiptap WYSIWYG Editor */}
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Article Content (WYSIWYG Editor)
                 </Label>
-                <ArtsRichTextEditor content={content} onChange={setContent} />
+                <ArtsRichTextEditor
+                  content={content}
+                  onChange={setContent}
+                  onUploadImage={uploadArticleImage}
+                />
               </div>
 
               <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">

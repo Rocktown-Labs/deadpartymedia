@@ -61,7 +61,7 @@ function Dashboard() {
           title={artmaker ? "Profile live" : "Profile needed"}
         />
         <DashboardCard
-          description="Add pieces to the exhibitions wall. Use image URLs now; direct upload storage is the next integration."
+          description="Upload gallery pieces that appear on your profile and in medium directories."
           href="/dashboard/artworks"
           icon={<Images className="size-5" />}
           label="Manage artwork"

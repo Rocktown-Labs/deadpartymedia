@@ -142,6 +142,7 @@ export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(asyn
       createdAt: artmakers.createdAt,
       hidden: artmakers.hidden,
       id: artmakers.id,
+      image: artmakers.image,
       instagramUsername: artmakers.instagramUsername,
       medium: artmakers.medium,
       name: artmakers.name,
