@@ -6,7 +6,7 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 
-function isArtsAdminRole(role: unknown) {
+export function isArtsAdminRole(role: unknown) {
   return role === "admin" || role === "super_admin" || role === "arts_admin";
 }
 

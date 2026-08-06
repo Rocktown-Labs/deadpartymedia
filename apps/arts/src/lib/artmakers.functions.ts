@@ -13,7 +13,7 @@ const slugInputSchema = z.object({
   slug: z.string().min(1),
 });
 
-function isArtsStaffRole(role: unknown) {
+export function isArtsStaffRole(role: unknown) {
   return (
     role === "admin" || role === "arts_admin" || role === "arts_writer" || role === "super_admin"
   );
