@@ -76,6 +76,20 @@ function ArticlesPage() {
                   <h2 className="font-black text-2xl tracking-tight transition-colors group-hover:text-[#7CFC00]">
                     {article.title}
                   </h2>
+                  {article.artmakers.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {article.artmakers.map((artmaker) => (
+                        <Link
+                          key={artmaker.id}
+                          to="/artmakers/$slug"
+                          params={{ slug: artmaker.slug }}
+                          className="rounded border border-[#7CFC00]/40 px-2 py-1 text-[#7CFC00] text-xs no-underline hover:bg-[#7CFC00] hover:text-black"
+                        >
+                          {artmaker.name}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : null}
                   <p className="mt-4 line-clamp-4 text-gray-400 leading-7">{article.excerpt}</p>
                   <div className="mt-auto pt-6">
                     <span className="inline-flex items-center gap-2 font-black text-[#7CFC00] text-xs uppercase tracking-[0.2em]">

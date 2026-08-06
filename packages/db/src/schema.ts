@@ -177,6 +177,21 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Venues Table
+export const venues = pgTable("venues", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  address: text("address"),
+  city: text("city").notNull().default("Little Rock"),
+  state: text("state").notNull().default("AR"),
+  zip: text("zip"),
+  website: text("website"),
+  phone: text("phone"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Artists Table
 export const artists = pgTable("artists", {
   id: serial("id").primaryKey(),

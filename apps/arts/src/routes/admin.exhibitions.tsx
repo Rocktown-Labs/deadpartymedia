@@ -1,16 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
-import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
+import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { listAdminArtmakers } from "#/lib/admin.functions.ts";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import {
   createArtsArtwork,
   deleteArtsArtwork,
@@ -31,8 +32,9 @@ export const Route = createFileRoute("/admin/exhibitions")({
 
 function AdminExhibitions() {
   const staff = Route.useRouteContext();
-  const { artmakers, artworks: initialArtworks } = Route.useLoaderData();
+  const { artmakers: initialArtmakers, artworks: initialArtworks } = Route.useLoaderData();
   const [artworks, setArtworks] = useState<ArtworkListItem[]>(initialArtworks);
+  const [artmakers, setArtmakers] = useState(initialArtmakers);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArtwork, setEditingArtwork] = useState<ArtworkListItem | null>(null);
 
@@ -46,10 +48,42 @@ function AdminExhibitions() {
   const [price, setPrice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Inline Quick Artmaker Creation
+  const [isArtmakerModalOpen, setIsArtmakerModalOpen] = useState(false);
+  const [newArtmakerName, setNewArtmakerName] = useState("");
+  const [newArtmakerCity, setNewArtmakerCity] = useState("Little Rock");
+
   const createArtworkFn = useServerFn(createArtsArtwork);
   const updateArtworkFn = useServerFn(updateArtsArtwork);
   const toggleStatusFn = useServerFn(toggleArtsArtworkStatus);
   const deleteArtworkFn = useServerFn(deleteArtsArtwork);
+  const createArtmakerStubFn = useServerFn(createArtsArtmakerStub);
+
+  const handleQuickCreateArtmaker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newArtmakerName.trim()) {
+      toast.error("Artmaker name is required");
+      return;
+    }
+
+    try {
+      const res = await createArtmakerStubFn({
+        data: {
+          city: newArtmakerCity,
+          name: newArtmakerName,
+          state: "AR",
+        },
+      });
+      toast.success("Artmaker profile created on the fly!");
+      const updatedArtmakers = await listAdminArtmakers();
+      setArtmakers(updatedArtmakers);
+      setArtmakerId(res.artmaker.id);
+      setIsArtmakerModalOpen(false);
+      setNewArtmakerName("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create artmaker");
+    }
+  };
 
   const openNewModal = () => {
     setEditingArtwork(null);
@@ -186,7 +220,7 @@ function AdminExhibitions() {
           {artworks.map((artwork) => (
             <article
               key={artwork.id}
-              className="group overflow-hidden rounded-xl border border-gray-800 bg-[#111111] flex flex-col justify-between"
+              className="group flex flex-col justify-between overflow-hidden rounded-xl border border-gray-800 bg-[#111111]"
             >
               <div>
                 <div className="relative aspect-square overflow-hidden bg-black">
@@ -197,7 +231,7 @@ function AdminExhibitions() {
                     height={640}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute top-3 left-3 rounded bg-black/80 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-gray-300 uppercase">
+                  <div className="absolute top-3 left-3 rounded bg-black/80 backdrop-blur-md px-2.5 py-1 font-bold text-[10px] text-gray-300 uppercase">
                     {artwork.artmakerName}
                   </div>
                 </div>
@@ -213,7 +247,7 @@ function AdminExhibitions() {
                 </div>
               </div>
 
-              <div className="p-5 pt-0 border-gray-800 border-t mt-4 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between border-gray-800 border-t p-5 pt-0">
                 <span
                   className={`rounded px-2 py-0.5 font-bold text-xs uppercase ${
                     artwork.status === "published"
@@ -285,14 +319,23 @@ function AdminExhibitions() {
             </div>
 
             <form onSubmit={handleSave} className="space-y-4">
-              {!editingArtwork && artmakers.length > 0 ? (
+              {!editingArtwork ? (
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="artmaker-select"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Select Artmaker
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label
+                      htmlFor="artmaker-select"
+                      className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                    >
+                      Select Artmaker / Artist
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={() => setIsArtmakerModalOpen(true)}
+                      className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                    >
+                      <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
+                    </button>
+                  </div>
                   <select
                     id="artmaker-select"
                     value={artmakerId}
@@ -324,20 +367,12 @@ function AdminExhibitions() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="artwork-image"
-                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                >
-                  Image URL
-                </Label>
-                <Input
-                  id="artwork-image"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
+              {/* Artwork Photo Uploader */}
+              <ArtsImageUploader
+                label="Artwork Photo / Image"
+                value={imageUrl}
+                onChange={setImageUrl}
+              />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -426,6 +461,55 @@ function AdminExhibitions() {
                   className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
                 >
                   {isSubmitting ? "Saving..." : editingArtwork ? "Update Artwork" : "Save Artwork"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Quick Artmaker Modal */}
+      {isArtmakerModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-4">
+            <h3 className="font-black text-xl text-white">Add Artmaker On-The-Fly</h3>
+            <form onSubmit={handleQuickCreateArtmaker} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="qa-name" className="text-xs font-bold text-gray-400 uppercase">
+                  Artist / Studio Name
+                </Label>
+                <Input
+                  id="qa-name"
+                  value={newArtmakerName}
+                  onChange={(e) => setNewArtmakerName(e.target.value)}
+                  placeholder="e.g. Sarah Jenkins"
+                  className="font-bold"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="qa-city" className="text-xs font-bold text-gray-400 uppercase">
+                  City
+                </Label>
+                <Input
+                  id="qa-city"
+                  value={newArtmakerCity}
+                  onChange={(e) => setNewArtmakerCity(e.target.value)}
+                  placeholder="Little Rock"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsArtmakerModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+                >
+                  Save Artmaker
                 </Button>
               </div>
             </form>

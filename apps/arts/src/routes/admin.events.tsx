@@ -1,14 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
+import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { listAdminArtmakers } from "#/lib/admin.functions.ts";
+import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import {
   createArtsEvent,
   deleteArtsEvent,
@@ -16,22 +18,38 @@ import {
   toggleArtsEventStatus,
   type ArtsEventListItem,
 } from "#/lib/content.functions.ts";
+import { createArtsVenue, listArtsVenues, type VenueListItem } from "#/lib/venues.functions.ts";
 
 export const Route = createFileRoute("/admin/events")({
   beforeLoad: () => requireArtsStaff(),
   component: AdminEvents,
-  loader: () => listArtsAdminEvents(),
+  loader: async () => {
+    const [events, artmakers, venues] = await Promise.all([
+      listArtsAdminEvents(),
+      listAdminArtmakers(),
+      listArtsVenues(),
+    ]);
+    return { artmakers, events, venues };
+  },
 });
 
 function AdminEvents() {
   const staff = Route.useRouteContext();
-  const initialEvents = Route.useLoaderData();
+  const {
+    artmakers: initialArtmakers,
+    events: initialEvents,
+    venues: initialVenues,
+  } = Route.useLoaderData();
   const [events, setEvents] = useState<ArtsEventListItem[]>(initialEvents);
+  const [artmakers, setArtmakers] = useState(initialArtmakers);
+  const [venues, setVenues] = useState<VenueListItem[]>(initialVenues);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedVenueId, setSelectedVenueId] = useState<string>("custom");
   const [venue, setVenue] = useState("");
   const [location, setLocation] = useState("Little Rock, AR");
   const [date, setDate] = useState("");
@@ -39,12 +57,87 @@ function AdminEvents() {
   const [price, setPrice] = useState("Free");
   const [ticketLink, setTicketLink] = useState("");
   const [image, setImage] = useState("");
+  const [selectedArtmakerIds, setSelectedArtmakerIds] = useState<number[]>([]);
+
+  // Inline Quick Creation Modals
+  const [isVenueModalOpen, setIsVenueModalOpen] = useState(false);
+  const [newVenueName, setNewVenueName] = useState("");
+  const [newVenueCity, setNewVenueCity] = useState("Little Rock");
+
+  const [isArtmakerModalOpen, setIsArtmakerModalOpen] = useState(false);
+  const [newArtmakerName, setNewArtmakerName] = useState("");
+  const [newArtmakerCity, setNewArtmakerCity] = useState("Little Rock");
 
   const createEventFn = useServerFn(createArtsEvent);
   const toggleStatusFn = useServerFn(toggleArtsEventStatus);
   const deleteEventFn = useServerFn(deleteArtsEvent);
+  const createVenueFn = useServerFn(createArtsVenue);
+  const createArtmakerStubFn = useServerFn(createArtsArtmakerStub);
 
-  const isSuperAdmin = staff.role === "super_admin" || staff.role === "admin";
+  const handleVenueSelect = (id: string) => {
+    setSelectedVenueId(id);
+    if (id !== "custom") {
+      const found = venues.find((v) => String(v.id) === id);
+      if (found) {
+        setVenue(found.name);
+        setLocation(`${found.city}, ${found.state}`);
+      }
+    }
+  };
+
+  const handleQuickCreateVenue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVenueName.trim()) {
+      toast.error("Venue name is required");
+      return;
+    }
+
+    try {
+      const res = await createVenueFn({
+        data: {
+          city: newVenueCity,
+          name: newVenueName,
+          state: "AR",
+        },
+      });
+      toast.success("Venue created on the fly!");
+      const updatedVenues = await listArtsVenues();
+      setVenues(updatedVenues);
+      setVenue(res.venue.name);
+      setLocation(`${res.venue.city}, ${res.venue.state}`);
+      setSelectedVenueId(String(res.venue.id));
+      setIsVenueModalOpen(false);
+      setNewVenueName("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create venue");
+    }
+  };
+
+  const handleQuickCreateArtmaker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newArtmakerName.trim()) {
+      toast.error("Artmaker name is required");
+      return;
+    }
+
+    try {
+      const res = await createArtmakerStubFn({
+        data: {
+          city: newArtmakerCity,
+          name: newArtmakerName,
+          state: "AR",
+        },
+      });
+      toast.success("Artmaker profile created on the fly!");
+      const updatedArtmakers = await listAdminArtmakers();
+      setArtmakers(updatedArtmakers);
+      setSelectedArtmakerIds((prev) => [...prev, res.artmaker.id]);
+      setIsArtmakerModalOpen(false);
+      setNewArtmakerName("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create artmaker");
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +150,7 @@ function AdminEvents() {
     try {
       await createEventFn({
         data: {
+          artmakerIds: selectedArtmakerIds,
           date,
           description,
           image,
@@ -114,20 +208,10 @@ function AdminEvents() {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          {/* AI Flyer Import Button Guarded for Super Admin */}
-          {isSuperAdmin ? (
-            <Link
-              to="/admin/events/import"
-              className="inline-flex items-center gap-2 rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-black text-xs uppercase tracking-[0.18em] no-underline hover:bg-[#a5ff43]"
-            >
-              <Sparkles className="size-4" />
-              AI Flyer Import
-            </Link>
-          ) : null}
           <Button
             type="button"
             onClick={() => setIsFormOpen(true)}
-            className="rounded-lg bg-white font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-gray-200"
+            className="rounded-lg bg-[#7CFC00] font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#7CFC00]/90"
           >
             <Plus className="mr-2 size-4" />
             Create Event
@@ -225,7 +309,40 @@ function AdminEvents() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Gallery Night Little Rock"
+                  className="font-bold"
                 />
+              </div>
+
+              {/* Venue Selection & Quick Create */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="venue-select"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
+                    Select Venue or Log New
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setIsVenueModalOpen(true)}
+                    className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                  >
+                    <Plus className="mr-1 size-3" /> Quick Add Venue
+                  </button>
+                </div>
+                <select
+                  id="venue-select"
+                  value={selectedVenueId}
+                  onChange={(e) => handleVenueSelect(e.target.value)}
+                  className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
+                >
+                  <option value="custom">Custom Venue / Manual Input</option>
+                  {venues.map((v) => (
+                    <option key={v.id} value={String(v.id)}>
+                      {v.name} ({v.city}, {v.state})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -234,7 +351,7 @@ function AdminEvents() {
                     htmlFor="event-venue"
                     className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                   >
-                    Venue
+                    Venue Name
                   </Label>
                   <Input
                     id="event-venue"
@@ -256,6 +373,48 @@ function AdminEvents() {
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="Little Rock, AR"
                   />
+                </div>
+              </div>
+
+              {/* Featured Artmakers Selection & Quick Create */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    Featured Artmakers / Artists
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setIsArtmakerModalOpen(true)}
+                    className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                  >
+                    <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
+                  </button>
+                </div>
+                <div className="max-h-36 overflow-y-auto rounded-lg border border-gray-800 bg-[#0A0A0A] p-3 space-y-2">
+                  {artmakers.map((am) => {
+                    const isSelected = selectedArtmakerIds.includes(am.id);
+                    return (
+                      <label
+                        key={am.id}
+                        className="flex items-center gap-2 cursor-pointer text-sm text-gray-300 hover:text-white"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedArtmakerIds((prev) => [...prev, am.id]);
+                            } else {
+                              setSelectedArtmakerIds((prev) => prev.filter((id) => id !== am.id));
+                            }
+                          }}
+                          className="size-4 rounded border-gray-800 bg-[#111111] text-[#7CFC00]"
+                        />
+                        <span>{am.name}</span>
+                        <span className="text-xs text-gray-500">({am.city})</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -304,20 +463,8 @@ function AdminEvents() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="event-image"
-                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                >
-                  Flyer / Image URL (Optional)
-                </Label>
-                <Input
-                  id="event-image"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
+              {/* Flyer / Image Upload */}
+              <ArtsImageUploader label="Event Flyer / Image" value={image} onChange={setImage} />
 
               <div className="space-y-2">
                 <Label
@@ -360,6 +507,100 @@ function AdminEvents() {
                   className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
                 >
                   {isSubmitting ? "Creating..." : "Save Event"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Quick Venue Modal */}
+      {isVenueModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-4">
+            <h3 className="font-black text-xl text-white">Log New Venue On-The-Fly</h3>
+            <form onSubmit={handleQuickCreateVenue} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="qv-name" className="text-xs font-bold text-gray-400 uppercase">
+                  Venue Name
+                </Label>
+                <Input
+                  id="qv-name"
+                  value={newVenueName}
+                  onChange={(e) => setNewVenueName(e.target.value)}
+                  placeholder="e.g. AMFA Glass Gallery"
+                  className="font-bold"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="qv-city" className="text-xs font-bold text-gray-400 uppercase">
+                  City
+                </Label>
+                <Input
+                  id="qv-city"
+                  value={newVenueCity}
+                  onChange={(e) => setNewVenueCity(e.target.value)}
+                  placeholder="Little Rock"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsVenueModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+                >
+                  Save Venue
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Quick Artmaker Modal */}
+      {isArtmakerModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-4">
+            <h3 className="font-black text-xl text-white">Add Artmaker On-The-Fly</h3>
+            <form onSubmit={handleQuickCreateArtmaker} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="qa-name" className="text-xs font-bold text-gray-400 uppercase">
+                  Artist / Studio Name
+                </Label>
+                <Input
+                  id="qa-name"
+                  value={newArtmakerName}
+                  onChange={(e) => setNewArtmakerName(e.target.value)}
+                  placeholder="e.g. Sarah Jenkins"
+                  className="font-bold"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="qa-city" className="text-xs font-bold text-gray-400 uppercase">
+                  City
+                </Label>
+                <Input
+                  id="qa-city"
+                  value={newArtmakerCity}
+                  onChange={(e) => setNewArtmakerCity(e.target.value)}
+                  placeholder="Little Rock"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsArtmakerModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+                >
+                  Save Artmaker
                 </Button>
               </div>
             </form>

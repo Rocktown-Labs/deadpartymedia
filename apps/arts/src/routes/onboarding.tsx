@@ -1,4 +1,5 @@
 import { uploadFiles } from "@better-upload/client";
+import { useUser } from "@clerk/tanstack-react-start";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,14 +22,20 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { MEDIUM_OPTIONS, artmakerOnboardingSchema } from "#/lib/artmakers.ts";
+import { MEDIUM_OPTIONS, artmakerOnboardingSchema, fanOnboardingSchema } from "#/lib/artmakers.ts";
 import {
   getCurrentArtmaker,
   requireUser,
   saveArtmakerOnboarding,
+  saveFanOnboarding,
 } from "#/lib/artmakers.functions.ts";
-import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
+import {
+  type ArtworkDraft,
+  createArtworkDrafts,
+  getUploadedObjectKey,
+} from "#/lib/artwork-drafts.ts";
 import { saveArtwork } from "#/lib/artworks.functions.ts";
+import { getPublicUploadUrl } from "#/lib/upload.ts";
 
 const STEPS = [
   { label: "Identity", value: 0 },
@@ -55,11 +62,22 @@ export const Route = createFileRoute("/onboarding")({
 
 function Onboarding() {
   const currentArtmaker = Route.useLoaderData();
+  const { user } = useUser();
   const saveArtmaker = useServerFn(saveArtmakerOnboarding);
+  const saveFan = useServerFn(saveFanOnboarding);
   const saveArt = useServerFn(saveArtwork);
   const navigate = useNavigate();
+  const existingRole = user?.publicMetadata?.role;
+  const [selectedRole, setSelectedRole] = useState<"fan" | "artmaker" | null>(
+    currentArtmaker || existingRole === "artmaker"
+      ? "artmaker"
+      : existingRole === "fan"
+        ? "fan"
+        : null,
+  );
   const [step, setStep] = useState(0);
-  const [name, setName] = useState(currentArtmaker?.name ?? "");
+  const [fanName, setFanName] = useState(user?.fullName ?? user?.firstName ?? "");
+  const [name, setName] = useState(currentArtmaker?.name ?? user?.fullName ?? "");
   const [city, setCity] = useState(currentArtmaker?.city ?? "");
   const [state, setState] = useState(currentArtmaker?.state ?? "AR");
   const [pronouns, setPronouns] = useState(currentArtmaker?.pronouns ?? "");
@@ -71,6 +89,8 @@ function Onboarding() {
   const [medium, setMedium] = useState<string[]>(currentArtmaker?.medium ?? []);
   const [customMedium, setCustomMedium] = useState("");
   const [bio, setBio] = useState(currentArtmaker?.bio ?? "");
+  const [profileImage, setProfileImage] = useState(currentArtmaker?.image ?? user?.imageUrl ?? "");
+  const [profileImageKey, setProfileImageKey] = useState("");
   const [artworkDrafts, setArtworkDrafts] = useState<ArtworkDraft[]>([]);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +113,29 @@ function Onboarding() {
     },
   });
 
+  const profileImageUploadMutation = useMutation({
+    mutationFn: async (files: File[]) =>
+      uploadFiles({
+        files,
+        route: "profileImages",
+      }),
+    onError: (caughtError) => {
+      setError(caughtError instanceof Error ? caughtError.message : "Profile image upload failed.");
+    },
+    onSuccess: (result) => {
+      const [uploadedFile] = (result.files ?? []) as unknown[];
+      const directKey = uploadedFile ? getUploadedObjectKey(uploadedFile) : "";
+
+      if (!directKey) {
+        setError("The image uploaded, but no object key came back from storage.");
+        return;
+      }
+
+      setProfileImageKey(directKey);
+      setProfileImage(getPublicUploadUrl(directKey));
+    },
+  });
+
   const toggleMedium = (value: string) => {
     setMedium((current) =>
       current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
@@ -104,12 +147,34 @@ function Onboarding() {
     city,
     customMedium,
     instagramUsername,
+    image: profileImage,
+    imageKey: profileImageKey,
     medium,
     name,
     phoneNumber,
     pronouns,
     showPronouns,
     state,
+  };
+
+  const submitFan = async () => {
+    setError("");
+    const parsed = fanOnboardingSchema.safeParse({ name: fanName });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Check the form and try again.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveFan({ data: parsed.data });
+      await navigate({ to: "/" });
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not save your profile.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const validateProfile = () => {
@@ -235,334 +300,455 @@ function Onboarding() {
         </aside>
 
         <section className="border border-neutral-800 bg-[#101010] p-5 md:p-8">
-          <div className="mb-8">
-            <div className="h-2 overflow-hidden bg-[#050505]">
-              <div
-                className="h-full bg-[#7CFC00] transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              {STEPS.map((item) => (
+          {!selectedRole ? (
+            <div>
+              <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.22em]">
+                Choose a profile type
+              </p>
+              <h2 className="mt-3 font-black text-3xl tracking-tight">How are you joining?</h2>
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <button
-                  key={item.value}
                   type="button"
-                  onClick={() => setStep(item.value)}
-                  className={`min-h-11 border px-3 font-black text-xs uppercase tracking-[0.14em] transition-colors ${
-                    step === item.value
-                      ? "border-[#7CFC00] bg-[#7CFC00] text-black"
-                      : "border-neutral-800 bg-[#080808] text-neutral-400 hover:border-neutral-600"
-                  }`}
+                  onClick={() => setSelectedRole("fan")}
+                  className="border border-neutral-800 bg-[#080808] p-5 text-left hover:border-[#7CFC00]"
                 >
-                  {item.label}
+                  <h3 className="font-black text-xl">Fan</h3>
+                  <p className="mt-2 text-neutral-400 text-sm leading-6">
+                    Follow artmakers, discover events, and keep up with arts stories.
+                  </p>
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {step === 0 ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field label="Artmaker name">
-                <Input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="First name, full name, studio, or artist name"
-                />
-              </Field>
-              <Field label="Instagram username">
-                <Input
-                  value={instagramUsername}
-                  onChange={(event) => setInstagramUsername(event.target.value)}
-                  placeholder="@yourhandle"
-                />
-              </Field>
-              <Field label="City">
-                <Input
-                  value={city}
-                  onChange={(event) => setCity(event.target.value)}
-                  placeholder="Little Rock"
-                />
-              </Field>
-              <Field label="State">
-                <Input
-                  value={state}
-                  maxLength={2}
-                  onChange={(event) => setState(event.target.value)}
-                  placeholder="AR"
-                />
-              </Field>
-              <Field label="Phone number">
-                <Input
-                  value={phoneNumber}
-                  onChange={(event) => setPhoneNumber(event.target.value)}
-                  placeholder="(501) 555-0101"
-                />
-              </Field>
-              <Field label="Pronouns">
-                <Input
-                  value={pronouns}
-                  onChange={(event) => setPronouns(event.target.value)}
-                  placeholder="Optional"
-                />
-              </Field>
-              <label className="flex items-center gap-3 border border-neutral-800 bg-[#080808] p-3 text-neutral-300 text-sm md:col-span-2">
-                <input
-                  type="checkbox"
-                  checked={showPronouns}
-                  onChange={(event) => setShowPronouns(event.target.checked)}
-                  className="size-4 accent-[#7CFC00]"
-                />
-                Show pronouns on the public profile
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole("artmaker")}
+                  className="border border-neutral-800 bg-[#080808] p-5 text-left hover:border-[#7CFC00]"
+                >
+                  <h3 className="font-black text-xl">Artmaker</h3>
+                  <p className="mt-2 text-neutral-400 text-sm leading-6">
+                    Create a public profile, add work, and appear in medium directories.
+                  </p>
+                </button>
+              </div>
             </div>
           ) : null}
 
-          {step === 1 ? (
+          {selectedRole === "fan" ? (
             <div>
-              <Label className="font-black text-xs uppercase tracking-[0.22em]">Mediums</Label>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                {MEDIUM_OPTIONS.map((option) => {
-                  const isSelected = selectedMediumSet.has(option);
-
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => toggleMedium(option)}
-                      className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm transition-colors ${
-                        isSelected
-                          ? "border-[#7CFC00] bg-[#7CFC00] text-black"
-                          : "border-neutral-800 bg-[#080808] text-neutral-300 hover:border-neutral-600"
-                      }`}
-                    >
-                      <span>{option}</span>
-                      {isSelected && <Check className="size-4" />}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-4">
-                <Input
-                  value={customMedium}
-                  onChange={(event) => setCustomMedium(event.target.value)}
-                  placeholder="Something else? Add it here."
-                />
-              </div>
-              <div className="mt-8">
-                <Field label="Short bio">
-                  <Textarea
-                    value={bio}
-                    onChange={(event) => setBio(event.target.value)}
-                    placeholder="Tell people what you make, where they may have seen it, or what you are working toward."
-                    rows={5}
+              <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.22em]">
+                Fan onboarding
+              </p>
+              <h2 className="mt-3 font-black text-3xl tracking-tight">Set your display name.</h2>
+              <div className="mt-6">
+                <Field label="Name">
+                  <Input
+                    value={fanName}
+                    onChange={(event) => setFanName(event.target.value)}
+                    placeholder="Your name"
                   />
                 </Field>
               </div>
+              {error ? (
+                <div className="mt-5 border border-red-500/50 bg-red-950/30 p-3 text-red-200 text-sm">
+                  {error}
+                </div>
+              ) : null}
+              <div className="mt-8 flex flex-wrap justify-between gap-3">
+                <Button
+                  type="button"
+                  onClick={() => setSelectedRole(null)}
+                  className="h-12 rounded-none border border-neutral-700 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] hover:border-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]"
+                >
+                  <ArrowLeft className="size-4" />
+                  Back
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={submitFan}
+                  className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
+                >
+                  {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Finish
+                </Button>
+              </div>
             </div>
           ) : null}
 
-          {step === 2 ? (
-            <div>
-              <div className="mb-5 flex items-center gap-3">
-                <div className="grid size-11 place-items-center border border-[#7CFC00]/40 text-[#7CFC00]">
-                  <ImageUp className="size-5" />
+          {selectedRole === "artmaker" ? (
+            <>
+              <div className="mb-8">
+                <div className="h-2 overflow-hidden bg-[#050505]">
+                  <div
+                    className="h-full bg-[#7CFC00] transition-all"
+                    style={{ width: `${progressPercent}%` }}
+                  />
                 </div>
-                <div>
-                  <h2 className="font-black text-xl">First artwork batch</h2>
-                  <p className="text-neutral-500 text-sm">
-                    Optional now. You can add or edit artwork later from the dashboard.
-                  </p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {STEPS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setStep(item.value)}
+                      className={`min-h-11 border px-3 font-black text-xs uppercase tracking-[0.14em] transition-colors ${
+                        step === item.value
+                          ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                          : "border-neutral-800 bg-[#080808] text-neutral-400 hover:border-neutral-600"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center border border-dashed border-neutral-700 bg-[#080808] p-6 text-center hover:border-[#7CFC00]">
-                {uploadMutation.isPending ? (
-                  <Loader2 className="mb-3 size-8 animate-spin text-[#7CFC00]" />
-                ) : (
-                  <Upload className="mb-3 size-8 text-[#7CFC00]" />
-                )}
-                <span className="font-black text-sm uppercase tracking-[0.18em]">
-                  {uploadMutation.isPending ? "Uploading" : "Choose artwork images"}
-                </span>
-                <span className="mt-2 text-neutral-500 text-sm">
-                  PNG, JPG, GIF, WebP. Up to 12 files.
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="sr-only"
-                  disabled={uploadMutation.isPending}
-                  onChange={(event) => {
-                    const files = [...(event.target.files ?? [])];
-                    if (files.length > 0) {
-                      uploadMutation.mutate(files);
-                    }
-                    event.target.value = "";
-                  }}
-                />
-              </label>
+              {step === 0 ? (
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field label="Artmaker name">
+                    <Input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="First name, full name, studio, or artist name"
+                    />
+                  </Field>
+                  <Field label="Instagram username">
+                    <Input
+                      value={instagramUsername}
+                      onChange={(event) => setInstagramUsername(event.target.value)}
+                      placeholder="@yourhandle"
+                    />
+                  </Field>
+                  <Field label="City">
+                    <Input
+                      value={city}
+                      onChange={(event) => setCity(event.target.value)}
+                      placeholder="Little Rock"
+                    />
+                  </Field>
+                  <Field label="State">
+                    <Input
+                      value={state}
+                      maxLength={2}
+                      onChange={(event) => setState(event.target.value)}
+                      placeholder="AR"
+                    />
+                  </Field>
+                  <Field label="Phone number">
+                    <Input
+                      value={phoneNumber}
+                      onChange={(event) => setPhoneNumber(event.target.value)}
+                      placeholder="(501) 555-0101"
+                    />
+                  </Field>
+                  <Field label="Pronouns">
+                    <Input
+                      value={pronouns}
+                      onChange={(event) => setPronouns(event.target.value)}
+                      placeholder="Optional"
+                    />
+                  </Field>
+                  <label className="flex items-center gap-3 border border-neutral-800 bg-[#080808] p-3 text-neutral-300 text-sm md:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={showPronouns}
+                      onChange={(event) => setShowPronouns(event.target.checked)}
+                      className="size-4 accent-[#7CFC00]"
+                    />
+                    Show pronouns on the public profile
+                  </label>
+                  <div className="border border-neutral-800 bg-[#080808] p-4 md:col-span-2">
+                    <Label className="font-black text-xs uppercase tracking-[0.22em]">
+                      Profile image
+                    </Label>
+                    <div className="mt-3 flex flex-wrap items-center gap-4">
+                      {profileImage ? (
+                        <img
+                          src={profileImage}
+                          alt=""
+                          className="size-24 border border-neutral-800 object-cover"
+                        />
+                      ) : null}
+                      <label className="inline-flex h-11 cursor-pointer items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.16em] hover:border-[#7CFC00] hover:text-[#7CFC00]">
+                        {profileImageUploadMutation.isPending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Upload className="size-4" />
+                        )}
+                        Upload image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={profileImageUploadMutation.isPending}
+                          onChange={(event) => {
+                            const files = [...(event.target.files ?? [])];
+                            if (files.length > 0) {
+                              profileImageUploadMutation.mutate(files);
+                            }
+                            event.target.value = "";
+                          }}
+                        />
+                      </label>
+                      <Input
+                        value={profileImage}
+                        onChange={(event) => {
+                          setProfileImage(event.target.value);
+                          setProfileImageKey("");
+                        }}
+                        placeholder="Or paste an image URL"
+                        className="min-w-72 flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
-              <div className="mt-6 grid gap-3">
-                {artworkDrafts.length > 0 ? (
-                  artworkDrafts.map((item, index) => (
-                    <details
-                      key={item.id}
-                      open={index === 0}
-                      className="border border-neutral-800 bg-[#080808]"
-                    >
-                      <summary className="cursor-pointer px-4 py-3 font-black text-sm uppercase tracking-[0.14em]">
-                        {item.title || item.fileName}
-                      </summary>
-                      <div className="grid gap-4 border-neutral-800 border-t p-4">
-                        <Field label="Title">
-                          <Input
-                            value={item.title}
-                            onChange={(event) => {
-                              const next = [...artworkDrafts];
-                              next[index] = { ...item, title: event.target.value };
-                              setArtworkDrafts(next);
-                            }}
-                          />
-                        </Field>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <Field label="Medium">
-                            <Input
-                              value={item.medium}
-                              onChange={(event) => {
-                                const next = [...artworkDrafts];
-                                next[index] = { ...item, medium: event.target.value };
-                                setArtworkDrafts(next);
-                              }}
-                            />
-                          </Field>
-                          <Field label="Year">
-                            <Input
-                              value={item.year}
-                              onChange={(event) => {
-                                const next = [...artworkDrafts];
-                                next[index] = { ...item, year: event.target.value };
-                                setArtworkDrafts(next);
-                              }}
-                            />
-                          </Field>
-                        </div>
-                        <Field label="Description">
-                          <Textarea
-                            value={item.description}
-                            rows={3}
-                            onChange={(event) => {
-                              const next = [...artworkDrafts];
-                              next[index] = { ...item, description: event.target.value };
-                              setArtworkDrafts(next);
-                            }}
-                          />
-                        </Field>
-                        <div className="grid gap-3 border border-neutral-800 p-3">
-                          <label className="flex items-center gap-3 text-neutral-300 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={item.forSale}
-                              onChange={(event) => {
-                                const next = [...artworkDrafts];
-                                next[index] = { ...item, forSale: event.target.checked };
-                                setArtworkDrafts(next);
-                              }}
-                              className="size-4 accent-[#7CFC00]"
-                            />
-                            Mark available for future sales
-                          </label>
-                          {item.forSale ? (
-                            <Field label="Price">
+              {step === 1 ? (
+                <div>
+                  <Label className="font-black text-xs uppercase tracking-[0.22em]">Mediums</Label>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {MEDIUM_OPTIONS.map((option) => {
+                      const isSelected = selectedMediumSet.has(option);
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => toggleMedium(option)}
+                          className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm transition-colors ${
+                            isSelected
+                              ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                              : "border-neutral-800 bg-[#080808] text-neutral-300 hover:border-neutral-600"
+                          }`}
+                        >
+                          <span>{option}</span>
+                          {isSelected && <Check className="size-4" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4">
+                    <Input
+                      value={customMedium}
+                      onChange={(event) => setCustomMedium(event.target.value)}
+                      placeholder="Something else? Add it here."
+                    />
+                  </div>
+                  <div className="mt-8">
+                    <Field label="Short bio">
+                      <Textarea
+                        value={bio}
+                        onChange={(event) => setBio(event.target.value)}
+                        placeholder="Tell people what you make, where they may have seen it, or what you are working toward."
+                        rows={5}
+                      />
+                    </Field>
+                  </div>
+                </div>
+              ) : null}
+
+              {step === 2 ? (
+                <div>
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="grid size-11 place-items-center border border-[#7CFC00]/40 text-[#7CFC00]">
+                      <ImageUp className="size-5" />
+                    </div>
+                    <div>
+                      <h2 className="font-black text-xl">First artwork batch</h2>
+                      <p className="text-neutral-500 text-sm">
+                        Optional now. You can add or edit artwork later from the dashboard.
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center border border-dashed border-neutral-700 bg-[#080808] p-6 text-center hover:border-[#7CFC00]">
+                    {uploadMutation.isPending ? (
+                      <Loader2 className="mb-3 size-8 animate-spin text-[#7CFC00]" />
+                    ) : (
+                      <Upload className="mb-3 size-8 text-[#7CFC00]" />
+                    )}
+                    <span className="font-black text-sm uppercase tracking-[0.18em]">
+                      {uploadMutation.isPending ? "Uploading" : "Choose artwork images"}
+                    </span>
+                    <span className="mt-2 text-neutral-500 text-sm">
+                      PNG, JPG, GIF, WebP. Up to 12 files.
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      disabled={uploadMutation.isPending}
+                      onChange={(event) => {
+                        const files = [...(event.target.files ?? [])];
+                        if (files.length > 0) {
+                          uploadMutation.mutate(files);
+                        }
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <div className="mt-6 grid gap-3">
+                    {artworkDrafts.length > 0 ? (
+                      artworkDrafts.map((item, index) => (
+                        <details
+                          key={item.id}
+                          open={index === 0}
+                          className="border border-neutral-800 bg-[#080808]"
+                        >
+                          <summary className="cursor-pointer px-4 py-3 font-black text-sm uppercase tracking-[0.14em]">
+                            {item.title || item.fileName}
+                          </summary>
+                          <div className="grid gap-4 border-neutral-800 border-t p-4">
+                            <Field label="Title">
                               <Input
-                                value={item.price}
+                                value={item.title}
                                 onChange={(event) => {
                                   const next = [...artworkDrafts];
-                                  next[index] = { ...item, price: event.target.value };
+                                  next[index] = { ...item, title: event.target.value };
                                   setArtworkDrafts(next);
                                 }}
-                                placeholder="250"
                               />
                             </Field>
-                          ) : null}
-                          <Field label="Visibility">
-                            <select
-                              value={item.status}
-                              onChange={(event) => {
-                                const next = [...artworkDrafts];
-                                next[index] = {
-                                  ...item,
-                                  status: event.target.value as "draft" | "published",
-                                };
-                                setArtworkDrafts(next);
-                              }}
-                              className="h-10 border border-neutral-800 bg-[#0A0A0A] px-3 text-white"
-                            >
-                              <option value="published">Published</option>
-                              <option value="draft">Draft</option>
-                            </select>
-                          </Field>
-                        </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <Field label="Medium">
+                                <Input
+                                  value={item.medium}
+                                  onChange={(event) => {
+                                    const next = [...artworkDrafts];
+                                    next[index] = { ...item, medium: event.target.value };
+                                    setArtworkDrafts(next);
+                                  }}
+                                />
+                              </Field>
+                              <Field label="Year">
+                                <Input
+                                  value={item.year}
+                                  onChange={(event) => {
+                                    const next = [...artworkDrafts];
+                                    next[index] = { ...item, year: event.target.value };
+                                    setArtworkDrafts(next);
+                                  }}
+                                />
+                              </Field>
+                            </div>
+                            <Field label="Description">
+                              <Textarea
+                                value={item.description}
+                                rows={3}
+                                onChange={(event) => {
+                                  const next = [...artworkDrafts];
+                                  next[index] = { ...item, description: event.target.value };
+                                  setArtworkDrafts(next);
+                                }}
+                              />
+                            </Field>
+                            <div className="grid gap-3 border border-neutral-800 p-3">
+                              <label className="flex items-center gap-3 text-neutral-300 text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={item.forSale}
+                                  onChange={(event) => {
+                                    const next = [...artworkDrafts];
+                                    next[index] = { ...item, forSale: event.target.checked };
+                                    setArtworkDrafts(next);
+                                  }}
+                                  className="size-4 accent-[#7CFC00]"
+                                />
+                                Mark available for future sales
+                              </label>
+                              {item.forSale ? (
+                                <Field label="Price">
+                                  <Input
+                                    value={item.price}
+                                    onChange={(event) => {
+                                      const next = [...artworkDrafts];
+                                      next[index] = { ...item, price: event.target.value };
+                                      setArtworkDrafts(next);
+                                    }}
+                                    placeholder="250"
+                                  />
+                                </Field>
+                              ) : null}
+                              <Field label="Visibility">
+                                <select
+                                  value={item.status}
+                                  onChange={(event) => {
+                                    const next = [...artworkDrafts];
+                                    next[index] = {
+                                      ...item,
+                                      status: event.target.value as "draft" | "published",
+                                    };
+                                    setArtworkDrafts(next);
+                                  }}
+                                  className="h-10 border border-neutral-800 bg-[#0A0A0A] px-3 text-white"
+                                >
+                                  <option value="published">Published</option>
+                                  <option value="draft">Draft</option>
+                                </select>
+                              </Field>
+                            </div>
+                          </div>
+                        </details>
+                      ))
+                    ) : (
+                      <div className="border border-neutral-800 bg-[#080808] p-5">
+                        <p className="font-black text-neutral-200">No artwork attached yet.</p>
+                        <p className="mt-2 text-neutral-500 text-sm">
+                          Finish onboarding now, then add pieces from your dashboard whenever the
+                          work is ready.
+                        </p>
                       </div>
-                    </details>
-                  ))
-                ) : (
-                  <div className="border border-neutral-800 bg-[#080808] p-5">
-                    <p className="font-black text-neutral-200">No artwork attached yet.</p>
-                    <p className="mt-2 text-neutral-500 text-sm">
-                      Finish onboarding now, then add pieces from your dashboard whenever the work
-                      is ready.
-                    </p>
+                    )}
                   </div>
+                </div>
+              ) : null}
+
+              {error ? (
+                <div className="mt-5 border border-red-500/50 bg-red-950/30 p-3 text-red-200 text-sm">
+                  {error}
+                </div>
+              ) : null}
+
+              <div className="mt-8 flex flex-wrap justify-between gap-3">
+                <Button
+                  type="button"
+                  disabled={step === 0 || isSaving}
+                  onClick={() => {
+                    setError("");
+                    setStep((current) => Math.max(current - 1, 0));
+                  }}
+                  className="h-12 rounded-none border border-neutral-700 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] hover:border-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]"
+                >
+                  <ArrowLeft className="size-4" />
+                  Back
+                </Button>
+                {step < STEPS.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
+                  >
+                    Continue
+                    <ArrowRight className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={isSaving || uploadMutation.isPending}
+                    onClick={submit}
+                    className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="size-4" />
+                    )}
+                    {isSaving ? "Saving" : "Publish Profile"}
+                  </Button>
                 )}
               </div>
-            </div>
+            </>
           ) : null}
-
-          {error ? (
-            <div className="mt-5 border border-red-500/50 bg-red-950/30 p-3 text-red-200 text-sm">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="mt-8 flex flex-wrap justify-between gap-3">
-            <Button
-              type="button"
-              disabled={step === 0 || isSaving}
-              onClick={() => {
-                setError("");
-                setStep((current) => Math.max(current - 1, 0));
-              }}
-              className="h-12 rounded-none border border-neutral-700 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] hover:border-[#7CFC00] hover:bg-transparent hover:text-[#7CFC00]"
-            >
-              <ArrowLeft className="size-4" />
-              Back
-            </Button>
-            {step < STEPS.length - 1 ? (
-              <Button
-                type="button"
-                onClick={goNext}
-                className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
-              >
-                Continue
-                <ArrowRight className="size-4" />
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                disabled={isSaving || uploadMutation.isPending}
-                onClick={submit}
-                className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
-              >
-                {isSaving ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="size-4" />
-                )}
-                {isSaving ? "Saving" : "Publish Profile"}
-              </Button>
-            )}
-          </div>
         </section>
       </div>
     </main>

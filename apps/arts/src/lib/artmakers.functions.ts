@@ -5,15 +5,20 @@ import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
-import { artmakerOnboardingSchema, normalizeInstagramUsername } from "#/lib/artmakers.ts";
+import {
+  artmakerOnboardingSchema,
+  fanOnboardingSchema,
+  normalizeInstagramUsername,
+} from "#/lib/artmakers.ts";
 import type { ArtmakerListItem } from "#/lib/artmakers.ts";
 import { createSlug } from "#/lib/slug.ts";
+import { getPublicUploadUrl } from "#/lib/upload.ts";
 
 const slugInputSchema = z.object({
   slug: z.string().min(1),
 });
 
-function isArtsStaffRole(role: unknown) {
+export function isArtsStaffRole(role: unknown) {
   return (
     role === "admin" || role === "arts_admin" || role === "arts_writer" || role === "super_admin"
   );
@@ -207,7 +212,7 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
     }
 
     const [existing] = await db
-      .select({ id: artmakers.id })
+      .select({ id: artmakers.id, image: artmakers.image })
       .from(artmakers)
       .where(eq(artmakers.clerkUserId, userId))
       .limit(1);
@@ -217,12 +222,18 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
     const slug = await makeUniqueArtmakerSlug(data.name, existing?.id);
     const instagramUsername = normalizeInstagramUsername(data.instagramUsername);
 
+    const client = clerkClient();
+    const clerkUser = await client.users.getUser(userId);
+
     const payload = {
       bio: data.bio?.trim() || null,
       city: data.city,
       clerkUserId: userId,
       instagramUrl: `https://instagram.com/${instagramUsername}`,
       instagramUsername,
+      image: data.imageKey
+        ? getPublicUploadUrl(data.imageKey)
+        : data.image?.trim() || existing?.image || clerkUser.imageUrl || null,
       medium,
       name: data.name,
       phoneNumber: data.phoneNumber,
@@ -234,8 +245,6 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
       updatedAt: new Date(),
     };
 
-    const client = clerkClient();
-    const clerkUser = await client.users.getUser(userId);
     const primaryEmail =
       clerkUser.emailAddresses.find(
         (emailAddress) => emailAddress.id === clerkUser.primaryEmailAddressId,
@@ -300,17 +309,78 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
     return { artmaker: created, success: true };
   });
 
+export const saveFanOnboarding = createServerFn({ method: "POST" })
+  .validator(fanOnboardingSchema)
+  .handler(async ({ data }) => {
+    assertClerkServerConfigured();
+
+    const { isAuthenticated, userId } = await auth();
+
+    if (!isAuthenticated || !userId) {
+      throw redirect({ to: "/" });
+    }
+
+    const client = clerkClient();
+    const clerkUser = await client.users.getUser(userId);
+    const primaryEmail =
+      clerkUser.emailAddresses.find(
+        (emailAddress) => emailAddress.id === clerkUser.primaryEmailAddressId,
+      )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
+
+    if (!primaryEmail) {
+      throw new Error("A verified email is required to finish onboarding.");
+    }
+
+    await db
+      .insert(users)
+      .values({
+        clerkId: userId,
+        email: primaryEmail,
+        firstName: data.name,
+        imageUrl: clerkUser.imageUrl,
+        lastName: clerkUser.lastName,
+        onboardingComplete: true,
+        role: "fan",
+      })
+      .onConflictDoUpdate({
+        set: {
+          email: primaryEmail,
+          firstName: data.name,
+          imageUrl: clerkUser.imageUrl,
+          lastName: clerkUser.lastName,
+          onboardingComplete: true,
+          role: "fan",
+          updatedAt: new Date(),
+        },
+        target: users.clerkId,
+      });
+
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        ...clerkUser.publicMetadata,
+        onboardingComplete: true,
+        role: "fan",
+      },
+    });
+
+    return { success: true };
+  });
+
 export const createArtsArtmakerStub = createServerFn({ method: "POST" })
   .validator(
     z.object({
       name: z.string().min(1, "Name is required"),
       city: z.string().optional(),
+      image: z.string().optional(),
+      instagramUsername: z.string().optional(),
+      medium: z.array(z.string()).optional(),
       state: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
     const slug = await makeUniqueArtmakerSlug(data.name);
+    const instagramUsername = normalizeInstagramUsername(data.instagramUsername);
     const [created] = await db
       .insert(artmakers)
       .values({
@@ -319,8 +389,13 @@ export const createArtsArtmakerStub = createServerFn({ method: "POST" })
         city: data.city || "Little Rock",
         state: data.state || "AR",
         bio: "",
-        medium: ["Visual Art"],
-        approvalStatus: "APPROVED",
+        clerkUserId: `local_artmaker:${slug}`,
+        claimed: false,
+        image: data.image?.trim() || null,
+        instagramUrl: instagramUsername ? `https://instagram.com/${instagramUsername}` : "",
+        instagramUsername,
+        medium: data.medium?.length ? data.medium : ["Visual Art"],
+        phoneNumber: "+10000000000",
       })
       .returning();
 
@@ -341,6 +416,7 @@ export const updateArtsArtmaker = createServerFn({ method: "POST" })
       city: z.string().min(1, "City is required"),
       hidden: z.boolean().optional(),
       id: z.number(),
+      image: z.string().optional(),
       instagramUsername: z.string().optional(),
       medium: z.array(z.string()).optional(),
       name: z.string().min(1, "Name is required"),
@@ -369,6 +445,7 @@ export const updateArtsArtmaker = createServerFn({ method: "POST" })
         bio: data.bio || null,
         city: data.city,
         hidden: data.hidden ?? existing.hidden,
+        image: data.image?.trim() || null,
         instagramUsername: data.instagramUsername || "",
         medium: data.medium || [],
         name: data.name,

@@ -6,11 +6,11 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 
-function isSuperAdminRole(role: unknown) {
-  return role === "admin" || role === "super_admin";
+export function isArtsAdminRole(role: unknown) {
+  return role === "admin" || role === "super_admin" || role === "arts_admin";
 }
 
-async function requireSuperAdmin() {
+async function requireArtsAdmin() {
   const { isAuthenticated, userId } = await auth();
 
   if (!isAuthenticated || !userId) {
@@ -20,9 +20,13 @@ async function requireSuperAdmin() {
   const client = clerkClient();
   const user = await client.users.getUser(userId);
 
-  if (!isSuperAdminRole(user.publicMetadata.role)) {
-    throw new Error("Unauthorized: Only super admins can change user roles");
+  if (!isArtsAdminRole(user.publicMetadata.role)) {
+    throw new Error(
+      "Unauthorized: Only arts admins or super admins can manage staff and invitations",
+    );
   }
+
+  return { role: user.publicMetadata.role as string, userId };
 }
 
 export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(async () => {
@@ -138,6 +142,7 @@ export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(asyn
       createdAt: artmakers.createdAt,
       hidden: artmakers.hidden,
       id: artmakers.id,
+      image: artmakers.image,
       instagramUsername: artmakers.instagramUsername,
       medium: artmakers.medium,
       name: artmakers.name,
@@ -185,7 +190,11 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireSuperAdmin();
+    const caller = await requireArtsAdmin();
+
+    if (caller.role === "arts_admin" && data.role === "super_admin") {
+      throw new Error("Unauthorized: Only super admins can grant super_admin role");
+    }
 
     const [targetUser] = await db
       .select({
@@ -227,3 +236,49 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
 
     return { success: true, user: updated };
   });
+
+export const inviteArtsUser = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      email: z.string().email("Valid email is required"),
+      role: z.enum(["arts_admin", "arts_writer", "artmaker", "fan"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireArtsAdmin();
+
+    const client = clerkClient();
+    const publicMetadata = {
+      onboardingComplete: true,
+      role: data.role,
+    };
+
+    const redirectUrl = process.env.PUBLIC_APP_URL
+      ? `${process.env.PUBLIC_APP_URL}/admin`
+      : "https://deadpartyarts.com/admin";
+
+    await client.invitations.createInvitation({
+      emailAddress: data.email,
+      publicMetadata,
+      redirectUrl,
+    });
+
+    return { success: true };
+  });
+
+export const listArtsInvitations = createServerFn({ method: "GET" }).handler(async () => {
+  await requireArtsAdmin();
+  try {
+    const client = clerkClient();
+    const response = await client.invitations.getInvitationList();
+    return response.data.map((inv) => ({
+      createdAt: inv.createdAt,
+      emailAddress: inv.emailAddress,
+      id: inv.id,
+      role: ((inv.publicMetadata as Record<string, unknown>)?.role as string) ?? "fan",
+      status: inv.status,
+    }));
+  } catch {
+    return [];
+  }
+});
