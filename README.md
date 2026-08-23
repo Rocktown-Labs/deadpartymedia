@@ -1,196 +1,225 @@
-# Dead Party Media
+# Dead Party Media (`dpmedia`)
 
-Your #1 outlet for Arkansas music.
+> The premier digital outlet and community platform for Arkansas music, arts, and culture.
 
-## Quick Start
+Dead Party Media is a full-stack TypeScript monorepo powering editorial coverage, event listings, artist & artmaker directories, gallery exhibitions, community interaction, e-commerce storefronts, and mobile experiences across Arkansas.
+
+---
+
+## 🏛️ Monorepo Architecture
+
+This repository is organized as a monorepo managed with [Turborepo](https://turbo.build/repo) and [pnpm workspaces](https://pnpm.io/workspaces):
+
+```txt
+deadpartymedia/
+├── apps/
+│   ├── web/        # Main Next.js 16 Web Application (deadpartymedia.com)
+│   ├── arts/       # Dead Party Arts Portal (arts.deadpartymedia.com)
+│   └── native/     # Dead Party Mobile App (Expo SDK 54 / React Native)
+├── packages/
+│   ├── db/         # Central Drizzle ORM schema, relations & Neon Postgres client
+│   ├── env/        # Type-safe environment validation schemas (@t3-oss/env-core + Zod)
+│   └── config/     # Shared TypeScript & build configs
+```
+
+### Applications
+
+| App               | Framework / Stack                                                                              | Role / Description                                                                                                  | Local Dev Domain (Portless)             |
+| ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **`apps/web`**    | Next.js 16 (App Router), React 19, Tailwind CSS v4, Shadcn UI, Clerk, TipTap, Fourthwall       | Music editorial magazine, show calendar, artist directory, article comments, and merch store.                       | `https://deadpartymedia.localhost`      |
+| **`apps/arts`**   | TanStack React Start, Nitro, React 19, Tailwind CSS v4, Radix UI, Clerk, TipTap, Cloudflare R2 | Arkansas arts directory, artist profiles (artmakers), gallery exhibitions, AI flyer ingestion, and arts storefront. | `https://arts.deadpartymedia.localhost` |
+| **`apps/native`** | Expo SDK 54, Expo Router v6, React Native 0.81, React 19, TanStack Query v5, TanStack Form     | Cross-platform iOS and Android mobile app for music, shows, and discovery.                                          | `http://localhost:8081`                 |
+
+### Shared Packages
+
+| Package                                   | Purpose                                                                                                                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`packages/db`** (`@dpmedia/db`)         | Central Drizzle ORM database schemas (`users`, `posts`, `events`, `artists`, `artmakers`, `artworks`, `venues`, `comments`, `tags`, etc.), relations, and Neon client. |
+| **`packages/env`** (`@dpmedia/env`)       | Type-safe environment variable schemas using `@t3-oss/env-core` and `zod`.                                                                                             |
+| **`packages/config`** (`@dpmedia/config`) | Shared TypeScript configurations and tool presets.                                                                                                                     |
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 20+ and pnpm
-- Python 3.11+ and [UV](https://github.com/astral-sh/uv)
-- Docker (for local PostgreSQL)
+- **Node.js** `20.x` or higher
+- **pnpm** `10.x` (enable via `corepack enable`)
 
-### Setup
-
-1. **Install dependencies:**
-
-   ```bash
-   pnpm install
-   ```
-
-2. **Set up environment variables:**
-
-   ```bash
-   # Backend - create .env file (gitignored)
-   cp apps/server/.env.example apps/server/.env
-   # Edit apps/server/.env with your settings
-   # Defaults work with Docker PostgreSQL (see docker-compose.yml)
-
-   # Frontend - create .env.local file (gitignored)
-   cp apps/web/.env.example apps/web/.env.local
-   # Edit apps/web/.env.local with your settings
-   # Default: NEXT_PUBLIC_API_URL=http://localhost:8000/api
-   # Also set DATABASE_URL for the web app (Drizzle + Neon)
-   ```
-
-3. **Start PostgreSQL (Docker):**
-
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Set up Django database:**
-
-   ```bash
-   cd apps/server
-   uv run python manage.py makemigrations
-   uv run python manage.py migrate
-   uv run python manage.py createsuperuser
-   ```
-
-5. **Run the application:**
-
-   ```bash
-   # From root directory - runs both frontend and backend
-   pnpm dev
-   ```
-
-   Or run individually:
-
-   ```bash
-   pnpm dev:web      # Frontend: http://localhost:3001
-   pnpm dev:server   # Backend: http://localhost:8000
-   ```
-
-## Project Structure
-
-See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) for detailed documentation on:
-
-- Directory structure
-- Environment variables
-- Configuration files
-- API endpoints
-- Content management
-- Common tasks
-
-## Tech Stack
-
-### Frontend
-
-- Next.js 16 (App Router)
-- React 19
-- TanStack Query
-- Tailwind CSS v4
-- Shadcn UI
-
-### Backend
-
-- Django 5.2
-- Django REST Framework
-- Django Admin (Jazzmin)
-- PostgreSQL
-- Amazon S3 (for image storage)
-- Django Allauth (authentication)
-
-## Development
-
-### Running Services
+### 1. Install Dependencies
 
 ```bash
-# Both frontend and backend
+pnpm install
+```
+
+### 2. Configure Environment Variables
+
+Create the local environment files for the applications:
+
+#### Web App (`apps/web/.env.local`)
+
+Copy from template and fill in your keys:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+Key variables:
+
+- `DATABASE_URL`: Neon PostgreSQL connection string (pooled connection)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` & `CLERK_SECRET_KEY`: Clerk authentication keys
+- `NEXT_PUBLIC_FW_*`: Fourthwall e-commerce storefront keys (optional)
+- `GOOGLE_GENERATIVE_AI_API_KEY`: AI integration key (optional)
+
+#### Arts App (`apps/arts/.env.local`)
+
+Copy from template and fill in your keys:
+
+```bash
+cp apps/arts/.env.example apps/arts/.env.local
+```
+
+Key variables:
+
+- `DATABASE_URL`: Neon PostgreSQL connection string (shares same DB)
+- `VITE_CLERK_PUBLISHABLE_KEY` & `CLERK_SECRET_KEY`: Clerk authentication keys
+- `CLOUDFLARE_R2_*`: Cloudflare R2 bucket credentials for media uploads
+- `VITE_FW_*`: Fourthwall Arts collection keys (optional)
+- `GEMINI_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`: AI flyer import (optional)
+
+### 3. Run Development Servers
+
+Run both web and native apps simultaneously:
+
+```bash
 pnpm dev
-
-# Individual services
-pnpm dev:web      # Next.js frontend
-pnpm dev:server   # Django backend
 ```
 
-### Database
-
-Local development uses Docker PostgreSQL:
+Or run all applications in the monorepo via Turborepo:
 
 ```bash
-docker-compose up -d    # Start
-docker-compose down     # Stop
-docker-compose logs     # View logs
+pnpm dev:all
 ```
 
-### Admin Access
+Or run specific applications:
 
-- Django Admin: http://localhost:8000/admin/
-- Create superuser: `cd apps/server && uv run python manage.py createsuperuser`
+```bash
+pnpm dev:web      # Main Next.js web application
+pnpm dev:arts     # TanStack Start arts application
+pnpm dev:native   # Expo mobile application
+```
 
-## Environment Variables
+---
 
-### Backend (`apps/server/.env`)
+## 🌐 Local Development with Portless
 
-**Location:** `apps/server/.env` (create from `.env.example`)
+This repository utilizes [Portless](https://github.com/Rocktown-Labs) for local development with named, HTTPS-ready `.localhost` domains without port collisions:
 
-- `SECRET_KEY` - Django secret key (generate with: `python -c "import secrets; print(secrets.token_urlsafe(50))"`)
-- `DEBUG` - Debug mode (True for dev, False for prod)
-- `DB_*` - PostgreSQL connection (defaults match docker-compose.yml)
-- `USE_S3` - Enable S3 storage (False for local dev, True for prod)
-- `AWS_*` - S3 credentials (only needed if USE_S3=True)
+- **Dead Party Media Web**: [`https://deadpartymedia.localhost`](https://deadpartymedia.localhost)
+- **Dead Party Arts**: [`https://arts.deadpartymedia.localhost`](https://arts.deadpartymedia.localhost)
 
-### Frontend (`apps/web/.env.local`)
+To run any app directly without Portless:
 
-**Location:** `apps/web/.env.local` (create from `.env.example`)
+```bash
+# Web
+pnpm --filter web dev:app
 
-- `NEXT_PUBLIC_API_URL` - Django API URL (default: http://localhost:8000/api)
-- `DATABASE_URL` - Postgres connection string for Next.js server code + API routes (Neon)
+# Arts
+PORTLESS=0 pnpm --filter arts dev:app
+```
 
-Tip: For Neon branch switching, see `apps/web/.env.development.local.example` (dev) and `apps/web/.env.production.local.example` (main).
+---
 
-## Vercel + Neon
+## 🗄️ Database Management (Drizzle ORM + Neon)
 
-This repo expects `DATABASE_URL` to be set in the Vercel Project Environment Variables so API routes can access Postgres.
+Database schemas are centrally maintained in [`packages/db/src/schema.ts`](./packages/db/src/schema.ts) and connected to **Neon Serverless PostgreSQL**.
 
-- **Production**: set `DATABASE_URL` to the Neon **main** branch pooler URL (host like `ep-restless-leaf-...-pooler...`).
-- **Preview**: set `DATABASE_URL` to the Neon **dev** branch pooler URL (host like `ep-autumn-lab-...-pooler...`).
+### Common Database Commands
 
-Optional (nice for catching migration drift in Preview/CI):
+```bash
+# Generate migration files from schema changes
+pnpm web:db:generate
+pnpm arts:db:generate
 
-- Set `DB_SCHEMA_SANITY_CHECK=1` for **Preview** (and/or **Development**).
+# Apply pending migrations
+pnpm web:db:migrate
+pnpm arts:db:migrate
 
-## Database Migrations (GitHub Actions)
+# Push schema directly to database (development / prototyping)
+pnpm web:db:push
+pnpm arts:db:push
 
-This repo includes a workflow that runs Drizzle migrations against the Neon **main** branch when code is pushed to `main`.
+# Open Drizzle Studio web GUI
+pnpm web:db:studio
+pnpm arts:db:studio
+```
 
-- Workflow: `.github/workflows/web-db-migrate.yml`
-- Required repo variable:
-  - `NEON_PROJECT_ID` (Neon project id, e.g. `cold-mud-71328663`)
+---
 
-- Required repo secrets:
-  - `NEON_DATABASE_URL_MAIN` (set this to the Neon **main** branch pooled connection string)
-  - `NEON_API_KEY` (Neon API key used to create/delete a temporary branch for a migration dry-run)
+## 🛠️ Content & Migration Utilities
 
-## Production
+The web workspace includes utilities for migrating, normalizing, and managing legacy WordPress content:
 
-1. **Backend:** Update `apps/server/.env` with production values:
-   - Set `DEBUG=False`
-   - Set `USE_S3=True` and configure AWS credentials
-   - Update `DB_*` with production database connection
-   - Set `ALLOWED_HOSTS` with your domain
+```bash
+# Backfill posts from WordPress
+pnpm --filter web content:wordpress:backfill
 
-2. **Frontend:** Update `apps/web/.env.local`:
-   - Set `NEXT_PUBLIC_API_URL` to production API URL
+# Remap legacy WordPress authors to Clerk users
+pnpm --filter web content:wordpress:remap-authors
 
-3. **Deploy:**
-   - Build frontend: `pnpm build`
-   - Deploy Django backend (Gunicorn + Nginx recommended)
-   - Run migrations on production database
+# Preview post content HTML normalization
+pnpm --filter web content:posts:normalize
 
-See [APPLICATION_STRUCTURE.md](./APPLICATION_STRUCTURE.md) and [SETUP.md](./SETUP.md) for detailed production setup.
+# Apply post content HTML normalization to database
+pnpm --filter web content:posts:normalize:apply
 
-## Deployment
+# Decode HTML entities in post titles
+pnpm --filter web content:posts:decode-titles
+```
 
-For production deployment to AWS Lightsail:
+---
 
-- **Deployment Guide**: [apps/server/DEPLOYMENT.md](./apps/server/DEPLOYMENT.md)
-- **IAM Policies**: [apps/server/IAM_POLICIES.md](./apps/server/IAM_POLICIES.md)
+## 🧪 Quality Gates & Testing
 
-The deployment uses GitHub Actions for CI/CD. Ensure you have:
+We enforce strict code quality using **Ultracite**, **TypeScript**, and **Vitest / Vite Plus**:
 
-1. GitHub Secrets configured (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
-2. IAM user with required permissions (see IAM_POLICIES.md)
-3. AWS Secrets Manager configured with application secrets
+```bash
+# Run Ultracite linter and formatter check
+pnpm check
+
+# Automatically format and fix lint errors
+pnpm fix
+
+# Typecheck all workspaces
+pnpm check-types
+
+# Run unit and integration tests
+pnpm web:test       # Web tests (Vitest)
+pnpm arts:test      # Arts tests (Vitest)
+
+# Run Playwright E2E tests
+pnpm web:test:e2e
+pnpm web:test:e2e:ui
+```
+
+---
+
+## 🚢 Deployment & CI/CD
+
+- **Web (`apps/web`)**: Deployed to [Vercel](https://vercel.com) (`deadpartymedia.com`).
+- **Arts (`apps/arts`)**: Deployed to [Vercel](https://vercel.com) (`arts.deadpartymedia.com`) using Nitro preset.
+- **Mobile (`apps/native`)**: Built and distributed via EAS / Expo.
+- **Database Migrations**: Automated GitHub Actions workflow (`.github/workflows/web-db-migrate.yml`) executes migrations on pushes to `master`.
+
+---
+
+## 📜 Contributing & Workflow
+
+All development follows the GitHub-Driven Development workflow defined in [`AGENTS.md`](./AGENTS.md):
+
+1. Every change traces to a **GitHub Issue**.
+2. Work is tracked on the repository **GitHub Project**.
+3. Feature branches derive from `master` (`feat/<slug>-<issueNumber>`, `fix/<slug>-<issueNumber>`, `chore/<slug>-<issueNumber>`).
+4. Quality gates (`pnpm check`, `pnpm check-types`, `pnpm test`) must pass before opening a Pull Request.
+5. All changes flow through a **Pull Request**.
