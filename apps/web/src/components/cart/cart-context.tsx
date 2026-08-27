@@ -2,7 +2,7 @@
 
 import type { Cart, CartItem, Product, ProductVariant } from "@/lib/types";
 import type React from "react";
-import { createContext, use, useContext, useMemo, useOptimistic } from "react";
+import { createContext, use, useContext, useEffect, useMemo, useOptimistic, useState } from "react";
 
 type UpdateType = "plus" | "minus" | "delete";
 
@@ -154,10 +154,42 @@ export function CartProvider({
   cartPromise,
 }: {
   children: React.ReactNode;
-  cartPromise: Promise<Cart | undefined>;
+  cartPromise?: Promise<Cart | undefined>;
 }) {
-  const initialCart = use(cartPromise);
-  const [optimisticCart, updateOptimisticCart] = useOptimistic(initialCart, cartReducer);
+  const initialCart = cartPromise ? use(cartPromise) : undefined;
+  const [baseCart, setBaseCart] = useState(initialCart);
+  const [optimisticCart, updateOptimisticCart] = useOptimistic(baseCart, cartReducer);
+
+  useEffect(() => {
+    if (cartPromise) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function hydrateCart() {
+      const response = await fetch("/api/cart", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        return;
+      }
+
+      const cart = (await response.json()) as Cart | null;
+      if (cart) {
+        setBaseCart(cart);
+      }
+    }
+
+    hydrateCart().catch(() => {
+      // Cart hydration is best-effort; actions still fetch the authoritative cart.
+    });
+
+    return () => {
+      controller.abort();
+    };
+  }, [cartPromise]);
 
   const updateCartItem = (merchandiseId: string, updateType: UpdateType) => {
     updateOptimisticCart({ payload: { merchandiseId, updateType }, type: "UPDATE_ITEM" });

@@ -1,109 +1,23 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { events, eventArtists, artists } from "@/lib/db/schema";
-import { eq, and, desc, inArray, gte, lt } from "drizzle-orm";
-import { getLocalDateKey } from "@/lib/events/date-state";
+import {
+  listPublishedEvents,
+  parseEventLimit,
+  parseEventOffset,
+  parseEventStatus,
+} from "@/lib/api/events.server";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
-
-const EVENT_GENRES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
-
-type EventGenre = (typeof EVENT_GENRES)[number];
-
-function isEventGenre(value: string): value is EventGenre {
-  return EVENT_GENRES.includes(value as EventGenre);
-}
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
   try {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
-    const status = searchParams.get("status");
-    const limit = Number.parseInt(searchParams.get("limit") || "100", 10);
-    const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
-
-    // Build where conditions
-    const conditions = [eq(events.status, "published")];
-    if (genre && isEventGenre(genre)) {
-      conditions.push(eq(events.genre, genre));
-    }
-    const today = getLocalDateKey();
-    if (status === "upcoming") {
-      conditions.push(gte(events.date, today));
-    } else if (status === "past") {
-      conditions.push(lt(events.date, today));
-    }
-
-    const results = await db
-      .select()
-      .from(events)
-      .where(conditions.length > 1 ? and(...conditions) : conditions[0])
-      .orderBy(desc(events.date))
-      .limit(limit)
-      .offset(offset);
-
-    // Get artist relations for all events
-    const eventIds = results.map((event) => event.id);
-    const artistRelations: Record<
-      number,
-      {
-        eventId: number;
-        artistId: number;
-        artistSlug: string;
-        artistName: string;
-        artistImage: string | null;
-      }[]
-    > = {};
-
-    if (eventIds.length > 0) {
-      const relations = await db
-        .select({
-          artistId: artists.id,
-          artistImage: artists.image,
-          artistName: artists.name,
-          artistSlug: artists.slug,
-          eventId: eventArtists.eventId,
-        })
-        .from(eventArtists)
-        .innerJoin(artists, eq(eventArtists.artistId, artists.id))
-        .where(inArray(eventArtists.eventId, eventIds));
-
-      // Group by eventId
-      for (const rel of relations) {
-        if (!artistRelations[rel.eventId]) {
-          artistRelations[rel.eventId] = [];
-        }
-        artistRelations[rel.eventId].push(rel);
-      }
-    }
-
-    // Transform to match existing EventList interface
-    const eventList = results.map((event) => {
-      const eventArtistsData = artistRelations[event.id] || [];
-      return {
-        artists: eventArtistsData.map((a) => ({
-          id: a.artistId,
-          image: a.artistImage,
-          name: a.artistName,
-          slug: a.artistSlug,
-        })),
-        created_at: event.createdAt.toISOString(),
-        date: event.date,
-        description: event.description,
-        genre: event.genre,
-        id: event.id,
-        image: event.image,
-        location: event.location,
-        price: event.price,
-        slug: event.slug,
-        ticket_link: event.ticketLink,
-        time: event.time,
-        title: event.title,
-        venue: event.venue,
-      };
-    });
+    const status = parseEventStatus(searchParams.get("status"));
+    const limit = parseEventLimit(searchParams.get("limit"));
+    const offset = parseEventOffset(searchParams.get("offset"));
+    const eventList = await listPublishedEvents({ genre, limit, offset, status });
 
     return NextResponse.json(
       {

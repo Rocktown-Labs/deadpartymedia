@@ -7,6 +7,7 @@ import path from "node:path";
 const turbopackRoot = path.resolve(process.cwd(), "../..");
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   typedRoutes: true,
   reactCompiler: true,
   allowedDevOrigins: ["deadpartymedia.localhost", "*.deadpartymedia.localhost"],

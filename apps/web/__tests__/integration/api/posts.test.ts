@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 const toNextRequest = (request: Request): NextRequest => request as unknown as NextRequest;
 
 vi.mock<typeof import("next/cache")>(import("next/cache"), () => ({
+  cacheLife: vi.fn(),
   cacheTag: vi.fn(),
 }));
 

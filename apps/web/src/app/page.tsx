@@ -1,34 +1,57 @@
-"use client";
 import HomepageClient from "@/components/homepage-client";
 import type { HomepageArticle, HomepageEvent } from "@/components/homepage-client";
-import { useArticles } from "@/lib/api/articles";
 import type { ArticleList } from "@/lib/api/articles";
-import { useEvents } from "@/lib/api/events";
+import { listPublishedArticles } from "@/lib/api/articles.server";
 import type { EventList } from "@/lib/api/events";
+import { listPublishedEvents } from "@/lib/api/events.server";
+import { getMonthlyHomepageStats } from "@/lib/api/stats.server";
 import { isActiveEventDate } from "@/lib/events/date-state";
-import { useProducts } from "@/lib/api/products";
+import { getProducts } from "@/lib/fourthwall";
 
-export default function DeadPartyMedia() {
-  const {
-    data: articles,
-    isLoading: articlesLoading,
-    error: articlesError,
-  } = useArticles(undefined, { limit: 12 });
-  const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
-  const {
-    data: products,
-    isLoading: productsLoading,
-    error: productsError,
-  } = useProducts({ limit: 5 });
+async function getHomepageData() {
+  const [articlesResult, eventsResult, productsResult, monthlyStatsResult] =
+    await Promise.allSettled([
+      listPublishedArticles({ limit: 12 }),
+      listPublishedEvents({ limit: 100 }),
+      getProducts("USD", 5),
+      getMonthlyHomepageStats(),
+    ]);
 
-  // Ensure articles and events are arrays
-  // If editorial APIs fail, we still render the homepage and show skeletons/empty states,
-  // while keeping merch (Fourthwall) available.
-  const articlesArray: ArticleList[] = Array.isArray(articles) ? articles : [];
-  const eventsArray: EventList[] = Array.isArray(events) ? events : [];
+  return {
+    articles:
+      articlesResult.status === "fulfilled" && Array.isArray(articlesResult.value)
+        ? articlesResult.value
+        : [],
+    events:
+      eventsResult.status === "fulfilled" && Array.isArray(eventsResult.value)
+        ? eventsResult.value
+        : [],
+    hasArticlesError: articlesResult.status === "rejected",
+    hasEventsError: eventsResult.status === "rejected",
+    hasProductsError: productsResult.status === "rejected",
+    hasStatsError: monthlyStatsResult.status === "rejected",
+    monthlyStats: monthlyStatsResult.status === "fulfilled" ? monthlyStatsResult.value : null,
+    products:
+      productsResult.status === "fulfilled" && Array.isArray(productsResult.value)
+        ? productsResult.value
+        : [],
+  };
+}
+
+export default async function DeadPartyMedia() {
+  const {
+    articles,
+    events,
+    hasArticlesError,
+    hasEventsError,
+    hasProductsError,
+    hasStatsError,
+    monthlyStats,
+    products,
+  } = await getHomepageData();
 
   // Transform articles to match homepage-client expected format
-  const transformedArticles: HomepageArticle[] = articlesArray.map((article) => ({
+  const transformedArticles: HomepageArticle[] = articles.map((article: ArticleList) => ({
     ...article,
     author: article.author?.name || "Unknown",
     date: article.published_at
@@ -50,10 +73,10 @@ export default function DeadPartyMedia() {
   const articlesData = transformedArticles;
 
   // Transform events for the homepage format
-  const upcomingEvents: HomepageEvent[] = eventsArray
+  const upcomingEvents: HomepageEvent[] = events
     .filter((event) => isActiveEventDate(event.date))
     .slice(0, 3)
-    .map((event) => ({
+    .map((event: EventList) => ({
       artist: (event.artists || []).map((artist) => artist.name).join(" & ") || "Various Artists",
       date: {
         day: new Date(event.date).getDate().toString(),
@@ -64,10 +87,7 @@ export default function DeadPartyMedia() {
       venue: `${event.venue} - ${event.location}`,
     }));
 
-  // Ensure products is an array
-  const productsArray = Array.isArray(products) ? products : [];
-
-  const featuredProducts = productsArray.slice(0, 5);
+  const featuredProducts = products.slice(0, 5);
 
   return (
     <HomepageClient
@@ -75,12 +95,11 @@ export default function DeadPartyMedia() {
       articlesData={articlesData}
       upcomingEvents={upcomingEvents}
       featuredProducts={featuredProducts}
-      isArticlesLoading={articlesLoading}
-      isEventsLoading={eventsLoading}
-      isProductsLoading={productsLoading}
-      hasArticlesError={Boolean(articlesError)}
-      hasEventsError={Boolean(eventsError)}
-      hasProductsError={Boolean(productsError)}
+      monthlyStats={monthlyStats}
+      hasArticlesError={hasArticlesError}
+      hasEventsError={hasEventsError}
+      hasProductsError={hasProductsError}
+      hasStatsError={hasStatsError}
     />
   );
 }

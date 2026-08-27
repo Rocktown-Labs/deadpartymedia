@@ -1,12 +1,13 @@
 import { checkRole } from "@/lib/auth/roles";
+import { connection } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { backfillRuns } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
+  await connection();
+
   // Verify super admin role
   const isSuperAdmin = await checkRole("super_admin");
   if (!isSuperAdmin) {

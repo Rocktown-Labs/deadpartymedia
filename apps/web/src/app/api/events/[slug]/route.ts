@@ -12,7 +12,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { slug } = await params;
 
     const [event] = await db
-      .select()
+      .select({
+        createdAt: events.createdAt,
+        date: events.date,
+        description: events.description,
+        genre: events.genre,
+        id: events.id,
+        image: events.image,
+        location: events.location,
+        price: events.price,
+        slug: events.slug,
+        ticketLink: events.ticketLink,
+        time: events.time,
+        title: events.title,
+        updatedAt: events.updatedAt,
+        venue: events.venue,
+      })
       .from(events)
       .where(and(eq(events.slug, slug), eq(events.status, "published")))
       .limit(1);

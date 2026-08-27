@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
 import { MapPin, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,8 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
-import { useRouter } from "next/navigation";
-import { useMonthlyHomepageStats } from "@/lib/api/stats";
+import type { MonthlyStats } from "@/lib/api/stats";
 import type { Route } from "next";
 import type { ArticleList } from "@/lib/api/articles";
 
@@ -35,12 +31,14 @@ interface HomepageClientProps {
   articlesData: HomepageArticle[];
   upcomingEvents: HomepageEvent[];
   featuredProducts: Product[];
+  monthlyStats: MonthlyStats | null;
   isArticlesLoading?: boolean;
   isEventsLoading?: boolean;
   isProductsLoading?: boolean;
   hasArticlesError?: boolean;
   hasEventsError?: boolean;
   hasProductsError?: boolean;
+  hasStatsError?: boolean;
 }
 
 export default function HomepageClient({
@@ -48,43 +46,24 @@ export default function HomepageClient({
   articlesData = [],
   upcomingEvents = [],
   featuredProducts = [],
+  monthlyStats = null,
   isArticlesLoading = false,
   isEventsLoading = false,
   isProductsLoading = false,
   hasArticlesError = false,
   hasEventsError = false,
   hasProductsError = false,
+  hasStatsError = false,
 }: HomepageClientProps) {
-  const router = useRouter();
-  const { data: monthlyStats, isLoading: isStatsLoading } = useMonthlyHomepageStats();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const latestArticles = useMemo(() => articlesData.slice(3, 12), [articlesData]);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
+  const latestArticles = articlesData.slice(3, 12);
+  const isStatsLoading = false;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">
       {/* Subtle Background */}
       <div className="fixed inset-0 pointer-events-none opacity-30">
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-5" />
-        <div
-          className="absolute w-96 h-96 bg-[#7CFC00]/3 rounded-full blur-3xl"
-          style={{
-            left: mousePosition.x - 192,
-            top: mousePosition.y - 192,
-            transition: "all 0.5s ease-out",
-          }}
-        />
+        <div className="absolute left-1/2 top-24 h-96 w-96 -translate-x-1/2 rounded-full bg-[#7CFC00]/3 blur-3xl" />
       </div>
 
       {/* Magazine Cover Hero */}
@@ -124,6 +103,8 @@ export default function HomepageClient({
                         }
                         alt={featuredArticles[0]?.title || "Featured Article"}
                         fill
+                        priority
+                        sizes="(min-width: 1024px) 66vw, 100vw"
                         className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-transparent" />
@@ -207,18 +188,18 @@ export default function HomepageClient({
                   editorial team.
                 </p>
                 <div className="space-y-3">
-                  <Button
-                    className="w-full bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold tracking-wider uppercase text-sm"
-                    onClick={() => router.push("/sign-up?role=artist" as Route)}
+                  <Link
+                    href={"/sign-up?role=artist" as Route}
+                    className="flex h-8 w-full items-center justify-center bg-[#7CFC00] px-2.5 text-sm font-bold uppercase tracking-wider text-black transition-colors hover:bg-[#7CFC00]/90"
                   >
                     Artist Registration
-                  </Button>
-                  <Button
-                    className="w-full bg-transparent border border-gray-700 hover:border-[#7CFC00] text-white font-bold tracking-wider uppercase text-sm"
-                    onClick={() => router.push("/sign-in" as Route)}
+                  </Link>
+                  <Link
+                    href={"/sign-in" as Route}
+                    className="flex h-8 w-full items-center justify-center border border-gray-700 bg-transparent px-2.5 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:border-[#7CFC00]"
                   >
                     Sign In
-                  </Button>
+                  </Link>
                 </div>
               </div>
 
@@ -261,6 +242,7 @@ export default function HomepageClient({
                               src={article.image || article.cover_image || "/placeholder.svg"}
                               alt={article.title}
                               fill
+                              sizes="(min-width: 1024px) 33vw, 100vw"
                               className="object-cover transition-transform duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
                             />
                             <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
@@ -295,7 +277,7 @@ export default function HomepageClient({
                       <Skeleton className="h-6 w-8" />
                     ) : (
                       <span className="text-lg font-black text-[#7CFC00]">
-                        {monthlyStats?.featuredArtistsCount ?? "—"}
+                        {hasStatsError ? "—" : (monthlyStats?.featuredArtistsCount ?? "—")}
                       </span>
                     )}
                   </div>
@@ -305,7 +287,7 @@ export default function HomepageClient({
                       <Skeleton className="h-6 w-8" />
                     ) : (
                       <span className="text-lg font-black text-[#9400D3]">
-                        {monthlyStats?.liveEventsCount ?? "—"}
+                        {hasStatsError ? "—" : (monthlyStats?.liveEventsCount ?? "—")}
                       </span>
                     )}
                   </div>
@@ -315,7 +297,7 @@ export default function HomepageClient({
                       <Skeleton className="h-6 w-8" />
                     ) : (
                       <span className="text-lg font-black text-white">
-                        {monthlyStats?.newArticlesCount ?? "—"}
+                        {hasStatsError ? "—" : (monthlyStats?.newArticlesCount ?? "—")}
                       </span>
                     )}
                   </div>
@@ -369,6 +351,7 @@ export default function HomepageClient({
                         src={article.image || article.cover_image || "/placeholder.svg"}
                         alt={article.title}
                         fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                         className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
                       />
                       <div className="absolute top-4 left-4">
@@ -478,6 +461,7 @@ export default function HomepageClient({
                       src={event.image || "/placeholder.svg"}
                       alt={event.artist}
                       fill
+                      sizes="(min-width: 768px) 33vw, 100vw"
                       className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />

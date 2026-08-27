@@ -1,12 +1,10 @@
 import type React from "react";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { connection } from "next/server";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/cart-context";
-import { getCart } from "@/lib/fourthwall";
-import { getCartId } from "./cart/actions";
 import Providers from "@/components/providers";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -72,29 +70,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await connection();
-
-  const cartId = await getCartId();
-  const cart = getCart(cartId, "USD");
-
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
-        <Providers>
-          <CartProvider cartPromise={cart}>
-            <Navbar />
-            <div className="pb-16 lg:pb-0">{children}</div>
-            <div className="pb-16 lg:pb-0">
-              <Footer />
-            </div>
-            <MobileBottomNav />
-          </CartProvider>
-        </Providers>
+        <Suspense>
+          <Providers>
+            <CartProvider>
+              <Navbar />
+              <div className="pb-16 lg:pb-0">{children}</div>
+              <div className="pb-16 lg:pb-0">
+                <Footer />
+              </div>
+              <MobileBottomNav />
+            </CartProvider>
+          </Providers>
+        </Suspense>
         <Analytics />
       </body>
     </html>
