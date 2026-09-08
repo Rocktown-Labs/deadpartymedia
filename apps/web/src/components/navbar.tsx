@@ -108,7 +108,7 @@ export default function Navbar() {
               href="/events"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
-              Events
+              Shows
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
@@ -119,11 +119,25 @@ export default function Navbar() {
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
+              href={"/venues" as Route}
+              className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
+            >
+              Venues
+              <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
+            </Link>
+            <Link
               href="/merch"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Merch
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
+            </Link>
+            <Link
+              href={"/donate" as Route}
+              className="text-sm font-medium tracking-wider uppercase hover:text-purple-400 text-zinc-300 transition-colors relative group"
+            >
+              Donate
+              <div className="absolute -bottom-1 left-0 w-0 h-px bg-purple-500 transition-all duration-300 group-hover:w-full" />
             </Link>
           </div>
           {/* Actions */}

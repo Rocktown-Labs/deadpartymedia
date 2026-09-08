@@ -74,6 +74,7 @@ export default function DeadPartyMedia() {
       featuredArticles={featuredArticles}
       articlesData={articlesData}
       upcomingEvents={upcomingEvents}
+      allEvents={eventsArray}
       featuredProducts={featuredProducts}
       isArticlesLoading={articlesLoading}
       isEventsLoading={eventsLoading}
