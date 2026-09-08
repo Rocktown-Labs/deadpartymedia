@@ -114,12 +114,9 @@ export default function HomepageClient({
         <div className="container mx-auto">
           {/* Top Kicker Bar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-800/80 pb-3 mb-6">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#7CFC00] animate-pulse" />
-              <h2 className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-[#7CFC00]">
-                Featured Spotlight
-              </h2>
-            </div>
+            <h2 className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-[#7CFC00]">
+              Featured Spotlight
+            </h2>
             <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
               Arkansas Independent Music &amp; Scene Coverage
             </span>
@@ -371,9 +368,9 @@ export default function HomepageClient({
          ========================================================================= */}
       <AboutMissionSection
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
-        bandsCount={monthlyStats?.featuredArtistsCount ?? "—"}
-        showsCount={allEvents.length || monthlyStats?.liveEventsCount || "—"}
-        articlesCount={monthlyStats?.newArticlesCount ?? "—"}
+        bandsCount={monthlyStats?.featuredArtistsCount ?? 0}
+        showsCount={allEvents.length || monthlyStats?.liveEventsCount || 0}
+        articlesCount={monthlyStats?.newArticlesCount ?? 0}
       />
 
       {/* =========================================================================

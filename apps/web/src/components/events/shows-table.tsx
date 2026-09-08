@@ -51,6 +51,52 @@ function formatDisplayDate(dateStr: string): DisplayDate {
   }
 }
 
+function VenueCell({
+  venue,
+  location,
+  isPast,
+}: {
+  venue: string;
+  location?: string | null;
+  isPast: boolean;
+}) {
+  const [showAddress, setShowAddress] = useState(false);
+
+  return (
+    <div className="flex flex-col py-1 text-xs sm:text-sm">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (location) {
+            setShowAddress((prev) => !prev);
+          }
+        }}
+        className={cn(
+          "font-semibold text-left transition-colors cursor-pointer sm:cursor-default line-clamp-1",
+          isPast
+            ? "text-zinc-500 line-through"
+            : "text-zinc-200 hover:text-[#7CFC00] sm:hover:text-zinc-200",
+        )}
+        title={location ? (showAddress ? "Tap to hide address" : "Tap to view address") : venue}
+      >
+        {venue}
+      </button>
+      {location && (
+        <div
+          className={cn(
+            "items-center gap-1 text-[11px] text-zinc-500 mt-0.5 transition-all",
+            showAddress ? "flex" : "hidden sm:flex",
+          )}
+        >
+          <MapPin className="w-3 h-3 shrink-0 text-[#7CFC00] sm:text-zinc-500" />
+          <span className="truncate">{location}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ShowsTable({
   events = [],
   compact = false,
@@ -185,34 +231,73 @@ export function ShowsTable({
                   {item.title}
                 </Link>
                 {item.artists && item.artists.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">w/</span>
-                    {item.artists.map((artist, idx) => (
-                      <span key={artist.id ?? idx} className="text-[11px]">
-                        {artist.slug ? (
-                          <Link
-                            href={`/artists/${artist.slug}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className={cn(
-                              "hover:underline font-medium",
-                              isPast
-                                ? "text-zinc-500 hover:text-zinc-300"
-                                : "text-zinc-300 hover:text-[#7CFC00]",
-                            )}
-                          >
-                            {artist.name}
-                          </Link>
-                        ) : (
-                          <span className={isPast ? "text-zinc-500" : "text-zinc-400"}>
-                            {artist.name}
-                          </span>
-                        )}
-                        {idx < item.artists.length - 1 && (
-                          <span className="text-zinc-600 ml-1">,</span>
-                        )}
+                  <>
+                    {/* Mobile: shorten long list so it does ... */}
+                    <div className="flex sm:hidden items-center gap-1 mt-0.5 min-w-0 max-w-[190px] xs:max-w-[240px]">
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">
+                        w/
                       </span>
-                    ))}
-                  </div>
+                      <div className="text-[11px] text-zinc-400 truncate">
+                        {item.artists.slice(0, 2).map((artist, idx) => (
+                          <span key={artist.id ?? idx}>
+                            {artist.slug ? (
+                              <Link
+                                href={`/artists/${artist.slug}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className={cn(
+                                  "hover:underline",
+                                  isPast ? "text-zinc-500" : "text-zinc-300 hover:text-[#7CFC00]",
+                                )}
+                              >
+                                {artist.name}
+                              </Link>
+                            ) : (
+                              <span>{artist.name}</span>
+                            )}
+                            {idx === 0 && item.artists.length > 1 && (
+                              <span className="text-zinc-600 mr-1">,</span>
+                            )}
+                          </span>
+                        ))}
+                        {item.artists.length > 2 && (
+                          <span className="text-zinc-500 font-mono ml-0.5">...</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Desktop: multi-chip list with clickable artist links */}
+                    <div className="hidden sm:flex flex-wrap items-center gap-1 mt-0.5">
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">w/</span>
+                      {item.artists.slice(0, 4).map((artist, idx) => (
+                        <span key={artist.id ?? idx} className="text-[11px]">
+                          {artist.slug ? (
+                            <Link
+                              href={`/artists/${artist.slug}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className={cn(
+                                "hover:underline font-medium",
+                                isPast
+                                  ? "text-zinc-500 hover:text-zinc-300"
+                                  : "text-zinc-300 hover:text-[#7CFC00]",
+                              )}
+                            >
+                              {artist.name}
+                            </Link>
+                          ) : (
+                            <span className={isPast ? "text-zinc-500" : "text-zinc-400"}>
+                              {artist.name}
+                            </span>
+                          )}
+                          {idx < Math.min(item.artists.length, 4) - 1 && (
+                            <span className="text-zinc-600 ml-1">,</span>
+                          )}
+                        </span>
+                      ))}
+                      {item.artists.length > 4 && (
+                        <span className="text-[11px] text-zinc-500 font-mono">...</span>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -226,22 +311,7 @@ export function ShowsTable({
           const item = row.original;
           const isPast = isPastEventDateKey(item.date);
 
-          return (
-            <div className="flex flex-col py-1 text-xs sm:text-sm">
-              <span
-                className={cn(
-                  "font-semibold line-clamp-1",
-                  isPast ? "text-zinc-500 line-through" : "text-zinc-200",
-                )}
-              >
-                {item.venue}
-              </span>
-              <span className="text-[11px] text-zinc-500 flex items-center gap-1 line-clamp-1">
-                <MapPin className="w-3 h-3 shrink-0" />
-                {item.location}
-              </span>
-            </div>
-          );
+          return <VenueCell venue={item.venue} location={item.location} isPast={isPast} />;
         },
       },
       {

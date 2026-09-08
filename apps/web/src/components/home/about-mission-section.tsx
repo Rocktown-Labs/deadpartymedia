@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Users, MapPin, Calendar, HeartHandshake, ArrowRight, PlusCircle } from "lucide-react";
 import type { Route } from "next";
@@ -13,50 +14,69 @@ interface AboutMissionSectionProps {
 
 export function AboutMissionSection({
   onOpenSubmitModal,
-  bandsCount = "—",
-  showsCount = "—",
-  articlesCount = "—",
+  bandsCount = 0,
+  showsCount = 0,
+  articlesCount = 0,
 }: AboutMissionSectionProps) {
   return (
     <section className="relative py-16 px-4 sm:px-6 border-t border-zinc-900 bg-zinc-950/70">
       <div className="container mx-auto">
-        {/* Editorial Introduction Header */}
-        <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-linear-to-b from-zinc-900/60 to-zinc-950 p-6 sm:p-10 lg:p-12 mb-8 shadow-2xl">
+        {/* Editorial Introduction Header featuring the Dead Party Logo */}
+        <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-linear-to-b from-zinc-900/70 to-zinc-950 p-6 sm:p-10 lg:p-12 mb-8 shadow-2xl">
           {/* Subtle Accent Glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-[#7CFC00]/5 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7CFC00]/10 border border-[#7CFC00]/20 text-[#7CFC00] text-xs font-mono font-bold tracking-widest uppercase mb-4">
-              What is Dead Party Media?
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 lg:gap-10">
+            {/* Prominent Dead Party Logo */}
+            <div className="shrink-0 flex items-center justify-center p-4 sm:p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-xl group">
+              <Image
+                src="/images/dead-party-logo.png"
+                alt="Dead Party Media Logo"
+                width={140}
+                height={140}
+                className="w-24 h-24 sm:w-32 sm:h-32 object-contain group-hover:scale-105 transition-transform duration-300"
+              />
             </div>
 
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-white leading-tight mb-4">
-              Arkansas&apos; Independent Hub for Live Music, Underground Bands &amp; Scene Culture.
-            </h2>
+            {/* Clear, Informative Mission Copy (No em dashes) */}
+            <div className="flex-1 max-w-3xl text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7CFC00]/10 border border-[#7CFC00]/20 text-[#7CFC00] text-xs font-mono font-bold tracking-widest uppercase mb-3">
+                What is Dead Party Media?
+              </div>
 
-            <p className="text-sm sm:text-base text-zinc-300 leading-relaxed mb-6">
-              We are your premier destination for all things music across Arkansas. Whether
-              you&apos;re looking for hardcore bands, local rappers, country singers, indie acts, or
-              EDM producers — we celebrate it all. Our mission is to shine an equal spotlight on
-              every artist, stage, and fan in the local scene, ensuring Arkansas talent gets seen,
-              heard, and documented.
-            </p>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-white leading-tight mb-3">
+                Arkansas Music Documented With Zero Gatekeeping.
+              </h2>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link
-                href="/about"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-black font-black text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
-              >
-                Read Our Story &amp; Mission <ArrowRight className="w-4 h-4" />
-              </Link>
-              {onOpenSubmitModal && (
-                <button
-                  onClick={onOpenSubmitModal}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              <p className="text-sm sm:text-base text-zinc-300 leading-relaxed mb-4">
+                Dead Party Media is a grassroots collective of local Arkansas artists, writers,
+                photographers, musicians, and scene creators. We exist to spotlight the state&apos;s
+                underground culture with equal dedication across hardcore, metal, hip-hop, indie
+                rock, country, and electronic music.
+              </p>
+
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed mb-6">
+                Use this platform to discover upcoming live concerts, submit your show flyers,
+                explore claimed local artist discographies, check venue specs, and read independent
+                scene journalism.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-black font-black text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
                 >
-                  <PlusCircle className="w-4 h-4" /> Submit an Upcoming Show
-                </button>
-              )}
+                  Read Full Story &amp; Mission <ArrowRight className="w-4 h-4" />
+                </Link>
+                {onOpenSubmitModal && (
+                  <button
+                    onClick={onOpenSubmitModal}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#7CFC00] text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Submit a Show Flyer
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -150,10 +170,10 @@ export function AboutMissionSection({
           </Link>
         </div>
 
-        {/* Scene Activity Snapshot Bar */}
+        {/* Scene Activity Snapshot Bar (No em dashes) */}
         <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-400">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#7CFC00] animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#7CFC00]" />
             <span className="text-zinc-300 font-bold uppercase tracking-wider">
               Arkansas Scene Live Tracker:
             </span>
