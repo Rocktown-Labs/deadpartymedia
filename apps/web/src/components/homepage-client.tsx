@@ -7,7 +7,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
-import { useMonthlyHomepageStats } from "@/lib/api/stats";
 import type { ArticleList } from "@/lib/api/articles";
 import type { EventList } from "@/lib/api/events";
 import { ShowsTable } from "@/components/events/shows-table";
@@ -62,7 +61,6 @@ export default function HomepageClient({
   hasEventsError: _hasEventsError = false,
   hasProductsError = false,
 }: HomepageClientProps) {
-  const { data: monthlyStats } = useMonthlyHomepageStats();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
 
@@ -366,12 +364,7 @@ export default function HomepageClient({
           SECTION 5: BRIEF INTRODUCTION EXPLAINING WHAT DEAD PARTY IS
           What is Dead Party Media? Mission & Scene Navigation Pillars
          ========================================================================= */}
-      <AboutMissionSection
-        onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
-        bandsCount={monthlyStats?.featuredArtistsCount ?? 0}
-        showsCount={allEvents.length || monthlyStats?.liveEventsCount || 0}
-        articlesCount={monthlyStats?.newArticlesCount ?? 0}
-      />
+      <AboutMissionSection onOpenSubmitModal={() => setIsSubmitModalOpen(true)} />
 
       {/* =========================================================================
           SECTION 6: MERCH

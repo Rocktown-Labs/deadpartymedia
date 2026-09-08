@@ -7,17 +7,9 @@ import type { Route } from "next";
 
 interface AboutMissionSectionProps {
   onOpenSubmitModal?: () => void;
-  bandsCount?: number | string;
-  showsCount?: number | string;
-  articlesCount?: number | string;
 }
 
-export function AboutMissionSection({
-  onOpenSubmitModal,
-  bandsCount = 0,
-  showsCount = 0,
-  articlesCount = 0,
-}: AboutMissionSectionProps) {
+export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionProps) {
   return (
     <section className="relative py-16 px-4 sm:px-6 border-t border-zinc-900 bg-zinc-950/70">
       <div className="container mx-auto">
@@ -82,7 +74,7 @@ export function AboutMissionSection({
         </div>
 
         {/* 4 Core Scene Pillars / Quick Navigation Cards */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Pillar 1: Artists */}
           <Link href="/artists" className="group block">
             <div className="h-full p-5 rounded-xl border border-zinc-800/90 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00] transition-all flex flex-col justify-between">
@@ -168,30 +160,6 @@ export function AboutMissionSection({
               </div>
             </div>
           </Link>
-        </div>
-
-        {/* Scene Activity Snapshot Bar (No em dashes) */}
-        <div className="p-4 rounded-xl border border-zinc-800/80 bg-zinc-900/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-400">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#7CFC00]" />
-            <span className="text-zinc-300 font-bold uppercase tracking-wider">
-              Arkansas Scene Live Tracker:
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <div>
-              <span className="text-zinc-500 uppercase">Claimed Bands: </span>
-              <span className="text-white font-bold text-sm">{bandsCount}</span>
-            </div>
-            <div>
-              <span className="text-zinc-500 uppercase">Documented Shows: </span>
-              <span className="text-[#7CFC00] font-bold text-sm">{showsCount}</span>
-            </div>
-            <div>
-              <span className="text-zinc-500 uppercase">Scene Stories: </span>
-              <span className="text-white font-bold text-sm">{articlesCount}</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>
