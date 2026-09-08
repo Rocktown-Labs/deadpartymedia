@@ -7,6 +7,7 @@ import { useEvents } from "@/lib/api/events";
 import type { EventList } from "@/lib/api/events";
 import { isActiveEventDate } from "@/lib/events/date-state";
 import { useProducts } from "@/lib/api/products";
+import { useMusicReleases } from "@/lib/api/music";
 
 export default function DeadPartyMedia() {
   const {
@@ -15,6 +16,7 @@ export default function DeadPartyMedia() {
     error: articlesError,
   } = useArticles(undefined, { limit: 12 });
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
+  const { data: musicReleasesData } = useMusicReleases({ limit: 10 });
   const {
     data: products,
     isLoading: productsLoading,
@@ -69,12 +71,27 @@ export default function DeadPartyMedia() {
 
   const featuredProducts = productsArray.slice(0, 5);
 
+  const transformedMusicReleases = (musicReleasesData || []).map((r) => ({
+    appleMusicUrl: r.appleMusicUrl || undefined,
+    artistName: r.artistName,
+    artistSlug: r.artistSlug || undefined,
+    bandcampUrl: r.bandcampUrl || undefined,
+    coverArt: r.coverArt || "/placeholder.svg",
+    id: r.id.toString(),
+    releaseDate: r.releaseDate || undefined,
+    slug: r.slug,
+    spotifyUrl: r.spotifyUrl || undefined,
+    title: r.title,
+    type: r.releaseType,
+  }));
+
   return (
     <HomepageClient
       featuredArticles={featuredArticles}
       articlesData={articlesData}
       upcomingEvents={upcomingEvents}
       allEvents={eventsArray}
+      musicReleases={transformedMusicReleases}
       featuredProducts={featuredProducts}
       isArticlesLoading={articlesLoading}
       isEventsLoading={eventsLoading}

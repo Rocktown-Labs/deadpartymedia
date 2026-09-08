@@ -47,7 +47,7 @@ export default async function NewPostPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black mb-8">Create New Post</h1>
+      <h1 className="text-3xl font-black mb-8">Create New Article</h1>
       <PostEditor
         initialData={{ authorId: defaultAuthorId }}
         canManageAuthor={isSuperAdmin}

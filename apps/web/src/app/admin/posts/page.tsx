@@ -102,7 +102,7 @@ export default async function PostsPage({
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-black">Posts</h1>
+        <h1 className="text-3xl font-black">Articles</h1>
         <div className="flex gap-4">
           {isSuperAdmin && (
             <Link href="/admin/posts/wordpress">
@@ -110,7 +110,7 @@ export default async function PostsPage({
             </Link>
           )}
           <Link href="/admin/posts/new">
-            <Button>Create New Post</Button>
+            <Button>Create New Article</Button>
           </Link>
         </div>
       </div>

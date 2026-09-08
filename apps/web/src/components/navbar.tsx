@@ -23,7 +23,7 @@ const currentDate = new Date();
 const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
 export default function Navbar() {
-  const [isMusicDropdownOpen, setIsMusicDropdownOpen] = useState(false);
+  const [isArticlesDropdownOpen, setIsArticlesDropdownOpen] = useState(false);
   const { user } = useUser();
   const dashboardHref: Route = getDashboardRouteFromMetadata(user?.publicMetadata?.role);
 
@@ -77,21 +77,35 @@ export default function Navbar() {
           </div>
           {/* Desktop Menu */}
           <div className="hidden lg:flex flex-1 items-center justify-center gap-8">
-            {/* Music Dropdown */}
+            <Link
+              href="/music"
+              className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
+            >
+              Music
+              <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
+            </Link>
+
+            {/* Articles Dropdown */}
             <div
               className="relative"
-              onMouseEnter={() => setIsMusicDropdownOpen(true)}
-              onMouseLeave={() => setIsMusicDropdownOpen(false)}
+              onMouseEnter={() => setIsArticlesDropdownOpen(true)}
+              onMouseLeave={() => setIsArticlesDropdownOpen(false)}
             >
-              <Link href="/music">
+              <Link href={"/articles" as Route}>
                 <button className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group flex items-center gap-1">
-                  Music
+                  Articles
                   <ChevronDown className="w-4 h-4" />
                   <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
                 </button>
               </Link>
-              {isMusicDropdownOpen && (
+              {isArticlesDropdownOpen && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-[#0A0A0A] border border-gray-800 rounded-lg shadow-xl py-2">
+                  <Link
+                    href={"/articles" as Route}
+                    className="block px-4 py-2 text-sm font-bold text-[#7CFC00] hover:bg-gray-900 transition-colors border-b border-gray-800/60 mb-1"
+                  >
+                    All Articles
+                  </Link>
                   {MUSIC_GENRES.map((genre) => (
                     <Link
                       key={genre.name}

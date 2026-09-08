@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
-import { posts, events } from "@/lib/db/schema";
+import { posts, events, musicReleases } from "@/lib/db/schema";
 import { eq, desc, count } from "drizzle-orm";
 import Link from "next/link";
 
@@ -19,6 +19,11 @@ export default async function AdminDashboard() {
     .from(posts)
     .where(eq(posts.status, "published"));
 
+  const [musicCount] = await db
+    .select({ count: count() })
+    .from(musicReleases)
+    .where(eq(musicReleases.status, "published"));
+
   const [eventsCount] = await db
     .select({ count: count() })
     .from(events)
@@ -34,10 +39,15 @@ export default async function AdminDashboard() {
     <div>
       <h1 className="text-3xl font-black mb-8">Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
         <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-bold mb-2">Published Posts</h2>
+          <h2 className="text-xl font-bold mb-2">Published Articles</h2>
           <p className="text-3xl font-black text-[#7CFC00]">{postsCount?.count || 0}</p>
+        </div>
+
+        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
+          <h2 className="text-xl font-bold mb-2">Music Releases</h2>
+          <p className="text-3xl font-black text-[#7CFC00]">{musicCount?.count || 0}</p>
         </div>
 
         <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
@@ -48,10 +58,10 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Recent Posts</h2>
+          <h2 className="text-xl font-bold mb-4">Recent Articles</h2>
           <div className="space-y-2">
             {recentPosts.length === 0 ? (
-              <p className="text-gray-400">No posts yet</p>
+              <p className="text-gray-400">No articles yet</p>
             ) : (
               recentPosts.map((post) => (
                 <div key={post.id} className="border-b border-gray-800 pb-2">

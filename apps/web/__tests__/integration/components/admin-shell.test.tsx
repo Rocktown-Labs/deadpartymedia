@@ -72,9 +72,13 @@ describe(AdminShell, () => {
 
     const usersButton = screen.getByRole("button", { name: "Users" });
     const dashboardButton = screen.getByRole("button", { name: "Dashboard" });
+    const articlesButton = screen.getByRole("button", { name: "Articles" });
+    const musicButton = screen.getByRole("button", { name: "Music Releases" });
 
     expect(usersButton).toHaveAttribute("data-active");
     expect(dashboardButton).not.toHaveAttribute("data-active");
+    expect(articlesButton).toBeInTheDocument();
+    expect(musicButton).toBeInTheDocument();
 
     rerender(
       <AdminShell isSuperAdmin={false} userRole="writer">
@@ -83,6 +87,8 @@ describe(AdminShell, () => {
     );
 
     expect(screen.queryByRole("button", { name: "Users" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Articles" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Music Releases" })).toBeInTheDocument();
   });
 
   it("opens the mobile sidebar drawer from the trigger", async () => {

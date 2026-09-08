@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { artists, events, posts } from "@/lib/db/schema";
+import { artists, events, musicReleases, posts } from "@/lib/db/schema";
 import { getSiteDefaults } from "@/lib/seo";
 
 const STATIC_ROUTES = [
@@ -11,6 +11,7 @@ const STATIC_ROUTES = [
   { changeFrequency: "daily", path: "/events", priority: 0.9 },
   { changeFrequency: "daily", path: "/artists", priority: 0.9 },
   { changeFrequency: "daily", path: "/music", priority: 0.8 },
+  { changeFrequency: "daily", path: "/articles", priority: 0.8 },
   { changeFrequency: "weekly", path: "/country", priority: 0.7 },
   { changeFrequency: "weekly", path: "/edm", priority: 0.7 },
   { changeFrequency: "weekly", path: "/hardcore", priority: 0.7 },
@@ -31,9 +32,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let articleRows: { slug: string; updatedAt: Date | null }[] = [];
   let artistRows: { slug: string; updatedAt: Date | null }[] = [];
   let eventRows: { slug: string; updatedAt: Date | null }[] = [];
+  let releaseRows: { slug: string; updatedAt: Date | null }[] = [];
 
   try {
-    const [articles, artistsList, eventsList] = await Promise.all([
+    const [articles, artistsList, eventsList, musicReleasesList] = await Promise.all([
       db
         .select({
           slug: posts.slug,
@@ -54,10 +56,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })
         .from(events)
         .where(eq(events.status, "published")),
+      db
+        .select({
+          slug: musicReleases.slug,
+          updatedAt: musicReleases.updatedAt,
+        })
+        .from(musicReleases)
+        .where(eq(musicReleases.status, "published")),
     ]);
     articleRows = articles;
     artistRows = artistsList;
     eventRows = eventsList;
+    releaseRows = musicReleasesList;
   } catch (err) {
     // Database may be unreachable during static build prerender
     console.warn("Unable to load dynamic database routes for sitemap prerender:", err);
@@ -91,5 +101,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: toAbsoluteUrl(siteUrl, `/artists/${artist.slug}`),
   }));
 
-  return [...staticEntries, ...articleEntries, ...eventEntries, ...artistEntries];
+  const releaseEntries: MetadataRoute.Sitemap = releaseRows.map((release) => ({
+    changeFrequency: "weekly",
+    lastModified: release.updatedAt ?? now,
+    priority: 0.8,
+    url: toAbsoluteUrl(siteUrl, `/music/${release.slug}`),
+  }));
+
+  return [
+    ...staticEntries,
+    ...articleEntries,
+    ...eventEntries,
+    ...artistEntries,
+    ...releaseEntries,
+  ];
 }

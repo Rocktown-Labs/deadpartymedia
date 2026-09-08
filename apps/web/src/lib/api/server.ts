@@ -113,3 +113,45 @@ export const getArtist = async (slug: string): Promise<Artist | null> => {
     return null;
   }
 };
+
+/**
+ * Fetch a music release by slug (server-side)
+ */
+export const getMusicRelease = async (
+  slug: string,
+): Promise<import("./music").MusicReleaseData | null> => {
+  try {
+    return await serverFetch<import("./music").MusicReleaseData>(`/api/music/${slug}`);
+  } catch (error) {
+    logger.error(
+      { error: sanitizeError(error), operation: "get_music_release", slug },
+      "Error fetching music release",
+    );
+    return null;
+  }
+};
+
+/**
+ * Fetch music releases (server-side)
+ */
+export const getMusicReleases = async (params?: {
+  limit?: number;
+  type?: string;
+}): Promise<import("./music").MusicReleaseData[]> => {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.type) searchParams.set("type", params.type);
+    const qs = searchParams.toString();
+    const result = await serverFetch<import("./music").MusicReleaseData[]>(
+      `/api/music${qs ? `?${qs}` : ""}`,
+    );
+    return Array.isArray(result) ? result : [];
+  } catch (error) {
+    logger.error(
+      { error: sanitizeError(error), operation: "get_music_releases" },
+      "Error fetching music releases",
+    );
+    return [];
+  }
+};

@@ -20,11 +20,11 @@ export default function HipHopRAndBPage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/music"
+            href={"/articles" as any}
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Music
+            Back to Articles
           </Link>
 
           <PageTitleHeader title="HIP-HOP & R&B" />

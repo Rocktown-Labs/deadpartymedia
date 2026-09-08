@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { ExternalLink, Disc3 } from "lucide-react";
 
 export interface MusicRelease {
   id: string;
   title: string;
+  slug?: string;
   artistName: string;
   artistSlug?: string;
   coverArt: string;
@@ -55,77 +57,85 @@ export function RecentMusicReleases({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-          {releases.map((release) => (
-            <div
-              key={release.id}
-              className="group relative flex flex-col rounded-xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00]/60 transition-all p-3 overflow-hidden shadow-lg"
-            >
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-3">
-                <Image
-                  src={release.coverArt || "/placeholder.svg"}
-                  alt={release.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                {release.type && (
-                  <span className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs text-[10px] font-mono font-bold text-[#7CFC00] px-2 py-0.5 rounded border border-[#7CFC00]/30 uppercase">
-                    {release.type}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col flex-1 min-w-0">
-                <h3
-                  className="font-bold text-sm text-white group-hover:text-[#7CFC00] transition-colors truncate"
-                  title={release.title}
+          {releases.map((release) => {
+            const releaseHref = (release.slug ? `/music/${release.slug}` : "/music") as Route;
+            return (
+              <div
+                key={release.id}
+                className="group relative flex flex-col rounded-xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00]/60 transition-all p-3 overflow-hidden shadow-lg"
+              >
+                <Link
+                  href={releaseHref}
+                  className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-3 block"
                 >
-                  {release.title}
-                </h3>
+                  <Image
+                    src={release.coverArt || "/placeholder.svg"}
+                    alt={release.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {release.type && (
+                    <span className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs text-[10px] font-mono font-bold text-[#7CFC00] px-2 py-0.5 rounded border border-[#7CFC00]/30 uppercase">
+                      {release.type}
+                    </span>
+                  )}
+                </Link>
 
-                {release.artistSlug ? (
-                  <Link
-                    href={`/artists/${release.artistSlug}`}
-                    className="text-xs text-zinc-400 hover:text-white truncate transition-colors mt-0.5"
-                  >
-                    {release.artistName}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <Link href={releaseHref}>
+                    <h3
+                      className="font-bold text-sm text-white group-hover:text-[#7CFC00] transition-colors truncate"
+                      title={release.title}
+                    >
+                      {release.title}
+                    </h3>
                   </Link>
-                ) : (
-                  <span className="text-xs text-zinc-400 truncate mt-0.5">
-                    {release.artistName}
-                  </span>
-                )}
 
-                {release.releaseDate && (
-                  <span className="text-[10px] text-zinc-500 font-mono mt-1">
-                    {release.releaseDate}
-                  </span>
-                )}
+                  {release.artistSlug ? (
+                    <Link
+                      href={`/artists/${release.artistSlug}`}
+                      className="text-xs text-zinc-400 hover:text-white truncate transition-colors mt-0.5"
+                    >
+                      {release.artistName}
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-zinc-400 truncate mt-0.5">
+                      {release.artistName}
+                    </span>
+                  )}
 
-                <div className="flex items-center gap-2 mt-auto pt-3 border-t border-zinc-800/50">
-                  {release.spotifyUrl && (
-                    <a
-                      href={release.spotifyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] font-mono text-[#1DB954] hover:underline flex items-center gap-1"
-                    >
-                      <Disc3 className="w-3 h-3" /> Spotify
-                    </a>
+                  {release.releaseDate && (
+                    <span className="text-[10px] text-zinc-500 font-mono mt-1">
+                      {release.releaseDate}
+                    </span>
                   )}
-                  {release.bandcampUrl && (
-                    <a
-                      href={release.bandcampUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] font-mono text-cyan-400 hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Bandcamp
-                    </a>
-                  )}
+
+                  <div className="flex items-center gap-2 mt-auto pt-3 border-t border-zinc-800/50">
+                    {release.spotifyUrl && (
+                      <a
+                        href={release.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-mono text-[#1DB954] hover:underline flex items-center gap-1"
+                      >
+                        <Disc3 className="w-3 h-3" /> Spotify
+                      </a>
+                    )}
+                    {release.bandcampUrl && (
+                      <a
+                        href={release.bandcampUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-mono text-cyan-400 hover:underline flex items-center gap-1"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Bandcamp
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

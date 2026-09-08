@@ -243,7 +243,7 @@ export function PostsTable({
             {posts.length === 0 ? (
               <TableRow className="border-gray-800">
                 <TableCell colSpan={7} className="px-6 py-4 text-center text-gray-400">
-                  No posts found
+                  No articles found
                 </TableCell>
               </TableRow>
             ) : (
@@ -318,7 +318,7 @@ export function PostsTable({
                       ) : isSuperAdmin ? (
                         <DeleteConfirm
                           action={deletePost.bind(null, post.id)}
-                          title="Delete Post"
+                          title="Delete Article"
                           description={`Are you sure you want to delete "${post.title}"? This action cannot be undone.`}
                         />
                       ) : post.authorId === userId && !post.deleteRequested ? (

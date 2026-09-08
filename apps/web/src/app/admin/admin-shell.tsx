@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { CalendarDays, LayoutDashboard, Mic2, Newspaper, Users } from "lucide-react";
+import { CalendarDays, Disc, LayoutDashboard, Mic2, Newspaper, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -37,7 +37,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/posts", icon: Newspaper, label: "Posts" },
+  { href: "/admin/posts", icon: Newspaper, label: "Articles" },
+  { href: "/admin/music" as Route, icon: Disc, label: "Music Releases" },
   { href: "/admin/events", icon: CalendarDays, label: "Events" },
   { href: "/admin/artists", icon: Mic2, label: "Artists" },
   { href: "/admin/users", icon: Users, label: "Users", superAdminOnly: true },
