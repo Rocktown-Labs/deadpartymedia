@@ -20,6 +20,9 @@ export default function SignUpPage() {
     if (role === "artist") {
       return `/onboarding?role=artist${suffix}`;
     }
+    if (role === "venue") {
+      return `/onboarding?role=venue${suffix}`;
+    }
     return redirectParam
       ? `/onboarding?redirect_url=${encodeURIComponent(redirectParam)}`
       : "/onboarding";
@@ -48,6 +51,9 @@ export default function SignUpPage() {
           <p className="text-gray-400">Create your Dead Party Media account</p>
           {role === "artist" && artistId && (
             <p className="text-[#7CFC00] text-sm mt-2">You're claiming an artist profile</p>
+          )}
+          {role === "venue" && (
+            <p className="text-[#7CFC00] text-sm mt-2">Registering your venue profile</p>
           )}
         </div>
 

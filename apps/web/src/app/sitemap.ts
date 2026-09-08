@@ -17,6 +17,8 @@ const STATIC_ROUTES = [
   { changeFrequency: "weekly", path: "/hip-hop-r-b", priority: 0.7 },
   { changeFrequency: "weekly", path: "/other", priority: 0.6 },
   { changeFrequency: "weekly", path: "/merch", priority: 0.7 },
+  { changeFrequency: "weekly", path: "/venues", priority: 0.8 },
+  { changeFrequency: "monthly", path: "/donate", priority: 0.6 },
   { changeFrequency: "weekly", path: "/writers", priority: 0.5 },
 ] as const;
 
@@ -26,28 +28,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { siteUrl } = getSiteDefaults();
   const now = new Date();
 
-  const [articleRows, artistRows, eventRows] = await Promise.all([
-    db
-      .select({
-        slug: posts.slug,
-        updatedAt: posts.updatedAt,
-      })
-      .from(posts)
-      .where(eq(posts.status, "published")),
-    db
-      .select({
-        slug: artists.slug,
-        updatedAt: artists.updatedAt,
-      })
-      .from(artists),
-    db
-      .select({
-        slug: events.slug,
-        updatedAt: events.updatedAt,
-      })
-      .from(events)
-      .where(eq(events.status, "published")),
-  ]);
+  let articleRows: { slug: string; updatedAt: Date | null }[] = [];
+  let artistRows: { slug: string; updatedAt: Date | null }[] = [];
+  let eventRows: { slug: string; updatedAt: Date | null }[] = [];
+
+  try {
+    const [articles, artistsList, eventsList] = await Promise.all([
+      db
+        .select({
+          slug: posts.slug,
+          updatedAt: posts.updatedAt,
+        })
+        .from(posts)
+        .where(eq(posts.status, "published")),
+      db
+        .select({
+          slug: artists.slug,
+          updatedAt: artists.updatedAt,
+        })
+        .from(artists),
+      db
+        .select({
+          slug: events.slug,
+          updatedAt: events.updatedAt,
+        })
+        .from(events)
+        .where(eq(events.status, "published")),
+    ]);
+    articleRows = articles;
+    artistRows = artistsList;
+    eventRows = eventsList;
+  } catch (err) {
+    // Database may be unreachable during static build prerender
+    console.warn("Unable to load dynamic database routes for sitemap prerender:", err);
+  }
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
     changeFrequency: route.changeFrequency,

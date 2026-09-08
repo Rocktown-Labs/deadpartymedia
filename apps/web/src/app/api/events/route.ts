@@ -121,3 +121,67 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  const log = getRequestLogger(request);
+  try {
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      title,
+      description,
+      venue,
+      location,
+      date,
+      time,
+      genre,
+      ticketLink,
+      ticket_link,
+      flyerUrl,
+      image,
+      price,
+    } = body;
+
+    if (!title || !date || !venue) {
+      return NextResponse.json(
+        { error: "Title, date, and venue are required fields" },
+        { status: 400 },
+      );
+    }
+
+    const { generateSlug, ensureUniqueSlug } = await import("@/lib/utils/slug");
+    const slug = await ensureUniqueSlug(generateSlug(title), undefined, "events");
+
+    const [newEvent] = await db
+      .insert(events)
+      .values({
+        createdById: userId,
+        date,
+        description: description || `Live show at ${venue}`,
+        genre: isEventGenre(genre) ? genre : "OTHER",
+        image: image || flyerUrl || "/placeholder.svg",
+        location: location || "Little Rock, AR",
+        price: price || null,
+        slug,
+        status: "draft",
+        ticketLink: ticketLink || ticket_link || null,
+        time: time || "7:00 PM",
+        title,
+        venue,
+      })
+      .returning();
+
+    log.info({ eventId: newEvent.id, title: newEvent.title, userId }, "Event created successfully");
+
+    return NextResponse.json({ event: newEvent, success: true }, { status: 201 });
+  } catch (error) {
+    log.error({ error: sanitizeError(error), operation: "create_event" }, "Error creating event");
+    return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
+  }
+}

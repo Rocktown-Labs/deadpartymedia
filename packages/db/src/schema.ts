@@ -42,6 +42,7 @@ export const roleEnum = pgEnum("role", [
   "arts_writer",
   "fan",
   "super_admin",
+  "venue",
   "writer",
 ]);
 
@@ -188,6 +189,9 @@ export const venues = pgTable("venues", {
   zip: text("zip"),
   website: text("website"),
   phone: text("phone"),
+  capacity: text("capacity"),
+  description: text("description"),
+  claimedById: text("claimed_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

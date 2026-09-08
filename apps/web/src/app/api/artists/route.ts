@@ -24,9 +24,13 @@ export async function GET(request: NextRequest) {
     const offset = Math.max(0, Number.parseInt(searchParams.get("offset") || "0", 10));
     const sort = searchParams.get("sort") === "name" ? "name" : "created_at";
     const order = searchParams.get("order") === "asc" ? "asc" : "desc";
+    const claimedParam = searchParams.get("claimed");
 
     // Build where conditions
     const conditions = [eq(artists.hidden, false)];
+    if (claimedParam === "true") {
+      conditions.push(eq(artists.claimed, true));
+    }
     if (genre && isArtistGenre(genre)) {
       conditions.push(eq(artists.genre, genre));
     }

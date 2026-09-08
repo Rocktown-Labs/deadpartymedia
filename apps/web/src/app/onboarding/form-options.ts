@@ -42,6 +42,21 @@ export const artistFormOptions = formOptions({
   },
 });
 
+// Venue form options
+export const venueFormOptions = formOptions({
+  defaultValues: {
+    address: "",
+    capacity: "",
+    city: "Little Rock",
+    description: "",
+    name: "",
+    phone: "",
+    state: "AR",
+    website: "",
+  },
+});
+
 // Export types for use in components
 export type FanFormData = typeof fanFormOptions.defaultValues;
 export type ArtistFormData = typeof artistFormOptions.defaultValues;
+export type VenueFormData = typeof venueFormOptions.defaultValues;

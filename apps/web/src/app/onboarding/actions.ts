@@ -9,11 +9,15 @@ import {
   initialFormState,
 } from "@tanstack/react-form-nextjs";
 import { db } from "@/lib/db";
-import { artists } from "@/lib/db/schema";
+import { artists, venues } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
-import { fanOnboardingSchema, artistOnboardingSchema } from "@/lib/validations/onboarding";
-import { fanFormOptions, artistFormOptions } from "./form-options";
+import {
+  fanOnboardingSchema,
+  artistOnboardingSchema,
+  venueOnboardingSchema,
+} from "@/lib/validations/onboarding";
+import { fanFormOptions, artistFormOptions, venueFormOptions } from "./form-options";
 import { logger } from "@/lib/logger";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
@@ -248,6 +252,100 @@ export async function artistOnboardingAction(_prev: unknown, formData: FormData)
     log.error(
       { error: sanitizeError(error), operation: "artist_onboarding" },
       "Error completing onboarding",
+    );
+    return {
+      ...initialFormState,
+      errors: [
+        error instanceof Error ? error.message : "Failed to complete onboarding. Please try again.",
+      ],
+    };
+  }
+}
+
+// Venue onboarding server action
+const venueServerValidate = createServerValidate({
+  ...venueFormOptions,
+  onServerValidate: ({ value }) => validateWithZod(venueOnboardingSchema, value),
+});
+
+export async function venueOnboardingAction(_prev: unknown, formData: FormData) {
+  const { userId } = await auth();
+  const log = userId ? withUserContext(logger, userId, "venue") : logger;
+  try {
+    if (!userId) {
+      redirect("/sign-in" as Route);
+    }
+
+    const validatedData = await venueServerValidate(formData);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+
+    const venueSlug = await ensureUniqueSlug(
+      generateSlug(validatedData.name),
+      undefined,
+      "venues",
+    );
+
+    // Insert venue into database
+    const [createdVenue] = await db
+      .insert(venues)
+      .values({
+        address: validatedData.address || null,
+        capacity: validatedData.capacity || null,
+        city: validatedData.city || "Little Rock",
+        claimedById: userId,
+        description: validatedData.description || null,
+        name: validatedData.name,
+        phone: validatedData.phone || null,
+        slug: venueSlug,
+        state: validatedData.state || "AR",
+        website: validatedData.website || null,
+      })
+      .returning();
+
+    // Update user display name
+    try {
+      await client.users.updateUser(userId, {
+        firstName: validatedData.name,
+      });
+    } catch {
+      // Best-effort name sync
+    }
+
+    // Update user's publicMetadata to set role and mark onboarding as complete
+    await client.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        ...user.publicMetadata,
+        onboardingComplete: true,
+        role: "venue",
+        venueId: createdVenue?.id,
+      },
+    });
+
+    const primaryEmail = getPrimaryEmail(user);
+    if (primaryEmail) {
+      await upsertUserAuthState({
+        clerkId: userId,
+        email: primaryEmail,
+        firstName: validatedData.name,
+        imageUrl: user.imageUrl,
+        lastName: user.lastName,
+        onboardingComplete: true,
+        role: "venue",
+      });
+    }
+
+    return {
+      ...initialFormState,
+      success: true,
+    };
+  } catch (error) {
+    if (error instanceof ServerValidateError) {
+      return error.formState;
+    }
+    log.error(
+      { error: sanitizeError(error), operation: "venue_onboarding" },
+      "Error completing venue onboarding",
     );
     return {
       ...initialFormState,

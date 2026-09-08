@@ -15,10 +15,10 @@ export function generateSlug(title: string): string {
 export async function ensureUniqueSlug(
   slug: string,
   excludeId?: number,
-  table?: "posts" | "events" | "artists",
+  table?: "posts" | "events" | "artists" | "venues",
 ): Promise<string> {
   const { db } = await import("@/lib/db");
-  const { posts, events, artists } = await import("@/lib/db/schema");
+  const { posts, events, artists, venues } = await import("@/lib/db/schema");
   const { eq, and, ne } = await import("drizzle-orm");
 
   let uniqueSlug = slug;
@@ -27,7 +27,14 @@ export async function ensureUniqueSlug(
   // If table is specified, only check that table
 
   if (table) {
-    const tableSchema = table === "posts" ? posts : table === "events" ? events : artists;
+    const tableSchema =
+      table === "posts"
+        ? posts
+        : table === "events"
+        ? events
+        : table === "venues"
+        ? venues
+        : artists;
     while (true) {
       const existing = await db
         .select()

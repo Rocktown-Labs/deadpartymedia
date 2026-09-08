@@ -42,6 +42,7 @@ export const roleEnum = pgEnum("role", [
   "arts_writer",
   "fan",
   "super_admin",
+  "venue",
   "writer",
 ]);
 
@@ -173,6 +174,24 @@ export const events = pgTable("events", {
   status: eventStatusEnum("status").notNull().default("draft"),
   // Clerk user ID
   createdById: text("created_by_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Venues Table
+export const venues = pgTable("venues", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  address: text("address"),
+  city: text("city").notNull().default("Little Rock"),
+  state: text("state").notNull().default("AR"),
+  zip: text("zip"),
+  website: text("website"),
+  phone: text("phone"),
+  capacity: text("capacity"),
+  description: text("description"),
+  claimedById: text("claimed_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -6,16 +6,26 @@ import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { FanOnboarding } from "./fan-onboarding";
 import { ArtistOnboarding } from "./artist-onboarding";
+import { VenueOnboarding } from "./venue-onboarding";
 import posthog from "posthog-js";
 import type { Route } from "next";
 import { parseRole } from "@/lib/auth/role";
 
 interface OnboardingProfilePayload {
-  role: "artist" | "fan" | "super_admin" | "writer";
+  role: "artist" | "fan" | "venue" | "super_admin" | "writer";
   onboardingComplete: boolean;
   fan: {
     name: string;
   };
+  venue?: {
+    name: string;
+    city: string;
+    address?: string;
+    phone?: string;
+    website?: string;
+    capacity?: string;
+    description?: string;
+  } | null;
   artist: {
     name: string;
     location: string;
@@ -36,14 +46,16 @@ export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
-  const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | undefined>();
+  const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | "venue" | undefined>();
   const [profileData, setProfileData] = useState<OnboardingProfilePayload | null>(null);
 
   // Get role information
   const existingRole = parseRole(user?.publicMetadata?.role);
   const roleFromUrlRaw = searchParams.get("role");
   const roleFromUrl =
-    roleFromUrlRaw === "fan" || roleFromUrlRaw === "artist" ? roleFromUrlRaw : null;
+    roleFromUrlRaw === "fan" || roleFromUrlRaw === "artist" || roleFromUrlRaw === "venue"
+      ? roleFromUrlRaw
+      : null;
 
   // Check if user is loaded and authenticated
   useEffect(() => {
@@ -59,7 +71,7 @@ export default function OnboardingPage() {
       user &&
       !existingRole &&
       roleFromUrl &&
-      (roleFromUrl === "fan" || roleFromUrl === "artist")
+      (roleFromUrl === "fan" || roleFromUrl === "artist" || roleFromUrl === "venue")
     ) {
       setSelectedRole(roleFromUrl);
       // Track onboarding role selection from URL
@@ -94,7 +106,9 @@ export default function OnboardingPage() {
             ? rawRedirect
             : userRole === "artist"
               ? "/artist-dashboard"
-              : "/dashboard";
+              : userRole === "venue"
+                ? "/venues"
+                : "/dashboard";
         router.push(destination as Route);
       }
     }
@@ -169,6 +183,10 @@ export default function OnboardingPage() {
     return <ArtistOnboarding initialValues={profileData?.artist ?? undefined} />;
   }
 
+  if (role === "venue") {
+    return <VenueOnboarding initialValues={profileData?.venue ?? undefined} />;
+  }
+
   if (role === "fan") {
     return <FanOnboarding initialName={profileData?.fan?.name} />;
   }
@@ -177,7 +195,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <div className="container mx-auto px-6 pt-40 pb-20">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
             <Image
@@ -200,7 +218,7 @@ export default function OnboardingPage() {
                   How do you want to participate in Dead Party Media?
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -211,16 +229,18 @@ export default function OnboardingPage() {
                       user_id: user?.id,
                     });
                   }}
-                  className={`p-6 rounded-lg border-2 transition-all text-left ${
+                  className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${
                     selectedRole === "fan"
                       ? "border-[#7CFC00] bg-[#7CFC00]/10"
                       : "border-gray-800 hover:border-gray-700"
                   }`}
                 >
-                  <h3 className="text-lg font-bold mb-1">Fan</h3>
-                  <p className="text-sm text-gray-400">
-                    Read articles, discover events, save content.
-                  </p>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">Fan</h3>
+                    <p className="text-xs text-gray-400">
+                      Read articles, discover events, save content.
+                    </p>
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -232,16 +252,41 @@ export default function OnboardingPage() {
                       user_id: user?.id,
                     });
                   }}
-                  className={`p-6 rounded-lg border-2 transition-all text-left ${
+                  className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${
                     selectedRole === "artist"
                       ? "border-[#7CFC00] bg-[#7CFC00]/10"
                       : "border-gray-800 hover:border-gray-700"
                   }`}
                 >
-                  <h3 className="text-lg font-bold mb-1">Artist</h3>
-                  <p className="text-sm text-gray-400">
-                    Manage your profile, submit music, promote events.
-                  </p>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">Artist</h3>
+                    <p className="text-xs text-gray-400">
+                      Manage your profile, submit music, promote events.
+                    </p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole("venue");
+                    // Track onboarding role selection
+                    posthog.capture("onboarding_role_selected", {
+                      role: "venue",
+                      user_id: user?.id,
+                    });
+                  }}
+                  className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${
+                    selectedRole === "venue"
+                      ? "border-[#7CFC00] bg-[#7CFC00]/10"
+                      : "border-gray-800 hover:border-gray-700"
+                  }`}
+                >
+                  <div>
+                    <h3 className="text-lg font-bold mb-1">Venue</h3>
+                    <p className="text-xs text-gray-400">
+                      Manage venue page, post upcoming shows, connect with bands.
+                    </p>
+                  </div>
                 </button>
               </div>
             </div>

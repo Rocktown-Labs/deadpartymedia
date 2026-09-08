@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   useReactTable,
   getCoreRowModel,
@@ -159,51 +160,67 @@ export function ShowsTable({
           const isPast = isPastEventDateKey(item.date);
 
           return (
-            <div className="flex flex-col py-1 min-w-[140px] sm:min-w-[200px]">
+            <div className="flex items-center gap-3 py-1 min-w-[170px] sm:min-w-[220px]">
               <Link
                 href={`/events/${item.slug}`}
-                className={cn(
-                  "font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
-                  isPast
-                    ? "line-through text-zinc-400 hover:text-zinc-200"
-                    : "text-white hover:text-[#7CFC00]"
-                )}
-                title={item.title}
+                className="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-md overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-[#7CFC00]/60 transition-colors"
               >
-                {item.title}
+                <Image
+                  src={item.image || "/placeholder.svg"}
+                  alt={item.title}
+                  fill
+                  className={cn(
+                    "object-cover transition-transform group-hover:scale-105",
+                    isPast && "grayscale opacity-50"
+                  )}
+                />
               </Link>
-              {item.artists && item.artists.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1 mt-1">
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                    w/
-                  </span>
-                  {item.artists.map((artist, idx) => (
-                    <span key={artist.id ?? idx} className="text-[11px]">
-                      {artist.slug ? (
-                        <Link
-                          href={`/artists/${artist.slug}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className={cn(
-                            "hover:underline font-medium",
-                            isPast
-                              ? "text-zinc-500 hover:text-zinc-300"
-                              : "text-zinc-300 hover:text-[#7CFC00]"
-                          )}
-                        >
-                          {artist.name}
-                        </Link>
-                      ) : (
-                        <span className={isPast ? "text-zinc-500" : "text-zinc-400"}>
-                          {artist.name}
-                        </span>
-                      )}
-                      {idx < item.artists.length - 1 && (
-                        <span className="text-zinc-600 ml-1">,</span>
-                      )}
+              <div className="flex flex-col min-w-0">
+                <Link
+                  href={`/events/${item.slug}`}
+                  className={cn(
+                    "font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
+                    isPast
+                      ? "line-through text-zinc-400 hover:text-zinc-200"
+                      : "text-white hover:text-[#7CFC00]"
+                  )}
+                  title={item.title}
+                >
+                  {item.title}
+                </Link>
+                {item.artists && item.artists.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                      w/
                     </span>
-                  ))}
-                </div>
-              )}
+                    {item.artists.map((artist, idx) => (
+                      <span key={artist.id ?? idx} className="text-[11px]">
+                        {artist.slug ? (
+                          <Link
+                            href={`/artists/${artist.slug}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "hover:underline font-medium",
+                              isPast
+                                ? "text-zinc-500 hover:text-zinc-300"
+                                : "text-zinc-300 hover:text-[#7CFC00]"
+                            )}
+                          >
+                            {artist.name}
+                          </Link>
+                        ) : (
+                          <span className={isPast ? "text-zinc-500" : "text-zinc-400"}>
+                            {artist.name}
+                          </span>
+                        )}
+                        {idx < item.artists.length - 1 && (
+                          <span className="text-zinc-600 ml-1">,</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           );
         },

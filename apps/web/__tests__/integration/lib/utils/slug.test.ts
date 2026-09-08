@@ -22,6 +22,7 @@ vi.mock<typeof import("@/lib/db/schema")>(import("@/lib/db/schema"), () => ({
   artists: { id: "id", slug: "slug" },
   events: { id: "id", slug: "slug" },
   posts: { id: "id", slug: "slug" },
+  venues: { id: "id", slug: "slug" },
 }));
 
 vi.mock<typeof import("drizzle-orm")>(import("drizzle-orm"), async (importOriginal) => {

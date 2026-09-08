@@ -11,6 +11,9 @@ function mapRoleToDashboardRoute(role: Roles): Route {
     case "artist": {
       return "/artist-dashboard" as Route;
     }
+    case "venue": {
+      return "/events" as Route;
+    }
     case "fan":
     default: {
       return "/dashboard" as Route;

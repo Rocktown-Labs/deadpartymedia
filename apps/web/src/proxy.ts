@@ -27,6 +27,8 @@ const isPublicRoute = createRouteMatcher([
   "/article(.*)",
   "/artists(.*)",
   "/events(.*)",
+  "/venues(.*)",
+  "/donate(.*)",
   "/music(.*)",
   "/writers(.*)",
   "/about",
