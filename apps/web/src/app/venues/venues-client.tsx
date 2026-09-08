@@ -222,7 +222,7 @@ export function VenuesClient() {
         ),
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -265,7 +265,7 @@ export function VenuesClient() {
                     "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border transition-colors cursor-pointer",
                     selectedCity === city
                       ? "border-[#7CFC00] bg-[#7CFC00]/10 text-[#7CFC00]"
-                      : "border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                      : "border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700",
                   )}
                 >
                   {city}
@@ -321,7 +321,10 @@ export function VenuesClient() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={columns.length} className="h-32 text-center text-zinc-500 text-sm">
+                      <td
+                        colSpan={columns.length}
+                        className="h-32 text-center text-zinc-500 text-sm"
+                      >
                         No venues found matching your criteria.
                       </td>
                     </tr>

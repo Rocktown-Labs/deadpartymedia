@@ -26,6 +26,7 @@ export default function ArtistsPageClient() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const artistGenreFilter = filterGenre === "ALL" ? undefined : filterGenre;
   const { data, isFetching, isLoading, isPlaceholderData } = useArtistsPage({
+    claimed: true,
     genre: artistGenreFilter,
     limit: visibleCount,
     offset: 0,
@@ -48,7 +49,7 @@ export default function ArtistsPageClient() {
 
   useEffect(() => {
     const node = loadMoreRef.current;
-    if (!node || !data?.hasMore || isFetching) {
+    if (!node || !data?.hasMore || isFetching || completeArtists.length === 0) {
       return;
     }
 
@@ -58,12 +59,12 @@ export default function ArtistsPageClient() {
           setVisibleCount((count) => count + PAGE_SIZE);
         }
       },
-      { rootMargin: "480px 0px" },
+      { rootMargin: "200px 0px" },
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [data?.hasMore, isFetching]);
+  }, [data?.hasMore, isFetching, completeArtists.length]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -190,7 +191,8 @@ export default function ArtistsPageClient() {
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-white">No Claimed Artist Profiles Yet</h3>
                   <p className="text-sm text-zinc-400 max-w-md mx-auto">
-                    Only verified, claimed Arkansas artist profiles appear here. Are you an Arkansas musician or band?
+                    Only verified, claimed Arkansas artist profiles appear here. Are you an Arkansas
+                    musician or band?
                   </p>
                 </div>
                 <div>
@@ -205,19 +207,15 @@ export default function ArtistsPageClient() {
             )}
           </div>
 
-          <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
-            {isFetching && hasArtistsData && !isReplacingGrid ? (
-              <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <ArtistCardSkeleton key={`append-skeleton-${index}`} compact />
-                ))}
-              </div>
-            ) : data?.hasMore ? (
-              <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                Loading more artists
-              </span>
-            ) : null}
-          </div>
+          {completeArtists.length > 0 && data?.hasMore && (
+            <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
+              {isFetching ? (
+                <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                  Loading more artists...
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
       </main>
     </div>

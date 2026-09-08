@@ -58,7 +58,7 @@ export default function EventsPage() {
                     "flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer",
                     viewMode === "table"
                       ? "bg-[#7CFC00] text-black"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-400 hover:text-white",
                   )}
                 >
                   <TableIcon className="w-3.5 h-3.5" />
@@ -70,7 +70,7 @@ export default function EventsPage() {
                     "flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-colors cursor-pointer",
                     viewMode === "grid"
                       ? "bg-[#7CFC00] text-black"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-400 hover:text-white",
                   )}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -99,7 +99,8 @@ export default function EventsPage() {
                 onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
               />
               <p className="text-xs text-zinc-500 font-mono text-center">
-                Shows are ordered recent to least. Past dates remain accessible and are struck through.
+                Shows are ordered recent to least. Past dates remain accessible and are struck
+                through.
               </p>
             </div>
           )}
@@ -115,7 +116,7 @@ export default function EventsPage() {
                     "px-6 py-3 font-bold transition-colors cursor-pointer",
                     gridTab === "upcoming"
                       ? "border-b-2 border-[#7CFC00] text-[#7CFC00]"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-400 hover:text-white",
                   )}
                 >
                   Upcoming ({upcomingEvents.length})
@@ -126,7 +127,7 @@ export default function EventsPage() {
                     "px-6 py-3 font-bold transition-colors cursor-pointer",
                     gridTab === "past"
                       ? "border-b-2 border-[#7CFC00] text-[#7CFC00]"
-                      : "text-zinc-400 hover:text-white"
+                      : "text-zinc-400 hover:text-white",
                   )}
                 >
                   Past Archive ({pastEvents.length})
@@ -203,10 +204,7 @@ export default function EventsPage() {
           )}
 
           {/* Submit Show Modal */}
-          <SubmitShowModal
-            isOpen={isSubmitModalOpen}
-            onClose={() => setIsSubmitModalOpen(false)}
-          />
+          <SubmitShowModal isOpen={isSubmitModalOpen} onClose={() => setIsSubmitModalOpen(false)} />
         </div>
       </main>
     </div>

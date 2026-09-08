@@ -51,11 +51,10 @@ export default function DonatePage() {
                 <div className="w-12 h-12 rounded-xl bg-[#7CFC00]/10 border border-[#7CFC00]/30 flex items-center justify-center mb-6">
                   <DollarSign className="w-6 h-6 text-[#7CFC00]" />
                 </div>
-                <h2 className="text-2xl font-black text-white mb-2">
-                  Dead Party General Fund
-                </h2>
+                <h2 className="text-2xl font-black text-white mb-2">Dead Party General Fund</h2>
                 <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                  Funds web hosting, printing zines, show promotion, photographer equipment, and maintaining the Arkansas music directory.
+                  Funds web hosting, printing zines, show promotion, photographer equipment, and
+                  maintaining the Arkansas music directory.
                 </p>
               </div>
 
@@ -86,7 +85,8 @@ export default function DonatePage() {
                   Writers & Photographers Tip Jar
                 </h2>
                 <p className="text-sm text-zinc-400 leading-relaxed mb-6">
-                  Every dollar sent here is distributed directly to our volunteer writers, interviewers, and photographers who document Arkansas gigs and releases.
+                  Every dollar sent here is distributed directly to our volunteer writers,
+                  interviewers, and photographers who document Arkansas gigs and releases.
                 </p>
               </div>
 
@@ -109,7 +109,8 @@ export default function DonatePage() {
 
           <div className="mt-12 p-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40 text-center text-xs text-zinc-500">
             <Sparkles className="w-4 h-4 text-[#7CFC00] inline mr-1" />
-            Dead Party Media operates as a grassroots DIY collective. We appreciate every contribution that keeps local Arkansas culture alive.
+            Dead Party Media operates as a grassroots DIY collective. We appreciate every
+            contribution that keeps local Arkansas culture alive.
           </div>
         </div>
       </main>

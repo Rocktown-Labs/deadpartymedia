@@ -104,7 +104,8 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
               Claim & Register Your Venue
             </h1>
             <p className="text-zinc-400 text-sm max-w-md mx-auto">
-              Get listed in the Arkansas music directory, showcase your stage specs, and post upcoming concerts.
+              Get listed in the Arkansas music directory, showcase your stage specs, and post
+              upcoming concerts.
             </p>
           </div>
 

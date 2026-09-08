@@ -62,9 +62,7 @@ export function ShowsTable({
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<"all" | "upcoming" | "past">("all");
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "date", desc: true },
-  ]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "date", desc: true }]);
 
   const todayKey = useMemo(() => getLocalDateKey(), []);
 
@@ -114,22 +112,20 @@ export function ShowsTable({
                   isPast
                     ? "bg-zinc-900/60 border-zinc-800 text-zinc-500"
                     : isToday
-                    ? "bg-[#7CFC00] border-[#7CFC00] text-black font-black"
-                    : "bg-zinc-900 border-zinc-700 text-white"
+                      ? "bg-[#7CFC00] border-[#7CFC00] text-black font-black"
+                      : "bg-zinc-900 border-zinc-700 text-white",
                 )}
               >
                 <span className="text-[10px] font-bold tracking-widest leading-none">
                   {d.month}
                 </span>
-                <span className="text-base sm:text-lg font-black leading-tight">
-                  {d.day}
-                </span>
+                <span className="text-base sm:text-lg font-black leading-tight">{d.day}</span>
               </div>
               <div className="hidden sm:flex flex-col">
                 <span
                   className={cn(
                     "text-xs font-mono tracking-wider uppercase",
-                    isPast ? "text-zinc-600 line-through" : "text-zinc-400"
+                    isPast ? "text-zinc-600 line-through" : "text-zinc-400",
                   )}
                 >
                   {d.weekday}
@@ -171,7 +167,7 @@ export function ShowsTable({
                   fill
                   className={cn(
                     "object-cover transition-transform group-hover:scale-105",
-                    isPast && "grayscale opacity-50"
+                    isPast && "grayscale opacity-50",
                   )}
                 />
               </Link>
@@ -182,7 +178,7 @@ export function ShowsTable({
                     "font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
                     isPast
                       ? "line-through text-zinc-400 hover:text-zinc-200"
-                      : "text-white hover:text-[#7CFC00]"
+                      : "text-white hover:text-[#7CFC00]",
                   )}
                   title={item.title}
                 >
@@ -190,9 +186,7 @@ export function ShowsTable({
                 </Link>
                 {item.artists && item.artists.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                      w/
-                    </span>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">w/</span>
                     {item.artists.map((artist, idx) => (
                       <span key={artist.id ?? idx} className="text-[11px]">
                         {artist.slug ? (
@@ -203,7 +197,7 @@ export function ShowsTable({
                               "hover:underline font-medium",
                               isPast
                                 ? "text-zinc-500 hover:text-zinc-300"
-                                : "text-zinc-300 hover:text-[#7CFC00]"
+                                : "text-zinc-300 hover:text-[#7CFC00]",
                             )}
                           >
                             {artist.name}
@@ -237,7 +231,7 @@ export function ShowsTable({
               <span
                 className={cn(
                   "font-semibold line-clamp-1",
-                  isPast ? "text-zinc-500 line-through" : "text-zinc-200"
+                  isPast ? "text-zinc-500 line-through" : "text-zinc-200",
                 )}
               >
                 {item.venue}
@@ -264,7 +258,7 @@ export function ShowsTable({
                   "inline-block text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider",
                   isPast
                     ? "border-zinc-800 text-zinc-600 bg-zinc-900/40"
-                    : "border-zinc-700 text-zinc-300 bg-zinc-900"
+                    : "border-zinc-700 text-zinc-300 bg-zinc-900",
                 )}
               >
                 {genre}
@@ -324,7 +318,7 @@ export function ShowsTable({
         },
       },
     ],
-    [todayKey]
+    [todayKey],
   );
 
   const table = useReactTable({
@@ -342,7 +336,7 @@ export function ShowsTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: compact ? (limit || 8) : 20,
+        pageSize: compact ? limit || 8 : 20,
       },
     },
   });
@@ -350,7 +344,12 @@ export function ShowsTable({
   const genres = ["ALL", "HARDCORE & ROCK", "HIP-HOP & R&B", "EDM", "COUNTRY", "OTHER"];
 
   return (
-    <div className={cn("w-full bg-[#0D0D0D] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl", className)}>
+    <div
+      className={cn(
+        "w-full bg-[#0D0D0D] border border-zinc-800 rounded-xl overflow-hidden shadow-2xl",
+        className,
+      )}
+    >
       {/* Header Controls */}
       {showFilters && (
         <div className="p-4 border-b border-zinc-800/80 bg-zinc-950/60 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
@@ -362,7 +361,7 @@ export function ShowsTable({
                 "px-3 py-1 text-xs font-bold uppercase tracking-wider rounded transition-colors",
                 statusFilter === "all"
                   ? "bg-[#7CFC00] text-black"
-                  : "text-zinc-400 hover:text-white"
+                  : "text-zinc-400 hover:text-white",
               )}
             >
               All Shows ({events.length})
@@ -373,7 +372,7 @@ export function ShowsTable({
                 "px-3 py-1 text-xs font-bold uppercase tracking-wider rounded transition-colors",
                 statusFilter === "upcoming"
                   ? "bg-[#7CFC00] text-black"
-                  : "text-zinc-400 hover:text-white"
+                  : "text-zinc-400 hover:text-white",
               )}
             >
               Upcoming ({events.filter((e) => !isPastEventDateKey(e.date)).length})
@@ -384,7 +383,7 @@ export function ShowsTable({
                 "px-3 py-1 text-xs font-bold uppercase tracking-wider rounded transition-colors",
                 statusFilter === "past"
                   ? "bg-[#7CFC00] text-black"
-                  : "text-zinc-400 hover:text-white"
+                  : "text-zinc-400 hover:text-white",
               )}
             >
               Past ({events.filter((e) => isPastEventDateKey(e.date)).length})
@@ -417,9 +416,7 @@ export function ShowsTable({
       {/* Genre Pills */}
       {showFilters && (
         <div className="px-4 py-2 bg-zinc-950/40 border-b border-zinc-800/40 flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold">
-          <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[10px]">
-            Genre:
-          </span>
+          <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[10px]">Genre:</span>
           {genres.map((genre) => (
             <button
               key={genre}
@@ -428,7 +425,7 @@ export function ShowsTable({
                 "px-2.5 py-0.5 rounded-full border transition-colors whitespace-nowrap uppercase tracking-wider",
                 selectedGenre === genre
                   ? "border-[#7CFC00] bg-[#7CFC00]/10 text-[#7CFC00]"
-                  : "border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                  : "border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700",
               )}
             >
               {genre}
@@ -450,10 +447,7 @@ export function ShowsTable({
                   <th key={header.id} className="px-3 sm:px-4 py-3 font-semibold">
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
@@ -470,7 +464,7 @@ export function ShowsTable({
                       "group transition-colors duration-150 cursor-pointer",
                       isPast
                         ? "bg-zinc-950/30 hover:bg-zinc-900/40 opacity-70 hover:opacity-100"
-                        : "bg-[#0D0D0D] hover:bg-zinc-900/60"
+                        : "bg-[#0D0D0D] hover:bg-zinc-900/60",
                     )}
                     onClick={() => {
                       window.location.href = `/events/${row.original.slug}`;
@@ -506,7 +500,7 @@ export function ShowsTable({
             {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
             {Math.min(
               (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-              filteredData.length
+              filteredData.length,
             )}{" "}
             of {filteredData.length} shows
           </div>

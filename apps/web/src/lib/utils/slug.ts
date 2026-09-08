@@ -31,10 +31,10 @@ export async function ensureUniqueSlug(
       table === "posts"
         ? posts
         : table === "events"
-        ? events
-        : table === "venues"
-        ? venues
-        : artists;
+          ? events
+          : table === "venues"
+            ? venues
+            : artists;
     while (true) {
       const existing = await db
         .select()

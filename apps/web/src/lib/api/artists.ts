@@ -74,12 +74,14 @@ export function useArtistsPage({
   offset,
   order = "asc",
   sort = "name",
+  claimed,
 }: {
   genre?: string;
   limit: number;
   offset: number;
   order?: "asc" | "desc";
   sort?: "name" | "created_at";
+  claimed?: boolean;
 }) {
   return useQuery<ArtistsPageResult>({
     placeholderData: keepPreviousData,
@@ -94,13 +96,16 @@ export function useArtistsPage({
       if (genre) {
         params.set("genre", genre);
       }
+      if (claimed !== undefined) {
+        params.set("claimed", String(claimed));
+      }
       const response = await fetch(`/api/artists?${params.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch artists");
       }
       return response.json();
     },
-    queryKey: ["artists", "page", genre, limit, offset, sort, order],
+    queryKey: ["artists", "page", genre, limit, offset, sort, order, claimed],
   });
 }
 

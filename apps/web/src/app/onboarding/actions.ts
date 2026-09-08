@@ -280,11 +280,7 @@ export async function venueOnboardingAction(_prev: unknown, formData: FormData) 
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
-    const venueSlug = await ensureUniqueSlug(
-      generateSlug(validatedData.name),
-      undefined,
-      "venues",
-    );
+    const venueSlug = await ensureUniqueSlug(generateSlug(validatedData.name), undefined, "venues");
 
     // Insert venue into database
     const [createdVenue] = await db

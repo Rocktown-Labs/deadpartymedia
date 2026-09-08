@@ -12,8 +12,7 @@ export const metadata: Metadata = {
   description:
     "Directory of Arkansas music venues, dive bars, stages, and concert halls hosting live local and touring acts.",
   openGraph: {
-    description:
-      "Directory of Arkansas music venues, dive bars, stages, and concert halls.",
+    description: "Directory of Arkansas music venues, dive bars, stages, and concert halls.",
     images: [{ alt: "Dead Party Media Venues", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,

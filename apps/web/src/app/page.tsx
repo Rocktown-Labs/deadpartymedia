@@ -45,8 +45,8 @@ export default function DeadPartyMedia() {
     image: article.cover_image || "/placeholder.svg",
   }));
 
-  // Transform data for homepage
-  const featuredArticles = transformedArticles.slice(0, 3);
+  // Transform data for homepage: 1 hero spotlight + up to 3 cards underneath
+  const featuredArticles = transformedArticles.slice(0, 4);
   const articlesData = transformedArticles;
 
   // Transform events for the homepage format

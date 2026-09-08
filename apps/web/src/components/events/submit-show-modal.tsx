@@ -84,8 +84,8 @@ export function SubmitShowModal({ isOpen, onClose }: SubmitShowModalProps) {
             Submit an Arkansas Show
           </DialogTitle>
           <DialogDescription className="text-zinc-400 text-sm">
-            Add your upcoming concert, festival, or house show to the Dead Party directory.
-            All submissions are reviewed before appearing live.
+            Add your upcoming concert, festival, or house show to the Dead Party directory. All
+            submissions are reviewed before appearing live.
           </DialogDescription>
         </DialogHeader>
 

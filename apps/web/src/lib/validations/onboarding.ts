@@ -183,4 +183,3 @@ export type OnboardingFormData = z.infer<typeof onboardingSchema>;
 export type ArtistOnboardingFormData = z.infer<typeof artistOnboardingSchema>;
 export type FanOnboardingFormData = z.infer<typeof fanOnboardingSchema>;
 export type VenueOnboardingFormData = z.infer<typeof venueOnboardingSchema>;
-
