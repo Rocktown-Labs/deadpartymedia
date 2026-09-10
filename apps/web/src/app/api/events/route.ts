@@ -146,6 +146,9 @@ export async function POST(request: NextRequest) {
       flyerUrl,
       image,
       price,
+      artists,
+      socialLink,
+      notes,
     } = body;
 
     if (!title || !date || !venue) {
@@ -158,12 +161,21 @@ export async function POST(request: NextRequest) {
     const { generateSlug, ensureUniqueSlug } = await import("@/lib/utils/slug");
     const slug = await ensureUniqueSlug(generateSlug(title), undefined, "events");
 
+    const fullDescription = [
+      description,
+      artists ? `Lineup / Artists: ${artists}` : null,
+      socialLink ? `Social / Info Link: ${socialLink}` : null,
+      notes ? `Notes: ${notes}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
     const [newEvent] = await db
       .insert(events)
       .values({
         createdById: userId,
         date,
-        description: description || `Live show at ${venue}`,
+        description: fullDescription || `Live show at ${venue}`,
         genre: isEventGenre(genre) ? genre : "OTHER",
         image: image || flyerUrl || "/placeholder.svg",
         location: location || "Little Rock, AR",

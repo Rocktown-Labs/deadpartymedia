@@ -36,15 +36,25 @@ interface DisplayDate {
 
 function formatDisplayDate(dateStr: string): DisplayDate {
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) {
-      return { month: "DATE", day: dateStr, weekday: "", year: "" };
+    const [y, m, d] = dateStr.split("-").map(Number);
+    if (!y || !m || !d || Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) {
+      const fallback = new Date(dateStr);
+      if (Number.isNaN(fallback.getTime())) {
+        return { month: "DATE", day: dateStr, weekday: "", year: "" };
+      }
+      return {
+        month: fallback.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+        day: fallback.toLocaleDateString("en-US", { day: "numeric" }),
+        weekday: fallback.toLocaleDateString("en-US", { weekday: "short" }),
+        year: fallback.getFullYear(),
+      };
     }
+    const local = new Date(y, m - 1, d);
     return {
-      month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-      day: d.toLocaleDateString("en-US", { day: "numeric" }),
-      weekday: d.toLocaleDateString("en-US", { weekday: "short" }),
-      year: d.getFullYear(),
+      month: local.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+      day: local.toLocaleDateString("en-US", { day: "numeric" }),
+      weekday: local.toLocaleDateString("en-US", { weekday: "short" }),
+      year: y,
     };
   } catch {
     return { month: "DATE", day: dateStr, weekday: "", year: "" };
@@ -195,7 +205,8 @@ export function ShowsTable({
         },
       },
       {
-        accessorKey: "title",
+        id: "title",
+        accessorFn: (row) => `${row.title} ${row.artists?.map((a) => a.name).join(" ") ?? ""}`,
         header: "SHOW / ARTISTS",
         cell: ({ row }) => {
           const item = row.original;
@@ -305,7 +316,8 @@ export function ShowsTable({
         },
       },
       {
-        accessorKey: "venue",
+        id: "venue",
+        accessorFn: (row) => `${row.venue} ${row.location ?? ""}`,
         header: "VENUE",
         cell: ({ row }) => {
           const item = row.original;

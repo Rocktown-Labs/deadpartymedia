@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
 import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
@@ -222,6 +223,7 @@ export function MusicReleaseEditor({
   allowCoverImageUrl = true,
   isSubmitting = false,
 }: MusicReleaseEditorProps) {
+  const router = useRouter();
   const [title, setTitle] = useState(initialData?.title || "");
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [artistName, setArtistName] = useState(initialData?.artistName || "");
@@ -568,10 +570,16 @@ export function MusicReleaseEditor({
     }
 
     try {
-      await onSubmit(formData);
+      const result = (await onSubmit(formData)) as { redirectUrl?: string } | undefined;
       toast.success(
         initialData?.id ? "Release updated successfully" : "Release created successfully",
       );
+      if (result?.redirectUrl) {
+        router.push(result.redirectUrl as Route);
+      } else {
+        router.push("/admin/music" as Route);
+      }
+      router.refresh();
     } catch (error) {
       if (isNextRedirectError(error)) {
         return;

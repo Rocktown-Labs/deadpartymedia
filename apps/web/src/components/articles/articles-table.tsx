@@ -34,6 +34,8 @@ export function ArticlesTable({
     () => [
       {
         id: "article",
+        accessorFn: (row) =>
+          `${row.title} ${row.excerpt ?? ""} ${row.category ?? ""} ${row.author ?? ""}`,
         header: "LATEST STORIES",
         cell: ({ row }) => {
           const article = row.original;

@@ -55,16 +55,16 @@ export function SubmitShowModal({ isOpen, onClose }: SubmitShowModalProps) {
       });
 
       if (!res.ok) {
-        // Fallback for public intake if auth or endpoint handles differently
-        console.warn("Event submitted for manual review");
+        const errorData = await res.json().catch(() => null);
+        toast.error(errorData?.error || "Submission failed - please try again or contact us.");
+        return;
       }
 
       toast.success("Show submitted! It will appear after review by the Dead Party team.");
       onClose();
     } catch (err) {
       console.error(err);
-      toast.success("Show submitted! Thanks for supporting Arkansas music.");
-      onClose();
+      toast.error("Network error - please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -21,7 +21,6 @@ const isPublicRoute = createRouteMatcher([
   "/api/articles(.*)",
   "/api/events(.*)",
   "/api/venues(.*)",
-  "/api/stats/monthly",
   "/api/artists(.*)",
   "/api/writers(.*)",
   "/api/spotify(.*)",
