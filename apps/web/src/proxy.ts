@@ -8,6 +8,7 @@ import type { Roles } from "@/types/globals";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isArtistDashboardRoute = createRouteMatcher(["/artist-dashboard(.*)"]);
+const isVenueDashboardRoute = createRouteMatcher(["/venue-dashboard(.*)"]);
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 const isOnboardingRoute = createRouteMatcher(["/onboarding(.*)"]);
 const isArtistMeRoute = createRouteMatcher(["/api/artists/me(.*)"]);
@@ -19,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/posts(.*)",
   "/api/articles(.*)",
   "/api/events(.*)",
+  "/api/venues(.*)",
   "/api/stats/monthly",
   "/api/artists(.*)",
   "/api/writers(.*)",
@@ -44,6 +46,7 @@ const isPublicRoute = createRouteMatcher([
 const isProtectedRoute = createRouteMatcher([
   "/admin(.*)",
   "/artist-dashboard(.*)",
+  "/venue-dashboard(.*)",
   "/dashboard(.*)",
   "/onboarding(.*)",
   "/api/artists/me(.*)",
@@ -146,6 +149,7 @@ export default clerkMiddleware(async (auth, req) => {
     const isCorrectRoute =
       ((role === "super_admin" || role === "writer") && isAdminRoute(req)) ||
       (role === "artist" && isArtistDashboardRoute(req)) ||
+      (role === "venue" && isVenueDashboardRoute(req)) ||
       ((role === "fan" || role === "artmaker" || role === "arts_admin" || role === "arts_writer") &&
         isDashboardRoute(req));
 
@@ -156,13 +160,20 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // Redirect to correct dashboard based on role
-    if (isAdminRoute(req) || isArtistDashboardRoute(req) || isDashboardRoute(req)) {
+    if (
+      isAdminRoute(req) ||
+      isArtistDashboardRoute(req) ||
+      isVenueDashboardRoute(req) ||
+      isDashboardRoute(req)
+    ) {
       const targetPath =
         role === "super_admin" || role === "writer"
           ? "/admin"
           : role === "artist"
             ? "/artist-dashboard"
-            : "/dashboard";
+            : role === "venue"
+              ? "/venue-dashboard"
+              : "/dashboard";
 
       if (userId) {
         log.info(

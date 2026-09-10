@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { musicReleases } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
+import { checkRole } from "@/lib/auth/roles";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { musicReleaseSchema } from "@/lib/validations/music";
@@ -23,6 +24,10 @@ export async function createMusicRelease(formData: FormData) {
   if (!(await canCreate())) {
     throw new Error("Unauthorized: You don't have permission to create music releases");
   }
+
+  const authorIdInput = formData.get("authorId") as string | null;
+  const isSuperAdmin = await checkRole("super_admin");
+  const authorId = isSuperAdmin && authorIdInput ? authorIdInput : userId;
 
   const rawData = {
     appleMusicUrl: (formData.get("appleMusicUrl") as string | null) || undefined,
@@ -61,7 +66,7 @@ export async function createMusicRelease(formData: FormData) {
         appleMusicUrl: validatedData.appleMusicUrl || null,
         artistId: validatedData.artistId || null,
         artistName: validatedData.artistName,
-        authorId: userId,
+        authorId,
         bandcampUrl: validatedData.bandcampUrl || null,
         content: validatedData.content || null,
         coverArt: validatedData.coverArt || null,
@@ -73,6 +78,7 @@ export async function createMusicRelease(formData: FormData) {
         slug,
         spotifyUrl: validatedData.spotifyUrl || null,
         status: validatedData.status as MusicReleaseInsert["status"],
+        submissionStatus: "none",
         title: validatedData.title,
         youtubeUrl: validatedData.youtubeUrl || null,
       })
@@ -140,6 +146,10 @@ export async function updateMusicRelease(releaseId: number, formData: FormData) 
     generateSlug(`${validatedData.artistName}-${validatedData.title}`);
   const slug = await ensureUniqueSlug(baseSlug, releaseId, "musicReleases");
 
+  const authorIdInput = formData.get("authorId") as string | null;
+  const isSuperAdmin = await checkRole("super_admin");
+  const authorId = isSuperAdmin && authorIdInput ? authorIdInput : existingRelease.authorId;
+
   try {
     await db
       .update(musicReleases)
@@ -147,6 +157,7 @@ export async function updateMusicRelease(releaseId: number, formData: FormData) 
         appleMusicUrl: validatedData.appleMusicUrl || null,
         artistId: validatedData.artistId || null,
         artistName: validatedData.artistName,
+        authorId,
         bandcampUrl: validatedData.bandcampUrl || null,
         content: validatedData.content || null,
         coverArt: validatedData.coverArt || null,
@@ -250,4 +261,58 @@ export async function bulkUpdateMusicReleaseStatus(
     );
     throw error;
   }
+}
+
+export async function approveMusicSubmission(releaseId: number) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized");
+  }
+
+  await db
+    .update(musicReleases)
+    .set({
+      submissionStatus: "approved",
+      status: "published",
+      updatedAt: new Date(),
+    })
+    .where(eq(musicReleases.id, releaseId));
+
+  revalidatePath("/music");
+  revalidatePath("/admin/music");
+  revalidatePath("/admin/music/submissions");
+  revalidatePath("/");
+  revalidateTag("music_releases", "max");
+
+  return { success: true };
+}
+
+export async function declineMusicSubmission(releaseId: number, declineReason?: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized");
+  }
+
+  await db
+    .update(musicReleases)
+    .set({
+      submissionStatus: "declined",
+      declineReason: declineReason || null,
+      status: "draft",
+      updatedAt: new Date(),
+    })
+    .where(eq(musicReleases.id, releaseId));
+
+  revalidatePath("/admin/music");
+  revalidatePath("/admin/music/submissions");
+
+  return { success: true };
 }

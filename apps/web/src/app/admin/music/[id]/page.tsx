@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { musicReleases } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { musicReleases, users } from "@/lib/db/schema";
+import { eq, asc, inArray } from "drizzle-orm";
 import { canEdit } from "@/lib/auth/access";
-import { MusicReleaseForm } from "@/components/admin/music-release-form";
+import { checkRole } from "@/lib/auth/roles";
+import { MusicReleaseEditor } from "@/components/admin/music-release-editor";
 import { updateMusicRelease } from "../actions";
+import { createArtistProfileStub, createUserProfileStub } from "@/app/admin/users/actions";
 import type { Route } from "next";
 
 interface EditMusicReleasePageProps {
@@ -35,14 +37,37 @@ export default async function EditMusicReleasePage({ params }: EditMusicReleaseP
     redirect("/admin/music" as Route);
   }
 
+  const isSuperAdmin = await checkRole("super_admin");
+  const authorOptions = isSuperAdmin
+    ? await db
+        .select({
+          clerkId: users.clerkId,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+        })
+        .from(users)
+        .where(inArray(users.role, ["writer", "super_admin"]))
+        .orderBy(asc(users.firstName), asc(users.lastName))
+        .then((rows) =>
+          rows.map((row) => ({
+            clerkId: row.clerkId,
+            name: [row.firstName, row.lastName].filter(Boolean).join(" ").trim() || row.email,
+            role: row.role,
+          })),
+        )
+    : [];
+
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Edit Release</h1>
-      <MusicReleaseForm
+      <MusicReleaseEditor
         initialData={{
           appleMusicUrl: release.appleMusicUrl,
           artistId: release.artistId,
           artistName: release.artistName,
+          authorId: release.authorId,
           bandcampUrl: release.bandcampUrl,
           content: release.content,
           coverArt: release.coverArt,
@@ -58,8 +83,13 @@ export default async function EditMusicReleasePage({ params }: EditMusicReleaseP
           title: release.title,
           youtubeUrl: release.youtubeUrl,
         }}
+        canManageAuthor={isSuperAdmin}
+        authorOptions={authorOptions}
+        onCreateAuthorStub={isSuperAdmin ? createUserProfileStub : undefined}
+        onCreateArtistStub={isSuperAdmin ? createArtistProfileStub : undefined}
         onSubmit={updateMusicRelease.bind(null, releaseId)}
         cancelHref={"/admin/music" as Route}
+        allowCoverImageUrl={true}
       />
     </div>
   );

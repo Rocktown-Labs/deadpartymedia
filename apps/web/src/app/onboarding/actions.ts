@@ -23,6 +23,7 @@ import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
 import { upsertUserAuthState } from "@/lib/auth/user-state";
 import { getPrimaryEmail } from "@/lib/auth/clerk";
+import { sendVenueRegistrationNotification } from "@/lib/email/notifications";
 import type { ZodType } from "zod";
 
 type ArtistGenre = (typeof artists.$inferInsert)["genre"];
@@ -287,10 +288,13 @@ export async function venueOnboardingAction(_prev: unknown, formData: FormData) 
       .insert(venues)
       .values({
         address: validatedData.address || null,
+        bookingEmail: validatedData.bookingEmail || null,
+        bookingRates: validatedData.bookingRates || null,
         capacity: validatedData.capacity || null,
         city: validatedData.city || "Little Rock",
         claimedById: userId,
         description: validatedData.description || null,
+        image: validatedData.image || null,
         name: validatedData.name,
         phone: validatedData.phone || null,
         slug: venueSlug,
@@ -298,6 +302,23 @@ export async function venueOnboardingAction(_prev: unknown, formData: FormData) 
         website: validatedData.website || null,
       })
       .returning();
+
+    // Send admin notification email
+    sendVenueRegistrationNotification({
+      address: validatedData.address,
+      bookingEmail: validatedData.bookingEmail,
+      bookingRates: validatedData.bookingRates,
+      capacity: validatedData.capacity,
+      city: validatedData.city || "Little Rock",
+      description: validatedData.description,
+      name: validatedData.name,
+      phone: validatedData.phone,
+      state: validatedData.state || "AR",
+      venueId: createdVenue?.id,
+      website: validatedData.website,
+    }).catch((err) => {
+      log.warn({ err }, "Failed to send venue registration notification email");
+    });
 
     // Update user display name
     try {

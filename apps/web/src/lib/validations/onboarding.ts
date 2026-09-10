@@ -159,6 +159,8 @@ export const fanOnboardingSchema = z.object({
 // Venue onboarding schema
 export const venueOnboardingSchema = z.object({
   address: z.string().max(150, "Address too long").optional(),
+  bookingEmail: z.string().email("Must be a valid email").or(z.literal("")).optional(),
+  bookingRates: z.string().max(250, "Booking rates note must be under 250 characters").optional(),
   capacity: z.string().max(20).optional(),
   city: z
     .string()
@@ -166,6 +168,7 @@ export const venueOnboardingSchema = z.object({
     .max(80, "City must be less than 80 characters")
     .default("Little Rock"),
   description: z.string().max(500, "Description must be under 500 characters").optional(),
+  image: optionalUrlField,
   name: z
     .string()
     .min(1, "Venue name is required")

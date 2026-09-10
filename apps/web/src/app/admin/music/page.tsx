@@ -63,7 +63,12 @@ export default async function AdminMusicPage({
   const totalQuery = db.select({ total: count() }).from(musicReleases);
   const rowsQuery = db.select().from(musicReleases);
 
-  const [totalRows, pagedReleases] = await Promise.all([
+  const pendingQuery = db
+    .select({ count: count() })
+    .from(musicReleases)
+    .where(eq(musicReleases.submissionStatus, "pending"));
+
+  const [totalRows, pagedReleases, pendingRows] = await Promise.all([
     whereClause ? totalQuery.where(whereClause) : totalQuery,
     (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
       .orderBy(
@@ -98,9 +103,11 @@ export default async function AdminMusicPage({
       )
       .limit(ADMIN_PAGE_SIZE)
       .offset(offset),
+    pendingQuery,
   ]);
 
   const totalCount = Number(totalRows[0]?.total ?? 0);
+  const pendingCount = Number(pendingRows[0]?.count ?? 0);
   const currentSearchParams = buildSearchParams(
     params as Record<string, string | string[] | undefined>,
   );
@@ -122,7 +129,7 @@ export default async function AdminMusicPage({
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black">Music Releases</h1>
           <p className="text-sm text-zinc-400 mt-1">
@@ -133,6 +140,27 @@ export default async function AdminMusicPage({
           <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
             Create New Release
           </Button>
+        </Link>
+      </div>
+
+      {/* Navigation tabs */}
+      <div className="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
+        <Link
+          href={"/admin/music" as Route}
+          className="px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-800 text-white"
+        >
+          All Releases ({totalCount})
+        </Link>
+        <Link
+          href={"/admin/music/submissions" as Route}
+          className="px-3 py-1.5 rounded-md text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition flex items-center gap-2"
+        >
+          <span>Artist Submissions</span>
+          {pendingCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#7CFC00] text-black">
+              {pendingCount}
+            </span>
+          )}
         </Link>
       </div>
 

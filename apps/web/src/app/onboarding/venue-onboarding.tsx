@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, startTransition } from "react";
+import { useActionState, useEffect, useRef, useState, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser, useSession } from "@clerk/nextjs";
 import type { Route } from "next";
 import Image from "next/image";
-import { MapPin, Globe, Phone, Users, Building2 } from "lucide-react";
+import { MapPin, Globe, Phone, Users, Building2, DollarSign, Mail, Upload, X } from "lucide-react";
+import { validateImageFile } from "@/lib/upload";
 import {
   initialFormState,
   mergeForm,
@@ -43,6 +44,45 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
   });
 
   const formErrors = useStore(form.store, (formState) => formState.errors);
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleVenueImageUpload = async (file: File | null) => {
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || "Invalid image file");
+      return;
+    }
+
+    setImageUploading(true);
+    const loadingId = toast.loading("Uploading venue image...");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/image?type=venue", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(error.error || "Failed to upload image");
+      }
+
+      const { url } = await response.json();
+      form.setFieldValue("image", url);
+      toast.success("Venue image uploaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload venue image");
+    } finally {
+      toast.dismiss(loadingId);
+      setImageUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (!initialValues) {
@@ -57,6 +97,9 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
       "website",
       "capacity",
       "description",
+      "bookingRates",
+      "bookingEmail",
+      "image",
     ];
     for (const field of fields) {
       const val = initialValues[field];
@@ -78,7 +121,7 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
           !rawRedirect.startsWith("/sign-in") &&
           !rawRedirect.startsWith("/sign-up")
             ? rawRedirect
-            : "/venues";
+            : "/venue-dashboard";
         router.push(destination as Route);
       });
     }
@@ -309,6 +352,107 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
                   </form.Field>
                 </div>
               </div>
+
+              {/* Booking Rates & Booking Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form.Field name="bookingRates">
+                  {(field) => (
+                    <div>
+                      <label
+                        htmlFor={field.name}
+                        className="block text-xs font-mono font-bold tracking-wider text-zinc-300 uppercase mb-2 flex items-center gap-1.5"
+                      >
+                        <DollarSign className="w-3.5 h-3.5 text-[#7CFC00]" /> Booking Rates / Terms
+                      </label>
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="e.g. $150 flat + sound tech, 80/20 split"
+                        className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#7CFC00] transition-colors text-sm"
+                      />
+                    </div>
+                  )}
+                </form.Field>
+
+                <form.Field name="bookingEmail">
+                  {(field) => (
+                    <div>
+                      <label
+                        htmlFor={field.name}
+                        className="block text-xs font-mono font-bold tracking-wider text-zinc-300 uppercase mb-2 flex items-center gap-1.5"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-zinc-400" /> Booking Email
+                      </label>
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="email"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="booking@venue.com"
+                        className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#7CFC00] transition-colors text-sm"
+                      />
+                    </div>
+                  )}
+                </form.Field>
+              </div>
+
+              {/* Venue Photo Upload */}
+              <form.Field name="image">
+                {(field) => (
+                  <div>
+                    <label className="block text-xs font-mono font-bold tracking-wider text-zinc-300 uppercase mb-2 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-[#7CFC00]" /> Venue Photo
+                    </label>
+                    <input type="hidden" name={field.name} value={field.state.value} />
+                    <div className="flex items-center gap-4">
+                      {field.state.value ? (
+                        <div className="relative w-28 h-20 rounded border border-zinc-700 overflow-hidden bg-zinc-900">
+                          <Image
+                            src={field.state.value}
+                            alt="Venue preview"
+                            fill
+                            className="object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => field.handleChange("")}
+                            className="absolute top-1 right-1 p-1 bg-black/70 rounded-full text-white hover:bg-black"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : null}
+                      <div>
+                        <input
+                          type="file"
+                          ref={imageInputRef}
+                          accept="image/*"
+                          onChange={(e) => handleVenueImageUpload(e.target.files?.[0] || null)}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={imageUploading}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-300 text-xs font-mono uppercase font-bold hover:bg-zinc-800 transition-colors cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-[#7CFC00]" />
+                          {imageUploading
+                            ? "Uploading..."
+                            : field.state.value
+                              ? "Change Photo"
+                              : "Upload Venue Photo"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </form.Field>
 
               {/* Submit Button */}
               <button

@@ -51,6 +51,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           time: event.time || undefined,
           title: event.title,
           venue: event.venue,
+          venueId: event.venueId || undefined,
         }}
         onSubmit={updateEvent.bind(null, eventId)}
         cancelHref={"/admin/events" as Route}

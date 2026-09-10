@@ -264,7 +264,7 @@ export function MusicReleasesTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-zinc-400 text-xs font-mono">
-                    {release.releaseDate || "—"}
+                    {release.releaseDate || "-"}
                   </TableCell>
                   <TableCell className="text-right px-4">
                     <div className="flex items-center justify-end gap-2">

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate upload type
 
-    if (!["cover", "content", "profile", "event"].includes(type)) {
+    if (!["cover", "content", "profile", "event", "venue", "release"].includes(type)) {
       return NextResponse.json({ error: "Invalid upload type" }, { status: 400 });
     }
 

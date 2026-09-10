@@ -1,7 +1,8 @@
 "use client";
 
-import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar } from "lucide-react";
+import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar, Disc } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 
@@ -55,7 +56,17 @@ export default function ArtistDashboardPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+            <Link href={"/artist-dashboard/releases" as Route}>
+              <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
+                <Disc className="w-6 h-6 text-[#7CFC00]" />
+                <div className="text-left">
+                  <h3 className="font-bold text-base">My Releases</h3>
+                  <p className="text-sm text-gray-400">Submit and track music</p>
+                </div>
+              </Button>
+            </Link>
+
             <Link href="/artist-dashboard/profile">
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <Edit className="w-6 h-6 text-[#7CFC00]" />

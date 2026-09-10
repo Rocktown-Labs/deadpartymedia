@@ -163,6 +163,7 @@ export const events = pgTable("events", {
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
   image: text("image"),
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "set null" }),
   venue: text("venue").notNull(),
   location: text("location").notNull(),
   date: date("date").notNull(),
@@ -190,11 +191,18 @@ export const venues = pgTable("venues", {
   website: text("website"),
   phone: text("phone"),
   capacity: text("capacity"),
+  genres: text("genres"),
   description: text("description"),
+  bookingRates: text("booking_rates"),
+  bookingEmail: text("booking_email"),
+  image: text("image"),
   claimedById: text("claimed_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export type Venue = typeof venues.$inferSelect;
+export type NewVenue = typeof venues.$inferInsert;
 
 // Artists Table
 export const artists = pgTable("artists", {
@@ -236,6 +244,7 @@ export const musicReleases = pgTable(
     genre: genreEnum("genre").notNull().default("OTHER"),
     releaseDate: text("release_date"),
     coverArt: text("cover_art"),
+    audioUrl: text("audio_url"),
     excerpt: text("excerpt").notNull(),
     content: text("content"),
     spotifyUrl: text("spotify_url"),
@@ -244,6 +253,8 @@ export const musicReleases = pgTable(
     youtubeUrl: text("youtube_url"),
     authorId: text("author_id").notNull(),
     status: postStatusEnum("status").notNull().default("published"),
+    submissionStatus: text("submission_status").notNull().default("approved"),
+    declineReason: text("decline_reason"),
     featured: boolean("featured").notNull().default(false),
     views: integer("views").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -256,6 +267,7 @@ export const musicReleases = pgTable(
     releaseTypeIdx: index("music_releases_release_type_idx").on(table.releaseType),
     slugUnique: uniqueIndex("music_releases_slug_unique").on(table.slug),
     statusIdx: index("music_releases_status_idx").on(table.status),
+    submissionStatusIdx: index("music_releases_submission_status_idx").on(table.submissionStatus),
   }),
 );
 
@@ -397,9 +409,13 @@ export const postsRelations = relations(posts, ({ many }) => ({
   saves: many(userArticleSaves),
 }));
 
-export const eventsRelations = relations(events, ({ many }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   eventArtmakers: many(eventArtmakers),
   eventArtists: many(eventArtists),
+  venue: one(venues, {
+    fields: [events.venueId],
+    references: [venues.id],
+  }),
 }));
 
 export const artistsRelations = relations(artists, ({ many }) => ({
@@ -492,6 +508,10 @@ export const eventArtmakersRelations = relations(eventArtmakers, ({ one }) => ({
     fields: [eventArtmakers.eventId],
     references: [events.id],
   }),
+}));
+
+export const venuesRelations = relations(venues, ({ many }) => ({
+  events: many(events),
 }));
 
 export const artworksRelations = relations(artworks, ({ one }) => ({

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
+import { useVenues } from "@/lib/api/venues";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import type { Route } from "next";
@@ -31,6 +32,7 @@ interface EventFormProps {
     description?: string;
     image?: string;
     venue?: string;
+    venueId?: number | null;
     location?: string;
     date?: string;
     time?: string;
@@ -60,6 +62,7 @@ export function EventForm({
   const [description, setDescription] = useState(initialData?.description || "");
   const [image, setImage] = useState(initialData?.image || "");
   const [venue, setVenue] = useState(initialData?.venue || "");
+  const [venueId, setVenueId] = useState<number | null>(initialData?.venueId ?? null);
   const [location, setLocation] = useState(initialData?.location || "");
   const [date, setDate] = useState(initialData?.date || "");
   const [time, setTime] = useState(initialData?.time || "");
@@ -93,6 +96,7 @@ export function EventForm({
         time: initialData?.time || "",
         title: initialData?.title || "",
         venue: initialData?.venue || "",
+        venueId: initialData?.venueId ?? null,
       }),
     [initialData],
   );
@@ -110,6 +114,7 @@ export function EventForm({
     time,
     title,
     venue,
+    venueId,
   });
   const { UnsavedChangesDialog, navigateAway } = useUnsavedChangesGuard(
     currentSnapshot !== initialSnapshot,
@@ -117,6 +122,7 @@ export function EventForm({
   );
 
   const { data: artists = [], isLoading: artistsLoading } = useArtists();
+  const { data: venuesList = [] } = useVenues();
 
   const handleArtistToggle = (artistId: number) => {
     setSelectedArtistIds((prev) =>
@@ -184,6 +190,9 @@ export function EventForm({
     formData.append("price", price);
     formData.append("genre", genre);
     formData.append("status", status);
+    if (venueId) {
+      formData.append("venueId", String(venueId));
+    }
     // Append artist IDs as comma-separated string (optional for events)
     if (selectedArtistIds.length > 0) {
       formData.append("artistIds", selectedArtistIds.join(","));
@@ -318,27 +327,71 @@ export function EventForm({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4 p-4 rounded-lg bg-zinc-900/40 border border-zinc-800">
         <div>
-          <Label htmlFor="venue">Venue</Label>
-          <Input
-            id="venue"
-            value={venue}
-            onChange={(e) => setVenue(e.target.value)}
-            required
-            className="mt-1"
-          />
+          <Label htmlFor="venue-select">Select Saved Venue (Auto-fills name and address)</Label>
+          <Select
+            value={venueId ? String(venueId) : "custom"}
+            onValueChange={(val) => {
+              if (val === "custom") {
+                setVenueId(null);
+              } else {
+                const selected = venuesList.find((v) => String(v.id) === val);
+                if (selected) {
+                  setVenueId(selected.id);
+                  setVenue(selected.name);
+                  const fullAddr = [
+                    selected.address,
+                    selected.city,
+                    `${selected.state} ${selected.zip || ""}`.trim(),
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
+                  setLocation(fullAddr);
+                }
+              }
+            }}
+          >
+            <SelectTrigger id="venue-select" className="mt-1 bg-zinc-900">
+              <SelectValue placeholder="Choose a venue or enter custom below" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="custom">Custom Venue (Type below)</SelectItem>
+              {venuesList.map((v) => (
+                <SelectItem key={v.id} value={String(v.id)}>
+                  {v.name} ({v.city}, {v.state})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div>
-          <Label htmlFor="location">Location</Label>
-          <Input
-            id="location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-            className="mt-1"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="venue">Venue Name</Label>
+            <Input
+              id="venue"
+              value={venue}
+              onChange={(e) => {
+                setVenue(e.target.value);
+                setVenueId(null);
+              }}
+              required
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="location">Location / Address</Label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+              placeholder="e.g. 923 W 7th St, Little Rock, AR"
+              className="mt-1"
+            />
+          </div>
         </div>
       </div>
 

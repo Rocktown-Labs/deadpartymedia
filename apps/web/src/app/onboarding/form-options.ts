@@ -46,9 +46,12 @@ export const artistFormOptions = formOptions({
 export const venueFormOptions = formOptions({
   defaultValues: {
     address: "",
+    bookingEmail: "",
+    bookingRates: "",
     capacity: "",
     city: "Little Rock",
     description: "",
+    image: "",
     name: "",
     phone: "",
     state: "AR",

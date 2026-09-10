@@ -25,7 +25,7 @@ export interface VenueItem {
   genres?: string;
 }
 
-const ARKANSAS_VENUES: VenueItem[] = [
+const DEFAULT_VENUES: VenueItem[] = [
   {
     id: "vinos",
     name: "Vino's Pizza-Pub-Brewery",
@@ -37,108 +37,34 @@ const ARKANSAS_VENUES: VenueItem[] = [
     genres: "Punk, Hardcore, Indie, Metal",
   },
   {
-    id: "white-water-tavern",
-    name: "White Water Tavern",
-    city: "Little Rock",
-    address: "2500 W 7th St",
-    phone: "501-375-8400",
-    website: "https://whitewatertavern.com",
-    capacity: "150",
-    genres: "Folk, Country, Rock, Americana",
-  },
-  {
-    id: "the-hall",
-    name: "The Hall",
-    city: "Little Rock",
-    address: "721 W 9th St",
-    phone: "501-406-1364",
-    website: "https://littlerockhall.com",
-    capacity: "1,300",
-    genres: "Touring Acts, Rock, Hip-Hop, Pop",
-  },
-  {
-    id: "stickyz",
-    name: "Stickyz Rock 'n' Roll Chicken Shack",
-    city: "Little Rock",
-    address: "107 River Market Ave",
-    phone: "501-372-7707",
-    website: "https://stickyz.com",
-    capacity: "350",
-    genres: "Rock, Jam, Indie, Roots",
-  },
-  {
-    id: "the-rev-room",
-    name: "The Rev Room (Revolution Music Room)",
-    city: "Little Rock",
-    address: "300 President Clinton Ave",
-    phone: "501-823-0091",
-    website: "https://revroom.com",
-    capacity: "800",
-    genres: "Rock, Metal, Hip-Hop, EDM",
-  },
-  {
-    id: "four-quarter-bar",
-    name: "Four Quarter Bar",
-    city: "North Little Rock",
-    address: "415 Main St",
-    phone: "501-313-4704",
-    website: "https://fourquarterbar.com",
-    capacity: "120",
-    genres: "Blues, Funk, Rock, Singer-Songwriter",
-  },
-  {
-    id: "kings-live-music",
-    name: "Kings Live Music",
-    city: "Conway",
-    address: "1020 Front St",
-    phone: "501-205-8512",
-    website: "https://kingslivemusic.com",
-    capacity: "250",
-    genres: "Rock, Country, Local Bands",
-  },
-  {
     id: "full-moon-records",
     name: "Full Moon Records",
     city: "Conway",
-    address: "1164 Front St",
+    address: "1104 Front St",
     phone: "501-287-7452",
     website: "https://thefullmoonrecords.com",
     capacity: "80",
-    genres: "Indie, Punk, Acoustic, DIY",
-  },
-  {
-    id: "maxines",
-    name: "Maxine's Live",
-    city: "Hot Springs",
-    address: "700 Central Ave",
-    phone: "501-321-0909",
-    website: "https://maxineslive.com",
-    capacity: "180",
-    genres: "Eclectic, Rock, Jazz, Indie",
-  },
-  {
-    id: "simmons-bank-arena",
-    name: "Simmons Bank Arena",
-    city: "North Little Rock",
-    address: "1 Simmons Bank Arena Dr",
-    phone: "501-340-5660",
-    website: "https://simmonsbankarena.com",
-    capacity: "18,000",
-    genres: "Arena Tours, Major Headliners",
+    genres: "Punk, Underground, DIY Shows, Vinyl Shop",
   },
 ];
 
-export function VenuesClient() {
+interface VenuesClientProps {
+  initialVenues?: VenueItem[];
+}
+
+export function VenuesClient({ initialVenues }: VenuesClientProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedCity, setSelectedCity] = useState("ALL");
 
+  const venuesSource = initialVenues && initialVenues.length > 0 ? initialVenues : DEFAULT_VENUES;
+
   const filteredData = useMemo(() => {
-    let list = [...ARKANSAS_VENUES];
+    let list = [...venuesSource];
     if (selectedCity !== "ALL") {
       list = list.filter((v) => v.city.toUpperCase() === selectedCity.toUpperCase());
     }
     return list;
-  }, [selectedCity]);
+  }, [venuesSource, selectedCity]);
 
   const columns = useMemo<ColumnDef<VenueItem>[]>(
     () => [
@@ -150,16 +76,14 @@ export function VenuesClient() {
             <span className="font-bold text-sm sm:text-base text-white hover:text-[#7CFC00] transition-colors block">
               {row.original.name}
             </span>
-            {row.original.address && (
-              <span className="text-xs text-zinc-400 block sm:hidden">
-                {row.original.address}, {row.original.city}
-              </span>
-            )}
             {row.original.genres && (
-              <span className="text-[10px] text-zinc-500 block uppercase font-mono mt-0.5">
+              <span className="text-[11px] text-[#7CFC00]/90 font-mono tracking-wide">
                 {row.original.genres}
               </span>
             )}
+            <div className="sm:hidden mt-1 text-xs text-zinc-400">
+              {row.original.city}, AR {row.original.address ? `• ${row.original.address}` : ""}
+            </div>
           </div>
         ),
       },
@@ -181,6 +105,15 @@ export function VenuesClient() {
         ),
       },
       {
+        accessorKey: "capacity",
+        header: "CAPACITY",
+        cell: ({ row }) => (
+          <div className="py-1 hidden md:block font-mono text-xs text-zinc-400">
+            {row.original.capacity ? `${row.original.capacity} cap` : "-"}
+          </div>
+        ),
+      },
+      {
         accessorKey: "phone",
         header: "PHONE",
         cell: ({ row }) => (
@@ -194,7 +127,7 @@ export function VenuesClient() {
                 {row.original.phone}
               </a>
             ) : (
-              <span className="text-xs text-zinc-600">—</span>
+              <span className="text-xs text-zinc-600">-</span>
             )}
           </div>
         ),
@@ -216,7 +149,7 @@ export function VenuesClient() {
                 <ExternalLink className="w-3 h-3 ml-1" />
               </a>
             ) : (
-              <span className="text-xs text-zinc-600">—</span>
+              <span className="text-xs text-zinc-600">-</span>
             )}
           </div>
         ),
@@ -235,7 +168,13 @@ export function VenuesClient() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const cities = ["ALL", "Little Rock", "North Little Rock", "Conway", "Hot Springs"];
+  const cities = useMemo(() => {
+    const set = new Set<string>();
+    for (const v of venuesSource) {
+      if (v.city) set.add(v.city);
+    }
+    return ["ALL", ...Array.from(set)];
+  }, [venuesSource]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">

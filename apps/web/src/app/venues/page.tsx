@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+import { db } from "@/lib/db";
+import { venues } from "@/lib/db/schema";
+import { asc } from "drizzle-orm";
 import { VenuesClient } from "./venues-client";
 
 const { siteUrl, siteName } = getSiteDefaults();
@@ -23,6 +26,24 @@ export const metadata: Metadata = {
   title: "Venues Directory",
 };
 
-export default function VenuesPage() {
-  return <VenuesClient />;
+export default async function VenuesPage() {
+  let dbVenues: (typeof venues.$inferSelect)[] = [];
+  try {
+    dbVenues = await db.select().from(venues).orderBy(asc(venues.name));
+  } catch {
+    dbVenues = [];
+  }
+
+  const initialVenues = dbVenues.map((v) => ({
+    address: v.address || undefined,
+    capacity: v.capacity || undefined,
+    city: v.city,
+    genres: v.genres || undefined,
+    id: String(v.id),
+    name: v.name,
+    phone: v.phone || undefined,
+    website: v.website || undefined,
+  }));
+
+  return <VenuesClient initialVenues={initialVenues} />;
 }
