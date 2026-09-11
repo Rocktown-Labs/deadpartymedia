@@ -10,11 +10,13 @@ import { useProducts } from "@/lib/api/products";
 import { useMusicReleases } from "@/lib/api/music";
 
 export default function DeadPartyMedia() {
+  // Fetch up to 100 recent articles for homepage spotlight + story archive table.
+  // When the publication archive outgrows 100, transition archive to server-side query.
   const {
     data: articles,
     isLoading: articlesLoading,
     error: articlesError,
-  } = useArticles(undefined, { limit: 500 });
+  } = useArticles(undefined, { limit: 100 });
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
   const { data: musicReleasesData } = useMusicReleases({ limit: 10 });
   const {

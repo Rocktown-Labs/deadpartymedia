@@ -5,6 +5,7 @@ import { posts, postArtists, artists, articleComments, users } from "@/lib/db/sc
 import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { clampInt } from "@/lib/security";
 
 const POST_CATEGORIES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
@@ -34,10 +35,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-    const limit = searchParams.has("limit")
-      ? Math.min(Math.max(1, Number.parseInt(searchParams.get("limit")!, 10) || 50), 1000)
-      : 50;
-    const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
+    const limit = clampInt(searchParams.get("limit"), 50, 1, 200);
+    const offset = clampInt(searchParams.get("offset"), 0, 0, 100_000);
     const coverStory = searchParams.get("cover_story") === "true";
 
     // Build where conditions

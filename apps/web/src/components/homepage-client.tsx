@@ -83,8 +83,14 @@ export default function HomepageClient({
       ? featuredArticles.slice(1, 4)
       : articlesData.filter((a) => a.slug !== heroArticle?.slug).slice(0, 3);
 
-  // Archive stories for Recent Articles section (all articles available for full pagination)
-  const archiveArticles = articlesData;
+  // Archive stories for Recent Articles section (exclude spotlight articles shown above to avoid redundant hero tiles)
+  const featuredSlugs = new Set(
+    [heroArticle?.slug, ...secondaryArticles.map((a) => a.slug)].filter(Boolean),
+  );
+  const archiveArticles =
+    articlesData.length > featuredSlugs.size
+      ? articlesData.filter((a) => !featuredSlugs.has(a.slug))
+      : articlesData;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">
