@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-    const limit = Number.parseInt(searchParams.get("limit") || "10", 10);
+    const limit = searchParams.has("limit")
+      ? Math.min(Math.max(1, Number.parseInt(searchParams.get("limit")!, 10) || 50), 1000)
+      : 50;
     const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
     const coverStory = searchParams.get("cover_story") === "true";
 

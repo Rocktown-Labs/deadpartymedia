@@ -177,7 +177,7 @@ export default function Navbar() {
           </div>
 
           {/* Bottom Row: Menu Navigation */}
-          <nav className="border-t border-gray-800/60 py-2.5 flex items-center gap-8">
+          <nav className="border-t border-gray-800/60 py-2.5 flex items-center justify-center gap-8">
             <Link
               href="/music"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"

@@ -83,11 +83,8 @@ export default function HomepageClient({
       ? featuredArticles.slice(1, 4)
       : articlesData.filter((a) => a.slug !== heroArticle?.slug).slice(0, 3);
 
-  // Archive stories for Recent Articles section (exclude the hero article to prevent redundancy)
-  const archiveArticles =
-    articlesData.length > 4
-      ? articlesData.slice(4)
-      : articlesData.filter((a) => a.slug !== heroArticle?.slug);
+  // Archive stories for Recent Articles section (all articles available for full pagination)
+  const archiveArticles = articlesData;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white overflow-hidden relative">

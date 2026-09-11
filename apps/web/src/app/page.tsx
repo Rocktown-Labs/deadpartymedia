@@ -14,7 +14,7 @@ export default function DeadPartyMedia() {
     data: articles,
     isLoading: articlesLoading,
     error: articlesError,
-  } = useArticles(undefined, { limit: 12 });
+  } = useArticles(undefined, { limit: 500 });
   const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
   const { data: musicReleasesData } = useMusicReleases({ limit: 10 });
   const {

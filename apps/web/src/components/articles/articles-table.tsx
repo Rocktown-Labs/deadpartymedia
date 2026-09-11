@@ -176,34 +176,100 @@ export function ArticlesTable({
       {pageCount > 1 && (
         <div className="p-3 border-t border-zinc-800 bg-zinc-900/40 flex items-center justify-between text-xs font-mono">
           <button
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-3.5 h-3.5" /> Previous
           </button>
 
-          <div className="flex items-center gap-1">
-            {Array.from({ length: pageCount }).map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => table.setPageIndex(idx)}
-                className={cn(
-                  "w-7 h-7 rounded text-xs font-bold transition-colors",
-                  pageIndex === idx
-                    ? "bg-[#7CFC00] text-black"
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800",
+          <div className="flex items-center gap-1 overflow-x-auto max-w-[200px] sm:max-w-none py-1">
+            {pageCount <= 7 ? (
+              Array.from({ length: pageCount }).map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => table.setPageIndex(idx)}
+                  className={cn(
+                    "w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer shrink-0",
+                    pageIndex === idx
+                      ? "bg-[#7CFC00] text-black"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800",
+                  )}
+                  aria-label={`Page ${idx + 1}`}
+                  aria-current={pageIndex === idx ? "page" : undefined}
+                >
+                  {idx + 1}
+                </button>
+              ))
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => table.setPageIndex(0)}
+                  className={cn(
+                    "w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer shrink-0",
+                    pageIndex === 0
+                      ? "bg-[#7CFC00] text-black"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800",
+                  )}
+                  aria-label="Page 1"
+                  aria-current={pageIndex === 0 ? "page" : undefined}
+                >
+                  1
+                </button>
+
+                {pageIndex > 2 && <span className="px-1 text-zinc-600 select-none text-xs">…</span>}
+
+                {Array.from({ length: pageCount })
+                  .map((_, idx) => idx)
+                  .filter((idx) => idx > 0 && idx < pageCount - 1 && Math.abs(idx - pageIndex) <= 1)
+                  .map((idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => table.setPageIndex(idx)}
+                      className={cn(
+                        "w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer shrink-0",
+                        pageIndex === idx
+                          ? "bg-[#7CFC00] text-black"
+                          : "text-zinc-400 hover:text-white hover:bg-zinc-800",
+                      )}
+                      aria-label={`Page ${idx + 1}`}
+                      aria-current={pageIndex === idx ? "page" : undefined}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+
+                {pageIndex < pageCount - 3 && (
+                  <span className="px-1 text-zinc-600 select-none text-xs">…</span>
                 )}
-              >
-                {idx + 1}
-              </button>
-            ))}
+
+                <button
+                  type="button"
+                  onClick={() => table.setPageIndex(pageCount - 1)}
+                  className={cn(
+                    "w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer shrink-0",
+                    pageIndex === pageCount - 1
+                      ? "bg-[#7CFC00] text-black"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800",
+                  )}
+                  aria-label={`Page ${pageCount}`}
+                  aria-current={pageIndex === pageCount - 1 ? "page" : undefined}
+                >
+                  {pageCount}
+                </button>
+              </>
+            )}
           </div>
 
           <button
+            type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             Next <ChevronRight className="w-3.5 h-3.5" />
           </button>
