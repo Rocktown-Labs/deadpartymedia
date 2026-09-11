@@ -1,11 +1,10 @@
 "use client";
 import HomepageClient from "@/components/homepage-client";
-import type { HomepageArticle, HomepageEvent } from "@/components/homepage-client";
+import type { HomepageArticle } from "@/components/homepage-client";
 import { useArticles } from "@/lib/api/articles";
 import type { ArticleList } from "@/lib/api/articles";
 import { useEvents } from "@/lib/api/events";
 import type { EventList } from "@/lib/api/events";
-import { isActiveEventDate } from "@/lib/events/date-state";
 import { useProducts } from "@/lib/api/products";
 import { useMusicReleases } from "@/lib/api/music";
 
@@ -17,7 +16,7 @@ export default function DeadPartyMedia() {
     isLoading: articlesLoading,
     error: articlesError,
   } = useArticles(undefined, { limit: 100 });
-  const { data: events, isLoading: eventsLoading, error: eventsError } = useEvents();
+  const { data: events, isLoading: eventsLoading } = useEvents();
   const { data: musicReleasesData } = useMusicReleases({ limit: 10 });
   const {
     data: products,
@@ -53,21 +52,6 @@ export default function DeadPartyMedia() {
   const featuredArticles = transformedArticles.slice(0, 4);
   const articlesData = transformedArticles;
 
-  // Transform events for the homepage format
-  const upcomingEvents: HomepageEvent[] = eventsArray
-    .filter((event) => isActiveEventDate(event.date))
-    .slice(0, 3)
-    .map((event) => ({
-      artist: (event.artists || []).map((artist) => artist.name).join(" & ") || "Various Artists",
-      date: {
-        day: new Date(event.date).getDate().toString(),
-        month: new Date(event.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-      },
-      image: event.image,
-      ticketUrl: event.ticket_link || "#",
-      venue: `${event.venue} - ${event.location}`,
-    }));
-
   // Ensure products is an array
   const productsArray = Array.isArray(products) ? products : [];
 
@@ -91,7 +75,6 @@ export default function DeadPartyMedia() {
     <HomepageClient
       featuredArticles={featuredArticles}
       articlesData={articlesData}
-      upcomingEvents={upcomingEvents}
       allEvents={eventsArray}
       musicReleases={transformedMusicReleases}
       featuredProducts={featuredProducts}
@@ -99,7 +82,6 @@ export default function DeadPartyMedia() {
       isEventsLoading={eventsLoading}
       isProductsLoading={productsLoading}
       hasArticlesError={Boolean(articlesError)}
-      hasEventsError={Boolean(eventsError)}
       hasProductsError={Boolean(productsError)}
     />
   );

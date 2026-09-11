@@ -70,7 +70,8 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
   const columns = useMemo<ColumnDef<VenueItem>[]>(
     () => [
       {
-        accessorKey: "name",
+        id: "name",
+        accessorFn: (row) => `${row.name} ${row.address ?? ""} ${row.city}`,
         header: "VENUE NAME",
         cell: ({ row }) => (
           <div className="py-1">

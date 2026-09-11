@@ -21,21 +21,9 @@ export type HomepageArticle = Omit<ArticleList, "author"> & {
   image: string;
 };
 
-export interface HomepageEvent {
-  artist: string;
-  date: {
-    day: string;
-    month: string;
-  };
-  image: string;
-  ticketUrl: string;
-  venue: string;
-}
-
 interface HomepageClientProps {
   featuredArticles: HomepageArticle[];
   articlesData: HomepageArticle[];
-  upcomingEvents?: HomepageEvent[];
   allEvents?: EventList[];
   musicReleases?: MusicRelease[];
   featuredProducts: Product[];
@@ -43,22 +31,19 @@ interface HomepageClientProps {
   isEventsLoading?: boolean;
   isProductsLoading?: boolean;
   hasArticlesError?: boolean;
-  hasEventsError?: boolean;
   hasProductsError?: boolean;
 }
 
 export default function HomepageClient({
   featuredArticles = [],
   articlesData = [],
-  upcomingEvents: _upcomingEvents = [],
   allEvents = [],
   musicReleases = [],
   featuredProducts = [],
   isArticlesLoading = false,
   isEventsLoading = false,
   isProductsLoading = false,
-  hasArticlesError: _hasArticlesError = false,
-  hasEventsError: _hasEventsError = false,
+  hasArticlesError = false,
   hasProductsError = false,
 }: HomepageClientProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -181,7 +166,18 @@ export default function HomepageClient({
                 </div>
               </article>
             </Link>
-          ) : null}
+          ) : (
+            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/60 px-6 text-center">
+              <p className="mb-2 text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#7CFC00]">
+                {hasArticlesError ? "Coverage temporarily offline" : "Stories coming soon"}
+              </p>
+              <p className="max-w-md text-sm text-zinc-500">
+                {hasArticlesError
+                  ? "We couldn't load the latest stories. Please check back shortly."
+                  : "New Arkansas music stories are on the way. Check back soon."}
+              </p>
+            </div>
+          )}
 
           {/* 2-3 Cards Underneath Hero */}
           {secondaryArticles.length > 0 && (
