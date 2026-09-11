@@ -47,36 +47,137 @@ export default function Navbar() {
           <span className="hidden md:block">{issueDate.toUpperCase()}</span>
           <span className="hidden md:block">ARKANSAS MUSIC</span>
         </div>
-        <nav className="py-6 flex items-center justify-between gap-6">
-          {/* Logo */}
-          <div className="flex-1">
-            <div className="lg:hidden">
-              <Link href="/">
-                <Image
-                  src="/images/dead-party-logo.png"
-                  alt="Dead Party Media"
-                  width={50}
-                  height={50}
-                  // Removed mx-6 to prevent overlap
-                  className="size-14"
+        {/* Mobile Bar (< lg) */}
+        <div className="flex items-center justify-between py-4 lg:hidden">
+          <Link href="/">
+            <Image
+              src="/images/dead-party-logo.png"
+              alt="Dead Party Media"
+              width={48}
+              height={48}
+              className="size-12"
+            />
+          </Link>
+          <div className="flex items-center gap-2">
+            <CartModal />
+            <SignedOut>
+              <div className="flex items-center gap-2">
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
+                    aria-label="Sign in"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
+                    aria-label="Sign up"
+                  >
+                    <span className="text-xs font-bold tracking-wider uppercase">Sign Up</span>
+                  </button>
+                </SignUpButton>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={dashboardHref}
+                  className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="ml-2 text-xs font-bold tracking-wider uppercase">Dashboard</span>
+                </Link>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox:
+                        "h-10 w-10 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
+                      userButtonPopoverActionButtonText: "text-white",
+                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
+                    },
+                  }}
                 />
-              </Link>
-            </div>
-            <div className="hidden lg:block">
-              <Link href="/">
-                <div className="text-3xl font-black tracking-tighter">
-                  <span className="text-[#7CFC00]">DEAD</span>
-                  <span className="text-white"> PARTY</span>
-                  <span className="text-purple-500"> MEDIA</span>
+              </div>
+            </SignedIn>
+          </div>
+        </div>
+
+        {/* Desktop Header: Stacked layout (>= lg) */}
+        <div className="hidden lg:block">
+          {/* Top Row: Masthead (Logo & Subtitle) + Actions */}
+          <div className="py-3.5 flex items-center justify-between gap-6">
+            <Link href="/" className="group inline-flex flex-col">
+              <div className="text-2xl xl:text-3xl font-black tracking-tighter whitespace-nowrap leading-none">
+                <span className="text-[#7CFC00]">DEAD</span>
+                <span className="text-white"> PARTY</span>
+                <span className="text-purple-500"> MEDIA</span>
+              </div>
+              <div className="text-[10px] tracking-[0.28em] xl:tracking-[0.32em] font-light mt-1 text-zinc-400 whitespace-nowrap leading-none">
+                YOUR #1 OUTLET FOR ARKANSAS MUSIC
+              </div>
+            </Link>
+
+            {/* Desktop Actions */}
+            <div className="flex items-center gap-3">
+              <CartModal />
+              <SignedOut>
+                <div className="flex items-center gap-2">
+                  <SignInButton mode="modal">
+                    <button
+                      type="button"
+                      className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
+                      aria-label="Sign in"
+                    >
+                      <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <button
+                      type="button"
+                      className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
+                      aria-label="Get started"
+                    >
+                      <span className="text-xs font-bold tracking-wider uppercase">
+                        Get Started
+                      </span>
+                    </button>
+                  </SignUpButton>
                 </div>
-                <div className="text-[10px] tracking-[0.4em] font-light mt-1 text-foreground">
-                  YOUR #1 OUTLET FOR ARKANSAS MUSIC
+              </SignedOut>
+              <SignedIn>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={dashboardHref}
+                    className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="ml-2 text-xs font-bold tracking-wider uppercase">
+                      Dashboard
+                    </span>
+                  </Link>
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        avatarBox:
+                          "h-10 w-10 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+                        userButtonPopoverActionButton: "text-white hover:bg-gray-900",
+                        userButtonPopoverActionButtonText: "text-white",
+                        userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
+                      },
+                    }}
+                  />
                 </div>
-              </Link>
+              </SignedIn>
             </div>
           </div>
-          {/* Desktop Menu */}
-          <div className="hidden lg:flex flex-1 items-center justify-center gap-8">
+
+          {/* Bottom Row: Menu Navigation */}
+          <nav className="border-t border-gray-800/60 py-2.5 flex items-center gap-8">
             <Link
               href="/music"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
@@ -91,15 +192,16 @@ export default function Navbar() {
               onMouseEnter={() => setIsArticlesDropdownOpen(true)}
               onMouseLeave={() => setIsArticlesDropdownOpen(false)}
             >
-              <Link href={"/articles" as Route}>
-                <button className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group flex items-center gap-1">
-                  Articles
-                  <ChevronDown className="w-4 h-4" />
-                  <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
-                </button>
+              <Link
+                href={"/articles" as Route}
+                className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group flex items-center gap-1"
+              >
+                Articles
+                <ChevronDown className="w-4 h-4" />
+                <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
               </Link>
               {isArticlesDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-48 bg-[#0A0A0A] border border-gray-800 rounded-lg shadow-xl py-2">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-[#0A0A0A] border border-gray-800 rounded-lg shadow-xl py-2 z-50">
                   <Link
                     href={"/articles" as Route}
                     className="block px-4 py-2 text-sm font-bold text-[#7CFC00] hover:bg-gray-900 transition-colors border-b border-gray-800/60 mb-1"
@@ -118,6 +220,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+
             <Link
               href="/events"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
@@ -153,100 +256,8 @@ export default function Navbar() {
               Donate
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-purple-500 transition-all duration-300 group-hover:w-full" />
             </Link>
-          </div>
-          {/* Actions */}
-          <div className="hidden lg:flex items-center gap-3">
-            <CartModal />
-            <SignedOut>
-              <div className="flex items-center gap-2">
-                <SignInButton mode="modal">
-                  <button
-                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
-                    aria-label="Sign in"
-                  >
-                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button
-                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
-                    aria-label="Get started"
-                  >
-                    <span className="text-xs font-bold tracking-wider uppercase">Get Started</span>
-                  </button>
-                </SignUpButton>
-              </div>
-            </SignedOut>
-            <SignedIn>
-              <div className="hidden lg:flex items-center gap-2">
-                <Link
-                  href={dashboardHref}
-                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span className="ml-2 text-xs font-bold tracking-wider uppercase">Dashboard</span>
-                </Link>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox:
-                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
-                      userButtonPopoverActionButtonText: "text-white",
-                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
-                    },
-                  }}
-                />
-              </div>
-            </SignedIn>
-          </div>
-          {/* Mobile Layout - Cart + Auth/Dashboard */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <CartModal />
-            <SignedOut>
-              <div className="flex items-center gap-2">
-                <SignInButton mode="modal">
-                  <button
-                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent text-white px-3"
-                    aria-label="Sign in"
-                  >
-                    <span className="text-xs font-bold tracking-wider uppercase">Sign In</span>
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button
-                    className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-[#7CFC00] text-black px-3"
-                    aria-label="Sign up"
-                  >
-                    <span className="text-xs font-bold tracking-wider uppercase">Sign Up</span>
-                  </button>
-                </SignUpButton>
-              </div>
-            </SignedOut>
-            <SignedIn>
-              <div className="flex items-center gap-2">
-                <Link
-                  href={dashboardHref}
-                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span className="ml-2 text-xs font-bold tracking-wider uppercase">Dashboard</span>
-                </Link>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox:
-                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
-                      userButtonPopoverActionButtonText: "text-white",
-                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
-                    },
-                  }}
-                />
-              </div>
-            </SignedIn>
-          </div>
-        </nav>
+          </nav>
+        </div>
       </div>
     </header>
   );

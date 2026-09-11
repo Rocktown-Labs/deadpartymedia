@@ -48,8 +48,10 @@ export async function sendMusicReleaseSubmissionNotification(
 
   const reviewUrl = "https://deadpartymedia.tv/admin/music/submissions";
   const safeSpotify = data.spotifyUrl && isSafeHttpUrl(data.spotifyUrl) ? data.spotifyUrl : null;
-  const safeApple = data.appleMusicUrl && isSafeHttpUrl(data.appleMusicUrl) ? data.appleMusicUrl : null;
-  const safeBandcamp = data.bandcampUrl && isSafeHttpUrl(data.bandcampUrl) ? data.bandcampUrl : null;
+  const safeApple =
+    data.appleMusicUrl && isSafeHttpUrl(data.appleMusicUrl) ? data.appleMusicUrl : null;
+  const safeBandcamp =
+    data.bandcampUrl && isSafeHttpUrl(data.bandcampUrl) ? data.bandcampUrl : null;
   const safeYoutube = data.youtubeUrl && isSafeHttpUrl(data.youtubeUrl) ? data.youtubeUrl : null;
   const safeAudio = data.audioUrl && isSafeHttpUrl(data.audioUrl) ? data.audioUrl : null;
   const safeCover = data.coverArt && isSafeHttpUrl(data.coverArt) ? data.coverArt : null;
@@ -92,7 +94,9 @@ export async function sendMusicReleaseSubmissionNotification(
       body: JSON.stringify({
         from: "Dead Party Media <submissions@deadpartymedia.tv>",
         to: NOTIFICATION_EMAIL,
-        subject: `New Music Submission: ${data.artistName} - ${data.title}`.replaceAll(/[\r\n]+/g, " ").slice(0, 200),
+        subject: `New Music Submission: ${data.artistName} - ${data.title}`
+          .replaceAll(/[\r\n]+/g, " ")
+          .slice(0, 200),
         html,
       }),
     });
@@ -163,7 +167,9 @@ export async function sendVenueRegistrationNotification(
       body: JSON.stringify({
         from: "Dead Party Media <onboarding@deadpartymedia.tv>",
         to: NOTIFICATION_EMAIL,
-        subject: `New Venue Onboarded: ${data.name} (${data.city}, ${data.state})`.replaceAll(/[\r\n]+/g, " ").slice(0, 200),
+        subject: `New Venue Onboarded: ${data.name} (${data.city}, ${data.state})`
+          .replaceAll(/[\r\n]+/g, " ")
+          .slice(0, 200),
         html,
       }),
     });

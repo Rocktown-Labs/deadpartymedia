@@ -74,7 +74,10 @@ export default clerkMiddleware(async (auth, req) => {
   // Public API prefixes are read-only: only GET/HEAD/OPTIONS bypass auth.
   // Writes (POST/PUT/PATCH/DELETE) fall through to per-handler auth checks.
   if (isPublicRoute(req) && !isArtistMeRoute(req)) {
-    if (!req.nextUrl.pathname.startsWith("/api/") || ["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+    if (
+      !req.nextUrl.pathname.startsWith("/api/") ||
+      ["GET", "HEAD", "OPTIONS"].includes(req.method)
+    ) {
       response = NextResponse.next();
       addRequestIdHeader(response, requestId);
       return response;

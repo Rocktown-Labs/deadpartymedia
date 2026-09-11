@@ -29,7 +29,10 @@ export async function GET() {
 
     return NextResponse.json(allVenues);
   } catch (error) {
-    logger.error({ error: sanitizeError(error), operation: "get_venues_api" }, "Failed to fetch venues");
+    logger.error(
+      { error: sanitizeError(error), operation: "get_venues_api" },
+      "Failed to fetch venues",
+    );
     return NextResponse.json({ error: "Failed to fetch venues" }, { status: 500 });
   }
 }

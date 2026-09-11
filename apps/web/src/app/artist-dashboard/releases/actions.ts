@@ -31,9 +31,7 @@ export async function submitArtistRelease(formData: FormData) {
 
   const allowedReleaseTypes = ["Single", "Album", "EP"] as const;
   const releaseTypeRaw = (formData.get("releaseType") as string) || "Single";
-  const releaseType = (
-    allowedReleaseTypes as readonly string[]
-  ).includes(releaseTypeRaw)
+  const releaseType = (allowedReleaseTypes as readonly string[]).includes(releaseTypeRaw)
     ? (releaseTypeRaw as "Single" | "Album" | "EP")
     : "Single";
   const allowedGenres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;

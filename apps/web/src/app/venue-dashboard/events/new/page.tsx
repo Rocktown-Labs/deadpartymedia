@@ -23,7 +23,7 @@ export default async function VenueNewEventPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-32 pb-20">
+      <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="mb-8">
             <h1 className="text-3xl font-black mb-2">Submit New Show</h1>

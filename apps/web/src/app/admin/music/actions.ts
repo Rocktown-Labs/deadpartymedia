@@ -249,10 +249,9 @@ export async function bulkUpdateMusicReleaseStatus(
     throw new Error("Invalid status");
   }
 
-  const sanitizedIds = [...new Set(releaseIds.filter((id) => Number.isInteger(id) && id > 0))].slice(
-    0,
-    100,
-  );
+  const sanitizedIds = [
+    ...new Set(releaseIds.filter((id) => Number.isInteger(id) && id > 0)),
+  ].slice(0, 100);
   if (sanitizedIds.length === 0) {
     return { count: 0 };
   }

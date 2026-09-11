@@ -58,7 +58,7 @@ export default async function VenueDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <main className="pt-36 pb-20">
+      <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-6xl">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800">

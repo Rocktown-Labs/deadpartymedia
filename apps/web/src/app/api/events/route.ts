@@ -174,7 +174,10 @@ export async function POST(request: NextRequest) {
 
     const safeTicketLink = safeHttpUrl(ticketLink || ticket_link);
     if ((ticketLink || ticket_link) && !safeTicketLink) {
-      return NextResponse.json({ error: "Ticket link must be a valid http(s) URL" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Ticket link must be a valid http(s) URL" },
+        { status: 400 },
+      );
     }
     const safeImage = safeHttpUrl(image || flyerUrl);
     if ((image || flyerUrl) && !(image || flyerUrl || "").startsWith("/") && !safeImage) {
