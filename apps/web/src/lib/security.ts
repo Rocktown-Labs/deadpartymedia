@@ -76,7 +76,7 @@ export function safeHttpUrl(value: string | null | undefined): string | null {
  * Clamp a parsed pagination param into a safe range.
  */
 export function clampInt(value: unknown, fallback: number, min: number, max: number): number {
-  const parsed = typeof value === "string" ? Number.parseInt(value, 10) : Number(value);
+  const parsed = typeof value === "string" ? Number.parseInt(value, 10) : Number(value ?? fallback);
   if (!Number.isFinite(parsed)) {
     return fallback;
   }
