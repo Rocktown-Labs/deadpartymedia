@@ -102,6 +102,12 @@ export async function updateMusicRelease(releaseId: number, formData: FormData) 
     redirect("/sign-in" as Route);
   }
 
+  // Admin surface is for writers/super_admins. Owners with fan/artist roles
+  // must go through the artist-dashboard submission flow instead.
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized: You don't have permission to edit music releases");
+  }
+
   const [existingRelease] = await db
     .select()
     .from(musicReleases)
@@ -194,6 +200,10 @@ export async function deleteMusicRelease(releaseId: number) {
     redirect("/sign-in" as Route);
   }
 
+  if (!(await canCreate())) {
+    throw new Error("Unauthorized: You don't have permission to delete music releases");
+  }
+
   const [existingRelease] = await db
     .select()
     .from(musicReleases)
@@ -235,25 +245,51 @@ export async function bulkUpdateMusicReleaseStatus(
     redirect("/sign-in" as Route);
   }
 
-  if (releaseIds.length === 0) {
+  if (!["draft", "published", "archived"].includes(status)) {
+    throw new Error("Invalid status");
+  }
+
+  const sanitizedIds = [...new Set(releaseIds.filter((id) => Number.isInteger(id) && id > 0))].slice(
+    0,
+    100,
+  );
+  if (sanitizedIds.length === 0) {
     return { count: 0 };
   }
 
+  // Writers may only bulk-update their own rows; super_admins may update any.
   const isSuperAdmin = await canDelete();
+  if (!isSuperAdmin) {
+    if (!(await canCreate())) {
+      throw new Error("Unauthorized: You don't have permission to bulk-update music releases");
+    }
+    // Verify every requested ID exists and is owned by the caller (IDOR guard).
+    const rows = await db
+      .select({ authorId: musicReleases.authorId, id: musicReleases.id })
+      .from(musicReleases)
+      .where(inArray(musicReleases.id, sanitizedIds));
+    if (rows.length !== sanitizedIds.length || rows.some((row) => row.authorId !== userId)) {
+      throw new Error("Unauthorized: You can only bulk-update your own music releases");
+    }
+  }
 
   try {
     const whereClause = isSuperAdmin
-      ? inArray(musicReleases.id, releaseIds)
-      : inArray(musicReleases.id, releaseIds); // writers can update their own in future or super admin
+      ? inArray(musicReleases.id, sanitizedIds)
+      : inArray(musicReleases.id, sanitizedIds);
 
-    await db.update(musicReleases).set({ status, updatedAt: new Date() }).where(whereClause);
+    const updated = await db
+      .update(musicReleases)
+      .set({ status, updatedAt: new Date() })
+      .where(whereClause)
+      .returning({ id: musicReleases.id });
 
     revalidatePath("/music");
     revalidatePath("/admin/music");
     revalidatePath("/");
     revalidateTag("music_releases", "max");
 
-    return { count: releaseIds.length };
+    return { count: updated.length };
   } catch (error) {
     logger.error(
       { error, operation: "bulk_update_music_release_status" },
@@ -271,6 +307,22 @@ export async function approveMusicSubmission(releaseId: number) {
 
   if (!(await canCreate())) {
     throw new Error("Unauthorized");
+  }
+
+  if (!Number.isInteger(releaseId) || releaseId <= 0) {
+    throw new Error("Invalid release ID");
+  }
+
+  const [existing] = await db
+    .select({ id: musicReleases.id, submissionStatus: musicReleases.submissionStatus })
+    .from(musicReleases)
+    .where(eq(musicReleases.id, releaseId))
+    .limit(1);
+  if (!existing) {
+    throw new Error("Music release not found");
+  }
+  if (existing.submissionStatus !== "pending") {
+    throw new Error("Only pending submissions can be approved");
   }
 
   await db
@@ -301,11 +353,27 @@ export async function declineMusicSubmission(releaseId: number, declineReason?: 
     throw new Error("Unauthorized");
   }
 
+  if (!Number.isInteger(releaseId) || releaseId <= 0) {
+    throw new Error("Invalid release ID");
+  }
+
+  const [existing] = await db
+    .select({ id: musicReleases.id, submissionStatus: musicReleases.submissionStatus })
+    .from(musicReleases)
+    .where(eq(musicReleases.id, releaseId))
+    .limit(1);
+  if (!existing) {
+    throw new Error("Music release not found");
+  }
+  if (existing.submissionStatus !== "pending") {
+    throw new Error("Only pending submissions can be declined");
+  }
+
   await db
     .update(musicReleases)
     .set({
       submissionStatus: "declined",
-      declineReason: declineReason || null,
+      declineReason: declineReason?.slice(0, 1000) || null,
       status: "draft",
       updatedAt: new Date(),
     })

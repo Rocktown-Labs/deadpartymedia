@@ -5,6 +5,7 @@ import { musicReleases, artists } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { clampInt } from "@/lib/security";
 
 export async function GET(request: NextRequest) {
   const log = getRequestLogger(request);
@@ -12,8 +13,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const releaseType = searchParams.get("type");
     const genre = searchParams.get("genre");
-    const limit = Number.parseInt(searchParams.get("limit") || "20", 10);
-    const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
+    const limit = clampInt(searchParams.get("limit"), 20, 1, 100);
+    const offset = clampInt(searchParams.get("offset"), 0, 0, 100_000);
     const featured = searchParams.get("featured") === "true";
 
     const conditions = [eq(musicReleases.status, "published")];

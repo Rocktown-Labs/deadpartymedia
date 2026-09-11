@@ -61,13 +61,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const authorName =
       [release.authorFirstName, release.authorLastName].filter(Boolean).join(" ").trim() ||
-      release.authorEmail ||
       "Dead Party Media";
 
+    // Never leak authorEmail / Clerk authorId in the public payload.
+    const {
+      authorEmail: _authorEmail,
+      authorFirstName: _authorFirstName,
+      authorLastName: _authorLastName,
+      authorId: _authorId,
+      ...publicRelease
+    } = release;
+
     return NextResponse.json({
-      ...release,
+      ...publicRelease,
       author: {
-        id: release.authorId,
         name: authorName,
       },
     });

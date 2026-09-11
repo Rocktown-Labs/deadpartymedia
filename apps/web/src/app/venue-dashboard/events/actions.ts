@@ -22,6 +22,12 @@ export async function createVenueEvent(formData: FormData) {
   // Find the venue claimed by this user
   const [userVenue] = await db.select().from(venues).where(eq(venues.claimedById, userId)).limit(1);
 
+  // Only onboarded venues may publish events. Unclaimed users cannot mint
+  // arbitrary-venue events (spam / impersonation guard).
+  if (!userVenue) {
+    throw new Error("Unauthorized: Claim a venue before creating events");
+  }
+
   const rawData = {
     date: (formData.get("date") as string) || "",
     description: (formData.get("description") as string) || "",
@@ -29,16 +35,16 @@ export async function createVenueEvent(formData: FormData) {
     image: (formData.get("image") as string | null) || undefined,
     location:
       (formData.get("location") as string) ||
-      (userVenue?.address
+      (userVenue.address
         ? `${userVenue.address}, ${userVenue.city}, ${userVenue.state}`
-        : userVenue?.city || "Little Rock, AR"),
+        : userVenue.city || "Little Rock, AR"),
     price: (formData.get("price") as string | null) || undefined,
     slug: (formData.get("slug") as string) || "",
-    status: (formData.get("status") as string) || "published",
+    status: (formData.get("status") as string) || "draft",
     ticketLink: (formData.get("ticketLink") as string | null) || undefined,
     time: (formData.get("time") as string | null) || undefined,
     title: (formData.get("title") as string) || "",
-    venue: userVenue?.name || (formData.get("venue") as string) || "",
+    venue: userVenue.name || (formData.get("venue") as string) || "",
   };
 
   const validationResult = eventSchema.safeParse(rawData);
@@ -71,7 +77,7 @@ export async function createVenueEvent(formData: FormData) {
         time: validatedData.time || null,
         title: validatedData.title,
         venue: validatedData.venue,
-        venueId: userVenue?.id || null,
+        venueId: userVenue.id,
       })
       .returning();
 

@@ -48,7 +48,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           slug: artists.slug,
           updatedAt: artists.updatedAt,
         })
-        .from(artists),
+        .from(artists)
+        .where(eq(artists.hidden, false)),
       db
         .select({
           slug: events.slug,

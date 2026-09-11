@@ -2,6 +2,7 @@ import type { Article } from "@/lib/api/articles";
 import type { Event } from "@/lib/api/events";
 import type { Artist } from "@/lib/api/artists";
 import { getAbsoluteUrl, getImageUrl } from "@/lib/seo";
+import { escapeJsonLd } from "@/lib/security";
 
 interface ArticleStructuredDataProps {
   article: Article;
@@ -47,7 +48,7 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      dangerouslySetInnerHTML={{ __html: escapeJsonLd(JSON.stringify(structuredData)) }}
     />
   );
 }
@@ -101,7 +102,7 @@ export function EventStructuredData({ event }: EventStructuredDataProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      dangerouslySetInnerHTML={{ __html: escapeJsonLd(JSON.stringify(structuredData)) }}
     />
   );
 }
@@ -141,7 +142,7 @@ export function ArtistStructuredData({ artist }: ArtistStructuredDataProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      dangerouslySetInnerHTML={{ __html: escapeJsonLd(JSON.stringify(structuredData)) }}
     />
   );
 }

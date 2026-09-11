@@ -143,6 +143,11 @@ describe(artistOnboardingAction, () => {
     vi.mocked(db.insert).mockReturnValue({
       values: mockValues,
     } as any);
+    // No existing claimed artist for this user (duplicate-mint guard)
+    const mockLimit = vi.fn().mockResolvedValue([]);
+    const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
+    const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
+    vi.mocked(db.select).mockReturnValue({ from: mockFrom } as any);
 
     const formData = new FormData();
     formData.append("name", "Test Artist");

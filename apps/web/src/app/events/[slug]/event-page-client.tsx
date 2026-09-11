@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/lib/api/events";
 import { useVenues } from "@/lib/api/venues";
+import { isSafeHttpUrl } from "@/lib/security";
 import { EventStructuredData } from "@/components/seo/structured-data";
 import posthogClient from "posthog-js";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
@@ -133,10 +134,9 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                 <div className="md:col-span-2">
                   <div className="bg-[#111111] border border-gray-800 rounded-lg p-6 mb-6">
                     <h2 className="text-2xl font-bold mb-4">About This Event</h2>
-                    <div
-                      className="prose prose-invert max-w-none text-gray-300"
-                      dangerouslySetInnerHTML={{ __html: String(event.description || "") }}
-                    />
+                    <p className="max-w-none whitespace-pre-line text-gray-300">
+                      {event.description || ""}
+                    </p>
                   </div>
 
                   {/* Featured Artists */}
@@ -244,7 +244,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                         </p>
                       )}
                       <div className="mt-4 pt-3 border-t border-gray-800 flex flex-col gap-2">
-                        {matchedVenue.website && (
+                        {matchedVenue.website && isSafeHttpUrl(matchedVenue.website) && (
                           <a
                             href={matchedVenue.website}
                             target="_blank"
@@ -280,7 +280,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                   )}
 
                   {/* Ticket Link */}
-                  {event.ticket_link && (
+                  {event.ticket_link && isSafeHttpUrl(event.ticket_link) && (
                     <a
                       href={event.ticket_link}
                       target="_blank"

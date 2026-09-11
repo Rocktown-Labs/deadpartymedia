@@ -15,6 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { isPastEventDateKey, getLocalDateKey } from "@/lib/events/date-state";
 import type { EventList } from "@/lib/api/events";
+import { isSafeHttpUrl } from "@/lib/security";
 import { MapPin, Ticket, Search, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -370,7 +371,7 @@ export function ShowsTable({
             );
           }
 
-          if (item.ticket_link) {
+          if (item.ticket_link && isSafeHttpUrl(item.ticket_link)) {
             return (
               <div className="py-1 text-right">
                 <a

@@ -6,6 +6,7 @@ import { eq, and, desc, inArray, gte, lt } from "drizzle-orm";
 import { getLocalDateKey } from "@/lib/events/date-state";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { clampInt, safeHttpUrl, truncateText } from "@/lib/security";
 
 const EVENT_GENRES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
     const status = searchParams.get("status");
-    const limit = Number.parseInt(searchParams.get("limit") || "100", 10);
-    const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
+    const limit = clampInt(searchParams.get("limit"), 100, 1, 100);
+    const offset = clampInt(searchParams.get("offset"), 0, 0, 100_000);
 
     // Build where conditions
     const conditions = [eq(events.status, "published")];
@@ -158,6 +159,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (
+      typeof title !== "string" ||
+      typeof venue !== "string" ||
+      typeof date !== "string" ||
+      title.trim().length === 0 ||
+      title.trim().length > 255 ||
+      venue.trim().length === 0 ||
+      venue.trim().length > 255 ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    ) {
+      return NextResponse.json({ error: "Invalid title, date, or venue" }, { status: 400 });
+    }
+
+    const safeTicketLink = safeHttpUrl(ticketLink || ticket_link);
+    if ((ticketLink || ticket_link) && !safeTicketLink) {
+      return NextResponse.json({ error: "Ticket link must be a valid http(s) URL" }, { status: 400 });
+    }
+    const safeImage = safeHttpUrl(image || flyerUrl);
+    if ((image || flyerUrl) && !(image || flyerUrl || "").startsWith("/") && !safeImage) {
+      return NextResponse.json({ error: "Image must be a valid http(s) URL" }, { status: 400 });
+    }
+
     const { generateSlug, ensureUniqueSlug } = await import("@/lib/utils/slug");
     const slug = await ensureUniqueSlug(generateSlug(title), undefined, "events");
 
@@ -175,17 +198,17 @@ export async function POST(request: NextRequest) {
       .values({
         createdById: userId,
         date,
-        description: fullDescription || `Live show at ${venue}`,
+        description: truncateText(fullDescription || `Live show at ${venue}`, 2000),
         genre: isEventGenre(genre) ? genre : "OTHER",
-        image: image || flyerUrl || "/placeholder.svg",
-        location: location || "Little Rock, AR",
-        price: price || null,
+        image: safeImage || "/placeholder.svg",
+        location: truncateText(typeof location === "string" ? location : "Little Rock, AR", 255),
+        price: typeof price === "string" ? truncateText(price, 50) : null,
         slug,
         status: "draft",
-        ticketLink: ticketLink || ticket_link || null,
-        time: time || "7:00 PM",
-        title,
-        venue,
+        ticketLink: safeTicketLink,
+        time: typeof time === "string" ? truncateText(time, 50) : "7:00 PM",
+        title: truncateText(String(title).trim(), 255),
+        venue: truncateText(String(venue).trim(), 255),
       })
       .returning();
 

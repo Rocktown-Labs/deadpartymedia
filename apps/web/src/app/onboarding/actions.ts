@@ -179,7 +179,19 @@ export async function artistOnboardingAction(_prev: unknown, formData: FormData)
         })
         .where(eq(artists.id, artistId));
     } else {
-      // If user is an artist but doesn't have an artistId, create a new artist profile
+      // If user is an artist but doesn't have an artistId, create a new artist profile.
+      // Guard against duplicate minting: one claimed artist per user.
+      const [existingClaim] = await db
+        .select({ id: artists.id })
+        .from(artists)
+        .where(eq(artists.claimedById, userId))
+        .limit(1);
+      if (existingClaim) {
+        return {
+          ...initialFormState,
+          errors: ["You have already claimed an artist profile"],
+        };
+      }
       artistSlug = await ensureUniqueSlug(generateSlug(validatedData.name), undefined, "artists");
 
       await db.insert(artists).values({
@@ -280,6 +292,19 @@ export async function venueOnboardingAction(_prev: unknown, formData: FormData) 
     const validatedData = await venueServerValidate(formData);
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
+
+    // Guard against duplicate minting: one claimed venue per user.
+    const [existingVenue] = await db
+      .select({ id: venues.id })
+      .from(venues)
+      .where(eq(venues.claimedById, userId))
+      .limit(1);
+    if (existingVenue) {
+      return {
+        ...initialFormState,
+        errors: ["You have already registered a venue"],
+      };
+    }
 
     const venueSlug = await ensureUniqueSlug(generateSlug(validatedData.name), undefined, "venues");
 

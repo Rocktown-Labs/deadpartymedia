@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
 import { sendMusicReleaseSubmissionNotification } from "@/lib/email/notifications";
+import { safeHttpUrl, truncateText } from "@/lib/security";
 import { logger } from "@/lib/logger";
 
 type MusicReleaseInsert = typeof musicReleases.$inferInsert;
@@ -24,21 +25,34 @@ export async function submitArtistRelease(formData: FormData) {
 
   const artistName = artist?.name || (formData.get("artistName") as string) || "Independent Artist";
   const title = (formData.get("title") as string)?.trim();
-  if (!title) {
-    throw new Error("Release title is required");
+  if (!title || title.length > 255) {
+    throw new Error("Release title is required (max 255 characters)");
   }
 
-  const releaseType = (formData.get("releaseType") as "Single" | "Album" | "EP") || "Single";
-  const genre = (formData.get("genre") as MusicReleaseInsert["genre"]) || "OTHER";
+  const allowedReleaseTypes = ["Single", "Album", "EP"] as const;
+  const releaseTypeRaw = (formData.get("releaseType") as string) || "Single";
+  const releaseType = (
+    allowedReleaseTypes as readonly string[]
+  ).includes(releaseTypeRaw)
+    ? (releaseTypeRaw as "Single" | "Album" | "EP")
+    : "Single";
+  const allowedGenres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
+  const genreRaw = (formData.get("genre") as string) || "OTHER";
+  const genre = (allowedGenres as readonly string[]).includes(genreRaw)
+    ? (genreRaw as MusicReleaseInsert["genre"])
+    : "OTHER";
   const releaseDate = (formData.get("releaseDate") as string) || null;
-  const coverArt = (formData.get("coverArt") as string) || null;
-  const excerpt = (formData.get("excerpt") as string)?.trim() || `New release by ${artistName}.`;
-  const content = (formData.get("content") as string) || null;
-  const spotifyUrl = (formData.get("spotifyUrl") as string) || null;
-  const appleMusicUrl = (formData.get("appleMusicUrl") as string) || null;
-  const bandcampUrl = (formData.get("bandcampUrl") as string) || null;
-  const youtubeUrl = (formData.get("youtubeUrl") as string) || null;
-  const audioUrl = (formData.get("audioUrl") as string) || null;
+  const coverArt = safeHttpUrl(formData.get("coverArt") as string | null);
+  const excerpt = truncateText(
+    (formData.get("excerpt") as string)?.trim() || `New release by ${artistName}.`,
+    1000,
+  );
+  const content = truncateText((formData.get("content") as string) || "", 20_000);
+  const spotifyUrl = safeHttpUrl(formData.get("spotifyUrl") as string | null);
+  const appleMusicUrl = safeHttpUrl(formData.get("appleMusicUrl") as string | null);
+  const bandcampUrl = safeHttpUrl(formData.get("bandcampUrl") as string | null);
+  const youtubeUrl = safeHttpUrl(formData.get("youtubeUrl") as string | null);
+  const audioUrl = safeHttpUrl(formData.get("audioUrl") as string | null);
 
   const baseSlug = generateSlug(`${artistName}-${title}`);
   const slug = await ensureUniqueSlug(baseSlug, undefined, "musicReleases");
@@ -76,7 +90,7 @@ export async function submitArtistRelease(formData: FormData) {
       audioUrl,
       bandcampUrl,
       coverArt,
-      genre,
+      genre: genre ?? "OTHER",
       notes: excerpt,
       releaseDate,
       releaseId: createdRelease.id,

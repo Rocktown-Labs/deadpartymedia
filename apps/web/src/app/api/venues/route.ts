@@ -3,14 +3,13 @@ import { db } from "@/lib/db";
 import { venues } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
 import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 export async function GET() {
   try {
     const allVenues = await db
       .select({
         address: venues.address,
-        bookingEmail: venues.bookingEmail,
-        bookingRates: venues.bookingRates,
         capacity: venues.capacity,
         city: venues.city,
         createdAt: venues.createdAt,
@@ -30,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json(allVenues);
   } catch (error) {
-    logger.error({ error, operation: "get_venues_api" }, "Failed to fetch venues");
+    logger.error({ error: sanitizeError(error), operation: "get_venues_api" }, "Failed to fetch venues");
     return NextResponse.json({ error: "Failed to fetch venues" }, { status: 500 });
   }
 }

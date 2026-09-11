@@ -13,6 +13,7 @@ import {
 import { PageTitleHeader } from "@/components/page-title-header";
 import { ArrowLeft, Search, MapPin, Phone, Globe, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isSafeHttpUrl } from "@/lib/security";
 
 export interface VenueItem {
   id: string;
@@ -137,7 +138,7 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
         header: "WEBSITE",
         cell: ({ row }) => (
           <div className="py-1 text-right">
-            {row.original.website ? (
+            {row.original.website && isSafeHttpUrl(row.original.website) ? (
               <a
                 href={row.original.website}
                 target="_blank"

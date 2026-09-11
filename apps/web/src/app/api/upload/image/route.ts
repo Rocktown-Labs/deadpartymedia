@@ -6,14 +6,26 @@ import { validateImageFile, generateImagePathname } from "@/lib/upload";
 import type { UploadType } from "@/lib/upload";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { checkRole } from "@/lib/auth/roles";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Authenticate user
+    // Authenticate user. Fans have no upload need; restrict to staff and
+    // onboarded creators to bound public-blob abuse / cost exhaustion.
 
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const [isSuperAdmin, isWriter, isArtist, isVenue] = await Promise.all([
+      checkRole("super_admin"),
+      checkRole("writer"),
+      checkRole("artist"),
+      checkRole("venue"),
+    ]);
+    if (!(isSuperAdmin || isWriter || isArtist || isVenue)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Get upload type from query params

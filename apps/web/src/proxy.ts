@@ -71,10 +71,14 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Allow public routes (except explicitly protected artist endpoints)
+  // Public API prefixes are read-only: only GET/HEAD/OPTIONS bypass auth.
+  // Writes (POST/PUT/PATCH/DELETE) fall through to per-handler auth checks.
   if (isPublicRoute(req) && !isArtistMeRoute(req)) {
-    response = NextResponse.next();
-    addRequestIdHeader(response, requestId);
-    return response;
+    if (!req.nextUrl.pathname.startsWith("/api/") || ["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+      response = NextResponse.next();
+      addRequestIdHeader(response, requestId);
+      return response;
+    }
   }
 
   // Protect routes that require authentication
