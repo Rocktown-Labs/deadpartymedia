@@ -78,6 +78,20 @@
       "when": 1783141323035,
       "tag": "0010_arts_shared_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788895412013,
+      "tag": "0011_mighty_butterfly",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789052200000,
+      "tag": "0012_graceful_music_submissions_and_venues",
+      "breakpoints": true
     }
   ]
 }

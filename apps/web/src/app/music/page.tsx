@@ -10,25 +10,30 @@ export const metadata: Metadata = {
     canonical: getAbsoluteUrl("/music"),
   },
   description:
-    "Read the latest articles covering Arkansas music across all genres — country, EDM, hip-hop, R&B, hardcore, rock, and more.",
-  keywords: ["arkansas music", "music articles", "arkansas artists", "dead party media"],
+    "Explore new albums, singles, and releases from Arkansas underground and independent artists across all genres.",
+  keywords: [
+    "arkansas music releases",
+    "new albums arkansas",
+    "arkansas singles",
+    "dead party media discography",
+  ],
   openGraph: {
     description:
-      "Read the latest articles covering Arkansas music across all genres — country, EDM, hip-hop, R&B, hardcore, rock, and more.",
-    images: [{ alt: "Dead Party Media Music", height: 630, url: ogImage, width: 1200 }],
+      "Explore new albums, singles, and releases from Arkansas underground and independent artists across all genres.",
+    images: [{ alt: "Dead Party Media Music Releases", height: 630, url: ogImage, width: 1200 }],
     locale: "en_US",
     siteName,
-    title: `Music | ${siteName}`,
+    title: `Music Releases | ${siteName}`,
     type: "website",
     url: getAbsoluteUrl("/music"),
   },
-  title: "Music",
+  title: "Music Releases",
   twitter: {
     card: "summary_large_image",
     description:
-      "Read the latest articles covering Arkansas music across all genres — country, EDM, hip-hop, R&B, hardcore, rock, and more.",
+      "Explore new albums, singles, and releases from Arkansas underground and independent artists across all genres.",
     images: [ogImage],
-    title: `Music | ${siteName}`,
+    title: `Music Releases | ${siteName}`,
   },
 };
 

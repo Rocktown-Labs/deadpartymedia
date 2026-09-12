@@ -1,5 +1,5 @@
 import { vi } from "vite-plus/test";
-import type { artists, posts, events } from "@/lib/db/schema";
+import type { artists, posts, events, musicReleases } from "@/lib/db/schema";
 
 export const createMockDb = () => {
   const mockSelect = vi.fn().mockReturnThis();
@@ -77,5 +77,30 @@ export const createMockEvent = (overrides?: Partial<typeof events.$inferSelect>)
   title: "Test Event",
   updatedAt: new Date(),
   venue: "Test Venue",
+  ...overrides,
+});
+
+export const createMockMusicRelease = (overrides?: Partial<typeof musicReleases.$inferSelect>) => ({
+  appleMusicUrl: null,
+  artistId: 1,
+  artistName: "Test Artist",
+  authorId: "user_test123",
+  bandcampUrl: null,
+  content: "Test album review and track breakdown.",
+  coverArt: "/placeholder.svg",
+  createdAt: new Date(),
+  excerpt: "Test music release excerpt",
+  featured: false,
+  genre: "HARDCORE & ROCK" as const,
+  id: 1,
+  releaseDate: "2024-05-01",
+  releaseType: "Album" as const,
+  slug: "test-music-release",
+  spotifyUrl: "https://open.spotify.com/album/test",
+  status: "published" as const,
+  title: "Test Music Release",
+  updatedAt: new Date(),
+  views: 0,
+  youtubeUrl: null,
   ...overrides,
 });

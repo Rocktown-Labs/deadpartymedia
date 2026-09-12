@@ -6,6 +6,7 @@ import { eq, and, desc, inArray, gte, lt } from "drizzle-orm";
 import { getLocalDateKey } from "@/lib/events/date-state";
 import { getRequestLogger } from "@/lib/logger/middleware";
 import { sanitizeError } from "@/lib/logger/sanitize";
+import { clampInt, safeHttpUrl, truncateText } from "@/lib/security";
 
 const EVENT_GENRES = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const genre = searchParams.get("genre");
     const status = searchParams.get("status");
-    const limit = Number.parseInt(searchParams.get("limit") || "100", 10);
-    const offset = Number.parseInt(searchParams.get("offset") || "0", 10);
+    const limit = clampInt(searchParams.get("limit"), 100, 1, 100);
+    const offset = clampInt(searchParams.get("offset"), 0, 0, 100_000);
 
     // Build where conditions
     const conditions = [eq(events.status, "published")];
@@ -119,5 +120,106 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     log.error({ error: sanitizeError(error), operation: "fetch_events" }, "Error fetching events");
     return NextResponse.json({ error: "Failed to fetch events" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const log = getRequestLogger(request);
+  try {
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      title,
+      description,
+      venue,
+      location,
+      date,
+      time,
+      genre,
+      ticketLink,
+      ticket_link,
+      flyerUrl,
+      image,
+      price,
+      artists,
+      socialLink,
+      notes,
+    } = body;
+
+    if (!title || !date || !venue) {
+      return NextResponse.json(
+        { error: "Title, date, and venue are required fields" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      typeof title !== "string" ||
+      typeof venue !== "string" ||
+      typeof date !== "string" ||
+      title.trim().length === 0 ||
+      title.trim().length > 255 ||
+      venue.trim().length === 0 ||
+      venue.trim().length > 255 ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    ) {
+      return NextResponse.json({ error: "Invalid title, date, or venue" }, { status: 400 });
+    }
+
+    const safeTicketLink = safeHttpUrl(ticketLink || ticket_link);
+    if ((ticketLink || ticket_link) && !safeTicketLink) {
+      return NextResponse.json(
+        { error: "Ticket link must be a valid http(s) URL" },
+        { status: 400 },
+      );
+    }
+    const safeImage = safeHttpUrl(image || flyerUrl);
+    if ((image || flyerUrl) && !(image || flyerUrl || "").startsWith("/") && !safeImage) {
+      return NextResponse.json({ error: "Image must be a valid http(s) URL" }, { status: 400 });
+    }
+
+    const { generateSlug, ensureUniqueSlug } = await import("@/lib/utils/slug");
+    const slug = await ensureUniqueSlug(generateSlug(title), undefined, "events");
+
+    const fullDescription = [
+      description,
+      artists ? `Lineup / Artists: ${artists}` : null,
+      socialLink ? `Social / Info Link: ${socialLink}` : null,
+      notes ? `Notes: ${notes}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const [newEvent] = await db
+      .insert(events)
+      .values({
+        createdById: userId,
+        date,
+        description: truncateText(fullDescription || `Live show at ${venue}`, 2000),
+        genre: isEventGenre(genre) ? genre : "OTHER",
+        image: safeImage || "/placeholder.svg",
+        location: truncateText(typeof location === "string" ? location : "Little Rock, AR", 255),
+        price: typeof price === "string" ? truncateText(price, 50) : null,
+        slug,
+        status: "draft",
+        ticketLink: safeTicketLink,
+        time: typeof time === "string" ? truncateText(time, 50) : "7:00 PM",
+        title: truncateText(String(title).trim(), 255),
+        venue: truncateText(String(venue).trim(), 255),
+      })
+      .returning();
+
+    log.info({ eventId: newEvent.id, title: newEvent.title, userId }, "Event created successfully");
+
+    return NextResponse.json({ event: newEvent, success: true }, { status: 201 });
+  } catch (error) {
+    log.error({ error: sanitizeError(error), operation: "create_event" }, "Error creating event");
+    return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
   }
 }

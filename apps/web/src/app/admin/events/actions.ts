@@ -79,6 +79,9 @@ export async function createEvent(formData: FormData) {
     "events",
   );
 
+  const venueIdRaw = formData.get("venueId");
+  const venueId = venueIdRaw && !Number.isNaN(Number(venueIdRaw)) ? Number(venueIdRaw) : null;
+
   let event;
   try {
     [event] = await db
@@ -97,6 +100,7 @@ export async function createEvent(formData: FormData) {
         time: validatedData.time || null,
         title: validatedData.title,
         venue: validatedData.venue,
+        venueId,
       })
       .returning();
 
@@ -234,6 +238,9 @@ export async function updateEvent(id: number, formData: FormData) {
 
   const slug = await ensureUniqueSlug(slugInput || generateSlug(validatedData.title), id, "events");
 
+  const venueIdRaw = formData.get("venueId");
+  const venueId = venueIdRaw && !Number.isNaN(Number(venueIdRaw)) ? Number(venueIdRaw) : null;
+
   try {
     await db
       .update(events)
@@ -251,6 +258,7 @@ export async function updateEvent(id: number, formData: FormData) {
         title: validatedData.title,
         updatedAt: new Date(),
         venue: validatedData.venue,
+        venueId,
       })
       .where(eq(events.id, id));
 

@@ -9,6 +9,7 @@ export type Roles =
   | "arts_writer"
   | "fan"
   | "super_admin"
+  | "venue"
   | "writer";
 
 declare global {
@@ -17,6 +18,8 @@ declare global {
       role?: Roles;
       // For artists claiming their profile
       artistId?: number;
+      // For venues claiming their profile
+      venueId?: number;
       // For artmakers in the arts app
       artmakerId?: number;
       // Track if user has completed onboarding

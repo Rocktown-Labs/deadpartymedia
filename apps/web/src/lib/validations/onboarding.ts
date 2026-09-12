@@ -156,9 +156,33 @@ export const fanOnboardingSchema = z.object({
   ...optionalFields,
 });
 
+// Venue onboarding schema
+export const venueOnboardingSchema = z.object({
+  address: z.string().max(150, "Address too long").optional(),
+  bookingEmail: z.string().email("Must be a valid email").or(z.literal("")).optional(),
+  bookingRates: z.string().max(250, "Booking rates note must be under 250 characters").optional(),
+  capacity: z.string().max(20).optional(),
+  city: z
+    .string()
+    .min(1, "City is required")
+    .max(80, "City must be less than 80 characters")
+    .default("Little Rock"),
+  description: z.string().max(500, "Description must be under 500 characters").optional(),
+  image: optionalUrlField,
+  name: z
+    .string()
+    .min(1, "Venue name is required")
+    .max(120, "Venue name must be less than 120 characters")
+    .transform((val) => val.trim()),
+  phone: z.string().max(30).optional(),
+  state: z.string().max(20).default("AR"),
+  website: z.string().url("Must be a valid website URL").or(z.literal("")).optional(),
+});
+
 // Legacy schema for backward compatibility (defaults to artist schema)
 export const onboardingSchema = artistOnboardingSchema;
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
 export type ArtistOnboardingFormData = z.infer<typeof artistOnboardingSchema>;
 export type FanOnboardingFormData = z.infer<typeof fanOnboardingSchema>;
+export type VenueOnboardingFormData = z.infer<typeof venueOnboardingSchema>;

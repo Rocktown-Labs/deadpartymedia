@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useArtistsPage } from "@/lib/api/artists";
@@ -26,6 +26,7 @@ export default function ArtistsPageClient() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const artistGenreFilter = filterGenre === "ALL" ? undefined : filterGenre;
   const { data, isFetching, isLoading, isPlaceholderData } = useArtistsPage({
+    claimed: true,
     genre: artistGenreFilter,
     limit: visibleCount,
     offset: 0,
@@ -37,21 +38,7 @@ export default function ArtistsPageClient() {
     (isLoading && !hasArtistsData) || (isPlaceholderData && visibleCount === INITIAL_PAGE_SIZE);
 
   const completeArtists = useMemo(
-    () =>
-      (data?.results ?? []).filter((artist) => {
-        const hasSpotify =
-          Boolean(artist.spotify_url?.trim()) && Boolean(artist.spotify_artist_id?.trim());
-        const hasBio = Boolean(artist.bio?.trim()) && artist.bio !== "Profile pending update.";
-        const hasImage = Boolean(artist.image?.trim());
-        const hasOtherLink = Boolean(
-          artist.instagram?.trim() ||
-          artist.twitter?.trim() ||
-          artist.tiktok?.trim() ||
-          artist.website?.trim(),
-        );
-        const hasActivity = artist.article_count > 0 || artist.event_count > 0;
-        return hasImage && hasBio && (hasSpotify || hasOtherLink || hasActivity || artist.claimed);
-      }),
+    () => (data?.results ?? []).filter((artist) => Boolean(artist.claimed)),
     [data?.results],
   );
 
@@ -62,7 +49,7 @@ export default function ArtistsPageClient() {
 
   useEffect(() => {
     const node = loadMoreRef.current;
-    if (!node || !data?.hasMore || isFetching) {
+    if (!node || !data?.hasMore || isFetching || completeArtists.length === 0) {
       return;
     }
 
@@ -72,12 +59,12 @@ export default function ArtistsPageClient() {
           setVisibleCount((count) => count + PAGE_SIZE);
         }
       },
-      { rootMargin: "480px 0px" },
+      { rootMargin: "200px 0px" },
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [data?.hasMore, isFetching]);
+  }, [data?.hasMore, isFetching, completeArtists.length]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -197,25 +184,38 @@ export default function ArtistsPageClient() {
                 </Link>
               ))
             ) : (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-400 text-lg">No artists found.</p>
+              <div className="col-span-full text-center py-16 border border-dashed border-zinc-800 rounded-2xl bg-zinc-950/40 p-8 space-y-4">
+                <div className="size-12 rounded-full bg-[#7CFC00]/10 text-[#7CFC00] flex items-center justify-center mx-auto">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-bold text-white">No Claimed Artist Profiles Yet</h3>
+                  <p className="text-sm text-zinc-400 max-w-md mx-auto">
+                    Only verified, claimed Arkansas artist profiles appear here. Are you an Arkansas
+                    musician or band?
+                  </p>
+                </div>
+                <div>
+                  <Link
+                    href="/onboarding?role=artist"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold text-xs uppercase tracking-wider transition-colors shadow-lg"
+                  >
+                    Claim Your Band Profile
+                  </Link>
+                </div>
               </div>
             )}
           </div>
 
-          <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
-            {isFetching && hasArtistsData && !isReplacingGrid ? (
-              <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <ArtistCardSkeleton key={`append-skeleton-${index}`} compact />
-                ))}
-              </div>
-            ) : data?.hasMore ? (
-              <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
-                Loading more artists
-              </span>
-            ) : null}
-          </div>
+          {completeArtists.length > 0 && data?.hasMore && (
+            <div ref={loadMoreRef} className="mt-10 flex min-h-8 items-center justify-center">
+              {isFetching ? (
+                <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                  Loading more artists...
+                </span>
+              ) : null}
+            </div>
+          )}
         </div>
       </main>
     </div>

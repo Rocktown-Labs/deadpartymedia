@@ -42,6 +42,7 @@ export const roleEnum = pgEnum("role", [
   "arts_writer",
   "fan",
   "super_admin",
+  "venue",
   "writer",
 ]);
 
@@ -162,6 +163,7 @@ export const events = pgTable("events", {
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
   image: text("image"),
+  venueId: integer("venue_id").references(() => venues.id, { onDelete: "set null" }),
   venue: text("venue").notNull(),
   location: text("location").notNull(),
   date: date("date").notNull(),
@@ -176,6 +178,31 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Venues Table
+export const venues = pgTable("venues", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  address: text("address"),
+  city: text("city").notNull().default("Little Rock"),
+  state: text("state").notNull().default("AR"),
+  zip: text("zip"),
+  website: text("website"),
+  phone: text("phone"),
+  capacity: text("capacity"),
+  genres: text("genres"),
+  description: text("description"),
+  bookingRates: text("booking_rates"),
+  bookingEmail: text("booking_email"),
+  image: text("image"),
+  claimedById: text("claimed_by_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type Venue = typeof venues.$inferSelect;
+export type NewVenue = typeof venues.$inferInsert;
 
 // Artists Table
 export const artists = pgTable("artists", {
@@ -203,6 +230,49 @@ export const artists = pgTable("artists", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Music Releases Table
+export const musicReleases = pgTable(
+  "music_releases",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    artistName: text("artist_name").notNull(),
+    artistId: integer("artist_id").references(() => artists.id, { onDelete: "set null" }),
+    releaseType: text("release_type").notNull().default("Single"),
+    genre: genreEnum("genre").notNull().default("OTHER"),
+    releaseDate: text("release_date"),
+    coverArt: text("cover_art"),
+    audioUrl: text("audio_url"),
+    excerpt: text("excerpt").notNull(),
+    content: text("content"),
+    spotifyUrl: text("spotify_url"),
+    appleMusicUrl: text("apple_music_url"),
+    bandcampUrl: text("bandcamp_url"),
+    youtubeUrl: text("youtube_url"),
+    authorId: text("author_id").notNull(),
+    status: postStatusEnum("status").notNull().default("published"),
+    submissionStatus: text("submission_status").notNull().default("approved"),
+    declineReason: text("decline_reason"),
+    featured: boolean("featured").notNull().default(false),
+    views: integer("views").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    artistIdx: index("music_releases_artist_id_idx").on(table.artistId),
+    featuredIdx: index("music_releases_featured_idx").on(table.featured),
+    genreIdx: index("music_releases_genre_idx").on(table.genre),
+    releaseTypeIdx: index("music_releases_release_type_idx").on(table.releaseType),
+    slugUnique: uniqueIndex("music_releases_slug_unique").on(table.slug),
+    statusIdx: index("music_releases_status_idx").on(table.status),
+    submissionStatusIdx: index("music_releases_submission_status_idx").on(table.submissionStatus),
+  }),
+);
+
+export type MusicRelease = typeof musicReleases.$inferSelect;
+export type NewMusicRelease = typeof musicReleases.$inferInsert;
 
 export const artmakerStatusEnum = pgEnum("artmaker_status", ["draft", "published", "hidden"]);
 
@@ -339,14 +409,26 @@ export const postsRelations = relations(posts, ({ many }) => ({
   saves: many(userArticleSaves),
 }));
 
-export const eventsRelations = relations(events, ({ many }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   eventArtmakers: many(eventArtmakers),
   eventArtists: many(eventArtists),
+  venue: one(venues, {
+    fields: [events.venueId],
+    references: [venues.id],
+  }),
 }));
 
 export const artistsRelations = relations(artists, ({ many }) => ({
   eventArtists: many(eventArtists),
   postArtists: many(postArtists),
+  musicReleases: many(musicReleases),
+}));
+
+export const musicReleasesRelations = relations(musicReleases, ({ one }) => ({
+  artist: one(artists, {
+    fields: [musicReleases.artistId],
+    references: [artists.id],
+  }),
 }));
 
 export const artmakersRelations = relations(artmakers, ({ many }) => ({
@@ -426,6 +508,10 @@ export const eventArtmakersRelations = relations(eventArtmakers, ({ one }) => ({
     fields: [eventArtmakers.eventId],
     references: [events.id],
   }),
+}));
+
+export const venuesRelations = relations(venues, ({ many }) => ({
+  events: many(events),
 }));
 
 export const artworksRelations = relations(artworks, ({ one }) => ({

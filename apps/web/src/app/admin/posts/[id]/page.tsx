@@ -58,7 +58,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <h1 className="text-3xl font-black mb-8">Edit Post</h1>
+      <h1 className="text-3xl font-black mb-8">Edit Article</h1>
       <PostEditor
         initialData={{
           artistIds,

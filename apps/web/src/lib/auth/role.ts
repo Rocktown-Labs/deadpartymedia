@@ -4,6 +4,7 @@ const VALID_ROLES: ReadonlySet<Roles> = new Set([
   "super_admin",
   "writer",
   "artist",
+  "venue",
   "artmaker",
   "arts_admin",
   "arts_writer",

@@ -1,10 +1,21 @@
 "use client";
 
-import { ArrowLeft, MapPin, Clock, Calendar, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Clock,
+  Calendar,
+  ExternalLink,
+  Building2,
+  Phone,
+  Globe,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEvent } from "@/lib/api/events";
+import { useVenues } from "@/lib/api/venues";
+import { isSafeHttpUrl } from "@/lib/security";
 import { EventStructuredData } from "@/components/seo/structured-data";
 import posthogClient from "posthog-js";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
@@ -34,6 +45,15 @@ const getInternalReferrerPath = (): string | null => {
 export function EventPageClient({ slug }: EventPageClientProps) {
   const router = useRouter();
   const { data: event, isLoading } = useEvent(slug);
+  const { data: venuesList = [] } = useVenues();
+
+  const matchedVenue = event
+    ? venuesList.find(
+        (v) =>
+          v.name.toLowerCase().trim() === event.venue?.toLowerCase().trim() ||
+          v.slug.toLowerCase().trim() === event.venue?.toLowerCase().trim(),
+      )
+    : null;
 
   const handleBackClick = () => {
     const internalReferrerPath = getInternalReferrerPath();
@@ -114,10 +134,9 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                 <div className="md:col-span-2">
                   <div className="bg-[#111111] border border-gray-800 rounded-lg p-6 mb-6">
                     <h2 className="text-2xl font-bold mb-4">About This Event</h2>
-                    <div
-                      className="prose prose-invert max-w-none text-gray-300"
-                      dangerouslySetInnerHTML={{ __html: String(event.description || "") }}
-                    />
+                    <p className="max-w-none whitespace-pre-line text-gray-300">
+                      {event.description || ""}
+                    </p>
                   </div>
 
                   {/* Featured Artists */}
@@ -197,8 +216,71 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                     </div>
                   </div>
 
+                  {/* Venue Information Card */}
+                  {matchedVenue && (
+                    <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Building2 className="w-5 h-5 text-[#7CFC00]" />
+                        <h3 className="text-xl font-bold">Venue Info</h3>
+                      </div>
+                      <p className="font-semibold text-white">{matchedVenue.name}</p>
+                      {matchedVenue.address && (
+                        <p className="text-sm text-gray-400 mt-0.5">
+                          {matchedVenue.address}, {matchedVenue.city}, {matchedVenue.state}{" "}
+                          {matchedVenue.zip || ""}
+                        </p>
+                      )}
+                      {matchedVenue.capacity && (
+                        <p className="text-xs text-[#7CFC00] font-mono mt-2">
+                          Capacity: {matchedVenue.capacity}
+                        </p>
+                      )}
+                      {matchedVenue.genres && (
+                        <p className="text-xs text-gray-300 mt-1">Vibe: {matchedVenue.genres}</p>
+                      )}
+                      {matchedVenue.bookingRates && (
+                        <p className="text-xs text-zinc-400 mt-1">
+                          Booking: {matchedVenue.bookingRates}
+                        </p>
+                      )}
+                      <div className="mt-4 pt-3 border-t border-gray-800 flex flex-col gap-2">
+                        {matchedVenue.website && isSafeHttpUrl(matchedVenue.website) && (
+                          <a
+                            href={matchedVenue.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#7CFC00] hover:underline flex items-center gap-1 font-mono uppercase font-bold"
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                            Visit Venue Website
+                          </a>
+                        )}
+                        {matchedVenue.phone && (
+                          <a
+                            href={`tel:${matchedVenue.phone}`}
+                            className="text-xs text-gray-400 hover:text-white flex items-center gap-1 font-mono"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            {matchedVenue.phone}
+                          </a>
+                        )}
+                        {matchedVenue.address && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${matchedVenue.name} ${matchedVenue.address} ${matchedVenue.city} AR`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-gray-400 hover:text-[#7CFC00] flex items-center gap-1"
+                          >
+                            <MapPin className="w-3.5 h-3.5" />
+                            Get Directions
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Ticket Link */}
-                  {event.ticket_link && (
+                  {event.ticket_link && isSafeHttpUrl(event.ticket_link) && (
                     <a
                       href={event.ticket_link}
                       target="_blank"
