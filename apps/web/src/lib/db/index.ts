@@ -31,6 +31,10 @@ async function runStartupSchemaSanityCheck() {
       AND (
         (table_name = 'users' AND column_name IN ('role', 'onboarding_complete'))
         OR (table_name = 'posts' AND column_name = 'tags')
+        OR (
+          table_name = 'venues'
+          AND column_name IN ('booking_email', 'booking_rates', 'genres', 'image')
+        )
       )
   `)) as { rows?: { column_name: string; table_name: string }[] };
 
@@ -38,18 +42,26 @@ async function runStartupSchemaSanityCheck() {
     (columnResult.rows ?? []).map((row) => `${row.table_name}.${row.column_name}`),
   );
 
-  const requiredColumns = ["users.role", "users.onboarding_complete", "posts.tags"] as const;
+  const requiredColumns = [
+    "users.role",
+    "users.onboarding_complete",
+    "posts.tags",
+    "venues.booking_email",
+    "venues.booking_rates",
+    "venues.genres",
+    "venues.image",
+  ] as const;
   const missingColumns = requiredColumns.filter((column) => !foundColumns.has(column));
 
   const tableResult = (await db.execute(sql`
     SELECT table_name
     FROM information_schema.tables
     WHERE table_schema = 'public'
-      AND table_name IN ('backfill_runs')
+      AND table_name IN ('backfill_runs', 'venues')
   `)) as { rows?: { table_name: string }[] };
 
   const foundTables = new Set((tableResult.rows ?? []).map((row) => row.table_name));
-  const requiredTables = ["backfill_runs"] as const;
+  const requiredTables = ["backfill_runs", "venues"] as const;
   const missingTables = requiredTables.filter((table) => !foundTables.has(table));
 
   if (missingColumns.length > 0 || missingTables.length > 0) {
@@ -58,7 +70,7 @@ async function runStartupSchemaSanityCheck() {
         missingColumns,
         missingTables,
         operation: "startup_schema_sanity_check",
-        tables: ["users", "posts", "backfill_runs"],
+        tables: ["users", "posts", "backfill_runs", "venues"],
       },
       "Database schema is out of sync. Run migrations before serving traffic.",
     );
@@ -76,7 +88,7 @@ async function runStartupSchemaSanityCheck() {
   logger.info(
     {
       operation: "startup_schema_sanity_check",
-      tables: ["users", "posts", "backfill_runs"],
+      tables: ["users", "posts", "backfill_runs", "venues"],
     },
     "Database schema sanity check passed",
   );
