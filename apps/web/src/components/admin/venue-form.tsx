@@ -141,7 +141,7 @@ export function VenueForm({
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("slug", slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+    formData.append("slug", slug);
     formData.append("address", address);
     formData.append("city", city);
     formData.append("state", state);

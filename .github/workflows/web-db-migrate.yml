@@ -61,8 +61,12 @@ jobs:
           database: neondb
           api_key: ${{ secrets.NEON_API_KEY }}
           expires_at: ${{ steps.neon-expiration.outputs.expires_at }}
+        # A missing/temporarily unavailable CI branch must not prevent the
+        # production migration from running after tests have passed.
+        continue-on-error: true
 
       - name: Migrate database (dry-run branch)
+        if: steps.neon-create-branch.outcome == 'success'
         env:
           DATABASE_URL: ${{ steps.neon-create-branch.outputs.db_url_pooled }}
         run: pnpm web:db:migrate
@@ -74,6 +78,7 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch: ${{ steps.neon-create-branch.outputs.branch_id }}
           api_key: ${{ secrets.NEON_API_KEY }}
+        continue-on-error: true
 
       - name: Migrate database
         env:

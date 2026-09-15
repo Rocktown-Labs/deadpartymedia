@@ -92,6 +92,13 @@
       "when": 1789052200000,
       "tag": "0012_graceful_music_submissions_and_venues",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789478685779,
+      "tag": "0013_reconcile_venue_schema",
+      "breakpoints": true
     }
   ]
 }
