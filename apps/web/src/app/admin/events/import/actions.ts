@@ -1,8 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { generateObject } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateObject, gateway } from "ai";
 import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -44,13 +43,10 @@ export type EventFlyerAnalysis = z.infer<typeof flyerAnalysisSchema> & {
 };
 
 function requireAiKey() {
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AI_GATEWAY_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "Missing API key: configure GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or AI_GATEWAY_API_KEY.",
+      "Missing API key: configure AI_GATEWAY_API_KEY (Vercel AI Gateway).",
     );
   }
 }
@@ -123,7 +119,7 @@ export async function analyzeEventFlyerAction(imageUrl: string): Promise<EventFl
 
   const currentYear = new Date().getFullYear();
   const { object } = await generateObject({
-    model: google("gemini-3.5-flash"),
+    model: gateway("google/gemini-3.8-flash"),
     schema: flyerAnalysisSchema,
     messages: [
       {

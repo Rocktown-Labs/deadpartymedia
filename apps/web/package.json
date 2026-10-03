@@ -26,7 +26,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.80",
     "@base-ui/react": "^1.0.0",
     "@clerk/nextjs": "^6.7.0",
     "@dpmedia/env": "workspace:*",
