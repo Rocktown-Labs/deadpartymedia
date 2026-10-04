@@ -26,7 +26,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@ai-sdk/google": "^3.0.80",
     "@base-ui/react": "^1.0.0",
     "@clerk/nextjs": "^6.7.0",
     "@dpmedia/env": "workspace:*",
@@ -70,7 +69,8 @@
     "@vercel/analytics": "^1.6.1",
     "@vercel/blob": "^2.0.0",
     "@vercel/og": "^0.8.6",
-    "ai": "^6.0.199",
+    "@vercel/oidc": "3.2.0",
+    "ai": "^7.0.127",
     "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

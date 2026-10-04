@@ -9,7 +9,6 @@ import { generateJSON } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { createImageMirror } from "../../../../../scripts/lib/image-mirror";
@@ -166,13 +165,10 @@ export async function analyzePostInternal(
   title: string,
   contentHtml: string,
 ): Promise<BackfillAnalysis> {
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY ||
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-    process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AI_GATEWAY_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "Missing API key: Please configure GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or AI_GATEWAY_API_KEY in the environment.",
+      "Missing API key: Please configure AI_GATEWAY_API_KEY (Vercel AI Gateway) in the environment.",
     );
   }
 
@@ -193,7 +189,7 @@ Perform the following tasks:
 4. For each primary subject artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
 
   const { object } = await generateObject({
-    model: google("gemini-3.5-flash"),
+    model: "google/gemini-3.8-flash",
     schema: backfillAnalysisSchema,
     prompt,
   });

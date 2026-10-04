@@ -54,7 +54,6 @@
     "@tiptap/react": "^2.9.2",
     "@tiptap/starter-kit": "^2.9.2",
     "@unpic/react": "^1.0.2",
-    "ai": "^6.0.199",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv-cli": "^11.0.0",

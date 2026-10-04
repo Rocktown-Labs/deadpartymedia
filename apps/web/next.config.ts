@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
   allowedDevOrigins: ["deadpartymedia.localhost", "*.deadpartymedia.localhost"],
+  // @vercel/oidc ships CommonJS; Turbopack stubs its require() calls in the
+  // bundled workflow step route ("dynamic usage of require is not supported").
+  // Loading it natively keeps fs/require working in the Node step runtime.
+  serverExternalPackages: ["@vercel/oidc"],
   turbopack: {
     root: turbopackRoot,
   },
