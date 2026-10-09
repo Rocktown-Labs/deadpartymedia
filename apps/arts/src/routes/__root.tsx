@@ -41,6 +41,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         href: appCss,
       },
       {
+        rel: "preconnect",
+        href: "https://clerk.deadpartymedia.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://img.clerk.com",
+      },
+      {
         rel: "icon",
         type: "image/png",
         href: "/deadpartyarts-trans.png",
