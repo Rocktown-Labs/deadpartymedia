@@ -84,7 +84,7 @@ function VenueCell({
           }
         }}
         className={cn(
-          "font-semibold text-left transition-colors cursor-pointer sm:cursor-default line-clamp-1",
+          "inline-block py-1 font-semibold text-left transition-colors cursor-pointer sm:cursor-default line-clamp-1",
           isPast
             ? "text-zinc-400 line-through"
             : "text-zinc-200 hover:text-[#7CFC00] sm:hover:text-zinc-200",
@@ -234,7 +234,7 @@ export function ShowsTable({
                 <Link
                   href={`/events/${item.slug}`}
                   className={cn(
-                    "font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
+                    "inline-block py-1 font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
                     isPast
                       ? "line-through text-zinc-400 hover:text-zinc-200"
                       : "text-white hover:text-[#7CFC00]",
@@ -268,7 +268,7 @@ export function ShowsTable({
                               <span>{artist.name}</span>
                             )}
                             {idx === 0 && item.artists.length > 1 && (
-                              <span className="text-zinc-600 mr-1">,</span>
+                              <span className="text-zinc-400 mr-1">,</span>
                             )}
                           </span>
                         ))}
@@ -302,7 +302,7 @@ export function ShowsTable({
                             </span>
                           )}
                           {idx < Math.min(item.artists.length, 4) - 1 && (
-                            <span className="text-zinc-600 ml-1">,</span>
+                            <span className="text-zinc-400 ml-1">,</span>
                           )}
                         </span>
                       ))}
@@ -341,7 +341,7 @@ export function ShowsTable({
                 className={cn(
                   "inline-block text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider",
                   isPast
-                    ? "border-zinc-800 text-zinc-600 bg-zinc-900/40"
+                    ? "border-zinc-800 text-zinc-400 bg-zinc-900/40"
                     : "border-zinc-700 text-zinc-300 bg-zinc-900",
                 )}
               >

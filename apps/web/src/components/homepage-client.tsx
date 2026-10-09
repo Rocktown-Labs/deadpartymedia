@@ -128,6 +128,7 @@ export default function HomepageClient({
                   alt={heroArticle.title || "Featured Spotlight"}
                   fill
                   priority
+                  fetchPriority="high"
                   className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-85"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/65 to-black/20" />
@@ -290,7 +291,7 @@ export default function HomepageClient({
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-zinc-400 pt-3 px-1">
             <span>
               Shows listed recent to least •{" "}
-              <span className="line-through text-zinc-600">Crossed out</span> = Past events
+              <span className="line-through text-zinc-400">Crossed out</span> = Past events
             </span>
             <div className="flex items-center gap-4 font-mono">
               <button

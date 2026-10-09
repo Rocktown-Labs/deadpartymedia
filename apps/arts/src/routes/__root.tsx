@@ -43,10 +43,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         rel: "preconnect",
         href: "https://clerk.deadpartymedia.com",
-      },
-      {
-        rel: "preconnect",
-        href: "https://img.clerk.com",
+        crossorigin: true,
       },
       {
         rel: "icon",

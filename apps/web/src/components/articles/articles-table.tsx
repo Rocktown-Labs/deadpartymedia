@@ -62,7 +62,7 @@ export function ArticlesTable({
                   <span className="inline-block text-[10px] font-mono font-bold uppercase tracking-wider text-[#7CFC00] px-2 py-0.5 rounded bg-[#7CFC00]/10 border border-[#7CFC00]/20">
                     {article.category}
                   </span>
-                  <span className="text-xs text-zinc-500 font-mono">{article.date}</span>
+                  <span className="text-xs text-zinc-400 font-mono">{article.date}</span>
                 </div>
 
                 <Link
@@ -77,7 +77,7 @@ export function ArticlesTable({
                   {article.excerpt}
                 </p>
 
-                <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+                <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
                   <span>
                     By{" "}
                     <span className="text-zinc-300 font-medium">
@@ -134,14 +134,14 @@ export function ArticlesTable({
           <h3 className="text-xs font-mono font-bold tracking-widest text-zinc-400 uppercase">
             Story Archive ({totalArticles})
           </h3>
-          <span className="text-[11px] text-zinc-500 font-mono">
+          <span className="text-[11px] text-zinc-400 font-mono">
             Page {pageIndex + 1} of {Math.max(1, pageCount)}
           </span>
         </div>
 
         {showSearch && (
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
             <input
               type="text"
               value={globalFilter ?? ""}
@@ -166,7 +166,7 @@ export function ArticlesTable({
             </div>
           ))
         ) : (
-          <div className="h-32 flex items-center justify-center text-center text-xs text-zinc-500 font-mono">
+          <div className="h-32 flex items-center justify-center text-center text-xs text-zinc-400 font-mono">
             No matching articles found.
           </div>
         )}
@@ -220,7 +220,7 @@ export function ArticlesTable({
                   1
                 </button>
 
-                {pageIndex > 2 && <span className="px-1 text-zinc-600 select-none text-xs">…</span>}
+                {pageIndex > 2 && <span className="px-1 text-zinc-400 select-none text-xs">…</span>}
 
                 {Array.from({ length: pageCount })
                   .map((_, idx) => idx)
@@ -244,7 +244,7 @@ export function ArticlesTable({
                   ))}
 
                 {pageIndex < pageCount - 3 && (
-                  <span className="px-1 text-zinc-600 select-none text-xs">…</span>
+                  <span className="px-1 text-zinc-400 select-none text-xs">…</span>
                 )}
 
                 <button
