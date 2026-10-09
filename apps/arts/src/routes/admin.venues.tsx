@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Edit, MapPin, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +18,15 @@ import {
 
 export const Route = createFileRoute("/admin/venues")({
   beforeLoad: () => requireArtsStaff(),
+  validateSearch: (search: Record<string, unknown>) => {
+    if (search.form === "new") {
+      return { form: "new" as const };
+    }
+    if (typeof search.form === "string" && /^\d+$/.test(search.form)) {
+      return { form: Number(search.form) };
+    }
+    return {};
+  },
   component: AdminVenues,
   loader: () => listArtsVenues(),
 });
@@ -26,7 +35,12 @@ function AdminVenues() {
   const staff = Route.useRouteContext();
   const initialVenues = Route.useLoaderData();
   const [venues, setVenues] = useState<VenueListItem[]>(initialVenues);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const isModalOpen = search.form !== undefined;
+  const closeForm = () => {
+    navigate({ search: { form: undefined } });
+  };
   const [editingVenue, setEditingVenue] = useState<VenueListItem | null>(null);
 
   const [name, setName] = useState("");
@@ -43,6 +57,7 @@ function AdminVenues() {
   const deleteVenueFn = useServerFn(deleteArtsVenue);
 
   const openNewModal = () => {
+    navigate({ search: { form: "new" } });
     setEditingVenue(null);
     setName("");
     setAddress("");
@@ -51,10 +66,10 @@ function AdminVenues() {
     setZip("");
     setWebsite("");
     setPhone("");
-    setIsModalOpen(true);
   };
 
   const openEditModal = (venue: VenueListItem) => {
+    navigate({ search: { form: venue.id } });
     setEditingVenue(venue);
     setName(venue.name);
     setAddress(venue.address || "");
@@ -63,7 +78,6 @@ function AdminVenues() {
     setZip(venue.zip || "");
     setWebsite(venue.website || "");
     setPhone(venue.phone || "");
-    setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -104,7 +118,7 @@ function AdminVenues() {
         toast.success("Venue created successfully");
       }
 
-      setIsModalOpen(false);
+      closeForm();
       const updated = await listArtsVenues();
       setVenues(updated);
     } catch (err) {
@@ -226,145 +240,139 @@ function AdminVenues() {
         </div>
       </div>
 
-      {/* Venue Modal */}
+      {/* Venue form — rendered as a full page via ?form=new or ?form=<id> */}
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-lg rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
-            <div className="flex items-center justify-between border-gray-800 border-b pb-4">
-              <h2 className="font-black text-2xl text-white">
-                {editingVenue ? "Edit Venue" : "Log New Venue"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+        <div className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="flex items-center justify-between border-gray-800 border-b pb-4">
+            <h2 className="font-black text-2xl text-white">
+              {editingVenue ? "Edit Venue" : "Log New Venue"}
+            </h2>
+            <button type="button" onClick={closeForm} className="text-gray-400 hover:text-white">
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="venue-name"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
-                ✕
-              </button>
+                Venue / Gallery Name
+              </Label>
+              <Input
+                id="venue-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Arkansas Museum of Fine Arts"
+                className="font-bold"
+              />
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="venue-address"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Street Address
+              </Label>
+              <Input
+                id="venue-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="e.g. 501 E 9th St"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label
-                  htmlFor="venue-name"
+                  htmlFor="venue-city"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Venue / Gallery Name
+                  City
                 </Label>
                 <Input
-                  id="venue-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Arkansas Museum of Fine Arts"
-                  className="font-bold"
+                  id="venue-city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Little Rock"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label
-                  htmlFor="venue-address"
+                  htmlFor="venue-state"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Street Address
+                  State
                 </Label>
                 <Input
-                  id="venue-address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. 501 E 9th St"
+                  id="venue-state"
+                  value={stateName}
+                  onChange={(e) => setStateName(e.target.value)}
+                  placeholder="AR"
                 />
               </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="venue-city"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    City
-                  </Label>
-                  <Input
-                    id="venue-city"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Little Rock"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="venue-state"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    State
-                  </Label>
-                  <Input
-                    id="venue-state"
-                    value={stateName}
-                    onChange={(e) => setStateName(e.target.value)}
-                    placeholder="AR"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="venue-zip"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    ZIP Code
-                  </Label>
-                  <Input
-                    id="venue-zip"
-                    value={zip}
-                    onChange={(e) => setZip(e.target.value)}
-                    placeholder="72202"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="venue-website"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Website URL
-                  </Label>
-                  <Input
-                    id="venue-website"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="venue-phone"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="venue-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="(501) 372-4000"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="venue-zip"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  {isSubmitting ? "Saving..." : editingVenue ? "Update Venue" : "Save Venue"}
-                </Button>
+                  ZIP Code
+                </Label>
+                <Input
+                  id="venue-zip"
+                  value={zip}
+                  onChange={(e) => setZip(e.target.value)}
+                  placeholder="72202"
+                />
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="venue-website"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
+                  Website URL
+                </Label>
+                <Input
+                  id="venue-website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="venue-phone"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
+                  Phone Number
+                </Label>
+                <Input
+                  id="venue-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(501) 372-4000"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
+              <Button type="button" variant="outline" onClick={closeForm}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              >
+                {isSubmitting ? "Saving..." : editingVenue ? "Update Venue" : "Save Venue"}
+              </Button>
+            </div>
+          </form>
         </div>
       ) : null}
     </ArtsAdminShell>

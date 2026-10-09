@@ -5,6 +5,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { createSlug } from "#/lib/slug.ts";
+import { normalizeStoredImageUrl } from "#/lib/upload.ts";
 
 export interface ArtsEventListItem {
   id: number;
@@ -64,7 +65,10 @@ export const listArtsEvents = createServerFn({ method: "GET" }).handler(async ()
       .where(and(eq(events.vertical, "arts"), eq(events.status, "published")))
       .orderBy(events.date);
 
-    return rows satisfies ArtsEventListItem[];
+    return rows.map((row) => ({
+      ...row,
+      image: normalizeStoredImageUrl(row.image),
+    })) satisfies ArtsEventListItem[];
   } catch {
     return [] satisfies ArtsEventListItem[];
   }
@@ -92,7 +96,10 @@ export const listArtsAdminEvents = createServerFn({ method: "GET" }).handler(asy
     .where(eq(events.vertical, "arts"))
     .orderBy(desc(events.createdAt));
 
-  return rows satisfies ArtsEventListItem[];
+  return rows.map((row) => ({
+    ...row,
+    image: normalizeStoredImageUrl(row.image),
+  })) satisfies ArtsEventListItem[];
 });
 
 export const listArtsArticles = createServerFn({ method: "GET" }).handler(async () => {
@@ -137,6 +144,7 @@ export const listArtsArticles = createServerFn({ method: "GET" }).handler(async 
       const rowLinks = links.filter((link) => link.postId === row.id);
       return {
         ...row,
+        coverImage: normalizeStoredImageUrl(row.coverImage),
         artmakerIds: rowLinks.map((link) => link.artmakerId),
         artmakers: rowLinks.map((link) => ({
           id: link.artmakerId,
@@ -192,6 +200,7 @@ export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(a
     const rowLinks = links.filter((link) => link.postId === row.id);
     return {
       ...row,
+      coverImage: normalizeStoredImageUrl(row.coverImage),
       artmakerIds: rowLinks.map((link) => link.artmakerId),
       artmakers: rowLinks.map((link) => ({
         id: link.artmakerId,

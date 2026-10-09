@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
 import { Edit, Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
@@ -23,6 +23,15 @@ import {
 
 export const Route = createFileRoute("/admin/exhibitions")({
   beforeLoad: () => requireArtsStaff(),
+  validateSearch: (search: Record<string, unknown>) => {
+    if (search.form === "new") {
+      return { form: "new" as const };
+    }
+    if (typeof search.form === "string" && /^\d+$/.test(search.form)) {
+      return { form: Number(search.form) };
+    }
+    return {};
+  },
   component: AdminExhibitions,
   loader: async () => {
     const [artworks, artmakers] = await Promise.all([listAdminArtworks(), listAdminArtmakers()]);
@@ -35,7 +44,12 @@ function AdminExhibitions() {
   const { artmakers: initialArtmakers, artworks: initialArtworks } = Route.useLoaderData();
   const [artworks, setArtworks] = useState<ArtworkListItem[]>(initialArtworks);
   const [artmakers, setArtmakers] = useState(initialArtmakers);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const isModalOpen = search.form !== undefined;
+  const closeForm = () => {
+    navigate({ search: { form: undefined } });
+  };
   const [editingArtwork, setEditingArtwork] = useState<ArtworkListItem | null>(null);
 
   const [title, setTitle] = useState("");
@@ -86,6 +100,7 @@ function AdminExhibitions() {
   };
 
   const openNewModal = () => {
+    navigate({ search: { form: "new" } });
     setEditingArtwork(null);
     setTitle("");
     setArtmakerId(artmakers[0]?.id ?? 0);
@@ -95,10 +110,10 @@ function AdminExhibitions() {
     setDescription("");
     setForSale(false);
     setPrice("");
-    setIsModalOpen(true);
   };
 
   const openEditModal = (artwork: ArtworkListItem) => {
+    navigate({ search: { form: artwork.id } });
     setEditingArtwork(artwork);
     setTitle(artwork.title);
     setArtmakerId(artwork.artmakerId);
@@ -108,7 +123,6 @@ function AdminExhibitions() {
     setDescription(artwork.description || "");
     setForSale(artwork.forSale);
     setPrice(artwork.priceCents ? (artwork.priceCents / 100).toFixed(2) : "");
-    setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -154,7 +168,7 @@ function AdminExhibitions() {
         toast.success("Artwork added to exhibitions");
       }
 
-      setIsModalOpen(false);
+      closeForm();
       const updated = await listAdminArtworks();
       setArtworks(updated);
     } catch (err) {
@@ -303,168 +317,162 @@ function AdminExhibitions() {
 
       {/* Artwork Modal */}
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
-            <div className="flex items-center justify-between border-gray-800 border-b pb-4">
-              <h2 className="font-black text-2xl text-white">
-                {editingArtwork ? "Edit Artwork" : "Add Artwork to Exhibition"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+        <div className="mx-auto max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="flex items-center justify-between border-gray-800 border-b pb-4">
+            <h2 className="font-black text-2xl text-white">
+              {editingArtwork ? "Edit Artwork" : "Add Artwork to Exhibition"}
+            </h2>
+            <button type="button" onClick={closeForm} className="text-gray-400 hover:text-white">
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-4">
+            {!editingArtwork ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="artmaker-select"
+                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                  >
+                    Select Artmaker / Artist
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setIsArtmakerModalOpen(true)}
+                    className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                  >
+                    <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
+                  </button>
+                </div>
+                <select
+                  id="artmaker-select"
+                  value={artmakerId}
+                  onChange={(e) => setArtmakerId(Number(e.target.value))}
+                  className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
+                >
+                  {artmakers.map((am) => (
+                    <option key={am.id} value={am.id}>
+                      {am.name} ({am.city})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="artwork-title"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
-                ✕
-              </button>
+                Artwork Title
+              </Label>
+              <Input
+                id="artwork-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Neon Reflection No. 4"
+                className="font-bold"
+              />
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
-              {!editingArtwork ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label
-                      htmlFor="artmaker-select"
-                      className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                    >
-                      Select Artmaker / Artist
-                    </Label>
-                    <button
-                      type="button"
-                      onClick={() => setIsArtmakerModalOpen(true)}
-                      className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
-                    >
-                      <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
-                    </button>
-                  </div>
-                  <select
-                    id="artmaker-select"
-                    value={artmakerId}
-                    onChange={(e) => setArtmakerId(Number(e.target.value))}
-                    className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
-                  >
-                    {artmakers.map((am) => (
-                      <option key={am.id} value={am.id}>
-                        {am.name} ({am.city})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
+            {/* Artwork Photo Uploader */}
+            <ArtsImageUploader
+              label="Artwork Photo / Image"
+              value={imageUrl}
+              onChange={setImageUrl}
+            />
 
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label
-                  htmlFor="artwork-title"
+                  htmlFor="artwork-medium"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Artwork Title
+                  Medium
                 </Label>
                 <Input
-                  id="artwork-title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Neon Reflection No. 4"
-                  className="font-bold"
+                  id="artwork-medium"
+                  value={medium}
+                  onChange={(e) => setMedium(e.target.value)}
+                  placeholder="Acrylic on Canvas"
                 />
               </div>
-
-              {/* Artwork Photo Uploader */}
-              <ArtsImageUploader
-                label="Artwork Photo / Image"
-                value={imageUrl}
-                onChange={setImageUrl}
-              />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="artwork-medium"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Medium
-                  </Label>
-                  <Input
-                    id="artwork-medium"
-                    value={medium}
-                    onChange={(e) => setMedium(e.target.value)}
-                    placeholder="Acrylic on Canvas"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="artwork-year"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Year Created
-                  </Label>
-                  <Input
-                    id="artwork-year"
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    placeholder="2026"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 py-2">
-                <input
-                  type="checkbox"
-                  id="forSale"
-                  checked={forSale}
-                  onChange={(e) => setForSale(e.target.checked)}
-                  className="size-4 rounded border-gray-800 bg-[#0A0A0A] text-[#7CFC00]"
-                />
-                <Label htmlFor="forSale" className="font-bold text-sm text-white cursor-pointer">
-                  Available for Sale / Price Attached
-                </Label>
-              </div>
-
-              {forSale ? (
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="artwork-price"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Price (USD $)
-                  </Label>
-                  <Input
-                    id="artwork-price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="250.00"
-                  />
-                </div>
-              ) : null}
-
               <div className="space-y-2">
                 <Label
-                  htmlFor="artwork-desc"
+                  htmlFor="artwork-year"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Description / Curator Statement
+                  Year Created
                 </Label>
-                <Textarea
-                  id="artwork-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Notes on composition, inspiration, or gallery display..."
-                  rows={3}
+                <Input
+                  id="artwork-year"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="2026"
                 />
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+            <div className="flex items-center gap-3 py-2">
+              <input
+                type="checkbox"
+                id="forSale"
+                checked={forSale}
+                onChange={(e) => setForSale(e.target.checked)}
+                className="size-4 rounded border-gray-800 bg-[#0A0A0A] text-[#7CFC00]"
+              />
+              <Label htmlFor="forSale" className="font-bold text-sm text-white cursor-pointer">
+                Available for Sale / Price Attached
+              </Label>
+            </div>
+
+            {forSale ? (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="artwork-price"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  {isSubmitting ? "Saving..." : editingArtwork ? "Update Artwork" : "Save Artwork"}
-                </Button>
+                  Price (USD $)
+                </Label>
+                <Input
+                  id="artwork-price"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="250.00"
+                />
               </div>
-            </form>
-          </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="artwork-desc"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Description / Curator Statement
+              </Label>
+              <Textarea
+                id="artwork-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Notes on composition, inspiration, or gallery display..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
+              <Button type="button" variant="outline" onClick={closeForm}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              >
+                {isSubmitting ? "Saving..." : editingArtwork ? "Update Artwork" : "Save Artwork"}
+              </Button>
+            </div>
+          </form>
         </div>
       ) : null}
 

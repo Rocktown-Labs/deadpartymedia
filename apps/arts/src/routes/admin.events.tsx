@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
+import { MultiSelect } from "#/components/multi-select.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
@@ -22,6 +23,12 @@ import { createArtsVenue, listArtsVenues, type VenueListItem } from "#/lib/venue
 
 export const Route = createFileRoute("/admin/events")({
   beforeLoad: () => requireArtsStaff(),
+  validateSearch: (search: Record<string, unknown>) => {
+    if (search.new === "1") {
+      return { new: true as const };
+    }
+    return {};
+  },
   component: AdminEvents,
   loader: async () => {
     const [events, artmakers, venues] = await Promise.all([
@@ -43,8 +50,17 @@ function AdminEvents() {
   const [events, setEvents] = useState<ArtsEventListItem[]>(initialEvents);
   const [artmakers, setArtmakers] = useState(initialArtmakers);
   const [venues, setVenues] = useState<VenueListItem[]>(initialVenues);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const isFormOpen = search.new === true;
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const closeForm = () => {
+    navigate({ search: { new: undefined } });
+  };
+  const openForm = () => {
+    navigate({ search: { new: true } });
+  };
 
   // Form State
   const [title, setTitle] = useState("");
@@ -164,7 +180,7 @@ function AdminEvents() {
         },
       });
       toast.success("Arts event created successfully!");
-      setIsFormOpen(false);
+      closeForm();
       const updated = await listArtsAdminEvents();
       setEvents(updated);
     } catch (err) {
@@ -210,7 +226,7 @@ function AdminEvents() {
         <div className="flex flex-wrap gap-3">
           <Button
             type="button"
-            onClick={() => setIsFormOpen(true)}
+            onClick={openForm}
             className="rounded-lg bg-[#7CFC00] font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#7CFC00]/90"
           >
             <Plus className="mr-2 size-4" />
@@ -281,241 +297,219 @@ function AdminEvents() {
         )}
       </div>
 
-      {/* Create Event Modal */}
+      {/* Create Event — rendered as a full page via ?new=1 */}
       {isFormOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-2xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
-            <div className="flex items-center justify-between border-gray-800 border-b pb-4">
-              <h2 className="font-black text-2xl text-white">Create New Arts Event</h2>
-              <button
-                type="button"
-                onClick={() => setIsFormOpen(false)}
-                className="text-gray-400 hover:text-white"
+        <div className="mx-auto max-w-3xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="flex items-center justify-between border-gray-800 border-b pb-4">
+            <h2 className="font-black text-2xl text-white">Create New Arts Event</h2>
+            <button type="button" onClick={closeForm} className="text-gray-400 hover:text-white">
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="event-title"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
-                ✕
-              </button>
+                Event Title
+              </Label>
+              <Input
+                id="event-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Gallery Night Little Rock"
+                className="font-bold"
+              />
             </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="space-y-2">
+            {/* Venue Selection & Quick Create */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
                 <Label
-                  htmlFor="event-title"
+                  htmlFor="venue-select"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Event Title
+                  Select Venue or Log New
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsVenueModalOpen(true)}
+                  className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                >
+                  <Plus className="mr-1 size-3" /> Quick Add Venue
+                </button>
+              </div>
+              <select
+                id="venue-select"
+                value={selectedVenueId}
+                onChange={(e) => handleVenueSelect(e.target.value)}
+                className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
+              >
+                <option value="custom">Custom Venue / Manual Input</option>
+                {venues.map((v) => (
+                  <option key={v.id} value={String(v.id)}>
+                    {v.name} ({v.city}, {v.state})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="event-venue"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                >
+                  Venue Name
                 </Label>
                 <Input
-                  id="event-title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Gallery Night Little Rock"
-                  className="font-bold"
+                  id="event-venue"
+                  value={venue}
+                  onChange={(e) => setVenue(e.target.value)}
+                  placeholder="e.g. Arkansas Museum of Fine Arts"
                 />
               </div>
-
-              {/* Venue Selection & Quick Create */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="venue-select"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Select Venue or Log New
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={() => setIsVenueModalOpen(true)}
-                    className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
-                  >
-                    <Plus className="mr-1 size-3" /> Quick Add Venue
-                  </button>
-                </div>
-                <select
-                  id="venue-select"
-                  value={selectedVenueId}
-                  onChange={(e) => handleVenueSelect(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
+                <Label
+                  htmlFor="event-location"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  <option value="custom">Custom Venue / Manual Input</option>
-                  {venues.map((v) => (
-                    <option key={v.id} value={String(v.id)}>
-                      {v.name} ({v.city}, {v.state})
-                    </option>
-                  ))}
-                </select>
+                  City, State
+                </Label>
+                <Input
+                  id="event-location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Little Rock, AR"
+                />
               </div>
+            </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="event-venue"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Venue Name
-                  </Label>
-                  <Input
-                    id="event-venue"
-                    value={venue}
-                    onChange={(e) => setVenue(e.target.value)}
-                    placeholder="e.g. Arkansas Museum of Fine Arts"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="event-location"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    City, State
-                  </Label>
-                  <Input
-                    id="event-location"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Little Rock, AR"
-                  />
-                </div>
+            {/* Featured Artmakers Selection & Quick Create */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Featured Artmakers / Artists
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsArtmakerModalOpen(true)}
+                  className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
+                >
+                  <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
+                </button>
               </div>
-
-              {/* Featured Artmakers Selection & Quick Create */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    Featured Artmakers / Artists
-                  </Label>
-                  <button
-                    type="button"
-                    onClick={() => setIsArtmakerModalOpen(true)}
-                    className="inline-flex items-center text-xs text-[#7CFC00] hover:underline"
-                  >
-                    <UserPlus className="mr-1 size-3" /> Quick Add Artmaker
-                  </button>
-                </div>
-                <div className="max-h-36 overflow-y-auto rounded-lg border border-gray-800 bg-[#0A0A0A] p-3 space-y-2">
-                  {artmakers.map((am) => {
-                    const isSelected = selectedArtmakerIds.includes(am.id);
-                    return (
-                      <label
-                        key={am.id}
-                        className="flex items-center gap-2 cursor-pointer text-sm text-gray-300 hover:text-white"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedArtmakerIds((prev) => [...prev, am.id]);
-                            } else {
-                              setSelectedArtmakerIds((prev) => prev.filter((id) => id !== am.id));
-                            }
-                          }}
-                          className="size-4 rounded border-gray-800 bg-[#111111] text-[#7CFC00]"
-                        />
-                        <span>{am.name}</span>
-                        <span className="text-xs text-gray-500">({am.city})</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="event-date"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Date
-                  </Label>
-                  <Input
-                    id="event-date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="event-time"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Time
-                  </Label>
-                  <Input
-                    id="event-time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="7:00 PM"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="event-price"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Price
-                  </Label>
-                  <Input
-                    id="event-price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Free / $10"
-                  />
-                </div>
-              </div>
-
-              {/* Flyer / Image Upload */}
-              <ArtsImageUploader
-                label="Event Flyer / Image"
-                value={image}
-                onChange={setImage}
-                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              <MultiSelect
+                options={artmakers.map((artmaker) => ({
+                  label: `${artmaker.name} (${artmaker.city})`,
+                  value: artmaker.id,
+                }))}
+                selected={selectedArtmakerIds}
+                onChange={(next) => setSelectedArtmakerIds(next.map(Number))}
+                placeholder="Select featured artmakers"
+                emptyLabel="No artmakers yet — use Quick Add below"
               />
+            </div>
 
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label
-                  htmlFor="event-ticket"
+                  htmlFor="event-date"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Ticket Link (Optional)
+                  Date
                 </Label>
                 <Input
-                  id="event-ticket"
-                  value={ticketLink}
-                  onChange={(e) => setTicketLink(e.target.value)}
-                  placeholder="https://..."
+                  id="event-date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label
-                  htmlFor="event-desc"
+                  htmlFor="event-time"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Description
+                  Time
                 </Label>
-                <Textarea
-                  id="event-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the event, featured artists, and exhibition details..."
-                  rows={4}
+                <Input
+                  id="event-time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  placeholder="7:00 PM"
                 />
               </div>
-
-              <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="event-price"
+                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  {isSubmitting ? "Creating..." : "Save Event"}
-                </Button>
+                  Price
+                </Label>
+                <Input
+                  id="event-price"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="Free / $10"
+                />
               </div>
-            </form>
-          </div>
+            </div>
+
+            {/* Flyer / Image Upload */}
+            <ArtsImageUploader
+              label="Event Flyer / Image"
+              value={image}
+              onChange={setImage}
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            />
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="event-ticket"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Ticket Link (Optional)
+              </Label>
+              <Input
+                id="event-ticket"
+                value={ticketLink}
+                onChange={(e) => setTicketLink(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="event-desc"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Description
+              </Label>
+              <Textarea
+                id="event-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the event, featured artists, and exhibition details..."
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
+              <Button type="button" variant="outline" onClick={closeForm}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              >
+                {isSubmitting ? "Creating..." : "Save Event"}
+              </Button>
+            </div>
+          </form>
         </div>
       ) : null}
 
