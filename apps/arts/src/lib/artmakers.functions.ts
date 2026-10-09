@@ -1,6 +1,6 @@
 import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { db } from "@dpmedia/db";
-import { artmakers, artworks, users } from "@dpmedia/db/schema";
+import { artmakers, artworks, roleEnum, users } from "@dpmedia/db/schema";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq, ne, sql } from "drizzle-orm";
@@ -11,21 +11,47 @@ import {
   normalizeInstagramUsername,
 } from "#/lib/artmakers.ts";
 import type { ArtmakerListItem } from "#/lib/artmakers.ts";
+import {
+  getRolesFromMetadata,
+  hasArtsStaffRole,
+  isArtsStaffRole,
+  mergeArtsRole,
+} from "#/lib/roles.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl } from "#/lib/upload.ts";
+
+// Re-exported for existing role unit tests and call sites.
+export {
+  getRolesFromMetadata,
+  hasArtsStaffRole,
+  isArtsStaffRole,
+  mergeArtsRole,
+} from "#/lib/roles.ts";
+
+type DbUserRole = (typeof roleEnum.enumValues)[number];
+
+/**
+ * Map a Clerk role to the shared DB role enum. "admin" is a legacy web-app
+ * role with no value in the enum; super_admin is the equivalent superuser.
+ */
+function toDbUserRole(role: string): DbUserRole {
+  if (role === "admin") {
+    return "super_admin";
+  }
+
+  return (roleEnum.enumValues as readonly string[]).includes(role) ? (role as DbUserRole) : "fan";
+}
 
 const slugInputSchema = z.object({
   slug: z.string().min(1),
 });
 
-export function isArtsStaffRole(role: unknown) {
-  return (
-    role === "admin" || role === "arts_admin" || role === "arts_writer" || role === "super_admin"
-  );
-}
-
 function getSerializableRole(role: unknown) {
   return typeof role === "string" ? role : null;
+}
+
+function getPrimaryRole(metadata: { role?: unknown } | undefined) {
+  return getSerializableRole(metadata?.role);
 }
 
 function assertClerkServerConfigured() {
@@ -57,13 +83,15 @@ export const requireArtmakerDashboardUser = createServerFn({ method: "GET" }).ha
 
   const client = clerkClient();
   const user = await client.users.getUser(userId);
-  const role = user.publicMetadata.role;
+  const roles = getRolesFromMetadata(user.publicMetadata);
 
-  if (isArtsStaffRole(role)) {
+  // Staff-only users belong in the admin desk. Users who are both staff and
+  // artmakers get access to both areas, so don't force a redirect (issue #92).
+  if (hasArtsStaffRole(roles) && !roles.includes("artmaker")) {
     throw redirect({ to: "/admin" });
   }
 
-  return { role: getSerializableRole(role), userId };
+  return { roles, role: getPrimaryRole(user.publicMetadata), userId };
 });
 
 export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async () => {
@@ -77,14 +105,15 @@ export const requireArtsStaff = createServerFn({ method: "GET" }).handler(async 
 
   const client = clerkClient();
   const user = await client.users.getUser(userId);
-  const role = user.publicMetadata.role;
+  const roles = getRolesFromMetadata(user.publicMetadata);
 
-  if (!isArtsStaffRole(role)) {
+  if (!hasArtsStaffRole(roles)) {
     throw redirect({ to: "/dashboard" });
   }
 
   return {
-    role: getSerializableRole(role),
+    roles,
+    role: getPrimaryRole(user.publicMetadata),
     userId,
   };
 });
@@ -250,6 +279,12 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
         (emailAddress) => emailAddress.id === clerkUser.primaryEmailAddressId,
       )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
 
+    // Staff members onboarding as artmakers keep their staff role as the
+    // primary role so admin tooling and legacy checks stay intact (#92).
+    const existingRoles = getRolesFromMetadata(clerkUser.publicMetadata);
+    const roles = mergeArtsRole(existingRoles, "artmaker");
+    const primaryRole = existingRoles.find((role) => isArtsStaffRole(role)) ?? "artmaker";
+
     if (primaryEmail) {
       await db
         .insert(users)
@@ -260,7 +295,7 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
           imageUrl: clerkUser.imageUrl,
           lastName: clerkUser.lastName,
           onboardingComplete: true,
-          role: "artmaker",
+          role: toDbUserRole(primaryRole),
         })
         .onConflictDoUpdate({
           set: {
@@ -269,7 +304,7 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
             imageUrl: clerkUser.imageUrl,
             lastName: clerkUser.lastName,
             onboardingComplete: true,
-            role: "artmaker",
+            role: toDbUserRole(primaryRole),
             updatedAt: new Date(),
           },
           target: users.clerkId,
@@ -288,7 +323,8 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
           ...clerkUser.publicMetadata,
           artmakerId: updated.id,
           onboardingComplete: true,
-          role: "artmaker",
+          role: primaryRole,
+          roles,
         },
       });
 
@@ -302,7 +338,8 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
         ...clerkUser.publicMetadata,
         artmakerId: created.id,
         onboardingComplete: true,
-        role: "artmaker",
+        role: primaryRole,
+        roles,
       },
     });
 
@@ -331,6 +368,10 @@ export const saveFanOnboarding = createServerFn({ method: "POST" })
       throw new Error("A verified email is required to finish onboarding.");
     }
 
+    const existingRoles = getRolesFromMetadata(clerkUser.publicMetadata);
+    const roles = mergeArtsRole(existingRoles, "fan");
+    const primaryRole = existingRoles.find((role) => isArtsStaffRole(role)) ?? "fan";
+
     await db
       .insert(users)
       .values({
@@ -340,7 +381,7 @@ export const saveFanOnboarding = createServerFn({ method: "POST" })
         imageUrl: clerkUser.imageUrl,
         lastName: clerkUser.lastName,
         onboardingComplete: true,
-        role: "fan",
+        role: toDbUserRole(primaryRole),
       })
       .onConflictDoUpdate({
         set: {
@@ -349,7 +390,7 @@ export const saveFanOnboarding = createServerFn({ method: "POST" })
           imageUrl: clerkUser.imageUrl,
           lastName: clerkUser.lastName,
           onboardingComplete: true,
-          role: "fan",
+          role: toDbUserRole(primaryRole),
           updatedAt: new Date(),
         },
         target: users.clerkId,
@@ -359,7 +400,8 @@ export const saveFanOnboarding = createServerFn({ method: "POST" })
       publicMetadata: {
         ...clerkUser.publicMetadata,
         onboardingComplete: true,
-        role: "fan",
+        role: primaryRole,
+        roles,
       },
     });
 

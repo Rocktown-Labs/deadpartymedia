@@ -5,6 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { getRolesFromMetadata, mergeArtsRole } from "#/lib/roles.ts";
 
 export function isArtsAdminRole(role: unknown) {
   return role === "admin" || role === "super_admin" || role === "arts_admin";
@@ -19,8 +20,10 @@ async function requireArtsAdmin() {
 
   const client = clerkClient();
   const user = await client.users.getUser(userId);
+  const roles = getRolesFromMetadata(user.publicMetadata);
+  const isAdminRole = roles.some((role) => isArtsAdminRole(role));
 
-  if (!isArtsAdminRole(user.publicMetadata.role)) {
+  if (!isAdminRole) {
     throw new Error(
       "Unauthorized: Only arts admins or super admins can manage staff and invitations",
     );
@@ -216,11 +219,18 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
       data.role === "super_admin" ||
       data.role === "writer";
 
+    // Merge the new role into the user's role list. Replacing a staff role
+    // keeps the user's audience role (artmaker/fan), and vice versa, so
+    // promoting an artmaker to admin doesn't strip their artist access (#92).
+    const existingRoles = getRolesFromMetadata(clerkUser.publicMetadata);
+    const roles = mergeArtsRole(existingRoles, data.role);
+
     await client.users.updateUserMetadata(targetUser.clerkId, {
       publicMetadata: {
         ...clerkUser.publicMetadata,
         onboardingComplete,
         role: data.role,
+        roles,
       },
     });
 

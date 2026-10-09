@@ -35,6 +35,7 @@ import {
   getUploadedObjectKey,
 } from "#/lib/artwork-drafts.ts";
 import { saveArtwork } from "#/lib/artworks.functions.ts";
+import { getRolesFromMetadata } from "#/lib/roles.ts";
 import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 
 const STEPS = [
@@ -67,11 +68,11 @@ function Onboarding() {
   const saveFan = useServerFn(saveFanOnboarding);
   const saveArt = useServerFn(saveArtwork);
   const navigate = useNavigate();
-  const existingRole = user?.publicMetadata?.role;
+  const existingRoles = getRolesFromMetadata(user?.publicMetadata);
   const [selectedRole, setSelectedRole] = useState<"fan" | "artmaker" | null>(
-    currentArtmaker || existingRole === "artmaker"
+    currentArtmaker || existingRoles.includes("artmaker")
       ? "artmaker"
-      : existingRole === "fan"
+      : existingRoles.includes("fan")
         ? "fan"
         : null,
   );
