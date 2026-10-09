@@ -86,7 +86,7 @@ function VenueCell({
         className={cn(
           "font-semibold text-left transition-colors cursor-pointer sm:cursor-default line-clamp-1",
           isPast
-            ? "text-zinc-500 line-through"
+            ? "text-zinc-400 line-through"
             : "text-zinc-200 hover:text-[#7CFC00] sm:hover:text-zinc-200",
         )}
         title={location ? (showAddress ? "Tap to hide address" : "Tap to view address") : venue}
@@ -96,11 +96,11 @@ function VenueCell({
       {location && (
         <div
           className={cn(
-            "items-center gap-1 text-[11px] text-zinc-500 mt-0.5 transition-all",
+            "items-center gap-1 text-[11px] text-zinc-400 mt-0.5 transition-all",
             showAddress ? "flex" : "hidden sm:flex",
           )}
         >
-          <MapPin className="w-3 h-3 shrink-0 text-[#7CFC00] sm:text-zinc-500" />
+          <MapPin className="w-3 h-3 shrink-0 text-[#7CFC00] sm:text-zinc-400" />
           <span className="truncate">{location}</span>
         </div>
       )}
@@ -167,7 +167,7 @@ export function ShowsTable({
                 className={cn(
                   "flex flex-col items-center justify-center rounded px-2 py-1 min-w-[50px] border text-center transition-colors",
                   isPast
-                    ? "bg-zinc-900/60 border-zinc-800 text-zinc-500"
+                    ? "bg-zinc-900/60 border-zinc-800 text-zinc-400"
                     : isToday
                       ? "bg-[#7CFC00] border-[#7CFC00] text-black font-black"
                       : "bg-zinc-900 border-zinc-700 text-white",
@@ -188,7 +188,7 @@ export function ShowsTable({
                   {d.weekday}
                 </span>
                 {isPast ? (
-                  <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-widest">
+                  <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest">
                     PAST
                   </span>
                 ) : isToday ? (
@@ -223,6 +223,7 @@ export function ShowsTable({
                   src={item.image || "/placeholder.svg"}
                   alt={item.title}
                   fill
+                  sizes="48px"
                   className={cn(
                     "object-cover transition-transform group-hover:scale-105",
                     isPast && "grayscale opacity-50",
@@ -246,7 +247,7 @@ export function ShowsTable({
                   <>
                     {/* Mobile: shorten long list so it does ... */}
                     <div className="flex sm:hidden items-center gap-1 mt-0.5 min-w-0 max-w-[190px] xs:max-w-[240px]">
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider shrink-0">
+                      <span className="text-[10px] text-zinc-400 uppercase tracking-wider shrink-0">
                         w/
                       </span>
                       <div className="text-[11px] text-zinc-400 truncate">
@@ -258,7 +259,7 @@ export function ShowsTable({
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
                                   "hover:underline",
-                                  isPast ? "text-zinc-500" : "text-zinc-300 hover:text-[#7CFC00]",
+                                  isPast ? "text-zinc-400" : "text-zinc-300 hover:text-[#7CFC00]",
                                 )}
                               >
                                 {artist.name}
@@ -272,14 +273,14 @@ export function ShowsTable({
                           </span>
                         ))}
                         {item.artists.length > 2 && (
-                          <span className="text-zinc-500 font-mono ml-0.5">...</span>
+                          <span className="text-zinc-400 font-mono ml-0.5">...</span>
                         )}
                       </div>
                     </div>
 
                     {/* Desktop: multi-chip list with clickable artist links */}
                     <div className="hidden sm:flex flex-wrap items-center gap-1 mt-0.5">
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">w/</span>
+                      <span className="text-[10px] text-zinc-400 uppercase tracking-wider">w/</span>
                       {item.artists.slice(0, 4).map((artist, idx) => (
                         <span key={artist.id ?? idx} className="text-[11px]">
                           {artist.slug ? (
@@ -287,16 +288,16 @@ export function ShowsTable({
                               href={`/artists/${artist.slug}`}
                               onClick={(e) => e.stopPropagation()}
                               className={cn(
-                                "hover:underline font-medium",
+                                "inline-block py-1 hover:underline font-medium",
                                 isPast
-                                  ? "text-zinc-500 hover:text-zinc-300"
+                                  ? "text-zinc-400 hover:text-zinc-300"
                                   : "text-zinc-300 hover:text-[#7CFC00]",
                               )}
                             >
                               {artist.name}
                             </Link>
                           ) : (
-                            <span className={isPast ? "text-zinc-500" : "text-zinc-400"}>
+                            <span className={isPast ? "text-zinc-400" : "text-zinc-400"}>
                               {artist.name}
                             </span>
                           )}
@@ -306,7 +307,7 @@ export function ShowsTable({
                         </span>
                       ))}
                       {item.artists.length > 4 && (
-                        <span className="text-[11px] text-zinc-500 font-mono">...</span>
+                        <span className="text-[11px] text-zinc-400 font-mono">...</span>
                       )}
                     </div>
                   </>
@@ -362,7 +363,8 @@ export function ShowsTable({
               <div className="py-1 text-right">
                 <Link
                   href={`/events/${item.slug}`}
-                  className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-zinc-500 hover:text-white px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-600 transition-colors"
+                  aria-label={`Details for ${item.title}`}
+                  className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-600 transition-colors"
                 >
                   <History className="w-3 h-3 mr-1" />
                   Details
@@ -392,6 +394,7 @@ export function ShowsTable({
             <div className="py-1 text-right">
               <Link
                 href={`/events/${item.slug}`}
+                aria-label={`View ${item.title}`}
                 className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider border border-[#7CFC00]/50 text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black px-2.5 sm:px-3 py-1 rounded transition-colors"
               >
                 View
@@ -475,7 +478,7 @@ export function ShowsTable({
 
           {/* Search Input */}
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input
               type="text"
               value={globalFilter ?? ""}
@@ -499,7 +502,7 @@ export function ShowsTable({
       {/* Genre Pills */}
       {showFilters && (
         <div className="px-4 py-2 bg-zinc-950/40 border-b border-zinc-800/40 flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold">
-          <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[10px]">Genre:</span>
+          <span className="text-zinc-400 uppercase tracking-widest mr-1 text-[10px]">Genre:</span>
           {genres.map((genre) => (
             <button
               key={genre}
@@ -565,7 +568,7 @@ export function ShowsTable({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="h-32 text-center text-zinc-500 text-sm font-medium"
+                  className="h-32 text-center text-zinc-400 text-sm font-medium"
                 >
                   No shows match your current filters.
                 </td>
