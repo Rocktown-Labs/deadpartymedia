@@ -2,6 +2,21 @@ import { handleRequest, route, type Router } from "@better-upload/server";
 import { cloudflare } from "@better-upload/server/clients";
 import { createFileRoute } from "@tanstack/react-router";
 
+// Image types accepted across arts upload routes. PDFs are accepted on the
+// artwork route because artists routinely upload portfolio documents.
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+const ARTWORK_TYPES = [...IMAGE_TYPES, "application/pdf"];
+
+// The browser builds public image URLs from this base. It is delivered through
+// the upload response metadata because client bundles cannot read
+// process.env at runtime and build-time VITE_ inlining has proven unreliable
+// (see issue #90): the server always has the runtime value.
+function getPublicBaseUrlMetadata() {
+  const publicBaseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL?.replace(/\/$/, "");
+
+  return publicBaseUrl ? { publicBaseUrl } : {};
+}
+
 function requireR2Router(): Router {
   const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
@@ -23,10 +38,13 @@ function requireR2Router(): Router {
     }),
     routes: {
       artwork: route({
-        fileTypes: ["image/*"],
+        fileTypes: ARTWORK_TYPES,
         maxFileSize: 1024 * 1024 * 12,
         maxFiles: 12,
         multipleFiles: true,
+        onAfterSignedUrl() {
+          return { metadata: getPublicBaseUrlMetadata() };
+        },
         onBeforeUpload() {
           return {
             generateObjectInfo: ({ file }) => {
@@ -42,10 +60,13 @@ function requireR2Router(): Router {
         },
       }),
       profileImages: route({
-        fileTypes: ["image/*"],
+        fileTypes: IMAGE_TYPES,
         maxFileSize: 1024 * 1024 * 8,
         maxFiles: 1,
         multipleFiles: false,
+        onAfterSignedUrl() {
+          return { metadata: getPublicBaseUrlMetadata() };
+        },
         onBeforeUpload() {
           return {
             generateObjectInfo: ({ file }) => {
@@ -61,10 +82,13 @@ function requireR2Router(): Router {
         },
       }),
       articleImages: route({
-        fileTypes: ["image/*"],
+        fileTypes: IMAGE_TYPES,
         maxFileSize: 1024 * 1024 * 12,
         maxFiles: 6,
         multipleFiles: true,
+        onAfterSignedUrl() {
+          return { metadata: getPublicBaseUrlMetadata() };
+        },
         onBeforeUpload() {
           return {
             generateObjectInfo: ({ file }) => {
@@ -80,10 +104,13 @@ function requireR2Router(): Router {
         },
       }),
       eventFlyers: route({
-        fileTypes: ["image/*"],
+        fileTypes: IMAGE_TYPES,
         maxFileSize: 1024 * 1024 * 12,
         maxFiles: 6,
         multipleFiles: true,
+        onAfterSignedUrl() {
+          return { metadata: getPublicBaseUrlMetadata() };
+        },
         onBeforeUpload() {
           return {
             generateObjectInfo: ({ file }) => {

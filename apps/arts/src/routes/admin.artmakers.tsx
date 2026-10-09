@@ -366,7 +366,12 @@ function AdminArtmakers() {
                 </div>
               </div>
 
-              <ArtsImageUploader label="Profile / Avatar Image" value={image} onChange={setImage} />
+              <ArtsImageUploader
+                label="Profile / Avatar Image"
+                value={image}
+                onChange={setImage}
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              />
 
               <div className="space-y-2">
                 <Label
