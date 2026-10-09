@@ -9,53 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as ExhibitionsRouteImport } from './routes/exhibitions'
-import { Route as EventsRouteImport } from './routes/events'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as ArticlesRouteImport } from './routes/articles'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MerchIndexRouteImport } from './routes/merch.index'
-import { Route as ArtmakersIndexRouteImport } from './routes/artmakers.index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ArticlesRouteImport } from './routes/articles'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EventsRouteImport } from './routes/events'
+import { Route as ExhibitionsRouteImport } from './routes/exhibitions'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
-import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
-import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
-import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
-import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
-import { Route as ApiUploadRouteImport } from './routes/api.upload'
-import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminExhibitionsRouteImport } from './routes/admin.exhibitions'
-import { Route as AdminEventsRouteImport } from './routes/admin.events'
-import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
 import { Route as AdminArticlesRouteImport } from './routes/admin.articles'
+import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminExhibitionsRouteImport } from './routes/admin.exhibitions'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
+import { Route as ApiUploadRouteImport } from './routes/api.upload'
+import { Route as ArtmakersIndexRouteImport } from './routes/artmakers.index'
+import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
+import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
+import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
+import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
+import { Route as MerchIndexRouteImport } from './routes/merch.index'
+import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
 import { Route as ArtmakersSlugGalleryRouteImport } from './routes/artmakers.$slug.gallery'
 
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExhibitionsRoute = ExhibitionsRouteImport.update({
-  id: '/exhibitions',
-  path: '/exhibitions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventsRoute = EventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ArticlesRoute = ArticlesRouteImport.update({
-  id: '/articles',
-  path: '/articles',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -63,19 +43,29 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ArticlesRoute = ArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MerchIndexRoute = MerchIndexRouteImport.update({
-  id: '/merch/',
-  path: '/merch/',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ArtmakersIndexRoute = ArtmakersIndexRouteImport.update({
-  id: '/artmakers/',
-  path: '/artmakers/',
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExhibitionsRoute = ExhibitionsRouteImport.update({
+  id: '/exhibitions',
+  path: '/exhibitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -83,54 +73,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const MerchHandleRoute = MerchHandleRouteImport.update({
-  id: '/merch/$handle',
-  path: '/merch/$handle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardProfileRoute = DashboardProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardEventsRoute = DashboardEventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardArtworksRoute = DashboardArtworksRouteImport.update({
-  id: '/artworks',
-  path: '/artworks',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
-  id: '/artmakers/$slug',
-  path: '/artmakers/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiUploadRoute = ApiUploadRouteImport.update({
-  id: '/api/upload',
-  path: '/api/upload',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminVenuesRoute = AdminVenuesRouteImport.update({
-  id: '/venues',
-  path: '/venues',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminExhibitionsRoute = AdminExhibitionsRouteImport.update({
-  id: '/exhibitions',
-  path: '/exhibitions',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEventsRoute = AdminEventsRouteImport.update({
-  id: '/events',
-  path: '/events',
+const AdminArticlesRoute = AdminArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminArtmakersRoute = AdminArtmakersRouteImport.update({
@@ -138,10 +83,65 @@ const AdminArtmakersRoute = AdminArtmakersRouteImport.update({
   path: '/artmakers',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminArticlesRoute = AdminArticlesRouteImport.update({
-  id: '/articles',
-  path: '/articles',
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminExhibitionsRoute = AdminExhibitionsRouteImport.update({
+  id: '/exhibitions',
+  path: '/exhibitions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVenuesRoute = AdminVenuesRouteImport.update({
+  id: '/venues',
+  path: '/venues',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiUploadRoute = ApiUploadRouteImport.update({
+  id: '/api/upload',
+  path: '/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtmakersIndexRoute = ArtmakersIndexRouteImport.update({
+  id: '/artmakers/',
+  path: '/artmakers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
+  id: '/artmakers/$slug',
+  path: '/artmakers/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardArtworksRoute = DashboardArtworksRouteImport.update({
+  id: '/artworks',
+  path: '/artworks',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEventsRoute = DashboardEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProfileRoute = DashboardProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const MerchIndexRoute = MerchIndexRouteImport.update({
+  id: '/merch/',
+  path: '/merch/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchHandleRoute = MerchHandleRouteImport.update({
+  id: '/merch/$handle',
+  path: '/merch/$handle',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ArtmakersSlugGalleryRoute = ArtmakersSlugGalleryRouteImport.update({
   id: '/gallery',
@@ -318,39 +318,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/exhibitions': {
-      id: '/exhibitions'
-      path: '/exhibitions'
-      fullPath: '/exhibitions'
-      preLoaderRoute: typeof ExhibitionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/events': {
-      id: '/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof EventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/articles': {
-      id: '/articles'
-      path: '/articles'
-      fullPath: '/articles'
-      preLoaderRoute: typeof ArticlesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -360,25 +332,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/articles': {
+      id: '/articles'
+      path: '/articles'
+      fullPath: '/articles'
+      preLoaderRoute: typeof ArticlesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/merch/': {
-      id: '/merch/'
-      path: '/merch'
-      fullPath: '/merch/'
-      preLoaderRoute: typeof MerchIndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/artmakers/': {
-      id: '/artmakers/'
-      path: '/artmakers'
-      fullPath: '/artmakers/'
-      preLoaderRoute: typeof ArtmakersIndexRouteImport
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exhibitions': {
+      id: '/exhibitions'
+      path: '/exhibitions'
+      fullPath: '/exhibitions'
+      preLoaderRoute: typeof ExhibitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -388,74 +374,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/merch/$handle': {
-      id: '/merch/$handle'
-      path: '/merch/$handle'
-      fullPath: '/merch/$handle'
-      preLoaderRoute: typeof MerchHandleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/profile': {
-      id: '/dashboard/profile'
-      path: '/profile'
-      fullPath: '/dashboard/profile'
-      preLoaderRoute: typeof DashboardProfileRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/events': {
-      id: '/dashboard/events'
-      path: '/events'
-      fullPath: '/dashboard/events'
-      preLoaderRoute: typeof DashboardEventsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/artworks': {
-      id: '/dashboard/artworks'
-      path: '/artworks'
-      fullPath: '/dashboard/artworks'
-      preLoaderRoute: typeof DashboardArtworksRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/artmakers/$slug': {
-      id: '/artmakers/$slug'
-      path: '/artmakers/$slug'
-      fullPath: '/artmakers/$slug'
-      preLoaderRoute: typeof ArtmakersSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/upload': {
-      id: '/api/upload'
-      path: '/api/upload'
-      fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/venues': {
-      id: '/admin/venues'
-      path: '/venues'
-      fullPath: '/admin/venues'
-      preLoaderRoute: typeof AdminVenuesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/exhibitions': {
-      id: '/admin/exhibitions'
-      path: '/exhibitions'
-      fullPath: '/admin/exhibitions'
-      preLoaderRoute: typeof AdminExhibitionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/events': {
-      id: '/admin/events'
-      path: '/events'
-      fullPath: '/admin/events'
-      preLoaderRoute: typeof AdminEventsRouteImport
+    '/admin/articles': {
+      id: '/admin/articles'
+      path: '/articles'
+      fullPath: '/admin/articles'
+      preLoaderRoute: typeof AdminArticlesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/artmakers': {
@@ -465,12 +388,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArtmakersRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/articles': {
-      id: '/admin/articles'
-      path: '/articles'
-      fullPath: '/admin/articles'
-      preLoaderRoute: typeof AdminArticlesRouteImport
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/admin/exhibitions': {
+      id: '/admin/exhibitions'
+      path: '/exhibitions'
+      fullPath: '/admin/exhibitions'
+      preLoaderRoute: typeof AdminExhibitionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/venues': {
+      id: '/admin/venues'
+      path: '/venues'
+      fullPath: '/admin/venues'
+      preLoaderRoute: typeof AdminVenuesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/upload': {
+      id: '/api/upload'
+      path: '/api/upload'
+      fullPath: '/api/upload'
+      preLoaderRoute: typeof ApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artmakers/': {
+      id: '/artmakers/'
+      path: '/artmakers'
+      fullPath: '/artmakers/'
+      preLoaderRoute: typeof ArtmakersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artmakers/$slug': {
+      id: '/artmakers/$slug'
+      path: '/artmakers/$slug'
+      fullPath: '/artmakers/$slug'
+      preLoaderRoute: typeof ArtmakersSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/artworks': {
+      id: '/dashboard/artworks'
+      path: '/artworks'
+      fullPath: '/dashboard/artworks'
+      preLoaderRoute: typeof DashboardArtworksRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/events': {
+      id: '/dashboard/events'
+      path: '/events'
+      fullPath: '/dashboard/events'
+      preLoaderRoute: typeof DashboardEventsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/profile': {
+      id: '/dashboard/profile'
+      path: '/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/merch/': {
+      id: '/merch/'
+      path: '/merch'
+      fullPath: '/merch/'
+      preLoaderRoute: typeof MerchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merch/$handle': {
+      id: '/merch/$handle'
+      path: '/merch/$handle'
+      fullPath: '/merch/$handle'
+      preLoaderRoute: typeof MerchHandleRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/artmakers/$slug/gallery': {
       id: '/artmakers/$slug/gallery'

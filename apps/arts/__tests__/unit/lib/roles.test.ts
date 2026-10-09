@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 import { isArtsAdminRole } from "#/lib/admin.functions.ts";
-import { isArtsStaffRole } from "#/lib/artmakers.functions.ts";
+import {
+  getRolesFromMetadata,
+  hasArtsStaffRole,
+  isArtsStaffRole,
+  mergeArtsRole,
+} from "#/lib/artmakers.functions.ts";
 
 describe("Arts Role & Access Control Rules", () => {
   describe("isArtsStaffRole", () => {
@@ -32,6 +37,46 @@ describe("Arts Role & Access Control Rules", () => {
       expect(isArtsAdminRole("fan")).toBe(false);
       expect(isArtsAdminRole("artist")).toBe(false);
       expect(isArtsAdminRole("writer")).toBe(false);
+    });
+  });
+
+  describe("getRolesFromMetadata", () => {
+    it("should read the roles array and legacy single role", () => {
+      expect(
+        getRolesFromMetadata({ roles: ["artmaker", "arts_admin"], role: "arts_admin" }),
+      ).toEqual(["artmaker", "arts_admin"]);
+      expect(getRolesFromMetadata({ role: "artmaker" })).toEqual(["artmaker"]);
+      expect(getRolesFromMetadata({})).toEqual([]);
+      expect(getRolesFromMetadata(null)).toEqual([]);
+    });
+  });
+
+  describe("hasArtsStaffRole", () => {
+    it("should detect staff membership across the roles array", () => {
+      expect(hasArtsStaffRole(["artmaker", "arts_admin"])).toBe(true);
+      expect(hasArtsStaffRole(["artmaker"])).toBe(false);
+      expect(hasArtsStaffRole([])).toBe(false);
+    });
+  });
+
+  describe("mergeArtsRole", () => {
+    it("should keep the audience role when granting a staff role", () => {
+      expect(mergeArtsRole(["artmaker"], "arts_admin")).toEqual(["arts_admin", "artmaker"]);
+    });
+
+    it("should keep the staff role when onboarding as an artmaker", () => {
+      expect(mergeArtsRole(["arts_admin"], "artmaker")).toEqual(["artmaker", "arts_admin"]);
+    });
+
+    it("should replace the audience role when switching to fan", () => {
+      expect(mergeArtsRole(["artmaker", "arts_admin"], "fan")).toEqual(["fan", "arts_admin"]);
+    });
+
+    it("should replace an existing staff role without stacking both", () => {
+      expect(mergeArtsRole(["arts_admin", "artmaker"], "arts_writer")).toEqual([
+        "arts_writer",
+        "artmaker",
+      ]);
     });
   });
 });

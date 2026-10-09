@@ -1,6 +1,8 @@
+import { useUser } from "@clerk/tanstack-react-start";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { BadgeCheck, CalendarDays, Images, LayoutDashboard, Settings } from "lucide-react";
+import { BadgeCheck, CalendarDays, Images, LayoutDashboard, Settings, Shield } from "lucide-react";
+import { getRolesFromMetadata, hasArtsStaffRole } from "#/lib/roles.ts";
 
 interface ArtmakerDashboardShellProps {
   children: React.ReactNode;
@@ -28,6 +30,9 @@ function isActiveRoute(pathname: string, href: NavItem["href"]) {
 
 export function ArtmakerDashboardShell({ children }: ArtmakerDashboardShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
+  const { user } = useUser();
+  const roles = getRolesFromMetadata(user?.publicMetadata);
+  const isStaff = hasArtsStaffRole(roles);
 
   return (
     <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
@@ -67,6 +72,15 @@ export function ArtmakerDashboardShell({ children }: ArtmakerDashboardShellProps
                   </Link>
                 );
               })}
+              {isStaff ? (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-3 rounded-md border border-transparent px-3 py-3 text-sm no-underline text-gray-300 transition-colors hover:bg-[#1A1A1A] hover:text-white"
+                >
+                  <Shield className="size-4" />
+                  <span>Admin desk</span>
+                </Link>
+              ) : null}
             </nav>
           </div>
         </aside>
