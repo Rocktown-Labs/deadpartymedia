@@ -103,7 +103,7 @@ export default function HomepageClient({
             <h2 className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-[#7CFC00]">
               Featured Spotlight
             </h2>
-            <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">
               Arkansas Independent Music &amp; Scene Coverage
             </span>
           </div>
@@ -171,7 +171,7 @@ export default function HomepageClient({
               <p className="mb-2 text-xs font-mono font-bold uppercase tracking-[0.2em] text-[#7CFC00]">
                 {hasArticlesError ? "Coverage temporarily offline" : "Stories coming soon"}
               </p>
-              <p className="max-w-md text-sm text-zinc-500">
+              <p className="max-w-md text-sm text-zinc-400">
                 {hasArticlesError
                   ? "We couldn't load the latest stories. Please check back shortly."
                   : "New Arkansas music stories are on the way. Check back soon."}
@@ -206,16 +206,16 @@ export default function HomepageClient({
 
                     <div className="p-5 flex flex-col flex-1 justify-between">
                       <div>
-                        <h3 className="font-bold text-base sm:text-lg text-white group-hover:text-[#7CFC00] transition-colors line-clamp-2 mb-2 leading-snug">
+                        <h2 className="font-bold text-base sm:text-lg text-white group-hover:text-[#7CFC00] transition-colors line-clamp-2 mb-2 leading-snug">
                           {article.title}
-                        </h3>
+                        </h2>
                         <p className="text-xs sm:text-sm text-zinc-400 line-clamp-2 leading-relaxed mb-4">
                           {article.excerpt}
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between text-xs font-mono pt-3 border-t border-zinc-800/60">
-                        <span className="text-zinc-500 truncate">
+                        <span className="text-zinc-400 truncate">
                           By {article.author || "Staff"}
                         </span>
                         <span className="text-[#7CFC00] font-bold shrink-0 flex items-center gap-1 group-hover:underline">
@@ -287,7 +287,7 @@ export default function HomepageClient({
           )}
 
           {/* Subtext and Quick Actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-zinc-500 pt-3 px-1">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-zinc-400 pt-3 px-1">
             <span>
               Shows listed recent to least •{" "}
               <span className="line-through text-zinc-600">Crossed out</span> = Past events
@@ -335,7 +335,7 @@ export default function HomepageClient({
                 Interviews, show reviews, artist spotlights, and underground scene commentary.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-zinc-500">
+            <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
               <Link href="/hardcore" className="hover:text-[#7CFC00] transition-colors">
                 Hardcore
               </Link>

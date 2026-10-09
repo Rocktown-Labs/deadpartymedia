@@ -84,11 +84,18 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark">
+      <head>
+        <link rel="preconnect" href="https://clerk.deadpartymedia.com" />
+        <link rel="preconnect" href="https://img.clerk.com" />
+        <link rel="preconnect" href="https://uqzzcjms8tqaey09.public.blob.vercel-storage.com" />
+      </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         <Providers>
           <CartProvider cartPromise={cart}>
             <Navbar />
-            <div className="pb-16 lg:pb-0">{children}</div>
+            <main id="main" className="pb-16 lg:pb-0">
+              {children}
+            </main>
             <div className="pb-16 lg:pb-0">
               <Footer />
             </div>

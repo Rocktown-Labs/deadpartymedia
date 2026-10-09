@@ -63,6 +63,57 @@ const nextConfig: NextConfig = {
   },
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
+  async headers() {
+    // Security hardening flagged by Lighthouse best practices. The CSP allows
+    // Next.js inline bootstrap scripts and the third parties the site loads:
+    // Clerk auth, Sentry, PostHog, Fourthwall merch, and Spotify artwork.
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.deadpartymedia.com https://*.ingest.us.sentry.io https://us-assets.i.posthog.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://img.clerk.com https://*.public.blob.vercel-storage.com https://*.fourthwall.com https://*.fourthwall.dev https://i.scdn.co https://*.ingest.us.sentry.io",
+      "font-src 'self' data:",
+      "connect-src 'self' https://clerk.deadpartymedia.com https://*.ingest.us.sentry.io https://us.i.posthog.com https://us-assets.i.posthog.com https://api.fourthwall.com wss://clerk.deadpartymedia.com",
+      "frame-src 'self' https://clerk.deadpartymedia.com https://www.fourthwall.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: csp,
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 const sentryConfig = withSentryConfig(nextConfig, {
