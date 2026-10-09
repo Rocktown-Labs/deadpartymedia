@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
 import { Instagram, MapPin, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
@@ -76,20 +77,37 @@ function Artmakers() {
                 className="group rounded-xl border border-gray-800 bg-[#101010] p-5 no-underline transition-colors hover:border-[#7CFC00]"
               >
                 <div className="flex min-h-40 flex-col justify-between">
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <h2 className="font-black text-2xl text-white tracking-tight group-hover:text-[#7CFC00]">
-                        {artmaker.name}
-                      </h2>
-                      <Instagram className="size-5 text-neutral-500" />
+                  <div className="flex gap-4">
+                    <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-md border border-gray-800 bg-black">
+                      {artmaker.image ? (
+                        <Image
+                          src={artmaker.image}
+                          alt={artmaker.name}
+                          width={160}
+                          height={160}
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-black text-3xl text-[#7CFC00]">
+                          {artmaker.name.slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
                     </div>
-                    <p className="mt-3 flex items-center gap-2 text-neutral-400 text-sm">
-                      <MapPin className="size-4" />
-                      {artmaker.city}, {artmaker.state}
-                    </p>
-                    {artmaker.showPronouns && artmaker.pronouns ? (
-                      <p className="mt-2 text-neutral-500 text-sm">{artmaker.pronouns}</p>
-                    ) : null}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <h2 className="font-black text-2xl text-white tracking-tight group-hover:text-[#7CFC00]">
+                          {artmaker.name}
+                        </h2>
+                        <Instagram className="size-5 shrink-0 text-neutral-500" />
+                      </div>
+                      <p className="mt-3 flex items-center gap-2 text-neutral-400 text-sm">
+                        <MapPin className="size-4" />
+                        {artmaker.city}, {artmaker.state}
+                      </p>
+                      {artmaker.showPronouns && artmaker.pronouns ? (
+                        <p className="mt-2 text-neutral-500 text-sm">{artmaker.pronouns}</p>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="mt-5 flex flex-wrap gap-2">
                     {artmaker.medium.slice(0, 5).map((medium) => (
