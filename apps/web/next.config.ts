@@ -70,6 +70,7 @@ const nextConfig: NextConfig = {
     const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.deadpartymedia.com https://*.ingest.us.sentry.io https://us-assets.i.posthog.com",
+      "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://img.clerk.com https://*.public.blob.vercel-storage.com https://*.fourthwall.com https://*.fourthwall.dev https://i.scdn.co https://*.ingest.us.sentry.io",
       "font-src 'self' data:",

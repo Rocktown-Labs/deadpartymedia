@@ -79,7 +79,7 @@ export default function Footer() {
                   <div className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-gray-800 group-hover:border-[#7CFC00] flex items-center justify-center transition-all duration-300">
                     <social.Icon className="w-7 h-7 text-gray-400 group-hover:text-[#7CFC00] transition-colors" />
                   </div>
-                  <span className="text-xs uppercase tracking-wider text-gray-500 group-hover:text-[#7CFC00] font-medium transition-colors">
+                  <span className="text-xs uppercase tracking-wider text-gray-400 group-hover:text-[#7CFC00] font-medium transition-colors">
                     {social.name}
                   </span>
                 </a>
