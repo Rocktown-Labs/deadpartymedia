@@ -3,12 +3,13 @@ import { Loader2, UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "#/components/ui/input.tsx";
-import { getPublicUploadUrl } from "#/lib/upload.ts";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 
 interface ArtsImageUploaderProps {
   label?: string;
   onChange: (url: string) => void;
   value: string;
+  accept?: string;
 }
 
 function getUploadedKey(candidate: Record<string, unknown>): string {
@@ -21,10 +22,13 @@ export function ArtsImageUploader({
   label = "Image / Photo",
   onChange,
   value,
+  accept = "image/jpeg,image/png,image/webp,image/gif,image/avif,application/pdf",
 }: ArtsImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isUrlMode, setIsUrlMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadProgressRef = useRef(new Map<string, number>());
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,11 +37,29 @@ export function ArtsImageUploader({
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    uploadProgressRef.current.clear();
+
     try {
       const result = await uploadFiles({
         files: [file],
         route: "artwork",
+        onFileStateChange: ({ file: state }) => {
+          const key = state.objectInfo?.key;
+
+          if (key) {
+            uploadProgressRef.current.set(
+              key,
+              state.status === "complete" ? 1 : (state.progress ?? 0),
+            );
+            setUploadProgress(state.progress ?? 0);
+          }
+        },
       });
+
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
 
       const uploadedFiles = (result.files ?? []) as Record<string, unknown>[];
       const firstFile = uploadedFiles[0];
@@ -47,7 +69,9 @@ export function ArtsImageUploader({
       }
 
       const key = getUploadedKey(firstFile);
-      const url = key ? getPublicUploadUrl(key) : (firstFile.url as string) || "";
+      const url = key
+        ? buildPublicUploadUrl(key, result.metadata)
+        : (firstFile.url as string) || "";
 
       if (!url) {
         throw new Error("Could not construct public URL for upload.");
@@ -106,20 +130,28 @@ export function ArtsImageUploader({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept={accept}
             onChange={handleFileChange}
             className="hidden"
           />
           {isUploading ? (
             <div className="flex flex-col items-center gap-2 text-gray-400">
               <Loader2 className="size-6 animate-spin text-[#7CFC00]" />
-              <p className="text-xs font-bold">Uploading image to R2 storage...</p>
+              <p className="text-xs font-bold">
+                Uploading to R2 storage... {Math.round(uploadProgress * 100)}%
+              </p>
+              <div className="h-1.5 w-48 overflow-hidden bg-gray-800">
+                <div
+                  className="h-full bg-[#7CFC00] transition-all"
+                  style={{ width: `${Math.round(uploadProgress * 100)}%` }}
+                />
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 text-gray-400">
               <UploadCloud className="size-8 text-[#7CFC00]" />
-              <p className="text-xs font-bold text-white">Click or drag image file to upload</p>
-              <p className="text-[10px]">PNG, JPG, WEBP up to 10MB</p>
+              <p className="text-xs font-bold text-white">Click or drag file to upload</p>
+              <p className="text-[10px]">PNG, JPG, WEBP, GIF, or PDF up to 12MB</p>
             </div>
           )}
         </div>
