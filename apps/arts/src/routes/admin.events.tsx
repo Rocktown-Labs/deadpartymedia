@@ -464,7 +464,12 @@ function AdminEvents() {
               </div>
 
               {/* Flyer / Image Upload */}
-              <ArtsImageUploader label="Event Flyer / Image" value={image} onChange={setImage} />
+              <ArtsImageUploader
+                label="Event Flyer / Image"
+                value={image}
+                onChange={setImage}
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              />
 
               <div className="space-y-2">
                 <Label

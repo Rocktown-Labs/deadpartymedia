@@ -16,7 +16,7 @@ import {
   Upload,
   UserRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -35,8 +35,8 @@ import {
   getUploadedObjectKey,
 } from "#/lib/artwork-drafts.ts";
 import { saveArtwork } from "#/lib/artworks.functions.ts";
-import { getPublicUploadUrl } from "#/lib/upload.ts";
 import { getRolesFromMetadata } from "#/lib/roles.ts";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 
 const STEPS = [
   { label: "Identity", value: 0 },
@@ -93,38 +93,93 @@ function Onboarding() {
   const [profileImage, setProfileImage] = useState(currentArtmaker?.image ?? user?.imageUrl ?? "");
   const [profileImageKey, setProfileImageKey] = useState("");
   const [artworkDrafts, setArtworkDrafts] = useState<ArtworkDraft[]>([]);
+  const [artworkUploadProgress, setArtworkUploadProgress] = useState(0);
+  const [profileUploadProgress, setProfileUploadProgress] = useState(0);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const selectedMediumSet = useMemo(() => new Set(medium), [medium]);
   const progressPercent = ((step + 1) / STEPS.length) * 100;
 
+  // Tracks per-file progress across the current upload so the UI can show a
+  // single averaged bar for multi-file transfers.
+  const uploadProgressRef = useRef(new Map<string, number>());
+
+  const trackUploadProgress = (file: {
+    objectInfo?: { key?: string };
+    progress?: number;
+    status?: string;
+  }) => {
+    const key = file.objectInfo?.key;
+
+    if (!key) {
+      return;
+    }
+
+    uploadProgressRef.current.set(key, file.status === "complete" ? 1 : (file.progress ?? 0));
+
+    const values = [...uploadProgressRef.current.values()];
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+
+    return Number.isFinite(average) ? average : 0;
+  };
+
   const uploadMutation = useMutation({
-    mutationFn: async (files: File[]) =>
-      uploadFiles({
+    mutationFn: async (files: File[]) => {
+      uploadProgressRef.current.clear();
+      const result = await uploadFiles({
         files,
         route: "artwork",
-      }),
+        onFileStateChange: ({ file }) => {
+          const average = trackUploadProgress(file);
+
+          if (average !== undefined) {
+            setArtworkUploadProgress(average);
+          }
+        },
+      });
+
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
+
+      return result;
+    },
     onError: (caughtError) => {
       setError(caughtError instanceof Error ? caughtError.message : "Artwork upload failed.");
     },
     onSuccess: (result) => {
-      const drafts = createArtworkDrafts((result.files ?? []) as unknown[]);
+      const drafts = createArtworkDrafts(result.files ?? []);
       setArtworkDrafts((current) => [...current, ...drafts]);
     },
   });
 
   const profileImageUploadMutation = useMutation({
-    mutationFn: async (files: File[]) =>
-      uploadFiles({
+    mutationFn: async (files: File[]) => {
+      uploadProgressRef.current.clear();
+      const result = await uploadFiles({
         files,
         route: "profileImages",
-      }),
+        onFileStateChange: ({ file }) => {
+          const average = trackUploadProgress(file);
+
+          if (average !== undefined) {
+            setProfileUploadProgress(average);
+          }
+        },
+      });
+
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
+
+      return result;
+    },
     onError: (caughtError) => {
       setError(caughtError instanceof Error ? caughtError.message : "Profile image upload failed.");
     },
     onSuccess: (result) => {
-      const [uploadedFile] = (result.files ?? []) as unknown[];
+      const [uploadedFile] = result.files ?? [];
       const directKey = uploadedFile ? getUploadedObjectKey(uploadedFile) : "";
 
       if (!directKey) {
@@ -133,7 +188,7 @@ function Onboarding() {
       }
 
       setProfileImageKey(directKey);
-      setProfileImage(getPublicUploadUrl(directKey));
+      setProfileImage(buildPublicUploadUrl(directKey, result.metadata));
     },
   });
 
@@ -473,10 +528,12 @@ function Onboarding() {
                         ) : (
                           <Upload className="size-4" />
                         )}
-                        Upload image
+                        {profileImageUploadMutation.isPending
+                          ? `Uploading ${Math.round(profileUploadProgress * 100)}%`
+                          : "Upload image"}
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                           className="sr-only"
                           disabled={profileImageUploadMutation.isPending}
                           onChange={(event) => {
@@ -567,14 +624,27 @@ function Onboarding() {
                       <Upload className="mb-3 size-8 text-[#7CFC00]" />
                     )}
                     <span className="font-black text-sm uppercase tracking-[0.18em]">
-                      {uploadMutation.isPending ? "Uploading" : "Choose artwork images"}
+                      {uploadMutation.isPending ? "Uploading" : "Choose artwork files"}
                     </span>
                     <span className="mt-2 text-neutral-500 text-sm">
-                      PNG, JPG, GIF, WebP. Up to 12 files.
+                      PNG, JPG, GIF, WebP, or PDF. Up to 12 files.
                     </span>
+                    {uploadMutation.isPending ? (
+                      <div className="mt-4 w-full max-w-xs">
+                        <div className="h-2 overflow-hidden bg-neutral-800">
+                          <div
+                            className="h-full bg-[#7CFC00] transition-all"
+                            style={{ width: `${Math.round(artworkUploadProgress * 100)}%` }}
+                          />
+                        </div>
+                        <p className="mt-2 text-neutral-400 text-xs">
+                          {Math.round(artworkUploadProgress * 100)}% uploaded — keep this open
+                        </p>
+                      </div>
+                    ) : null}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif,application/pdf"
                       multiple
                       className="sr-only"
                       disabled={uploadMutation.isPending}

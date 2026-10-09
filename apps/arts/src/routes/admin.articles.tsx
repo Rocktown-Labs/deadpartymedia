@@ -14,7 +14,7 @@ import { Textarea } from "#/components/ui/textarea.tsx";
 import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
-import { getPublicUploadUrl } from "#/lib/upload.ts";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 import {
   createArtsArticle,
@@ -89,6 +89,11 @@ function AdminArticles() {
       files: [file],
       route: "articleImages",
     });
+
+    if (result.failedFiles.length > 0) {
+      throw new Error(describeUploadFailures(result.failedFiles));
+    }
+
     const [uploadedFile] = (result.files ?? []) as unknown[];
     const key = uploadedFile ? getUploadedObjectKey(uploadedFile) : "";
 
@@ -96,7 +101,7 @@ function AdminArticles() {
       throw new Error("The image uploaded, but no object key came back from storage.");
     }
 
-    return getPublicUploadUrl(key);
+    return buildPublicUploadUrl(key, result.metadata);
   };
 
   const toggleArtmaker = (id: number) => {
@@ -370,6 +375,7 @@ function AdminArticles() {
                   label="Cover Image"
                   value={coverImage}
                   onChange={setCoverImage}
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                 />
                 <div className="space-y-2">
                   <Label
