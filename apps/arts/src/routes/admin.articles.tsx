@@ -1,5 +1,5 @@
 import { uploadFiles } from "@better-upload/client";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Edit, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -28,6 +28,14 @@ import {
 
 export const Route = createFileRoute("/admin/articles")({
   beforeLoad: () => requireArtsStaff(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    editor:
+      search.editor === "new"
+        ? "new"
+        : typeof search.editor === "string" && /^\\d+$/.test(search.editor)
+          ? Number(search.editor)
+          : undefined,
+  }),
   component: AdminArticles,
   loader: async () => {
     const [articles, artmakers] = await Promise.all([
@@ -43,7 +51,12 @@ function AdminArticles() {
   const { articles: initialArticles, artmakers: initialArtmakers } = Route.useLoaderData();
   const [articles, setArticles] = useState<ArtsArticleListItem[]>(initialArticles);
   const [artmakers, setArtmakers] = useState(initialArtmakers);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const isEditorOpen = search.editor !== undefined;
+  const closeEditor = () => {
+    navigate({ search: { editor: undefined } });
+  };
   const [editingArticle, setEditingArticle] = useState<ArtsArticleListItem | null>(null);
 
   const [title, setTitle] = useState("");
@@ -64,6 +77,7 @@ function AdminArticles() {
   const createArtmakerFn = useServerFn(createArtsArtmakerStub);
 
   const openNewEditor = () => {
+    navigate({ search: { editor: "new" } });
     setEditingArticle(null);
     setTitle("");
     setExcerpt("");
@@ -71,10 +85,10 @@ function AdminArticles() {
     setCoverImage("");
     setSelectedArtmakerIds([]);
     setStatus("published");
-    setIsEditorOpen(true);
   };
 
   const openEditEditor = (article: ArtsArticleListItem) => {
+    navigate({ search: { editor: article.id } });
     setEditingArticle(article);
     setTitle(article.title);
     setExcerpt(article.excerpt);
@@ -82,7 +96,6 @@ function AdminArticles() {
     setCoverImage(article.coverImage || "");
     setSelectedArtmakerIds(article.artmakerIds);
     setStatus(article.status);
-    setIsEditorOpen(true);
   };
 
   const uploadArticleImage = async (file: File) => {
@@ -184,7 +197,7 @@ function AdminArticles() {
         toast.success("Article created successfully!");
       }
 
-      setIsEditorOpen(false);
+      closeEditor();
       const updatedList = await listArtsAdminArticles();
       setArticles(updatedList);
     } catch (err) {
@@ -315,196 +328,184 @@ function AdminArticles() {
         )}
       </div>
 
-      {/* Article Editor Modal */}
+      {/* Article editor — rendered as a full page via ?editor=new or ?editor=<id> */}
       {isEditorOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-4xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-gray-800 border-b pb-4">
-              <h2 className="font-black text-2xl text-white">
-                {editingArticle ? "Edit Article" : "Create New Article"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsEditorOpen(false)}
-                className="text-gray-400 hover:text-white"
+        <div className="mx-auto max-w-4xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="flex items-center justify-between border-gray-800 border-b pb-4">
+            <h2 className="font-black text-2xl text-white">
+              {editingArticle ? "Edit Article" : "Create New Article"}
+            </h2>
+            <button type="button" onClick={closeEditor} className="text-gray-400 hover:text-white">
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-6">
+            <div className="space-y-2">
+              <Label
+                htmlFor="title"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
-                ✕
-              </button>
+                Article Title
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter article title..."
+                className="font-bold text-lg"
+              />
             </div>
 
-            <form onSubmit={handleSave} className="space-y-6">
+            <div className="space-y-2">
+              <Label
+                htmlFor="excerpt"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Excerpt / Summary
+              </Label>
+              <Textarea
+                id="excerpt"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                placeholder="Short summary for story cards..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <ArtsImageUploader
+                label="Cover Image"
+                value={coverImage}
+                onChange={setCoverImage}
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              />
               <div className="space-y-2">
                 <Label
-                  htmlFor="title"
+                  htmlFor="status-select"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Article Title
+                  Publication Status
                 </Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter article title..."
-                  className="font-bold text-lg"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="excerpt"
-                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+                <select
+                  id="status-select"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as "draft" | "published" | "archived")}
+                  className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
                 >
-                  Excerpt / Summary
-                </Label>
-                <Textarea
-                  id="excerpt"
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  placeholder="Short summary for story cards..."
-                  rows={3}
-                />
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                </select>
               </div>
+            </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <ArtsImageUploader
-                  label="Cover Image"
-                  value={coverImage}
-                  onChange={setCoverImage}
-                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                />
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="status-select"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    Publication Status
-                  </Label>
-                  <select
-                    id="status-select"
-                    value={status}
-                    onChange={(e) =>
-                      setStatus(e.target.value as "draft" | "published" | "archived")
-                    }
-                    className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
-                  >
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-lg border border-gray-800 bg-[#0A0A0A] p-4">
-                <div>
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    Featured Artmakers
-                  </Label>
-                  <p className="mt-1 text-gray-500 text-sm">
-                    Attach this story to public artmaker profiles.
-                  </p>
-                </div>
-                <div className="grid max-h-56 gap-2 overflow-y-auto sm:grid-cols-2">
-                  {artmakers.length > 0 ? (
-                    artmakers.map((artmaker) => {
-                      const selected = selectedArtmakerIds.includes(artmaker.id);
-                      return (
-                        <button
-                          key={artmaker.id}
-                          type="button"
-                          onClick={() => toggleArtmaker(artmaker.id)}
-                          className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm ${
-                            selected
-                              ? "border-[#7CFC00] bg-[#7CFC00] text-black"
-                              : "border-gray-800 bg-[#111111] text-gray-300 hover:border-gray-600"
-                          }`}
-                        >
-                          <span>{artmaker.name}</span>
-                          {selected ? <Check className="size-4" /> : null}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <p className="text-gray-500 text-sm">No artmakers yet.</p>
-                  )}
-                </div>
-                {selectedArtmakerIds.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {artmakers
-                      .filter((artmaker) => selectedArtmakerIds.includes(artmaker.id))
-                      .map((artmaker) => (
-                        <span
-                          key={artmaker.id}
-                          className="inline-flex items-center gap-2 rounded bg-[#7CFC00]/15 px-2 py-1 text-[#7CFC00] text-xs"
-                        >
-                          {artmaker.name}
-                          <button type="button" onClick={() => toggleArtmaker(artmaker.id)}>
-                            <X className="size-3" />
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                ) : null}
-
-                <div className="border-gray-800 border-t pt-4">
-                  <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    Quick Create Artmaker
-                  </Label>
-                  <div className="mt-3 grid gap-3">
-                    <Input
-                      value={newArtmakerName}
-                      onChange={(event) => setNewArtmakerName(event.target.value)}
-                      placeholder="Artmaker name"
-                    />
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      <MultiSelect
-                        options={MEDIUM_OPTIONS}
-                        selected={newArtmakerMedium}
-                        onChange={setNewArtmakerMedium}
-                        placeholder="Select mediums"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleQuickCreateArtmaker}
-                      disabled={isCreatingArtmaker}
-                      className="w-fit"
-                    >
-                      {isCreatingArtmaker ? "Creating..." : "Create and attach"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tiptap WYSIWYG Editor */}
-              <div className="space-y-2">
+            <div className="space-y-3 rounded-lg border border-gray-800 bg-[#0A0A0A] p-4">
+              <div>
                 <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Article Content (WYSIWYG Editor)
+                  Featured Artmakers
                 </Label>
-                <ArtsRichTextEditor
-                  content={content}
-                  onChange={setContent}
-                  onUploadImage={uploadArticleImage}
-                />
+                <p className="mt-1 text-gray-500 text-sm">
+                  Attach this story to public artmaker profiles.
+                </p>
               </div>
+              <div className="grid max-h-56 gap-2 overflow-y-auto sm:grid-cols-2">
+                {artmakers.length > 0 ? (
+                  artmakers.map((artmaker) => {
+                    const selected = selectedArtmakerIds.includes(artmaker.id);
+                    return (
+                      <button
+                        key={artmaker.id}
+                        type="button"
+                        onClick={() => toggleArtmaker(artmaker.id)}
+                        className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm ${
+                          selected
+                            ? "border-[#7CFC00] bg-[#7CFC00] text-black"
+                            : "border-gray-800 bg-[#111111] text-gray-300 hover:border-gray-600"
+                        }`}
+                      >
+                        <span>{artmaker.name}</span>
+                        {selected ? <Check className="size-4" /> : null}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-gray-500 text-sm">No artmakers yet.</p>
+                )}
+              </div>
+              {selectedArtmakerIds.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {artmakers
+                    .filter((artmaker) => selectedArtmakerIds.includes(artmaker.id))
+                    .map((artmaker) => (
+                      <span
+                        key={artmaker.id}
+                        className="inline-flex items-center gap-2 rounded bg-[#7CFC00]/15 px-2 py-1 text-[#7CFC00] text-xs"
+                      >
+                        {artmaker.name}
+                        <button type="button" onClick={() => toggleArtmaker(artmaker.id)}>
+                          <X className="size-3" />
+                        </button>
+                      </span>
+                    ))}
+                </div>
+              ) : null}
 
-              <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsEditorOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
-                >
-                  {isSubmitting
-                    ? "Saving..."
-                    : editingArticle
-                      ? "Update Article"
-                      : "Publish Article"}
-                </Button>
+              <div className="border-gray-800 border-t pt-4">
+                <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Quick Create Artmaker
+                </Label>
+                <div className="mt-3 grid gap-3">
+                  <Input
+                    value={newArtmakerName}
+                    onChange={(event) => setNewArtmakerName(event.target.value)}
+                    placeholder="Artmaker name"
+                  />
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <MultiSelect
+                      options={MEDIUM_OPTIONS.map((option) => ({ label: option, value: option }))}
+                      selected={newArtmakerMedium}
+                      onChange={(next) => setNewArtmakerMedium(next.map(String))}
+                      placeholder="Select mediums"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleQuickCreateArtmaker}
+                    disabled={isCreatingArtmaker}
+                    className="w-fit"
+                  >
+                    {isCreatingArtmaker ? "Creating..." : "Create and attach"}
+                  </Button>
+                </div>
               </div>
-            </form>
-          </div>
+            </div>
+
+            {/* Tiptap WYSIWYG Editor */}
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Article Content (WYSIWYG Editor)
+              </Label>
+              <ArtsRichTextEditor
+                content={content}
+                onChange={setContent}
+                onUploadImage={uploadArticleImage}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
+              <Button type="button" variant="outline" onClick={closeEditor}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              >
+                {isSubmitting ? "Saving..." : editingArticle ? "Update Article" : "Publish Article"}
+              </Button>
+            </div>
+          </form>
         </div>
       ) : null}
     </ArtsAdminShell>

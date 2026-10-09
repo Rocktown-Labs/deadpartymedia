@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -22,6 +22,15 @@ import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 
 export const Route = createFileRoute("/admin/artmakers")({
   beforeLoad: () => requireArtsStaff(),
+  validateSearch: (search: Record<string, unknown>) => {
+    if (search.form === "new") {
+      return { form: "new" as const };
+    }
+    if (typeof search.form === "string" && /^\d+$/.test(search.form)) {
+      return { form: Number(search.form) };
+    }
+    return {};
+  },
   component: AdminArtmakers,
   loader: () => listAdminArtmakers(),
 });
@@ -32,7 +41,12 @@ function AdminArtmakers() {
   const staff = Route.useRouteContext();
   const initialArtmakers = Route.useLoaderData();
   const [artmakers, setArtmakers] = useState<ArtmakerRow[]>(initialArtmakers);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const isModalOpen = search.form !== undefined;
+  const closeForm = () => {
+    navigate({ search: { form: undefined } });
+  };
   const [editingArtmaker, setEditingArtmaker] = useState<ArtmakerRow | null>(null);
 
   const [name, setName] = useState("");
@@ -50,6 +64,7 @@ function AdminArtmakers() {
   const deleteArtmakerFn = useServerFn(deleteArtsArtmaker);
 
   const openNewModal = () => {
+    navigate({ search: { form: "new" } });
     setEditingArtmaker(null);
     setName("");
     setCity("Little Rock");
@@ -58,10 +73,10 @@ function AdminArtmakers() {
     setImage("");
     setInstagram("");
     setMedium(["Visual Art"]);
-    setIsModalOpen(true);
   };
 
   const openEditModal = (artmaker: ArtmakerRow) => {
+    navigate({ search: { form: artmaker.id } });
     setEditingArtmaker(artmaker);
     setName(artmaker.name);
     setCity(artmaker.city);
@@ -70,7 +85,6 @@ function AdminArtmakers() {
     setImage(artmaker.image ?? "");
     setInstagram(artmaker.instagramUsername || "");
     setMedium(artmaker.medium.length ? artmaker.medium : ["Visual Art"]);
-    setIsModalOpen(true);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -112,7 +126,7 @@ function AdminArtmakers() {
         toast.success("Artmaker profile created");
       }
 
-      setIsModalOpen(false);
+      closeForm();
       const updated = await listAdminArtmakers();
       setArtmakers(updated);
     } catch (err) {
@@ -252,139 +266,129 @@ function AdminArtmakers() {
         </div>
       </div>
 
-      {/* Artmaker Modal */}
+      {/* Artmaker form — rendered as a full page via ?form=new or ?form=<id> */}
       {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-3xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
-            <div className="flex items-center justify-between border-gray-800 border-b pb-4">
-              <h2 className="font-black text-2xl text-white">
-                {editingArtmaker ? "Edit Artmaker Profile" : "Add New Artmaker"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+        <div className="mx-auto max-w-3xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+          <div className="flex items-center justify-between border-gray-800 border-b pb-4">
+            <h2 className="font-black text-2xl text-white">
+              {editingArtmaker ? "Edit Artmaker Profile" : "Add New Artmaker"}
+            </h2>
+            <button type="button" onClick={closeForm} className="text-gray-400 hover:text-white">
+              ✕
+            </button>
+          </div>
+
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="artmaker-name"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
               >
-                ✕
-              </button>
+                Full Name / Studio Name
+              </Label>
+              <Input
+                id="artmaker-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Jane Doe"
+                className="font-bold"
+              />
             </div>
 
-            <form onSubmit={handleSave} className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label
-                  htmlFor="artmaker-name"
+                  htmlFor="artmaker-city"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Full Name / Studio Name
+                  City
                 </Label>
                 <Input
-                  id="artmaker-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
-                  className="font-bold"
+                  id="artmaker-city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Little Rock"
                 />
               </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="artmaker-city"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    City
-                  </Label>
-                  <Input
-                    id="artmaker-city"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Little Rock"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="artmaker-state"
-                    className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                  >
-                    State
-                  </Label>
-                  <Input
-                    id="artmaker-state"
-                    value={stateName}
-                    onChange={(e) => setStateName(e.target.value)}
-                    placeholder="AR"
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <Label
-                  htmlFor="artmaker-ig"
+                  htmlFor="artmaker-state"
                   className="text-xs font-bold text-gray-400 uppercase tracking-wider"
                 >
-                  Instagram Handle
+                  State
                 </Label>
                 <Input
-                  id="artmaker-ig"
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  placeholder="@janedoeart"
+                  id="artmaker-state"
+                  value={stateName}
+                  onChange={(e) => setStateName(e.target.value)}
+                  placeholder="AR"
                 />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Mediums
-                </Label>
-                <MultiSelect
-                  options={MEDIUM_OPTIONS}
-                  selected={medium}
-                  onChange={setMedium}
-                  placeholder="Select mediums"
-                />
-              </div>
-
-              <ArtsImageUploader
-                label="Profile / Avatar Image"
-                value={image}
-                onChange={setImage}
-                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            <div className="space-y-2">
+              <Label
+                htmlFor="artmaker-ig"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Instagram Handle
+              </Label>
+              <Input
+                id="artmaker-ig"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                placeholder="@janedoeart"
               />
+            </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="artmaker-bio"
-                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                >
-                  Artist Bio
-                </Label>
-                <Textarea
-                  id="artmaker-bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Short bio..."
-                  rows={3}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Mediums
+              </Label>
+              <MultiSelect
+                options={MEDIUM_OPTIONS.map((option) => ({ label: option, value: option }))}
+                selected={medium}
+                onChange={(next) => setMedium(next.map(String))}
+                placeholder="Select mediums"
+              />
+            </div>
 
-              <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
-                >
-                  {isSubmitting
-                    ? "Saving..."
-                    : editingArtmaker
-                      ? "Update Profile"
-                      : "Create Profile"}
-                </Button>
-              </div>
-            </form>
-          </div>
+            <ArtsImageUploader
+              label="Profile / Avatar Image"
+              value={image}
+              onChange={setImage}
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            />
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="artmaker-bio"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Artist Bio
+              </Label>
+              <Textarea
+                id="artmaker-bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Short bio..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 border-gray-800 border-t pt-4">
+              <Button type="button" variant="outline" onClick={closeForm}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[#7CFC00] font-black text-black hover:bg-[#7CFC00]/90"
+              >
+                {isSubmitting ? "Saving..." : editingArtmaker ? "Update Profile" : "Create Profile"}
+              </Button>
+            </div>
+          </form>
         </div>
       ) : null}
     </ArtsAdminShell>

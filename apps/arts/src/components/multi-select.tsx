@@ -1,16 +1,21 @@
 import { ChevronDown, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+export interface MultiSelectOption {
+  label: string;
+  value: string | number;
+}
+
 interface MultiSelectProps {
-  options: readonly string[];
-  selected: string[];
-  onChange: (next: string[]) => void;
+  options: readonly MultiSelectOption[];
+  selected: (string | number)[];
+  onChange: (next: (string | number)[]) => void;
   placeholder?: string;
   emptyLabel?: string;
 }
 
 /**
- * Dropdown with checkboxes for multi-option fields (mediums, tags, etc.).
+ * Dropdown with checkboxes for multi-option fields (mediums, artmakers, tags).
  * Replaces long inline button grids so forms stay compact on laptop screens.
  */
 export function MultiSelect({
@@ -48,13 +53,15 @@ export function MultiSelect({
     };
   }, [isOpen]);
 
-  const toggleOption = (option: string) => {
+  const toggleValue = (value: string | number) => {
     onChange(
-      selected.includes(option)
-        ? selected.filter((item) => item !== option)
-        : [...selected, option],
+      selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value],
     );
   };
+
+  const selectedLabels = selected.map(
+    (value) => options.find((option) => option.value === value)?.label ?? String(value),
+  );
 
   return (
     <div ref={containerRef} className="relative">
@@ -77,19 +84,23 @@ export function MultiSelect({
           {selected.length === 0 ? (
             <span className="text-gray-500">{placeholder}</span>
           ) : (
-            selected.map((item) => (
+            selectedLabels.map((label) => (
               <span
-                key={item}
+                key={label}
                 className="inline-flex items-center gap-1 rounded bg-[#7CFC00]/15 px-1.5 py-0.5 text-xs text-[#7CFC00]"
               >
-                {item}
+                {label}
                 <button
                   type="button"
-                  aria-label={`Remove ${item}`}
+                  aria-label={`Remove ${label}`}
                   className="text-[#7CFC00]/70 hover:text-white"
                   onClick={(event) => {
                     event.stopPropagation();
-                    toggleOption(item);
+                    const option = options.find((item) => item.label === label);
+
+                    if (option) {
+                      toggleValue(option.value);
+                    }
                   }}
                 >
                   <X className="size-3" />
@@ -109,20 +120,20 @@ export function MultiSelect({
             <p className="px-2 py-1.5 text-gray-500 text-sm">{emptyLabel}</p>
           ) : (
             options.map((option) => {
-              const checked = selected.includes(option);
+              const checked = selected.includes(option.value);
 
               return (
                 <label
-                  key={option}
+                  key={String(option.value)}
                   className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-gray-200 text-sm hover:bg-[#1A1A1A]"
                 >
                   <input
                     type="checkbox"
                     checked={checked}
-                    onChange={() => toggleOption(option)}
+                    onChange={() => toggleValue(option.value)}
                     className="size-4 accent-[#7CFC00]"
                   />
-                  {option}
+                  {option.label}
                 </label>
               );
             })
