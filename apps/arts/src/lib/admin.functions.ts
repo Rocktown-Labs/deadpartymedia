@@ -258,14 +258,19 @@ export const inviteArtsUser = createServerFn({ method: "POST" })
     await requireArtsAdmin();
 
     const client = clerkClient();
+    // Dual-role model (#92): the invited person gets a single role in both
+    // the legacy field and the roles array so role checks stay consistent.
     const publicMetadata = {
       onboardingComplete: true,
       role: data.role,
+      roles: [data.role],
     };
 
+    // PUBLIC_APP_URL is not set on the Vercel project, and the previous
+    // fallback pointed at deadpartyarts.com, which does not resolve (#100).
     const redirectUrl = process.env.PUBLIC_APP_URL
       ? `${process.env.PUBLIC_APP_URL}/admin`
-      : "https://deadpartyarts.com/admin";
+      : "https://arts.deadpartymedia.com/admin";
 
     await client.invitations.createInvitation({
       emailAddress: data.email,
