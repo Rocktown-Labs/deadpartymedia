@@ -234,6 +234,26 @@ export const saveArtwork = createServerFn({ method: "POST" })
     return { artwork: created, success: true };
   });
 
+export const deleteCurrentArtwork = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.number() }))
+  .handler(async ({ data }) => {
+    const artmakerId = await getCurrentArtmakerId();
+
+    const [existing] = await db
+      .select({ id: artworks.id })
+      .from(artworks)
+      .where(and(eq(artworks.id, data.id), eq(artworks.artmakerId, artmakerId)))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error("Artwork not found");
+    }
+
+    await db.delete(artworks).where(eq(artworks.id, data.id));
+
+    return { success: true };
+  });
+
 export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
 
