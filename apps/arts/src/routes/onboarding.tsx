@@ -322,7 +322,7 @@ function Onboarding() {
   };
 
   return (
-    <main className="px-5 pt-32 pb-20">
+    <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-20">
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.82fr_1.18fr]">
         <aside className="lg:sticky lg:top-32 lg:self-start">
           <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
+import { MultiSelect } from "#/components/multi-select.tsx";
 import { ArtsRichTextEditor } from "#/components/arts-rich-text-editor.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -107,12 +108,6 @@ function AdminArticles() {
   const toggleArtmaker = (id: number) => {
     setSelectedArtmakerIds((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  };
-
-  const toggleNewArtmakerMedium = (value: string) => {
-    setNewArtmakerMedium((current) =>
-      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
     );
   };
 
@@ -460,23 +455,12 @@ function AdminArticles() {
                       placeholder="Artmaker name"
                     />
                     <div className="grid gap-2 sm:grid-cols-3">
-                      {MEDIUM_OPTIONS.slice(0, 12).map((option) => {
-                        const selected = newArtmakerMedium.includes(option);
-                        return (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => toggleNewArtmakerMedium(option)}
-                            className={`min-h-9 border px-2 text-left text-xs ${
-                              selected
-                                ? "border-[#7CFC00] bg-[#7CFC00] text-black"
-                                : "border-gray-800 bg-[#111111] text-gray-300 hover:border-gray-600"
-                            }`}
-                          >
-                            {option}
-                          </button>
-                        );
-                      })}
+                      <MultiSelect
+                        options={MEDIUM_OPTIONS}
+                        selected={newArtmakerMedium}
+                        onChange={setNewArtmakerMedium}
+                        placeholder="Select mediums"
+                      />
                     </div>
                     <Button
                       type="button"

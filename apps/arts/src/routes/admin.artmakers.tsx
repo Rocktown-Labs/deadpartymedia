@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
+import { MultiSelect } from "#/components/multi-select.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
@@ -119,12 +120,6 @@ function AdminArtmakers() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const toggleMedium = (value: string) => {
-    setMedium((current) =>
-      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
-    );
   };
 
   const handleToggleVisibility = async (id: number) => {
@@ -338,32 +333,15 @@ function AdminArtmakers() {
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="artmaker-medium"
-                  className="text-xs font-bold text-gray-400 uppercase tracking-wider"
-                >
+                <Label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                   Mediums
                 </Label>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {MEDIUM_OPTIONS.map((option) => {
-                    const selected = medium.includes(option);
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => toggleMedium(option)}
-                        className={`flex min-h-10 items-center justify-between gap-3 border px-3 text-left text-sm ${
-                          selected
-                            ? "border-[#7CFC00] bg-[#7CFC00] text-black"
-                            : "border-gray-800 bg-[#080808] text-gray-300 hover:border-gray-600"
-                        }`}
-                      >
-                        <span>{option}</span>
-                        {selected ? <Check className="size-4" /> : null}
-                      </button>
-                    );
-                  })}
-                </div>
+                <MultiSelect
+                  options={MEDIUM_OPTIONS}
+                  selected={medium}
+                  onChange={setMedium}
+                  placeholder="Select mediums"
+                />
               </div>
 
               <ArtsImageUploader

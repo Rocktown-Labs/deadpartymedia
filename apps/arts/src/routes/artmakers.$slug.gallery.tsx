@@ -35,7 +35,7 @@ function ArtmakerGallery() {
   const { artmaker, artworks } = Route.useLoaderData();
 
   return (
-    <main className="px-5 pt-32 pb-20">
+    <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-20">
       <div className="mx-auto max-w-7xl">
         <Link
           to="/artmakers/$slug"

@@ -40,6 +40,25 @@ export interface UploadFailureLike {
   error?: { type?: string; message?: string };
 }
 
+// Images saved before CLOUDFLARE_R2_PUBLIC_URL was configured point at the
+// private S3 endpoint, which requires authorization and can never render in a
+// browser. The files themselves are intact in the bucket.
+const LEGACY_S3_HOST_PATTERN = /r2\.cloudflarestorage\.com/;
+
+/**
+ * Rewrite legacy image URLs saved with the private S3 endpoint to the current
+ * public base URL. Applied at the data layer so existing rows self-heal once
+ * the public URL is configured — no re-upload or data migration needed.
+ */
+export function normalizeStoredImageUrl(url: string | null | undefined): string {
+  if (!url || !LEGACY_S3_HOST_PATTERN.test(url)) {
+    return url ?? "";
+  }
+
+  const key = url.replace(/^[a-z]+:\/\/[^/]+\//, "");
+  return getPublicUploadUrl(key);
+}
+
 /**
  * Human-readable message for files that failed the direct storage transfer.
  * uploadFiles() resolves instead of throwing for these, so callers must check

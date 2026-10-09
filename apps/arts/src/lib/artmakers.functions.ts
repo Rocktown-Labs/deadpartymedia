@@ -18,7 +18,7 @@ import {
   mergeArtsRole,
 } from "#/lib/roles.ts";
 import { createSlug } from "#/lib/slug.ts";
-import { getPublicUploadUrl } from "#/lib/upload.ts";
+import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
 
 // Re-exported for existing role unit tests and call sites.
 export {
@@ -170,7 +170,10 @@ export const listArtmakers = createServerFn({ method: "GET" }).handler(async () 
       .where(eq(artmakers.status, "published"))
       .orderBy(artmakers.name);
 
-    return rows satisfies ArtmakerListItem[];
+    return rows.map((row) => ({
+      ...row,
+      image: normalizeStoredImageUrl(row.image),
+    })) satisfies ArtmakerListItem[];
   } catch {
     return [] satisfies ArtmakerListItem[];
   }
@@ -205,7 +208,7 @@ export const getArtmakerBySlug = createServerFn({ method: "GET" })
         .where(and(eq(artmakers.slug, data.slug), eq(artmakers.status, "published")))
         .limit(1);
 
-      return artmaker ?? null;
+      return artmaker ? { ...artmaker, image: normalizeStoredImageUrl(artmaker.image) } : null;
     } catch {
       return null;
     }
@@ -226,7 +229,7 @@ export const getCurrentArtmaker = createServerFn({ method: "GET" }).handler(asyn
     .where(eq(artmakers.clerkUserId, userId))
     .limit(1);
 
-  return artmaker ?? null;
+  return artmaker ? { ...artmaker, image: normalizeStoredImageUrl(artmaker.image) } : null;
 });
 
 export const saveArtmakerOnboarding = createServerFn({ method: "POST" })

@@ -8,7 +8,11 @@ import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { getMediumGroup } from "#/lib/mediums.ts";
 import { createSlug } from "#/lib/slug.ts";
-import { getPublicUploadUrl } from "#/lib/upload.ts";
+import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
+
+function withNormalizedImages<T extends { image: string | null }>(rows: T[]): T[] {
+  return rows.map((row) => ({ ...row, image: normalizeStoredImageUrl(row.image) }));
+}
 
 export interface ArtworkListItem {
   id: number;
@@ -135,7 +139,7 @@ export const listPublishedArtworks = createServerFn({ method: "GET" }).handler(a
       .where(and(eq(artworks.status, "published"), eq(artmakers.status, "published")))
       .orderBy(desc(artworks.createdAt));
 
-    return rows satisfies ArtworkListItem[];
+    return withNormalizedImages(rows) satisfies ArtworkListItem[];
   } catch {
     return [] satisfies ArtworkListItem[];
   }
@@ -168,7 +172,7 @@ export const listMediumGroupArtworks = createServerFn({ method: "GET" })
         )
         .orderBy(desc(artworks.createdAt));
 
-      return rows satisfies ArtworkListItem[];
+      return withNormalizedImages(rows) satisfies ArtworkListItem[];
     } catch {
       return [] satisfies ArtworkListItem[];
     }
@@ -191,7 +195,7 @@ export const listPublishedArtworksByArtmakerSlug = createServerFn({ method: "GET
         )
         .orderBy(desc(artworks.createdAt));
 
-      return rows satisfies ArtworkListItem[];
+      return withNormalizedImages(rows) satisfies ArtworkListItem[];
     } catch {
       return [] satisfies ArtworkListItem[];
     }
@@ -207,7 +211,7 @@ export const listCurrentArtworks = createServerFn({ method: "GET" }).handler(asy
     .where(eq(artworks.artmakerId, artmakerId))
     .orderBy(desc(artworks.createdAt));
 
-  return rows satisfies ArtworkListItem[];
+  return withNormalizedImages(rows) satisfies ArtworkListItem[];
 });
 
 export const saveArtwork = createServerFn({ method: "POST" })
@@ -231,7 +235,10 @@ export const saveArtwork = createServerFn({ method: "POST" })
       })
       .returning();
 
-    return { artwork: created, success: true };
+    return {
+      artwork: { ...created, image: normalizeStoredImageUrl(created.image) },
+      success: true,
+    };
   });
 
 export const deleteCurrentArtwork = createServerFn({ method: "POST" })
@@ -263,7 +270,7 @@ export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async
     .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
     .orderBy(desc(artworks.createdAt));
 
-  return rows satisfies ArtworkListItem[];
+  return withNormalizedImages(rows) satisfies ArtworkListItem[];
 });
 
 export const createArtsArtwork = createServerFn({ method: "POST" })
@@ -300,7 +307,10 @@ export const createArtsArtwork = createServerFn({ method: "POST" })
       })
       .returning();
 
-    return { artwork: created, success: true };
+    return {
+      artwork: { ...created, image: normalizeStoredImageUrl(created.image) },
+      success: true,
+    };
   });
 
 export const updateArtsArtwork = createServerFn({ method: "POST" })
@@ -336,7 +346,10 @@ export const updateArtsArtwork = createServerFn({ method: "POST" })
       .where(eq(artworks.id, data.id))
       .returning();
 
-    return { artwork: updated, success: true };
+    return {
+      artwork: { ...updated, image: normalizeStoredImageUrl(updated.image) },
+      success: true,
+    };
   });
 
 export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
@@ -360,7 +373,10 @@ export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
       .where(eq(artworks.id, data.id))
       .returning();
 
-    return { artwork: updated, success: true };
+    return {
+      artwork: { ...updated, image: normalizeStoredImageUrl(updated.image) },
+      success: true,
+    };
   });
 
 export const deleteArtsArtwork = createServerFn({ method: "POST" })
