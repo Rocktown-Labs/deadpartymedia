@@ -1,6 +1,8 @@
+import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { handleRequest, route, type Router } from "@better-upload/server";
 import { cloudflare } from "@better-upload/server/clients";
 import { createFileRoute } from "@tanstack/react-router";
+import { getRolesFromMetadata } from "#/lib/roles.ts";
 
 // Image types accepted across arts upload routes. PDFs are accepted on the
 // artwork route because artists routinely upload portfolio documents.
@@ -15,6 +17,39 @@ function getPublicBaseUrlMetadata() {
   const publicBaseUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL?.replace(/\/$/, "");
 
   return publicBaseUrl ? { publicBaseUrl } : {};
+}
+
+// Uploads must be authenticated, and confirmed fans are rejected: they have
+// no upload surface in the product. Users with no role yet are allowed
+// through because artmaker onboarding uploads the profile image before any
+// role is assigned (issue #96).
+async function requireUploader() {
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated || !userId) {
+    return Response.json(
+      { error: { type: "unauthorized", message: "Sign in to upload files." } },
+      { status: 401 },
+    );
+  }
+
+  const client = clerkClient();
+  const user = await client.users.getUser(userId);
+  const roles = getRolesFromMetadata(user.publicMetadata);
+
+  if (roles.length > 0 && !roles.includes("artmaker") && roles.includes("fan")) {
+    return Response.json(
+      {
+        error: {
+          type: "forbidden",
+          message: "Fan accounts cannot upload files. Create an artist profile instead.",
+        },
+      },
+      { status: 403 },
+    );
+  }
+
+  return null;
 }
 
 function requireR2Router(): Router {
@@ -134,6 +169,12 @@ export const Route = createFileRoute("/api/upload")({
     handlers: {
       POST: async ({ request }) => {
         try {
+          const unauthorized = await requireUploader();
+
+          if (unauthorized) {
+            return unauthorized;
+          }
+
           return handleRequest(request, requireR2Router());
         } catch (error) {
           return Response.json(

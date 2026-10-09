@@ -4,8 +4,8 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
-import { CheckCircle2, ImageUp, Loader2, Upload } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, ImageUp, Loader2, Trash2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
 import { z } from "zod";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
 import { Button } from "#/components/ui/button.tsx";
@@ -14,7 +14,12 @@ import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
 import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
-import { listCurrentArtworks, saveArtwork } from "#/lib/artworks.functions.ts";
+import {
+  deleteCurrentArtwork,
+  listCurrentArtworks,
+  saveArtwork,
+} from "#/lib/artworks.functions.ts";
+import { describeUploadFailures } from "#/lib/upload.ts";
 
 const batchArtworkSchema = z.object({
   items: z
@@ -44,8 +49,29 @@ export const Route = createFileRoute("/dashboard/artworks")({
 function DashboardArtworks() {
   const initialArtworks = Route.useLoaderData();
   const save = useServerFn(saveArtwork);
+  const remove = useServerFn(deleteCurrentArtwork);
   const [artworks, setArtworks] = useState(initialArtworks);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadProgressRef = useRef(new Map<string, number>());
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this artwork? This cannot be undone.")) {
+      return;
+    }
+
+    setDeletingId(id);
+    setError("");
+    try {
+      await remove({ data: { id } });
+      setArtworks((current) => current.filter((artwork) => artwork.id !== id));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not delete artwork.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const form = useForm({
     defaultValues: {
@@ -81,11 +107,35 @@ function DashboardArtworks() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (files: File[]) =>
-      uploadFiles({
+    mutationFn: async (files: File[]) => {
+      uploadProgressRef.current.clear();
+      const result = await uploadFiles({
         files,
         route: "artwork",
-      }),
+        onFileStateChange: ({ file }) => {
+          const key = file.objectInfo?.key;
+
+          if (key) {
+            uploadProgressRef.current.set(
+              key,
+              file.status === "complete" ? 1 : (file.progress ?? 0),
+            );
+            const values = [...uploadProgressRef.current.values()];
+            const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+
+            if (Number.isFinite(average)) {
+              setUploadProgress(average);
+            }
+          }
+        },
+      });
+
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
+
+      return result;
+    },
     onError: (caughtError) => {
       setError(caughtError instanceof Error ? caughtError.message : "Artwork upload failed.");
     },
@@ -129,12 +179,27 @@ function DashboardArtworks() {
               <Upload className="mb-3 size-8 text-[#7CFC00]" />
             )}
             <span className="font-black text-sm uppercase tracking-[0.18em]">
-              {uploadMutation.isPending ? "Uploading" : "Choose artwork images"}
+              {uploadMutation.isPending ? "Uploading" : "Choose artwork files"}
             </span>
-            <span className="mt-2 text-gray-500 text-sm">PNG, JPG, GIF, WebP. Up to 12 files.</span>
+            <span className="mt-2 text-gray-500 text-sm">
+              PNG, JPG, GIF, WebP, or PDF. Up to 12 files.
+            </span>
+            {uploadMutation.isPending ? (
+              <div className="mt-4 w-full max-w-xs">
+                <div className="h-2 overflow-hidden bg-gray-800">
+                  <div
+                    className="h-full bg-[#7CFC00] transition-all"
+                    style={{ width: `${Math.round(uploadProgress * 100)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-gray-400 text-xs">
+                  {Math.round(uploadProgress * 100)}% uploaded — keep this open
+                </p>
+              </div>
+            ) : null}
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif,application/pdf"
               multiple
               className="sr-only"
               disabled={uploadMutation.isPending}
@@ -312,10 +377,26 @@ function DashboardArtworks() {
                   <div>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <h3 className="font-black text-lg">{artwork.title}</h3>
-                      <span className="inline-flex items-center gap-1 rounded bg-[#7CFC00]/15 px-2 py-1 font-bold text-[#7CFC00] text-xs uppercase">
-                        <CheckCircle2 className="size-3" />
-                        {artwork.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded bg-[#7CFC00]/15 px-2 py-1 font-bold text-[#7CFC00] text-xs uppercase">
+                          <CheckCircle2 className="size-3" />
+                          {artwork.status}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletingId === artwork.id}
+                          onClick={() => handleDelete(artwork.id)}
+                          title="Delete artwork"
+                        >
+                          {deletingId === artwork.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                     <p className="mt-2 text-gray-400 text-sm">
                       {artwork.medium ?? "Mixed practice"}

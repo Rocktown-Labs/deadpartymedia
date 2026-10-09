@@ -14,6 +14,9 @@ const navItems = [
   { label: "Merch", to: "/merch" },
 ] as const;
 
+const promoRequestUrl =
+  "https://docs.google.com/forms/d/14IqNEQH-PlztSsy8wz-9nUeMKj-1jYOMMpHGSeNB71I/viewform?edit_requested=true&utm_source=ig&utm_medium=social&utm_content=link_in_bio";
+
 const socialLinks = [
   { href: "https://www.instagram.com/deadpartyy", icon: Instagram, label: "Instagram" },
   { href: "https://www.youtube.com/@DeadPartyMedia", icon: Youtube, label: "YouTube" },
@@ -92,6 +95,64 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("arts-cart-updated", onCartUpdated);
   }, []);
 
+  // Shared between the mobile bar and the desktop masthead row.
+  const headerActions = (
+    <>
+      <Link
+        to="/merch"
+        aria-label="Open cart"
+        className="flex size-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent text-white no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+        onClick={(event) => {
+          event.preventDefault();
+          setIsCartOpen(true);
+        }}
+      >
+        <ShoppingBag className="size-4" />
+      </Link>
+      <Show when="signed-in">
+        <Link
+          to={dashboardRoute}
+          className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
+        >
+          <LayoutDashboard className="size-4" />
+          <span className="ml-2 hidden font-bold text-xs uppercase tracking-wider md:inline">
+            Dashboard
+          </span>
+        </Link>
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
+              userButtonPopoverActionButton: "text-white hover:bg-gray-900",
+              userButtonPopoverActionButtonText: "text-white",
+              userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
+            },
+          }}
+        />
+      </Show>
+      <Show when="signed-out">
+        <SignInButton mode="modal">
+          <button
+            type="button"
+            className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
+            aria-label="Sign in"
+          >
+            <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
+          </button>
+        </SignInButton>
+        <SignUpButton mode="modal">
+          <button
+            type="button"
+            className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
+            aria-label="Get started"
+          >
+            <span className="font-bold text-xs uppercase tracking-wider">Get Started</span>
+          </button>
+        </SignUpButton>
+      </Show>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <header className="fixed top-0 z-50 w-full border-gray-800 border-b bg-[#0A0A0A]/95 backdrop-blur-xl">
@@ -104,98 +165,62 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
             <span className="hidden md:block">ARKANSAS ARTS</span>
           </div>
 
-          <nav className="flex items-center justify-between gap-6 py-6">
-            <div className="flex-1">
-              <Link to="/" className="block no-underline" aria-label="Dead Party Arts home">
-                <Image
-                  src="/images/deadpartyarts-trans.png"
-                  alt="Dead Party Arts"
-                  width={56}
-                  height={56}
-                  className="size-14 object-contain lg:hidden"
-                />
-                <div className="hidden lg:block">
-                  <div className="font-black text-3xl tracking-tighter">
-                    <span className="text-[#7CFC00]">DEAD</span>
-                    <span className="text-white"> PARTY</span>
-                    <span className="text-fuchsia-500"> ARTS</span>
-                  </div>
-                  <div className="mt-1 font-light text-[10px] text-neutral-300 tracking-[0.4em]">
-                    YOUR #1 OUTLET FOR ARKANSAS ART
-                  </div>
-                </div>
-              </Link>
-            </div>
+          {/* Mobile bar (< lg): compact logo + actions */}
+          <div className="flex items-center justify-between gap-4 py-4 lg:hidden">
+            <Link to="/" className="block no-underline" aria-label="Dead Party Arts home">
+              <Image
+                src="/images/deadpartyarts-trans.png"
+                alt="Dead Party Arts"
+                width={48}
+                height={48}
+                className="size-12 object-contain"
+              />
+            </Link>
+            <div className="flex items-center gap-2">{headerActions}</div>
+          </div>
 
-            <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  activeProps={{ className: "text-[#7CFC00]" }}
-                  className="group relative font-medium text-sm uppercase tracking-wider text-white no-underline transition-colors hover:text-[#7CFC00]"
-                >
-                  {item.label}
-                  <span className="-bottom-1 absolute left-0 h-px w-0 bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
-                </Link>
-              ))}
-            </div>
+          {/* Desktop top row: masthead + actions */}
+          <div className="hidden items-center justify-between gap-6 py-3.5 lg:flex">
+            <Link
+              to="/"
+              className="inline-flex flex-col no-underline"
+              aria-label="Dead Party Arts home"
+            >
+              <div className="whitespace-nowrap font-black text-3xl leading-none tracking-tighter">
+                <span className="text-[#7CFC00]">DEAD</span>
+                <span className="text-white"> PARTY</span>
+                <span className="text-fuchsia-500"> ARTS</span>
+              </div>
+              <div className="mt-1 whitespace-nowrap font-light text-[10px] leading-none text-neutral-300 tracking-[0.3em]">
+                YOUR #1 OUTLET FOR ARKANSAS ART
+              </div>
+            </Link>
+            <div className="flex items-center gap-3">{headerActions}</div>
+          </div>
 
-            <div className="flex flex-1 items-center justify-end gap-2 lg:gap-3">
+          {/* Desktop bottom row: menu navigation */}
+          <nav className="hidden items-center justify-center gap-8 border-gray-800/60 border-t py-2.5 lg:flex">
+            {navItems.map((item) => (
               <Link
-                to="/merch"
-                aria-label="Open cart"
-                className="hidden size-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent text-white no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00] sm:flex"
-                onClick={(event) => {
-                  event.preventDefault();
-                  setIsCartOpen(true);
-                }}
+                key={item.label}
+                to={item.to}
+                activeProps={{ className: "text-[#7CFC00]" }}
+                className="group relative font-medium text-sm uppercase tracking-wider text-white no-underline transition-colors hover:text-[#7CFC00]"
               >
-                <ShoppingBag className="size-4" />
+                {item.label}
+                <span className="-bottom-1 absolute left-0 h-px w-0 bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
               </Link>
-              <Show when="signed-in">
-                <Link
-                  to={dashboardRoute}
-                  className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
-                >
-                  <LayoutDashboard className="size-4" />
-                  <span className="ml-2 hidden font-bold text-xs uppercase tracking-wider md:inline">
-                    Dashboard
-                  </span>
-                </Link>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox:
-                        "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-                      userButtonPopoverActionButton: "text-white hover:bg-gray-900",
-                      userButtonPopoverActionButtonText: "text-white",
-                      userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
-                    },
-                  }}
-                />
-              </Show>
-              <Show when="signed-out">
-                <SignInButton mode="modal">
-                  <button
-                    type="button"
-                    className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
-                    aria-label="Sign in"
-                  >
-                    <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button
-                    type="button"
-                    className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
-                    aria-label="Get started"
-                  >
-                    <span className="font-bold text-xs uppercase tracking-wider">Get Started</span>
-                  </button>
-                </SignUpButton>
-              </Show>
-            </div>
+            ))}
+            <a
+              href={promoRequestUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="group relative font-medium text-sm uppercase tracking-wider text-white no-underline transition-colors hover:text-[#7CFC00]"
+            >
+              Promo Request
+              <ExternalLink className="ml-1 inline size-3" />
+              <span className="-bottom-1 absolute left-0 h-px w-0 bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
+            </a>
           </nav>
         </div>
       </header>
