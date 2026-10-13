@@ -1,7 +1,10 @@
+import { buildPublicUploadUrl } from "#/lib/upload.ts";
+
 export interface ArtworkDraft {
   id: string;
   fileName: string;
   imageKey: string;
+  previewUrl?: string;
   title: string;
   medium: string;
   year: string;
@@ -28,16 +31,40 @@ export function titleFromFileName(fileName: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function createArtworkDrafts(files: unknown[]) {
+export function createArtworkDrafts(files: unknown[], metadata?: unknown) {
   const drafts: ArtworkDraft[] = [];
 
   files.forEach((file, index) => {
-    const sourceFile = (file as { file?: File }).file;
+    const candidate = file as {
+      file?: File;
+      url?: string;
+    };
+    const sourceFile = candidate.file;
     const fileName = sourceFile?.name ?? `Artwork ${index + 1}`;
     const imageKey = getUploadedObjectKey(file);
 
     if (!imageKey) {
       return;
+    }
+
+    let previewUrl = candidate.url;
+
+    if (
+      !previewUrl &&
+      typeof window !== "undefined" &&
+      typeof URL !== "undefined" &&
+      typeof URL.createObjectURL === "function" &&
+      sourceFile instanceof File
+    ) {
+      try {
+        previewUrl = URL.createObjectURL(sourceFile);
+      } catch {
+        // Fall back to built URL
+      }
+    }
+
+    if (!previewUrl) {
+      previewUrl = buildPublicUploadUrl(imageKey, metadata);
     }
 
     drafts.push({
@@ -46,6 +73,7 @@ export function createArtworkDrafts(files: unknown[]) {
       forSale: false,
       id: crypto.randomUUID(),
       imageKey,
+      previewUrl,
       medium: "",
       price: "",
       status: "published",

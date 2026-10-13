@@ -50,9 +50,9 @@ const artworkInputSchema = z
     status: z.enum(["draft", "published"]).default("published"),
     title: z
       .string()
+      .trim()
       .min(1, "Title is required")
-      .max(120, "Title must stay under 120 characters")
-      .transform((value) => value.trim()),
+      .max(120, "Title must stay under 120 characters"),
     year: z.string().max(20, "Year must stay under 20 characters").optional(),
   })
   .refine((value) => Boolean(value.imageKey || value.image), {
@@ -107,7 +107,7 @@ function parsePriceCents(price?: string) {
     return null;
   }
 
-  const amount = Number(trimmed.replaceAll(/[^0-9.]/g, ""));
+  const amount = Number(trimmed.replaceAll(/[^0-9.-]/g, ""));
   if (!Number.isFinite(amount) || amount <= 0) {
     return null;
   }
@@ -361,6 +361,63 @@ export const deleteCurrentArtwork = createServerFn({ method: "POST" })
     await db.delete(artworks).where(eq(artworks.id, data.id));
 
     return { success: true };
+  });
+
+export const updateCurrentArtwork = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      description: z.string().max(700, "Description must stay under 700 characters").optional(),
+      forSale: z.boolean(),
+      id: z.number(),
+      medium: z.string().max(80, "Medium must stay under 80 characters").optional(),
+      price: z.string().optional(),
+      status: z.enum(["draft", "published"]),
+      title: z
+        .string()
+        .trim()
+        .min(1, "Title is required")
+        .max(120, "Title must stay under 120 characters"),
+      year: z.string().max(20, "Year must stay under 20 characters").optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const artmakerId = await getCurrentArtmakerId();
+
+    const [existing] = await db
+      .select({ id: artworks.id, slug: artworks.slug, title: artworks.title })
+      .from(artworks)
+      .where(and(eq(artworks.id, data.id), eq(artworks.artmakerId, artmakerId)))
+      .limit(1);
+
+    if (!existing) {
+      throw new Error("Artwork not found");
+    }
+
+    let slug = existing.slug;
+    if (data.title !== existing.title) {
+      slug = await makeUniqueArtworkSlug(data.title);
+    }
+
+    const [updated] = await db
+      .update(artworks)
+      .set({
+        description: data.description?.trim() || null,
+        forSale: data.forSale,
+        medium: data.medium?.trim() || null,
+        priceCents: data.forSale ? parsePriceCents(data.price) : null,
+        slug,
+        status: data.status,
+        title: data.title,
+        updatedAt: new Date(),
+        year: data.year?.trim() || null,
+      })
+      .where(eq(artworks.id, data.id))
+      .returning();
+
+    return {
+      artwork: { ...updated, image: normalizeStoredImageUrl(updated.image) },
+      success: true,
+    };
   });
 
 export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async () => {
