@@ -60,7 +60,12 @@ const artworkInputSchema = z
     path: ["imageKey"],
   });
 
-async function getCurrentArtmakerId(options?: { allowMissing?: boolean }) {
+// No-arg callers always get a number: without allowMissing a missing artmaker
+// redirects to onboarding instead of returning. Only `{ allowMissing: true }`
+// callers can receive null.
+function getCurrentArtmakerId(): Promise<number>;
+function getCurrentArtmakerId(options: { allowMissing: true }): Promise<number | null>;
+async function getCurrentArtmakerId(options?: { allowMissing?: boolean }): Promise<number | null> {
   const { isAuthenticated, userId } = await auth();
 
   if (!isAuthenticated || !userId) {
