@@ -16,6 +16,7 @@ import {
   hasArtsStaffRole,
   isArtsStaffRole,
   mergeArtsRole,
+  shouldRedirectStaffFromArtmakerDashboard,
 } from "#/lib/roles.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
