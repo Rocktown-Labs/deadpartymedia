@@ -1,13 +1,25 @@
 import { Show, SignUpButton } from "@clerk/tanstack-react-start";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { ArrowRight, Instagram, MapPin } from "lucide-react";
+import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
+import { ArtsMerchCarousel } from "#/components/home/arts-merch-carousel.tsx";
+import { RecentArtworksCarousel } from "#/components/home/recent-artworks-carousel.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
+import { type ArtworkListItem, listPublishedArtworksPaginated } from "#/lib/artworks.functions.ts";
+import { getArtsProducts, type ArtsProduct } from "#/lib/fourthwall.functions.ts";
 import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 import { createSeoMeta, siteName, siteUrl } from "#/lib/seo.ts";
 
+export interface HomeSearch {
+  artwork?: string;
+}
+
 export const Route = createFileRoute("/")({
   component: Home,
+  validateSearch: (search: Record<string, unknown>): HomeSearch => ({
+    artwork: typeof search.artwork === "string" ? search.artwork : undefined,
+  }),
   head: () => ({
     ...createSeoMeta({
       description:
@@ -28,12 +40,46 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: () => listArtmakers(),
+  loader: async () => {
+    const [artmakers, paginatedArtworks, products] = await Promise.all([
+      listArtmakers(),
+      listPublishedArtworksPaginated({ data: { limit: 12, offset: 0, sort: "recent" } }),
+      getArtsProducts(),
+    ]);
+
+    return {
+      artmakers,
+      products: products as ArtsProduct[],
+      recentArtworks: paginatedArtworks.items,
+    };
+  },
 });
 
 function Home() {
-  const artmakers = Route.useLoaderData();
+  const { artmakers, recentArtworks, products } = Route.useLoaderData();
+  const { artwork } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const featuredArtmakers = artmakers.slice(0, 6);
+
+  const handleSelectArtwork = (selectedArtwork: ArtworkListItem) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        artwork: selectedArtwork.slug || String(selectedArtwork.id),
+      }),
+      resetScroll: false,
+    });
+  };
+
+  const handleCloseDrawer = () => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        artwork: undefined,
+      }),
+      resetScroll: false,
+    });
+  };
 
   return (
     <main className="pt-[calc(var(--navbar-offset)+1.25rem)]">
@@ -125,6 +171,10 @@ function Home() {
         </div>
       </section>
 
+      {/* Recent Artwork Uploads Showcase */}
+      <RecentArtworksCarousel artworks={recentArtworks} onSelectArtwork={handleSelectArtwork} />
+
+      {/* Recent Artmakers Showcase with Horizontal Touch Snap on Mobile */}
       <section className="border-gray-800 border-t px-6 py-14">
         <div className="container mx-auto">
           <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -132,25 +182,31 @@ function Home() {
               <p className="font-black text-[#7CFC00] text-xs uppercase tracking-[0.28em]">
                 First wall
               </p>
-              <h2 className="mt-2 font-black text-3xl tracking-tight">Recent Artmakers</h2>
+              <h2 className="mt-2 font-black text-3xl tracking-tight text-white md:text-4xl">
+                Recent Artmakers
+              </h2>
             </div>
             <Link
               to="/artmakers"
-              className="inline-flex items-center gap-2 font-black text-[#7CFC00] text-xs uppercase tracking-[0.22em] no-underline"
+              className="inline-flex items-center gap-2 font-black text-[#7CFC00] text-xs uppercase tracking-[0.22em] no-underline hover:text-[#a5ff43]"
             >
-              View all
+              <span>View all</span>
               <ArrowRight className="size-4" />
             </Link>
           </div>
 
           {featuredArtmakers.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div
+              tabIndex={0}
+              aria-label="Recent Artmakers Carousel"
+              className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 [touch-action:pan-y] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
+            >
               {featuredArtmakers.map((artmaker) => (
                 <Link
                   key={artmaker.id}
                   to="/artmakers/$slug"
                   params={{ slug: artmaker.slug }}
-                  className="group border border-neutral-800 bg-[#101010] p-5 no-underline transition-colors hover:border-[#7CFC00]"
+                  className="group w-[300px] shrink-0 [scroll-snap-align:start] border border-neutral-800 bg-[#101010] p-5 no-underline transition-[border-color,transform] duration-150 active:scale-[0.98] hover:border-[#7CFC00] md:w-auto [touch-action:manipulation]"
                 >
                   <div className="flex gap-4">
                     <div className="grid size-20 shrink-0 place-items-center overflow-hidden border border-neutral-800 bg-black">
@@ -206,6 +262,16 @@ function Home() {
           )}
         </div>
       </section>
+
+      {/* Arts Merch Carousel */}
+      <ArtsMerchCarousel products={products} />
+
+      {/* Interactive Artwork Detail Drawer for deep-linking (?artwork=...) */}
+      <ArtworkDetailDrawer
+        artworkIdentifier={artwork}
+        artworks={recentArtworks}
+        onClose={handleCloseDrawer}
+      />
     </main>
   );
 }
