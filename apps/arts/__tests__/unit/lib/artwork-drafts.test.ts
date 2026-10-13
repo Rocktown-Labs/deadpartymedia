@@ -51,6 +51,7 @@ describe("artwork draft helpers", () => {
         id: "00000000-0000-4000-8000-000000000001",
         imageKey: "artworks/ceramic-vessel.png",
         medium: "",
+        previewUrl: "artworks/ceramic-vessel.png",
         price: "",
         status: "published",
         title: "Ceramic Vessel",
@@ -63,11 +64,20 @@ describe("artwork draft helpers", () => {
         id: "00000000-0000-4000-8000-000000000002",
         imageKey: "artworks/fallback-name.png",
         medium: "",
+        previewUrl: "artworks/fallback-name.png",
         price: "",
         status: "published",
         title: "Artwork 3",
         year: "",
       },
     ]);
+  });
+
+  it("should construct full previewUrl when metadata provides publicBaseUrl", () => {
+    vi.spyOn(crypto, "randomUUID").mockReturnValueOnce("00000000-0000-4000-8000-000000000003");
+    const drafts = createArtworkDrafts([{ objectInfo: { key: "artworks/canvas.jpg" } }], {
+      publicBaseUrl: "https://media.deadparty.com",
+    });
+    expect(drafts[0]?.previewUrl).toBe("https://media.deadparty.com/artworks/canvas.jpg");
   });
 });

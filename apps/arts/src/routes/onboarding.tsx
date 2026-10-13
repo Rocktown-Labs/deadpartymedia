@@ -49,6 +49,7 @@ const artworkDraftSchema = z.object({
   forSale: z.boolean(),
   imageKey: z.string().min(1),
   medium: z.string().max(80, "Artwork medium must stay under 80 characters"),
+  previewUrl: z.string().optional(),
   price: z.string(),
   status: z.enum(["draft", "published"]),
   title: z.string().min(1, "Artwork title is required").max(120),
@@ -149,7 +150,7 @@ function Onboarding() {
       setError(caughtError instanceof Error ? caughtError.message : "Artwork upload failed.");
     },
     onSuccess: (result) => {
-      const drafts = createArtworkDrafts(result.files ?? []);
+      const drafts = createArtworkDrafts(result.files ?? [], result.metadata);
       setArtworkDrafts((current) => [...current, ...drafts]);
     },
   });
@@ -664,43 +665,85 @@ function Onboarding() {
                         <details
                           key={item.id}
                           open={index === 0}
-                          className="border border-neutral-800 bg-[#080808]"
+                          className="overflow-hidden border border-neutral-800 bg-[#080808]"
                         >
-                          <summary className="cursor-pointer px-4 py-3 font-black text-sm uppercase tracking-[0.14em]">
-                            {item.title || item.fileName}
+                          <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 font-black text-sm uppercase tracking-[0.14em] hover:bg-neutral-900/60">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {item.previewUrl ? (
+                                <img
+                                  src={item.previewUrl}
+                                  alt={item.title || item.fileName}
+                                  className="size-12 shrink-0 rounded border border-neutral-700 bg-neutral-950 object-cover"
+                                />
+                              ) : (
+                                <div className="grid size-12 shrink-0 place-items-center rounded border border-neutral-800 bg-neutral-900 text-[#7CFC00]">
+                                  <ImageUp className="size-5" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="truncate text-white font-black">
+                                  {item.title || item.fileName}
+                                </p>
+                                <p className="truncate text-xs font-normal normal-case text-gray-400">
+                                  {item.fileName}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-xs text-neutral-500 font-mono">
+                              #{index + 1}
+                            </span>
                           </summary>
                           <div className="grid gap-4 border-neutral-800 border-t p-4">
-                            <Field label="Title">
-                              <Input
-                                value={item.title}
-                                onChange={(event) => {
-                                  const next = [...artworkDrafts];
-                                  next[index] = { ...item, title: event.target.value };
-                                  setArtworkDrafts(next);
-                                }}
-                              />
-                            </Field>
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <Field label="Medium">
-                                <Input
-                                  value={item.medium}
-                                  onChange={(event) => {
-                                    const next = [...artworkDrafts];
-                                    next[index] = { ...item, medium: event.target.value };
-                                    setArtworkDrafts(next);
-                                  }}
-                                />
-                              </Field>
-                              <Field label="Year">
-                                <Input
-                                  value={item.year}
-                                  onChange={(event) => {
-                                    const next = [...artworkDrafts];
-                                    next[index] = { ...item, year: event.target.value };
-                                    setArtworkDrafts(next);
-                                  }}
-                                />
-                              </Field>
+                            <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)] items-start">
+                              {item.previewUrl ? (
+                                <div className="overflow-hidden rounded border border-neutral-700 bg-neutral-950">
+                                  <img
+                                    src={item.previewUrl}
+                                    alt={item.title || item.fileName}
+                                    className="aspect-square w-full object-cover"
+                                  />
+                                  <p className="p-1.5 text-center text-[10px] text-gray-400 font-mono truncate">
+                                    {item.fileName}
+                                  </p>
+                                </div>
+                              ) : null}
+                              <div className="grid gap-4 flex-1">
+                                <Field label="Title">
+                                  <Input
+                                    value={item.title}
+                                    placeholder="Artwork title"
+                                    onChange={(event) => {
+                                      const next = [...artworkDrafts];
+                                      next[index] = { ...item, title: event.target.value };
+                                      setArtworkDrafts(next);
+                                    }}
+                                  />
+                                </Field>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <Field label="Medium">
+                                    <Input
+                                      value={item.medium}
+                                      placeholder="e.g. Oil on Canvas"
+                                      onChange={(event) => {
+                                        const next = [...artworkDrafts];
+                                        next[index] = { ...item, medium: event.target.value };
+                                        setArtworkDrafts(next);
+                                      }}
+                                    />
+                                  </Field>
+                                  <Field label="Year">
+                                    <Input
+                                      value={item.year}
+                                      placeholder="e.g. 2026"
+                                      onChange={(event) => {
+                                        const next = [...artworkDrafts];
+                                        next[index] = { ...item, year: event.target.value };
+                                        setArtworkDrafts(next);
+                                      }}
+                                    />
+                                  </Field>
+                                </div>
+                              </div>
                             </div>
                             <Field label="Description">
                               <Textarea

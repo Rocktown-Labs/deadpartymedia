@@ -26,6 +26,7 @@ import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
 import { Route as ApiUploadRouteImport } from './routes/api.upload'
 import { Route as ArtmakersIndexRouteImport } from './routes/artmakers.index'
 import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
@@ -118,6 +119,11 @@ const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
   path: '/artmakers/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardArtworksRoute = DashboardArtworksRouteImport.update({
   id: '/artworks',
   path: '/artworks',
@@ -171,13 +177,13 @@ export interface FileRoutesByFullPath {
   '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/merch/': typeof MerchIndexRoute
   '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/articles': typeof ArticlesRoute
-  '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
   '/onboarding': typeof OnboardingRoute
@@ -195,6 +201,7 @@ export interface FileRoutesByTo {
   '/merch/$handle': typeof MerchHandleRoute
   '/admin': typeof AdminIndexRoute
   '/artmakers': typeof ArtmakersIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/merch': typeof MerchIndexRoute
   '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
@@ -221,6 +228,7 @@ export interface FileRoutesById {
   '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/merch/': typeof MerchIndexRoute
   '/artmakers/$slug/gallery': typeof ArtmakersSlugGalleryRoute
 }
@@ -248,13 +256,13 @@ export interface FileRouteTypes {
     | '/merch/$handle'
     | '/admin/'
     | '/artmakers/'
+    | '/dashboard/'
     | '/merch/'
     | '/artmakers/$slug/gallery'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/articles'
-    | '/dashboard'
     | '/events'
     | '/exhibitions'
     | '/onboarding'
@@ -272,6 +280,7 @@ export interface FileRouteTypes {
     | '/merch/$handle'
     | '/admin'
     | '/artmakers'
+    | '/dashboard'
     | '/merch'
     | '/artmakers/$slug/gallery'
   id:
@@ -297,6 +306,7 @@ export interface FileRouteTypes {
     | '/merch/$handle'
     | '/admin/'
     | '/artmakers/'
+    | '/dashboard/'
     | '/merch/'
     | '/artmakers/$slug/gallery'
   fileRoutesById: FileRoutesById
@@ -437,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtmakersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/artworks': {
       id: '/dashboard/artworks'
       path: '/artworks'
@@ -508,12 +525,14 @@ interface DashboardRouteChildren {
   DashboardArtworksRoute: typeof DashboardArtworksRoute
   DashboardEventsRoute: typeof DashboardEventsRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardArtworksRoute: DashboardArtworksRoute,
   DashboardEventsRoute: DashboardEventsRoute,
   DashboardProfileRoute: DashboardProfileRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
