@@ -5,6 +5,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { getWorkersAiModel } from "@/lib/ai";
 import { canCreate } from "@/lib/auth/access";
 import { db } from "@/lib/db";
 import { artists, eventArtists, events } from "@/lib/db/schema";
@@ -41,13 +42,6 @@ export type EventFlyerAnalysis = z.infer<typeof flyerAnalysisSchema> & {
   unmatchedArtists: string[];
   possibleDuplicate: { id: number; title: string; date: string; venue: string } | null;
 };
-
-function requireAiKey() {
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing API key: configure AI_GATEWAY_API_KEY (Vercel AI Gateway).");
-  }
-}
 
 function normalizeName(value: string) {
   return value.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
@@ -113,11 +107,10 @@ export async function analyzeEventFlyerAction(imageUrl: string): Promise<EventFl
   if (!(await canCreate())) {
     throw new Error("Unauthorized: Only event creators can analyze event flyers");
   }
-  requireAiKey();
-
+  const model = getWorkersAiModel();
   const currentYear = new Date().getFullYear();
   const { object } = await generateObject({
-    model: "google/gemini-3.8-flash",
+    model,
     schema: flyerAnalysisSchema,
     messages: [
       {
@@ -138,9 +131,8 @@ Infer a concise title from the headliner/event name and venue when no formal tit
 Use genre OTHER unless the flyer clearly indicates a music genre.`,
           },
           {
-            type: "file",
-            mediaType: "image",
-            data: imageUrl,
+            type: "image",
+            image: imageUrl,
           },
         ],
       },
