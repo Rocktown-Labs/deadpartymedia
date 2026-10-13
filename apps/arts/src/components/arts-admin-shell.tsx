@@ -66,6 +66,7 @@ export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const { user } = useUser();
   const roles = getRolesFromMetadata(user?.publicMetadata);
+  const isSuperAdmin = roles.includes("super_admin") || role === "super_admin";
   const isArtmaker = roles.includes("artmaker");
   const canManageStaff = role === "super_admin" || role === "admin" || role === "arts_admin";
   const visibleNavItems = NAV_ITEMS.filter((item) => !item.superAdminOnly || canManageStaff);
@@ -104,7 +105,7 @@ export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
                   </Link>
                 );
               })}
-              {isArtmaker ? (
+              {isArtmaker || isSuperAdmin ? (
                 <Link
                   to="/dashboard"
                   className="flex items-center gap-3 rounded-md border border-transparent px-3 py-3 text-sm no-underline text-gray-300 transition-colors hover:bg-[#1A1A1A] hover:text-white"

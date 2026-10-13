@@ -60,7 +60,7 @@ const artworkInputSchema = z
     path: ["imageKey"],
   });
 
-async function getCurrentArtmakerId() {
+async function getCurrentArtmakerId(options?: { allowMissing?: boolean }) {
   const { isAuthenticated, userId } = await auth();
 
   if (!isAuthenticated || !userId) {
@@ -74,6 +74,9 @@ async function getCurrentArtmakerId() {
     .limit(1);
 
   if (!artmaker) {
+    if (options?.allowMissing) {
+      return null;
+    }
     throw redirect({ to: "/onboarding" });
   }
 
@@ -304,7 +307,11 @@ export const listPublishedArtworksByArtmakerSlug = createServerFn({ method: "GET
   });
 
 export const listCurrentArtworks = createServerFn({ method: "GET" }).handler(async () => {
-  const artmakerId = await getCurrentArtmakerId();
+  const artmakerId = await getCurrentArtmakerId({ allowMissing: true });
+
+  if (!artmakerId) {
+    return [] satisfies ArtworkListItem[];
+  }
 
   const rows = await db
     .select(artworkSelect())

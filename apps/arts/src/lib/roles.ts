@@ -53,6 +53,15 @@ export function hasArtsStaffRole(roles: string[]) {
 }
 
 /**
+ * Staff-only users belong in the admin desk. Users who are both staff and
+ * artmakers get access to both areas (issue #92).
+ * super_admin has omni-access across all dashboards (issue #123).
+ */
+export function shouldRedirectStaffFromArtmakerDashboard(roles: string[]): boolean {
+  return hasArtsStaffRole(roles) && !roles.includes("super_admin") && !roles.includes("artmaker");
+}
+
+/**
  * Merge a new role into an existing role list. The new role replaces the
  * slot it belongs to (audience or staff) and keeps the other slot intact,
  * so granting a staff role never strips someone's artmaker status and

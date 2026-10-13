@@ -26,6 +26,7 @@ export {
   hasArtsStaffRole,
   isArtsStaffRole,
   mergeArtsRole,
+  shouldRedirectStaffFromArtmakerDashboard,
 } from "#/lib/roles.ts";
 
 type DbUserRole = (typeof roleEnum.enumValues)[number];
@@ -86,8 +87,9 @@ export const requireArtmakerDashboardUser = createServerFn({ method: "GET" }).ha
   const roles = getRolesFromMetadata(user.publicMetadata);
 
   // Staff-only users belong in the admin desk. Users who are both staff and
-  // artmakers get access to both areas, so don't force a redirect (issue #92).
-  if (hasArtsStaffRole(roles) && !roles.includes("artmaker")) {
+  // artmakers get access to both areas (issue #92).
+  // super_admin has omni-access across all dashboards (issue #123).
+  if (shouldRedirectStaffFromArtmakerDashboard(roles)) {
     throw redirect({ to: "/admin" });
   }
 

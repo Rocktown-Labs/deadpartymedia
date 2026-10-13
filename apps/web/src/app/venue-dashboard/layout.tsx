@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Route } from "next";
@@ -34,5 +35,19 @@ export default function VenueDashboardLayout({ children }: { children: React.Rea
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {role === "super_admin" && (
+        <div className="bg-[#7CFC00]/15 border-b border-[#7CFC00]/30 px-6 py-2.5 flex items-center justify-between text-xs text-white">
+          <span className="font-bold text-[#7CFC00] flex items-center gap-2">
+            <span>👁️</span> Super Admin Preview: Viewing Venue Dashboard
+          </span>
+          <Link href="/admin" className="text-white hover:underline font-mono">
+            Return to Admin Desk →
+          </Link>
+        </div>
+      )}
+      {children}
+    </>
+  );
 }

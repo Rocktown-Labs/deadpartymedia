@@ -12,7 +12,9 @@ import {
   Disc,
   LayoutDashboard,
   Mic2,
+  Music,
   Newspaper,
+  User,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +53,18 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/venues" as Route, icon: Building2, label: "Venues" },
   { href: "/admin/artists", icon: Mic2, label: "Artists" },
   { href: "/admin/users", icon: Users, label: "Users", superAdminOnly: true },
+];
+
+interface RoleDashboardItem {
+  href: Route;
+  label: string;
+  icon: LucideIcon;
+}
+
+const ROLE_DASHBOARD_ITEMS: RoleDashboardItem[] = [
+  { href: "/artist-dashboard" as Route, icon: Music, label: "Artist Dashboard" },
+  { href: "/venue-dashboard" as Route, icon: Building2, label: "Venue Dashboard" },
+  { href: "/dashboard" as Route, icon: User, label: "Fan Dashboard" },
 ];
 
 function getNavbarHeight() {
@@ -176,6 +190,29 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                 );
               })}
             </SidebarMenu>
+            {isSuperAdmin && (
+              <div className="mt-4 border-t border-gray-800/80 pt-3">
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 group-data-[collapsible=icon]:hidden">
+                  Role Dashboards
+                </p>
+                <SidebarMenu>
+                  {ROLE_DASHBOARD_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          onClick={() => router.push(item.href)}
+                          className="rounded-md border border-transparent text-sm text-gray-400 hover:bg-[#1A1A1A] hover:text-[#7CFC00]"
+                        >
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </div>
+            )}
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-800/80 p-3 text-xs text-gray-500">
             <p className="truncate group-data-[collapsible=icon]:hidden">
