@@ -130,8 +130,8 @@ export default clerkMiddleware(async (auth, req) => {
     );
   }
 
-  // Handle onboarding flow - only for authenticated users
-  if (userId && !onboardingComplete) {
+  // Handle onboarding flow - only for authenticated users (super_admin bypasses onboarding)
+  if (userId && !onboardingComplete && role !== "super_admin") {
     // Allow access to onboarding route
     if (isOnboardingRoute(req)) {
       response = NextResponse.next();
@@ -150,10 +150,12 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Handle role-based routing for authenticated users with completed onboarding
-  if (onboardingComplete) {
-    // Check if user is accessing the correct dashboard for their role
+  if (onboardingComplete || role === "super_admin") {
+    // Check if user is accessing the correct dashboard for their role.
+    // super_admin has omni-access across all role dashboards (issue #123).
     const isCorrectRoute =
-      ((role === "super_admin" || role === "writer") && isAdminRoute(req)) ||
+      role === "super_admin" ||
+      (role === "writer" && isAdminRoute(req)) ||
       (role === "artist" && isArtistDashboardRoute(req)) ||
       (role === "venue" && isVenueDashboardRoute(req)) ||
       ((role === "fan" || role === "artmaker" || role === "arts_admin" || role === "arts_writer") &&
@@ -165,7 +167,7 @@ export default clerkMiddleware(async (auth, req) => {
       return response;
     }
 
-    // Redirect to correct dashboard based on role
+    // Redirect to correct dashboard based on role (super_admin is exempt)
     if (
       isAdminRoute(req) ||
       isArtistDashboardRoute(req) ||
@@ -173,7 +175,7 @@ export default clerkMiddleware(async (auth, req) => {
       isDashboardRoute(req)
     ) {
       const targetPath =
-        role === "super_admin" || role === "writer"
+        role === "writer"
           ? "/admin"
           : role === "artist"
             ? "/artist-dashboard"

@@ -3,13 +3,14 @@ import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 let mockPathname = "/admin";
+const mockPush = vi.fn();
 
 vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
   usePathname: () => mockPathname,
   useRouter: () => ({
     back: vi.fn(),
     prefetch: vi.fn(),
-    push: vi.fn(),
+    push: mockPush,
     replace: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
@@ -79,6 +80,9 @@ describe(AdminShell, () => {
     expect(dashboardButton).not.toHaveAttribute("data-active");
     expect(articlesButton).toBeInTheDocument();
     expect(musicButton).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Artist Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Venue Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Fan Dashboard" })).toBeInTheDocument();
 
     rerender(
       <AdminShell isSuperAdmin={false} userRole="writer">
@@ -89,6 +93,28 @@ describe(AdminShell, () => {
     expect(screen.queryByRole("button", { name: "Users" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Articles" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Music Releases" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Artist Dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Venue Dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Fan Dashboard" })).not.toBeInTheDocument();
+  });
+
+  it("navigates to role dashboards when clicked by super admin", async () => {
+    setViewport(1280);
+    renderWithProviders(
+      <AdminShell isSuperAdmin userRole="super_admin">
+        <div>content</div>
+      </AdminShell>,
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Artist Dashboard" }));
+    expect(mockPush).toHaveBeenCalledWith("/artist-dashboard");
+
+    await user.click(screen.getByRole("button", { name: "Venue Dashboard" }));
+    expect(mockPush).toHaveBeenCalledWith("/venue-dashboard");
+
+    await user.click(screen.getByRole("button", { name: "Fan Dashboard" }));
+    expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
   it("opens the mobile sidebar drawer from the trigger", async () => {

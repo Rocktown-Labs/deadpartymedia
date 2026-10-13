@@ -5,6 +5,7 @@ import {
   hasArtsStaffRole,
   isArtsStaffRole,
   mergeArtsRole,
+  shouldRedirectStaffFromArtmakerDashboard,
 } from "#/lib/artmakers.functions.ts";
 
 describe("Arts Role & Access Control Rules", () => {
@@ -56,6 +57,29 @@ describe("Arts Role & Access Control Rules", () => {
       expect(hasArtsStaffRole(["artmaker", "arts_admin"])).toBe(true);
       expect(hasArtsStaffRole(["artmaker"])).toBe(false);
       expect(hasArtsStaffRole([])).toBe(false);
+    });
+  });
+
+  describe("shouldRedirectStaffFromArtmakerDashboard", () => {
+    it("should redirect staff-only users who are not artmakers or super_admin", () => {
+      expect(shouldRedirectStaffFromArtmakerDashboard(["arts_admin"])).toBe(true);
+      expect(shouldRedirectStaffFromArtmakerDashboard(["arts_writer"])).toBe(true);
+      expect(shouldRedirectStaffFromArtmakerDashboard(["admin"])).toBe(true);
+    });
+
+    it("should not redirect users who hold the artmaker role", () => {
+      expect(shouldRedirectStaffFromArtmakerDashboard(["artmaker"])).toBe(false);
+      expect(shouldRedirectStaffFromArtmakerDashboard(["artmaker", "arts_admin"])).toBe(false);
+    });
+
+    it("should not redirect super_admin users even without the artmaker role (issue #123)", () => {
+      expect(shouldRedirectStaffFromArtmakerDashboard(["super_admin"])).toBe(false);
+      expect(shouldRedirectStaffFromArtmakerDashboard(["super_admin", "arts_admin"])).toBe(false);
+    });
+
+    it("should not redirect fans or empty roles", () => {
+      expect(shouldRedirectStaffFromArtmakerDashboard(["fan"])).toBe(false);
+      expect(shouldRedirectStaffFromArtmakerDashboard([])).toBe(false);
     });
   });
 

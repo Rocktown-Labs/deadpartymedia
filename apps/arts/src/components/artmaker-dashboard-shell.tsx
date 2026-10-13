@@ -33,59 +33,72 @@ export function ArtmakerDashboardShell({ children }: ArtmakerDashboardShellProps
   const { user } = useUser();
   const roles = getRolesFromMetadata(user?.publicMetadata);
   const isStaff = hasArtsStaffRole(roles);
+  const isSuperAdmin = roles.includes("super_admin");
 
   return (
     <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-[calc(var(--navbar-offset)+1.5rem)] lg:self-start">
-          <div className="rounded-lg border border-gray-800 bg-[#0A0A0A]">
-            <div className="border-gray-800 border-b p-4">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-md border border-[#7CFC00]/40 text-[#7CFC00]">
-                  <BadgeCheck className="size-5" />
-                </div>
-                <div>
-                  <p className="font-black text-xl leading-none">Studio</p>
-                  <p className="mt-1 text-gray-500 text-xs uppercase tracking-[0.18em]">
-                    Artmaker tools
-                  </p>
+      <div className="mx-auto max-w-7xl">
+        {isSuperAdmin && (
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-[#7CFC00]/30 bg-[#7CFC00]/15 px-4 py-2.5 text-xs text-white">
+            <span className="flex items-center gap-2 font-bold text-[#7CFC00]">
+              <span>👁️</span> Super Admin Preview: Viewing Arts Studio Dashboard
+            </span>
+            <Link to="/admin" className="font-mono text-white hover:underline">
+              Return to Admin Desk &rarr;
+            </Link>
+          </div>
+        )}
+        <div className="grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+          <aside className="lg:sticky lg:top-[calc(var(--navbar-offset)+1.5rem)] lg:self-start">
+            <div className="rounded-lg border border-gray-800 bg-[#0A0A0A]">
+              <div className="border-gray-800 border-b p-4">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-md border border-[#7CFC00]/40 text-[#7CFC00]">
+                    <BadgeCheck className="size-5" />
+                  </div>
+                  <div>
+                    <p className="font-black text-xl leading-none">Studio</p>
+                    <p className="mt-1 text-gray-500 text-xs uppercase tracking-[0.18em]">
+                      Artmaker tools
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <nav className="grid gap-1 p-2">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const active = isActiveRoute(pathname, item.href);
+              <nav className="grid gap-1 p-2">
+                {NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActiveRoute(pathname, item.href);
 
-                return (
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className={`flex items-center gap-3 rounded-md border px-3 py-3 text-sm no-underline transition-colors ${
+                        active
+                          ? "border-[#7CFC00]/40 bg-[#7CFC00]/15 text-[#7CFC00]"
+                          : "border-transparent text-gray-300 hover:bg-[#1A1A1A] hover:text-white"
+                      }`}
+                    >
+                      <Icon className="size-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+                {isStaff ? (
                   <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center gap-3 rounded-md border px-3 py-3 text-sm no-underline transition-colors ${
-                      active
-                        ? "border-[#7CFC00]/40 bg-[#7CFC00]/15 text-[#7CFC00]"
-                        : "border-transparent text-gray-300 hover:bg-[#1A1A1A] hover:text-white"
-                    }`}
+                    to="/admin"
+                    className="flex items-center gap-3 rounded-md border border-transparent px-3 py-3 text-sm no-underline text-gray-300 transition-colors hover:bg-[#1A1A1A] hover:text-white"
                   >
-                    <Icon className="size-4" />
-                    <span>{item.label}</span>
+                    <Shield className="size-4" />
+                    <span>Admin desk</span>
                   </Link>
-                );
-              })}
-              {isStaff ? (
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-3 rounded-md border border-transparent px-3 py-3 text-sm no-underline text-gray-300 transition-colors hover:bg-[#1A1A1A] hover:text-white"
-                >
-                  <Shield className="size-4" />
-                  <span>Admin desk</span>
-                </Link>
-              ) : null}
-            </nav>
-          </div>
-        </aside>
+                ) : null}
+              </nav>
+            </div>
+          </aside>
 
-        <section className="min-w-0">{children}</section>
+          <section className="min-w-0">{children}</section>
+        </div>
       </div>
     </main>
   );

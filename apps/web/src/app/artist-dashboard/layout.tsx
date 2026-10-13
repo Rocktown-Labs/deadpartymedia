@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Route } from "next";
@@ -11,12 +12,13 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
   const router = useRouter();
 
   const role = parseRole(user?.publicMetadata?.role);
+  const isAuthorized = role === "artist" || role === "super_admin";
 
   useEffect(() => {
-    if (isLoaded && (!isSignedIn || role !== "artist")) {
+    if (isLoaded && (!isSignedIn || !isAuthorized)) {
       router.push("/sign-in" as Route);
     }
-  }, [isLoaded, isSignedIn, role, router]);
+  }, [isLoaded, isSignedIn, isAuthorized, router]);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || role !== "artist") {
@@ -66,9 +68,23 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
     );
   }
 
-  if (!isSignedIn || !user || role !== "artist") {
+  if (!isSignedIn || !user || !isAuthorized) {
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {role === "super_admin" && (
+        <div className="bg-[#7CFC00]/15 border-b border-[#7CFC00]/30 px-6 py-2.5 flex items-center justify-between text-xs text-white">
+          <span className="font-bold text-[#7CFC00] flex items-center gap-2">
+            <span>👁️</span> Super Admin Preview: Viewing Music Artist Dashboard
+          </span>
+          <Link href="/admin" className="text-white hover:underline font-mono">
+            Return to Admin Desk →
+          </Link>
+        </div>
+      )}
+      {children}
+    </>
+  );
 }
