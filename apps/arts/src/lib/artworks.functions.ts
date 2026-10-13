@@ -3,7 +3,7 @@ import { db } from "@dpmedia/db";
 import { artmakers, artworks } from "@dpmedia/db/schema";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { getMediumGroup } from "#/lib/mediums.ts";
@@ -31,6 +31,12 @@ export interface ArtworkListItem {
   forSale: boolean;
   priceCents: number | null;
   createdAt: Date;
+}
+
+export interface PaginatedArtworksResult {
+  items: ArtworkListItem[];
+  nextOffset: number | null;
+  totalCount: number;
 }
 
 const artworkInputSchema = z
@@ -144,6 +150,102 @@ export const listPublishedArtworks = createServerFn({ method: "GET" }).handler(a
     return [] satisfies ArtworkListItem[];
   }
 });
+
+export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      limit: z.number().int().min(1).max(100).default(24),
+      medium: z.string().optional(),
+      offset: z.number().int().min(0).default(0),
+      sort: z.enum(["recent", "available", "title"]).default("recent"),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const group = data.medium ? getMediumGroup(data.medium) : null;
+      const mediumMatches = group
+        ? group.mediums.map((candidate) =>
+            ilike(sql<string>`coalesce(${artworks.medium}, '')`, `%${candidate}%`),
+          )
+        : data.medium
+          ? [ilike(sql<string>`coalesce(${artworks.medium}, '')`, `%${data.medium}%`)]
+          : [];
+
+      const whereConditions = [eq(artworks.status, "published"), eq(artmakers.status, "published")];
+
+      if (mediumMatches.length > 0) {
+        whereConditions.push(or(...mediumMatches)!);
+      }
+
+      let orderClause: any[];
+      if (data.sort === "available") {
+        orderClause = [desc(artworks.forSale), desc(artworks.createdAt)];
+      } else if (data.sort === "title") {
+        orderClause = [asc(artworks.title), desc(artworks.createdAt)];
+      } else {
+        orderClause = [desc(artworks.createdAt)];
+      }
+
+      const [totalCountResult] = await db
+        .select({ total: count() })
+        .from(artworks)
+        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+        .where(and(...whereConditions));
+
+      const totalCount = Number(totalCountResult?.total ?? 0);
+
+      const rows = await db
+        .select(artworkSelect())
+        .from(artworks)
+        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+        .where(and(...whereConditions))
+        .orderBy(...orderClause)
+        .limit(data.limit)
+        .offset(data.offset);
+
+      const items = withNormalizedImages(rows) satisfies ArtworkListItem[];
+      const nextOffset = data.offset + items.length < totalCount ? data.offset + data.limit : null;
+
+      return {
+        items,
+        nextOffset,
+        totalCount,
+      } satisfies PaginatedArtworksResult;
+    } catch {
+      return {
+        items: [] satisfies ArtworkListItem[],
+        nextOffset: null,
+        totalCount: 0,
+      } satisfies PaginatedArtworksResult;
+    }
+  });
+
+export const getArtworkByIdOrSlug = createServerFn({ method: "GET" })
+  .validator(z.object({ identifier: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    try {
+      const isNumeric = /^\d+$/.test(data.identifier);
+      const condition = isNumeric
+        ? eq(artworks.id, Number(data.identifier))
+        : eq(artworks.slug, data.identifier);
+
+      const [row] = await db
+        .select(artworkSelect())
+        .from(artworks)
+        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+        .where(and(condition, eq(artworks.status, "published"), eq(artmakers.status, "published")))
+        .limit(1);
+
+      if (!row) {
+        return null;
+      }
+
+      const [normalized] = withNormalizedImages([row]);
+      return normalized satisfies ArtworkListItem;
+    } catch {
+      return null;
+    }
+  });
 
 export const listMediumGroupArtworks = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
