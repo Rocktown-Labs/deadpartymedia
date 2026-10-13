@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import {
   ArrowLeft,
@@ -8,9 +8,14 @@ import {
   Instagram,
   MapPin,
 } from "lucide-react";
+import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
 import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
+
+export interface ArtmakerProfileSearch {
+  artwork?: string;
+}
 
 export const Route = createFileRoute("/artmakers/$slug")({
   component: ArtmakerProfile,
@@ -31,7 +36,6 @@ export const Route = createFileRoute("/artmakers/$slug")({
       scripts: artmaker
         ? [
             {
-              type: "application/ld+json",
               children: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "Person",
@@ -49,6 +53,7 @@ export const Route = createFileRoute("/artmakers/$slug")({
                   },
                 },
               }),
+              type: "application/ld+json",
             },
           ]
         : [],
@@ -66,15 +71,40 @@ export const Route = createFileRoute("/artmakers/$slug")({
 
     return { artmaker, artworks };
   },
+  validateSearch: (search: Record<string, unknown>): ArtmakerProfileSearch => ({
+    artwork: typeof search.artwork === "string" ? search.artwork : undefined,
+  }),
 });
 
 function ArtmakerProfile() {
   const { artmaker, artworks } = Route.useLoaderData();
+  const { artwork } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const artworkCount = artworks.length || artmaker.artworkCount;
   const featuredArtwork = artworks[0];
-  const galleryPreview = artworks.slice(0, 6);
+  const galleryPreview = artworks.slice(0, 8);
+
+  const handleSelectArtwork = (selectedArtwork: { id: number; slug?: string }) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        artwork: selectedArtwork.slug ?? String(selectedArtwork.id),
+      }),
+    });
+  };
+
+  const handleCloseArtwork = () => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        artwork: undefined,
+      }),
+    });
+  };
 
   return (
-    <main className="px-5 pt-[calc(var(--navbar-offset)+1.5rem)] pb-20">
+    <main className="px-5 pb-20 pt-[calc(var(--navbar-offset)+1.5rem)]">
       <div className="mx-auto max-w-7xl">
         <Link
           to="/artmakers"
@@ -162,13 +192,35 @@ function ArtmakerProfile() {
               </div>
               <div className="grid min-h-64 border border-neutral-800 bg-[#080808]">
                 {featuredArtwork ? (
-                  <Image
-                    src={featuredArtwork.image}
-                    alt={featuredArtwork.title}
-                    width={720}
-                    height={720}
-                    className="h-full min-h-64 w-full object-cover"
-                  />
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSelectArtwork(featuredArtwork)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectArtwork(featuredArtwork);
+                      }
+                    }}
+                    className="group relative h-full min-h-64 w-full cursor-pointer overflow-hidden transition-[border-color,transform] active:scale-[0.99] [touch-action:manipulation]"
+                    aria-label={`View ${featuredArtwork.title}`}
+                  >
+                    <Image
+                      src={featuredArtwork.image}
+                      alt={featuredArtwork.title}
+                      width={720}
+                      height={720}
+                      className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 backdrop-blur-xs">
+                      <p className="font-black text-xs text-white group-hover:text-[#7CFC00]">
+                        {featuredArtwork.title}
+                      </p>
+                      <p className="text-[11px] text-neutral-400">
+                        {featuredArtwork.medium ?? "Featured Piece"}
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="grid place-items-center p-6 text-center">
                     <div>
@@ -187,7 +239,7 @@ function ArtmakerProfile() {
 
         <section className="mt-8 grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
           <div className="border border-neutral-800 bg-[#101010] p-5">
-            <p className="font-black text-3xl text-[#7CFC00]">{artmaker.artworkCount}</p>
+            <p className="font-black text-3xl text-[#7CFC00]">{artworkCount}</p>
             <p className="mt-2 text-neutral-500 text-sm uppercase tracking-[0.18em]">Artworks</p>
           </div>
           <div className="border border-neutral-800 bg-[#101010] p-5">
@@ -214,58 +266,92 @@ function ArtmakerProfile() {
                 </p>
                 <h2 className="mt-2 font-black text-3xl tracking-tight">Published work</h2>
               </div>
-              {artworks.some((artwork) => artwork.forSale) ? (
+              {artworks.some((item) => item.forSale) ? (
                 <p className="inline-flex items-center gap-2 text-neutral-400 text-sm">
                   <BadgeDollarSign className="size-4 text-[#7CFC00]" />
                   Some pieces are marked available
                 </p>
               ) : null}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {galleryPreview.map((artwork) => (
+
+            {/* 2-column mobile / 3-4 column desktop responsive touch grid */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 md:grid-cols-3 xl:grid-cols-4">
+              {galleryPreview.map((item) => (
                 <article
-                  key={artwork.id}
-                  className="overflow-hidden border border-neutral-800 bg-[#101010]"
+                  key={item.id}
+                  onClick={() => handleSelectArtwork(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleSelectArtwork(item);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-neutral-800/80 bg-[#101010] text-left transition-[border-color,transform] duration-150 active:scale-[0.98] hover:border-[#7CFC00] [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
                 >
-                  <Image
-                    src={artwork.image}
-                    alt={artwork.title}
-                    width={640}
-                    height={640}
-                    className="aspect-square w-full object-cover"
-                  />
-                  <div className="p-5">
-                    <p className="text-[#7CFC00] text-xs uppercase tracking-[0.2em]">
-                      {artwork.medium ?? "Mixed practice"}
-                    </p>
-                    <h3 className="mt-2 font-black text-xl">{artwork.title}</h3>
-                    {artwork.description ? (
-                      <p className="mt-3 line-clamp-3 text-neutral-400 text-sm leading-6">
-                        {artwork.description}
-                      </p>
+                  <div className="relative aspect-square w-full overflow-hidden bg-neutral-950">
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      width={480}
+                      height={480}
+                      className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {item.forSale ? (
+                      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full border border-[#7CFC00]/50 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#7CFC00] backdrop-blur-md">
+                        <BadgeDollarSign className="size-3" />
+                        <span>Available</span>
+                      </div>
                     ) : null}
-                    <div className="mt-4 flex flex-wrap gap-2 text-neutral-500 text-xs uppercase tracking-[0.14em]">
-                      {artwork.year ? <span>{artwork.year}</span> : null}
-                      {artwork.forSale ? <span>Available</span> : null}
+                  </div>
+
+                  <div className="flex flex-1 flex-col justify-between p-3 sm:p-4">
+                    <div>
+                      <p className="truncate text-[10px] font-black uppercase tracking-[0.2em] text-[#7CFC00]">
+                        {item.medium ?? "Mixed practice"}
+                      </p>
+                      <h3 className="mt-1 line-clamp-1 font-black text-sm tracking-tight text-white group-hover:text-[#7CFC00] sm:text-base">
+                        {item.title}
+                      </h3>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-xs text-neutral-400">
+                      {item.year ? (
+                        <span className="text-[11px] text-neutral-500">{item.year}</span>
+                      ) : (
+                        <span />
+                      )}
+                      {item.forSale ? (
+                        <span className="text-[11px] font-bold text-[#7CFC00]">For Sale</span>
+                      ) : null}
                     </div>
                   </div>
                 </article>
               ))}
             </div>
+
             {artworks.length > galleryPreview.length ? (
-              <div className="mt-6 flex justify-center">
+              <div className="mt-8 flex justify-center">
                 <Link
                   to="/artmakers/$slug/gallery"
                   params={{ slug: artmaker.slug }}
-                  className="inline-flex h-11 items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-700 bg-[#121212] px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-all hover:border-[#7CFC00] hover:text-[#7CFC00] active:scale-95"
                 >
-                  View full gallery
+                  View full gallery ({artworks.length})
                   <ImageIcon className="size-4" />
                 </Link>
               </div>
             ) : null}
           </section>
         ) : null}
+
+        {/* URL-driven modal/bottom sheet for artwork inspection */}
+        <ArtworkDetailDrawer
+          artworkIdentifier={artwork}
+          artworks={artworks}
+          onClose={handleCloseArtwork}
+        />
       </div>
     </main>
   );
