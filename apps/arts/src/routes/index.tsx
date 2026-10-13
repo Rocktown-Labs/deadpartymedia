@@ -171,9 +171,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Recent Artwork Uploads Showcase */}
-      <RecentArtworksCarousel artworks={recentArtworks} onSelectArtwork={handleSelectArtwork} />
-
       {/* Recent Artmakers Showcase with Horizontal Touch Snap on Mobile */}
       <section className="border-gray-800 border-t px-6 py-14">
         <div className="container mx-auto">
@@ -262,6 +259,9 @@ function Home() {
           )}
         </div>
       </section>
+
+      {/* Recent Artwork Uploads Showcase */}
+      <RecentArtworksCarousel artworks={recentArtworks} onSelectArtwork={handleSelectArtwork} />
 
       {/* Arts Merch Carousel */}
       <ArtsMerchCarousel products={products} />
