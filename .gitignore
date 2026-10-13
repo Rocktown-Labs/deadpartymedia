@@ -79,6 +79,9 @@ docker-compose.override.yml
 # Local/generated Codex and Expo artifacts
 .agents/skills/neon-postgres/
 .agents/skills/workflow-init/
+.agents/skills/ai-sdk/
+.agents/skills/cloudflare/
+.agents/skills/migrate-ai-sdk-v6-to-v7/
 apps/mobile/
 
 # Terraform (removed - using Vercel now)
