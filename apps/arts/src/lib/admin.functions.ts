@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { getRolesFromMetadata, mergeArtsRole } from "#/lib/roles.ts";
+import { getRolesFromMetadata, isArtsInvitation, mergeArtsRole } from "#/lib/roles.ts";
 
 export function isArtsAdminRole(role: unknown) {
   return role === "admin" || role === "super_admin" || role === "arts_admin";
@@ -172,7 +172,7 @@ export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(asyn
       updatedAt: users.updatedAt,
     })
     .from(users)
-    .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin", "fan", "artmaker"]))
+    .where(inArray(users.role, ["arts_admin", "arts_writer", "super_admin", "artmaker"]))
     .orderBy(desc(users.updatedAt))
     .catch(() => []);
 });
@@ -286,13 +286,15 @@ export const listArtsInvitations = createServerFn({ method: "GET" }).handler(asy
   try {
     const client = clerkClient();
     const response = await client.invitations.getInvitationList();
-    return response.data.map((inv) => ({
-      createdAt: inv.createdAt,
-      emailAddress: inv.emailAddress,
-      id: inv.id,
-      role: ((inv.publicMetadata as Record<string, unknown>)?.role as string) ?? "fan",
-      status: inv.status,
-    }));
+    return response.data
+      .filter((inv) => isArtsInvitation(inv))
+      .map((inv) => ({
+        createdAt: inv.createdAt,
+        emailAddress: inv.emailAddress,
+        id: inv.id,
+        role: ((inv.publicMetadata as Record<string, unknown>)?.role as string) ?? "fan",
+        status: inv.status,
+      }));
   } catch {
     return [];
   }
