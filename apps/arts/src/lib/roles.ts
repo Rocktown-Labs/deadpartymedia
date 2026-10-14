@@ -74,3 +74,36 @@ export function mergeArtsRole(existingRoles: string[], newRole: string): string[
 
   return [...new Set([newRole, ...replacement])];
 }
+
+export const ARTS_INVITATION_ROLES = ["arts_admin", "arts_writer", "artmaker"] as const;
+
+export function isArtsInvitation(invitation: {
+  publicMetadata?: unknown;
+  redirectUrl?: string | null;
+}): boolean {
+  const role = ((invitation.publicMetadata as Record<string, unknown>)?.role as string) ?? "";
+  if ((ARTS_INVITATION_ROLES as readonly string[]).includes(role)) {
+    return true;
+  }
+  if (
+    role === "fan" &&
+    typeof invitation.redirectUrl === "string" &&
+    /arts/i.test(invitation.redirectUrl)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export const ARTS_PLATFORM_ROLES = [
+  "super_admin",
+  "arts_admin",
+  "arts_writer",
+  "artmaker",
+] as const;
+
+export type ArtsPlatformRole = (typeof ARTS_PLATFORM_ROLES)[number];
+
+export function isArtsPlatformRole(role: unknown): role is ArtsPlatformRole {
+  return typeof role === "string" && (ARTS_PLATFORM_ROLES as readonly string[]).includes(role);
+}

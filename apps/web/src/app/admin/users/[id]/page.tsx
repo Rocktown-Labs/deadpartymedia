@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
 import { canManageUsers } from "@/lib/auth/access";
+import { isArtsRole } from "@/lib/auth/role";
 import { db } from "@/lib/db";
 import { posts, users } from "@/lib/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
@@ -72,7 +73,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!profile) {
+  if (!profile || isArtsRole(profile.role)) {
     notFound();
   }
 

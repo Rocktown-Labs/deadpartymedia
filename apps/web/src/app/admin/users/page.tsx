@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import { desc, count, ilike, or, asc } from "drizzle-orm";
+import { and, asc, count, desc, ilike, inArray, or } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
+import { WEB_ROLES, isArtsRole } from "@/lib/auth/role";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { Badge } from "@/components/ui/badge";
@@ -138,13 +139,17 @@ export default async function UsersPage({
   const usrOrder = parseSortOrderParam(params.usr_order, "desc");
   const artOrder = parseSortOrderParam(params.art_order, "desc");
 
-  const userConditions = query
+  const userRoleCondition = inArray(users.role, [...WEB_ROLES]);
+  const userSearchCondition = query
     ? or(
         ilike(users.email, `%${query}%`),
         ilike(users.firstName, `%${query}%`),
         ilike(users.lastName, `%${query}%`),
       )
     : undefined;
+  const userConditions = userSearchCondition
+    ? and(userRoleCondition, userSearchCondition)
+    : userRoleCondition;
   const artistConditions = query
     ? or(ilike(artists.name, `%${query}%`), ilike(artists.email, `%${query}%`))
     : undefined;
@@ -180,8 +185,9 @@ export default async function UsersPage({
 
   const [localUsersTotalRows, localUsers, localArtistsTotalRows, localArtists, invitationsResult] =
     await Promise.all([
-      userConditions ? userCountQuery.where(userConditions) : userCountQuery,
-      (userConditions ? userRowsQuery.where(userConditions) : userRowsQuery)
+      userCountQuery.where(userConditions),
+      userRowsQuery
+        .where(userConditions)
         .orderBy(
           usrSort === "name"
             ? usrOrder === "asc"
@@ -235,19 +241,21 @@ export default async function UsersPage({
       (await clerkClient()).invitations.getInvitationList(),
     ]);
 
-  const allInvitations = [...invitationsResult.data].toSorted((left, right) => {
-    let comparison = 0;
+  const allInvitations = [...invitationsResult.data]
+    .filter((inv) => !isArtsRole(getInvitationRole(inv)))
+    .toSorted((left, right) => {
+      let comparison = 0;
 
-    if (invSort === "emailAddress") {
-      comparison = left.emailAddress.localeCompare(right.emailAddress);
-    } else if (invSort === "role") {
-      comparison = getInvitationRole(left).localeCompare(getInvitationRole(right));
-    } else {
-      comparison = getInvitationCreatedAt(left) - getInvitationCreatedAt(right);
-    }
+      if (invSort === "emailAddress") {
+        comparison = left.emailAddress.localeCompare(right.emailAddress);
+      } else if (invSort === "role") {
+        comparison = getInvitationRole(left).localeCompare(getInvitationRole(right));
+      } else {
+        comparison = getInvitationCreatedAt(left) - getInvitationCreatedAt(right);
+      }
 
-    return invOrder === "asc" ? comparison : comparison * -1;
-  });
+      return invOrder === "asc" ? comparison : comparison * -1;
+    });
 
   const invitationTotal = allInvitations.length;
   const pagedInvitations = allInvitations.slice(

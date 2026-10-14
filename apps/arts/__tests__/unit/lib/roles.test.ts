@@ -7,6 +7,7 @@ import {
   mergeArtsRole,
   shouldRedirectStaffFromArtmakerDashboard,
 } from "#/lib/artmakers.functions.ts";
+import { isArtsInvitation, isArtsPlatformRole } from "#/lib/roles.ts";
 
 describe("Arts Role & Access Control Rules", () => {
   describe("isArtsStaffRole", () => {
@@ -101,6 +102,59 @@ describe("Arts Role & Access Control Rules", () => {
         "arts_writer",
         "artmaker",
       ]);
+    });
+  });
+
+  describe("isArtsInvitation", () => {
+    it("should allow arts staff and artmaker invitations", () => {
+      expect(isArtsInvitation({ publicMetadata: { role: "arts_admin" } })).toBe(true);
+      expect(isArtsInvitation({ publicMetadata: { role: "arts_writer" } })).toBe(true);
+      expect(isArtsInvitation({ publicMetadata: { role: "artmaker" } })).toBe(true);
+    });
+
+    it("should allow fan invitations specifically targeted to arts", () => {
+      expect(
+        isArtsInvitation({
+          publicMetadata: { role: "fan" },
+          redirectUrl: "https://arts.deadpartymedia.com/admin",
+        }),
+      ).toBe(true);
+      expect(
+        isArtsInvitation({
+          publicMetadata: { role: "fan" },
+          redirectUrl: "https://deadpartyarts.com/admin",
+        }),
+      ).toBe(true);
+    });
+
+    it("should reject music writer and artist invitations", () => {
+      expect(isArtsInvitation({ publicMetadata: { role: "writer" } })).toBe(false);
+      expect(isArtsInvitation({ publicMetadata: { role: "artist" } })).toBe(false);
+      expect(
+        isArtsInvitation({
+          publicMetadata: { role: "fan" },
+          redirectUrl: "https://deadpartymedia.com/sign-up",
+        }),
+      ).toBe(false);
+      expect(isArtsInvitation({})).toBe(false);
+    });
+  });
+
+  describe("isArtsPlatformRole", () => {
+    it("should allow arts staff and creator platform roles", () => {
+      expect(isArtsPlatformRole("super_admin")).toBe(true);
+      expect(isArtsPlatformRole("arts_admin")).toBe(true);
+      expect(isArtsPlatformRole("arts_writer")).toBe(true);
+      expect(isArtsPlatformRole("artmaker")).toBe(true);
+    });
+
+    it("should reject music-specific and non-staff roles", () => {
+      expect(isArtsPlatformRole("writer")).toBe(false);
+      expect(isArtsPlatformRole("artist")).toBe(false);
+      expect(isArtsPlatformRole("venue")).toBe(false);
+      expect(isArtsPlatformRole("fan")).toBe(false);
+      expect(isArtsPlatformRole("unknown")).toBe(false);
+      expect(isArtsPlatformRole(null)).toBe(false);
     });
   });
 });
