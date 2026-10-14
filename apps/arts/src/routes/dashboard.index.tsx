@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeCheck, CalendarDays, Eye, Images } from "lucide-react";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
+import { listTaggedEventsForCurrentArtmaker } from "#/lib/content.functions.ts";
 import { getCurrentArtmaker } from "#/lib/artmakers.functions.ts";
 import { listCurrentArtworks } from "#/lib/artworks.functions.ts";
 
@@ -9,13 +10,15 @@ export const Route = createFileRoute("/dashboard/")({
   loader: async () => {
     const artmaker = await getCurrentArtmaker();
     const artworks = artmaker ? await listCurrentArtworks() : [];
-    return { artmaker, artworks };
+    const taggedEvents = artmaker ? await listTaggedEventsForCurrentArtmaker() : [];
+    return { artmaker, artworks, taggedEvents };
   },
 });
 
 function Dashboard() {
-  const { artmaker, artworks } = Route.useLoaderData();
+  const { artmaker, artworks, taggedEvents } = Route.useLoaderData();
   const publishedCount = artworks.filter((artwork) => artwork.status === "published").length;
+  const upcomingEvents = taggedEvents.filter((event) => event.upcoming).length;
 
   return (
     <ArtmakerDashboardShell>
@@ -43,7 +46,11 @@ function Dashboard() {
           label="Published Artworks"
           value={publishedCount}
         />
-        <Metric icon={<CalendarDays className="size-6" />} label="Events Tagged" value={0} />
+        <Metric
+          icon={<CalendarDays className="size-6" />}
+          label="Upcoming Events"
+          value={upcomingEvents}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -60,18 +67,18 @@ function Dashboard() {
           title={artmaker ? "Profile live" : "Profile needed"}
         />
         <DashboardCard
-          description="Upload gallery pieces that appear on your profile and in medium directories."
+          description="Add photos of your pieces, name them, and publish to your page."
           href="/dashboard/artworks"
           icon={<Images className="size-5" />}
           label="Manage artwork"
-          title="Artwork uploads"
+          title="Your artwork"
         />
         <DashboardCard
-          description="Review events and articles that tag your profile as the arts editorial system fills out."
+          description="See gallery nights, pop-ups, and markets that feature your work."
           href="/dashboard/events"
           icon={<CalendarDays className="size-5" />}
           label="View activity"
-          title="Features"
+          title="Where you're showing"
         />
       </div>
     </ArtmakerDashboardShell>
