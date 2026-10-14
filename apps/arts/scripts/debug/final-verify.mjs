@@ -44,7 +44,9 @@ console.log("   sentinel:", sentinel.replace(/\n/g, " | "));
 await page.goto(`${BASE}/exhibitions?medium=painting`, { waitURL: undefined, waitUntil: "load" });
 await page.waitForTimeout(3000);
 const paintingCount = await page.evaluate(() => {
-  const el = [...document.querySelectorAll("span")].find((s) => /Artwork/i.test(s.textContent || ""));
+  const el = [...document.querySelectorAll("span")].find((s) =>
+    /Artwork/i.test(s.textContent || ""),
+  );
   return el ? el.textContent.trim() : "not found";
 });
 const paintingCards = await cardCount();

@@ -70,11 +70,16 @@ export function getMediumGroup(slug: string) {
   return MEDIUM_GROUPS.find((group) => group.slug === slug) ?? null;
 }
 
+// Grouping order matters: getMediumGroupForMedium returns the FIRST group
+// whose keyword matches, so every artwork lands in exactly one category and
+// per-category counts sum to the total (issue #129).
+const FALLBACK_MEDIUM_GROUP = MEDIUM_GROUPS[MEDIUM_GROUPS.length - 1];
+
 export function getMediumGroupForMedium(medium: string) {
   const normalized = medium.toLowerCase();
   return (
     MEDIUM_GROUPS.find((group) =>
       group.mediums.some((candidate) => normalized.includes(candidate.toLowerCase())),
-    ) ?? MEDIUM_GROUPS.at(-1)
+    ) ?? FALLBACK_MEDIUM_GROUP
   );
 }

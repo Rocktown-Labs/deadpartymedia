@@ -1,7 +1,29 @@
+import {
+  createColumnHelper,
+  createFilteredRowModel,
+  createSortedRowModel,
+  columnFilteringFeature,
+  filterFn_equalsString,
+  filterFn_includesString,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Edit,
+  Eye,
+  EyeOff,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
@@ -10,6 +32,7 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
+import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import {
   createArtsArtmakerStub,
@@ -18,7 +41,6 @@ import {
   toggleArtsArtmakerVisibility,
   updateArtsArtmaker,
 } from "#/lib/artmakers.functions.ts";
-import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 
 export const Route = createFileRoute("/admin/artmakers")({
   beforeLoad: () => requireArtsStaff(),
@@ -36,6 +58,132 @@ export const Route = createFileRoute("/admin/artmakers")({
 });
 
 type ArtmakerRow = Awaited<ReturnType<typeof listAdminArtmakers>>[number];
+
+const adminTableFeatures = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  sortFns: { alphanumeric: sortFn_alphanumeric },
+  columnFilteringFeature,
+  filteredRowModel: createFilteredRowModel(),
+  filterFns: {
+    includesString: filterFn_includesString,
+    equalsString: filterFn_equalsString,
+  },
+});
+
+const columnHelper = createColumnHelper<typeof adminTableFeatures, ArtmakerRow>();
+
+interface AdminTableMeta {
+  onToggleVisibility: (id: number) => void;
+  onEdit: (artmaker: ArtmakerRow) => void;
+  onDelete: (id: number) => void;
+}
+
+const statusFilterOptions = [
+  { label: "All statuses", value: "" },
+  { label: "Published", value: "published" },
+  { label: "Draft", value: "draft" },
+  { label: "Hidden", value: "hidden" },
+];
+
+const adminColumns = columnHelper.columns([
+  columnHelper.accessor("name", {
+    header: "Name",
+    filterFn: "includesString",
+    cell: (context) => {
+      const artmaker = context.row.original;
+      return (
+        <Link
+          to="/artmakers/$slug"
+          params={{ slug: artmaker.slug }}
+          className="font-bold text-white no-underline hover:text-[#7CFC00]"
+        >
+          {artmaker.name}
+        </Link>
+      );
+    },
+  }),
+  columnHelper.accessor((row) => `${row.city}, ${row.state}`, {
+    id: "city",
+    header: "City",
+    filterFn: "includesString",
+    cell: (context) => <span className="text-gray-400 text-sm">{context.getValue()}</span>,
+  }),
+  columnHelper.accessor((row) => row.instagramUsername ?? "", {
+    id: "instagram",
+    header: "Instagram",
+    filterFn: "includesString",
+    cell: (context) => (
+      <span className="text-gray-400 text-sm">
+        {context.row.original.instagramUsername
+          ? `@${context.row.original.instagramUsername}`
+          : "—"}
+      </span>
+    ),
+  }),
+  columnHelper.accessor((row) => row.medium.join(", ") || "Visual Art", {
+    id: "medium",
+    header: "Medium",
+    filterFn: "includesString",
+    cell: (context) => <span className="text-gray-400 text-sm">{context.getValue()}</span>,
+  }),
+  columnHelper.accessor((row) => (row.hidden ? "hidden" : row.status), {
+    id: "status",
+    header: "Status",
+    filterFn: "equalsString",
+    cell: (context) => {
+      const artmaker = context.row.original;
+      return (
+        <span
+          className={`rounded px-2 py-1 font-bold text-xs uppercase ${
+            artmaker.hidden ? "bg-red-500/15 text-red-400" : "bg-[#7CFC00]/15 text-[#7CFC00]"
+          }`}
+        >
+          {artmaker.hidden ? "hidden" : artmaker.status}
+        </span>
+      );
+    },
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: "Actions",
+    cell: (context) => {
+      const meta = context.table.options.meta as AdminTableMeta;
+      const artmaker = context.row.original;
+      return (
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => meta.onToggleVisibility(artmaker.id)}
+            title={artmaker.hidden ? "Unhide Profile" : "Hide Profile"}
+          >
+            {artmaker.hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => meta.onEdit(artmaker)}
+            title="Edit Artmaker"
+          >
+            <Edit className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => meta.onDelete(artmaker.id)}
+            title="Delete Artmaker"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      );
+    },
+  }),
+]);
 
 function AdminArtmakers() {
   const staff = Route.useRouteContext();
@@ -57,6 +205,10 @@ function AdminArtmakers() {
   const [instagram, setInstagram] = useState("");
   const [medium, setMedium] = useState<string[]>(["Visual Art"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // The search box narrows the rows before TanStack's column filters and
+  // sorting run, so the two compose.
+  const [query, setQuery] = useState("");
 
   const createStubFn = useServerFn(createArtsArtmakerStub);
   const updateArtmakerFn = useServerFn(updateArtsArtmaker);
@@ -160,6 +312,42 @@ function AdminArtmakers() {
     }
   };
 
+  const meta: AdminTableMeta = {
+    onToggleVisibility: handleToggleVisibility,
+    onEdit: openEditModal,
+    onDelete: handleDelete,
+  };
+
+  const searchedArtmakers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return artmakers;
+    }
+    return artmakers.filter((artmaker) =>
+      [
+        artmaker.name,
+        artmaker.city,
+        artmaker.state,
+        artmaker.instagramUsername ?? "",
+        artmaker.medium.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [artmakers, query]);
+
+  const table = useTable({
+    features: adminTableFeatures,
+    columns: adminColumns,
+    data: searchedArtmakers,
+    getRowId: (row) => String(row.id),
+    meta,
+  });
+
+  const totalRows = artmakers.length;
+  const visibleRows = table.getFilteredRowModel().rows.length;
+
   return (
     <ArtsAdminShell role={staff.role}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -179,88 +367,112 @@ function AdminArtmakers() {
         </Button>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-gray-500" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search name, city, Instagram, medium…"
+            className="pl-9"
+            aria-label="Search artmakers"
+          />
+        </div>
+        <p className="text-gray-500 text-xs">
+          Showing {visibleRows} of {totalRows} artmakers
+        </p>
+      </div>
+
       <div className="overflow-hidden rounded-lg border border-gray-800 bg-[#111111]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left">
+          <table className="w-full min-w-[900px] text-left">
             <thead className="bg-[#0A0A0A] text-gray-300 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">City</th>
-                <th className="px-6 py-4">Instagram</th>
-                <th className="px-6 py-4">Medium</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+              {table.getHeaderGroups().map((group) => (
+                <tr key={group.id}>
+                  {group.headers.map((header) => {
+                    const column = header.column;
+                    const sortable = column.getCanSort?.() ?? false;
+                    const sorted = sortable ? column.getIsSorted?.() : false;
+                    return (
+                      <th key={header.id} className="px-4 py-3">
+                        {header.isPlaceholder ? null : (
+                          <button
+                            type="button"
+                            onClick={sortable ? column.getToggleSortingHandler?.() : undefined}
+                            className={`flex items-center gap-1 font-bold uppercase tracking-wider ${
+                              sortable ? "cursor-pointer hover:text-white" : "cursor-default"
+                            } ${sorted ? "text-[#7CFC00]" : ""}`}
+                          >
+                            <table.FlexRender header={header} />
+                            {sorted === "asc" ? (
+                              <ArrowUp className="size-3" />
+                            ) : sorted === "desc" ? (
+                              <ArrowDown className="size-3" />
+                            ) : sortable ? (
+                              <ArrowUpDown className="size-3 text-gray-600" />
+                            ) : null}
+                          </button>
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+              <tr className="border-gray-800 border-t">
+                {table.getFlatHeaders().map((header) => {
+                  const column = header.column;
+                  if (!(column.getCanFilter?.() ?? false)) {
+                    return <th key={header.id} className="px-4 py-2" />;
+                  }
+                  const filterValue = (column.getFilterValue?.() as string) ?? "";
+                  return (
+                    <th key={header.id} className="px-4 py-2">
+                      {column.id === "status" ? (
+                        <select
+                          value={filterValue}
+                          onChange={(e) => column.setFilterValue?.(e.target.value)}
+                          className="h-7 w-full rounded border border-gray-800 bg-[#111111] px-1.5 text-xs text-gray-300"
+                          aria-label="Filter by status"
+                        >
+                          {statusFilterOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          value={filterValue}
+                          onChange={(e) => column.setFilterValue?.(e.target.value)}
+                          placeholder="Filter…"
+                          className="h-7 w-full rounded border border-gray-800 bg-[#111111] px-2 text-xs text-gray-200 placeholder:text-gray-600"
+                          aria-label={`Filter by ${header.column.id}`}
+                        />
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {artmakers.map((artmaker) => (
-                <tr key={artmaker.id} className="border-gray-800 border-t hover:bg-gray-900/50">
-                  <td className="px-6 py-4">
-                    <Link
-                      to="/artmakers/$slug"
-                      params={{ slug: artmaker.slug }}
-                      className="font-bold text-white no-underline hover:text-[#7CFC00]"
-                    >
-                      {artmaker.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
-                    {artmaker.city}, {artmaker.state}
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
-                    {artmaker.instagramUsername ? `@${artmaker.instagramUsername}` : "—"}
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
-                    {artmaker.medium.slice(0, 3).join(", ") || "Visual Art"}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded px-2 py-1 font-bold text-xs uppercase ${
-                        artmaker.hidden
-                          ? "bg-red-500/15 text-red-400"
-                          : "bg-[#7CFC00]/15 text-[#7CFC00]"
-                      }`}
-                    >
-                      {artmaker.hidden ? "hidden" : artmaker.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleVisibility(artmaker.id)}
-                        title={artmaker.hidden ? "Unhide Profile" : "Hide Profile"}
-                      >
-                        {artmaker.hidden ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <EyeOff className="size-4" />
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditModal(artmaker)}
-                        title="Edit Artmaker"
-                      >
-                        <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(artmaker.id)}
-                        title="Delete Artmaker"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    No artmakers match these filters.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-gray-800 border-t hover:bg-gray-900/50">
+                    {row.getAllCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-4 align-middle">
+                        <table.FlexRender cell={cell} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

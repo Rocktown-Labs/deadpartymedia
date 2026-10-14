@@ -1,8 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Image } from "@unpic/react";
-import { Edit, Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { Image as UniImage } from "@unpic/react";
+import {
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Edit,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  Plus,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
@@ -20,6 +32,7 @@ import {
   updateArtsArtwork,
   type ArtworkListItem,
 } from "#/lib/artworks.functions.ts";
+import { getMediumGroupForMedium, MEDIUM_GROUPS } from "#/lib/mediums.ts";
 
 export const Route = createFileRoute("/admin/exhibitions")({
   beforeLoad: () => requireArtsStaff(),
@@ -39,11 +52,96 @@ export const Route = createFileRoute("/admin/exhibitions")({
   },
 });
 
+type AdminExhibitionsLoader = Awaited<ReturnType<typeof Route.useLoaderData>>;
+type AdminArtmaker = AdminExhibitionsLoader["artmakers"][number];
+
+interface ArtworkCardProps {
+  artwork: ArtworkListItem;
+  onToggleStatus: (id: number) => void;
+  onEdit: (artwork: ArtworkListItem) => void;
+  onDelete: (id: number) => void;
+}
+
+function ArtworkCard({ artwork, onToggleStatus, onEdit, onDelete }: ArtworkCardProps) {
+  return (
+    <article className="group flex flex-col justify-between overflow-hidden rounded-xl border border-gray-800 bg-[#111111]">
+      <div>
+        <div className="relative aspect-square overflow-hidden bg-black">
+          <UniImage
+            src={artwork.image}
+            alt={artwork.title}
+            width={640}
+            height={640}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        <div className="p-4 space-y-1">
+          <h3 className="font-black text-base text-white tracking-tight">{artwork.title}</h3>
+          <p className="text-gray-400 text-xs">{artwork.medium ?? "Mixed practice"}</p>
+          {artwork.forSale && artwork.priceCents ? (
+            <p className="font-black text-[#7CFC00] text-xs">
+              ${(artwork.priceCents / 100).toFixed(2)} USD
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between border-gray-800 border-t px-4 py-3">
+        <span
+          className={`rounded px-2 py-0.5 font-bold text-xs uppercase ${
+            artwork.status === "published"
+              ? "bg-[#7CFC00]/15 text-[#7CFC00]"
+              : "bg-yellow-500/15 text-yellow-400"
+          }`}
+        >
+          {artwork.status}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onToggleStatus(artwork.id)}
+            title={artwork.status === "published" ? "Move to drafts" : "Publish to wall"}
+          >
+            {artwork.status === "published" ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(artwork)}
+            title="Edit Artwork"
+          >
+            <Edit className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => onDelete(artwork.id)}
+            title="Delete Artwork"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function AdminExhibitions() {
   const staff = Route.useRouteContext();
-  const { artmakers: initialArtmakers, artworks: initialArtworks } = Route.useLoaderData();
+  const { artmakers: initialArtmakers, artworks: initialArtworks } =
+    Route.useLoaderData<AdminExhibitionsLoader>();
   const [artworks, setArtworks] = useState<ArtworkListItem[]>(initialArtworks);
-  const [artmakers, setArtmakers] = useState(initialArtmakers);
+  const [artmakers, setArtmakers] = useState<AdminArtmaker[]>(initialArtmakers);
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const isModalOpen = search.form !== undefined;
@@ -51,6 +149,10 @@ function AdminExhibitions() {
     navigate({ search: { form: undefined } });
   };
   const [editingArtwork, setEditingArtwork] = useState<ArtworkListItem | null>(null);
+
+  // Grouped views: by artist (default) or by medium category.
+  const [view, setView] = useState<"artists" | "mediums">("artists");
+  const [expandedArtistId, setExpandedArtistId] = useState<number | null>(null);
 
   const [title, setTitle] = useState("");
   const [artmakerId, setArtmakerId] = useState<number>(artmakers[0]?.id ?? 0);
@@ -202,6 +304,62 @@ function AdminExhibitions() {
     }
   };
 
+  // Artist view: group by artmaker, largest collections first. Uses the
+  // artmaker name from the artwork row so deleted/renamed artists stay accurate.
+  const artistGroups = useMemo(() => {
+    const groups = new Map<
+      number,
+      { artmakerId: number; artmakerName: string; works: ArtworkListItem[] }
+    >();
+    for (const artwork of artworks) {
+      const existing = groups.get(artwork.artmakerId);
+      if (existing) {
+        existing.works.push(artwork);
+      } else {
+        groups.set(artwork.artmakerId, {
+          artmakerId: artwork.artmakerId,
+          artmakerName: artwork.artmakerName,
+          works: [artwork],
+        });
+      }
+    }
+    return [...groups.values()].sort(
+      (a, b) => b.works.length - a.works.length || a.artmakerName.localeCompare(b.artmakerName),
+    );
+  }, [artworks]);
+
+  // Medium view: same exclusive grouping the public wall uses, so an artwork
+  // appears in exactly one category.
+  const mediumGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; works: ArtworkListItem[] }>();
+    for (const artwork of artworks) {
+      const group = getMediumGroupForMedium(artwork.medium ?? "");
+      const existing = groups.get(group.slug);
+      if (existing) {
+        existing.works.push(artwork);
+      } else {
+        groups.set(group.slug, { label: group.label, works: [artwork] });
+      }
+    }
+    return MEDIUM_GROUPS.flatMap((group) => {
+      const entry = groups.get(group.slug);
+      return entry ? [{ slug: group.slug, label: entry.label, works: entry.works }] : [];
+    });
+  }, [artworks]);
+
+  const artworkActions = {
+    onToggleStatus: handleToggleStatus,
+    onEdit: openEditModal,
+    onDelete: handleDelete,
+  };
+
+  const toggleClasses = (active: boolean) =>
+    `flex items-center gap-1.5 rounded-lg px-3 py-2 font-black text-xs uppercase tracking-[0.14em] transition-colors ${
+      active
+        ? "bg-[#7CFC00] text-black"
+        : "border border-gray-800 bg-[#111111] text-gray-400 hover:text-white"
+    }`;
+
   return (
     <ArtsAdminShell role={staff.role}>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -229,95 +387,100 @@ function AdminExhibitions() {
         </div>
       </div>
 
-      {artworks.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {artworks.map((artwork) => (
-            <article
-              key={artwork.id}
-              className="group flex flex-col justify-between overflow-hidden rounded-xl border border-gray-800 bg-[#111111]"
-            >
-              <div>
-                <div className="relative aspect-square overflow-hidden bg-black">
-                  <Image
-                    src={artwork.image}
-                    alt={artwork.title}
-                    width={640}
-                    height={640}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute top-3 left-3 rounded bg-black/80 backdrop-blur-md px-2.5 py-1 font-bold text-[10px] text-gray-300 uppercase">
-                    {artwork.artmakerName}
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-2">
-                  <h2 className="font-black text-xl text-white tracking-tight">{artwork.title}</h2>
-                  <p className="text-gray-400 text-sm">{artwork.medium ?? "Mixed practice"}</p>
-                  {artwork.forSale && artwork.priceCents ? (
-                    <p className="font-black text-[#7CFC00] text-sm">
-                      ${(artwork.priceCents / 100).toFixed(2)} USD
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between border-gray-800 border-t p-5 pt-0">
-                <span
-                  className={`rounded px-2 py-0.5 font-bold text-xs uppercase ${
-                    artwork.status === "published"
-                      ? "bg-[#7CFC00]/15 text-[#7CFC00]"
-                      : "bg-yellow-500/15 text-yellow-400"
-                  }`}
-                >
-                  {artwork.status}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleStatus(artwork.id)}
-                    title={artwork.status === "published" ? "Draft" : "Publish"}
-                  >
-                    {artwork.status === "published" ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditModal(artwork)}
-                    title="Edit Artwork"
-                  >
-                    <Edit className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(artwork.id)}
-                    title="Delete Artwork"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            </article>
-          ))}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-2" role="group" aria-label="Group artworks by">
+          <button
+            type="button"
+            onClick={() => setView("artists")}
+            className={toggleClasses(view === "artists")}
+          >
+            <Users className="size-4" />
+            By Artist
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("mediums")}
+            className={toggleClasses(view === "mediums")}
+          >
+            <LayoutGrid className="size-4" />
+            By Medium
+          </button>
         </div>
-      ) : (
+        <p className="text-gray-500 text-xs">
+          {artworks.length} artwork{artworks.length === 1 ? "" : "s"} on the wall
+        </p>
+      </div>
+
+      {artworks.length === 0 ? (
         <div className="rounded-lg border border-gray-800 bg-[#111111] p-8 text-center text-gray-400">
           No artworks exhibit on the wall yet. Click "Add Artwork" to curate one!
+        </div>
+      ) : view === "artists" ? (
+        <div className="space-y-3">
+          {artistGroups.map((group) => {
+            const isExpanded = expandedArtistId === group.artmakerId;
+            return (
+              <section
+                key={group.artmakerId}
+                className="overflow-hidden rounded-xl border border-gray-800 bg-[#111111]"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedArtistId(isExpanded ? null : group.artmakerId)}
+                  className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left hover:bg-gray-900/40 sm:px-5"
+                  aria-expanded={isExpanded}
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    {isExpanded ? (
+                      <ChevronDown className="size-4 shrink-0 text-[#7CFC00]" />
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0 text-gray-500" />
+                    )}
+                    <Building2 className="hidden size-4 shrink-0 text-gray-500 sm:block" />
+                    <span className="truncate font-bold text-white">{group.artmakerName}</span>
+                  </span>
+                  <span className="shrink-0 rounded bg-[#7CFC00]/15 px-2 py-1 font-bold text-[#7CFC00] text-xs">
+                    {group.works.length} work{group.works.length === 1 ? "" : "s"}
+                  </span>
+                </button>
+                {isExpanded ? (
+                  <div className="border-gray-800 border-t p-4 sm:p-5">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {group.works.map((artwork) => (
+                        <ArtworkCard key={artwork.id} artwork={artwork} {...artworkActions} />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {mediumGroups.map((group) => (
+            <section key={group.slug}>
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="font-bold text-lg text-white">{group.label}</h2>
+                <span className="rounded bg-[#7CFC00]/15 px-2 py-1 font-bold text-[#7CFC00] text-xs">
+                  {group.works.length}
+                </span>
+              </div>
+              <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-3">
+                {group.works.map((artwork) => (
+                  <div key={artwork.id} className="w-60 shrink-0 sm:w-64">
+                    <ArtworkCard artwork={artwork} {...artworkActions} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
       {/* Artwork Modal */}
       {isModalOpen ? (
-        <div className="mx-auto max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
+        <div className="mx-auto mt-8 max-w-xl rounded-xl border border-gray-800 bg-[#111111] p-6 space-y-6">
           <div className="flex items-center justify-between border-gray-800 border-b pb-4">
             <h2 className="font-black text-2xl text-white">
               {editingArtwork ? "Edit Artwork" : "Add Artwork to Exhibition"}
@@ -349,7 +512,7 @@ function AdminExhibitions() {
                   id="artmaker-select"
                   value={artmakerId}
                   onChange={(e) => setArtmakerId(Number(e.target.value))}
-                  className="w-full h-10 rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-white text-sm"
+                  className="h-10 w-full rounded-lg border border-gray-800 bg-[#0A0A0A] px-3 font-bold text-sm text-white"
                 >
                   {artmakers.map((am) => (
                     <option key={am.id} value={am.id}>
@@ -422,7 +585,7 @@ function AdminExhibitions() {
                 onChange={(e) => setForSale(e.target.checked)}
                 className="size-4 rounded border-gray-800 bg-[#0A0A0A] text-[#7CFC00]"
               />
-              <Label htmlFor="forSale" className="font-bold text-sm text-white cursor-pointer">
+              <Label htmlFor="forSale" className="cursor-pointer font-bold text-sm text-white">
                 Available for Sale / Price Attached
               </Label>
             </div>
