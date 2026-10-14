@@ -10,6 +10,7 @@ import { canCreate, canEdit, canDelete } from "@/lib/auth/access";
 import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { postSchema } from "@/lib/validations/post";
+import { sanitizeAndTruncateExcerpt } from "@/lib/admin/wordpress-backfill";
 import { logger } from "@/lib/logger";
 import { sanitizeError } from "@/lib/logger/sanitize";
 
@@ -69,11 +70,15 @@ export async function createPost(formData: FormData) {
   }
 
   // Validate form data - convert null to empty string for required fields
+  const rawExcerpt = (formData.get("excerpt") as string) || "";
+  const normalizedExcerpt =
+    rawExcerpt.length > 500 ? sanitizeAndTruncateExcerpt(rawExcerpt, 500) : rawExcerpt.trim();
+
   const rawData = {
     category: (formData.get("category") as string) || "",
     content: (formData.get("content") as string) || "",
     coverImage: (formData.get("coverImage") as string | null) || undefined,
-    excerpt: (formData.get("excerpt") as string) || "",
+    excerpt: normalizedExcerpt,
     isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
     slug: (formData.get("slug") as string) || "",
     status: (formData.get("status") as string) || "",
@@ -230,11 +235,15 @@ export async function updatePost(id: number, formData: FormData) {
   }
 
   // Validate form data - convert null to empty string for required fields
+  const rawExcerpt = (formData.get("excerpt") as string) || "";
+  const normalizedExcerpt =
+    rawExcerpt.length > 500 ? sanitizeAndTruncateExcerpt(rawExcerpt, 500) : rawExcerpt.trim();
+
   const rawData = {
     category: (formData.get("category") as string) || "",
     content: (formData.get("content") as string) || "",
     coverImage: (formData.get("coverImage") as string | null) || undefined,
-    excerpt: (formData.get("excerpt") as string) || "",
+    excerpt: normalizedExcerpt,
     isCoverStory: formData.get("isCoverStory") === "true" || formData.get("isCoverStory") === "on",
     slug: (formData.get("slug") as string) || "",
     status: (formData.get("status") as string) || "",

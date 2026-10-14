@@ -1,8 +1,11 @@
 import {
   findMatchingImportSource,
   findDefaultBackfillAuthorId,
+  findMatchingAuthorId,
   normalizeImportSourceUrl,
   normalizeImportTitle,
+  parseNameParts,
+  sanitizeAndTruncateExcerpt,
   shouldReprocessImportedPost,
 } from "@/lib/admin/wordpress-backfill";
 import { selectPrimarySubjectArtists } from "@/lib/admin/article-subject-artists";
@@ -39,6 +42,54 @@ describe(findDefaultBackfillAuthorId, () => {
         "fallback",
       ),
     ).toBe("fallback");
+  });
+});
+
+describe(findMatchingAuthorId, () => {
+  const authorOptions = [
+    { clerkId: "user_petty", name: "Petty Vandalism", role: "writer" },
+    { clerkId: "wp_placeholder:caitlin", name: "Caitlin", role: "writer" },
+    { clerkId: "user_skylar", name: "Skylar Stewart", role: "writer" },
+  ];
+
+  it("matches an author by authorSlug matching clerkId", () => {
+    expect(findMatchingAuthorId(authorOptions, "caitlin", "Caitlin", "fallback")).toBe(
+      "wp_placeholder:caitlin",
+    );
+  });
+
+  it("matches an author by authorName matching user name", () => {
+    expect(findMatchingAuthorId(authorOptions, "unknown-slug", "Skylar Stewart", "fallback")).toBe(
+      "user_skylar",
+    );
+  });
+
+  it("matches an author by authorSlug matching part of clerkId", () => {
+    expect(findMatchingAuthorId(authorOptions, "skylar", "Skylar", "fallback")).toBe("user_skylar");
+  });
+
+  it("falls back to fallbackAuthorId when no matching writer exists in options", () => {
+    expect(
+      findMatchingAuthorId(authorOptions, "brand-new-author", "Brand New", "fallback-id"),
+    ).toBe("fallback-id");
+  });
+});
+
+describe(parseNameParts, () => {
+  it("splits multi-word names into firstName and lastName", () => {
+    expect(parseNameParts("John Doe")).toEqual({ firstName: "John", lastName: "Doe" });
+    expect(parseNameParts("John Middle Doe")).toEqual({
+      firstName: "John",
+      lastName: "Middle Doe",
+    });
+  });
+
+  it("handles single-word names", () => {
+    expect(parseNameParts("Caitlin")).toEqual({ firstName: "Caitlin", lastName: null });
+  });
+
+  it("falls back for empty strings", () => {
+    expect(parseNameParts("")).toEqual({ firstName: "Dead Party", lastName: "Writer" });
   });
 });
 
@@ -147,5 +198,51 @@ describe("event flyer import publication rules", () => {
   it("keeps invalid imported dates as drafts", () => {
     expect(getImportedEventStatus("not-a-date")).toBe("draft");
     expect(isPastEventDate("not-a-date")).toBeFalsy();
+  });
+});
+
+describe(sanitizeAndTruncateExcerpt, () => {
+  it("returns empty string for falsy values", () => {
+    expect(sanitizeAndTruncateExcerpt("")).toBe("");
+    expect(sanitizeAndTruncateExcerpt(null)).toBe("");
+    expect(sanitizeAndTruncateExcerpt(undefined)).toBe("");
+  });
+
+  it("strips HTML tags, decodes entities, and collapses whitespace", () => {
+    const input =
+      "<p>This is an <strong>exciting</strong> &amp; fresh &quot;track&quot; from Arkansas.&nbsp;&nbsp;\n\nCheck it out!</p>";
+    expect(sanitizeAndTruncateExcerpt(input)).toBe(
+      'This is an exciting & fresh "track" from Arkansas. Check it out!',
+    );
+  });
+
+  it("preserves text that is within the maxLength limit", () => {
+    const text = "A concise 2-sentence summary of an indie concert.";
+    expect(sanitizeAndTruncateExcerpt(text, 500)).toBe(text);
+  });
+
+  it("truncates text exceeding 500 characters so that total length is <= 500 and ends with ellipsis", () => {
+    const longText =
+      "Dead Party Media showcases the underground music and arts scene across Arkansas and beyond. " +
+      "From underground hardcore basement gigs in Little Rock to synth-driven electronic dance music festivals in Northwest Arkansas, " +
+      "we cover independent artists creating original sounds and pushing cultural boundaries. " +
+      "Our team provides candid reviews, in-depth interviews, photography, and community highlights to amplify voices that traditional media often ignores. " +
+      "Stay connected with the latest local album releases, tour announcements, venue profiles, and exclusive editorial features updated weekly.";
+
+    expect(longText.length).toBeGreaterThan(500);
+
+    const result = sanitizeAndTruncateExcerpt(longText, 500);
+    expect(result.length).toBeLessThanOrEqual(500);
+    expect(result.endsWith("…")).toBeTruthy();
+    // Verify it didn't cut off with awkward spacing before ellipsis
+    expect(result.endsWith(" …")).toBeFalsy();
+  });
+
+  it("supports custom maxLength limits with word boundary preservation", () => {
+    const input = "The quick brown fox jumps over the lazy dog repeatedly.";
+    const result = sanitizeAndTruncateExcerpt(input, 25);
+    expect(result.length).toBeLessThanOrEqual(25);
+    expect(result.endsWith("…")).toBeTruthy();
+    expect(result).toBe("The quick brown fox…");
   });
 });

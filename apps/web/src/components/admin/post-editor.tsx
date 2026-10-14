@@ -693,6 +693,10 @@ export function PostEditor({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (excerpt.length > 500) {
+      toast.error("Excerpt must be 500 characters or less");
+      return;
+    }
     setIsSaving(true);
     const formData = new FormData();
     formData.append("title", title);
@@ -791,21 +795,55 @@ export function PostEditor({
         </div>
 
         <div className="space-y-2">
-          <Label
-            htmlFor="excerpt"
-            className="text-zinc-400 font-semibold uppercase text-xs tracking-wider"
-          >
-            Excerpt
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="excerpt"
+              className="text-zinc-400 font-semibold uppercase text-xs tracking-wider"
+            >
+              Excerpt
+            </Label>
+            <div className="flex items-center gap-2">
+              {excerpt.length > 500 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setExcerpt((prev) => prev.slice(0, 497).trimEnd() + "...")}
+                  className="h-5 px-1.5 text-[10px] text-[#7CFC00] hover:text-[#6edc00] hover:bg-zinc-800"
+                >
+                  Trim to 500
+                </Button>
+              )}
+              <span
+                className={`text-[10px] ${
+                  excerpt.length > 500
+                    ? "text-red-400 font-semibold"
+                    : excerpt.length > 450
+                      ? "text-amber-400"
+                      : "text-zinc-500"
+                }`}
+              >
+                {excerpt.length}/500
+              </span>
+            </div>
+          </div>
           <Textarea
             id="excerpt"
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
             required
             placeholder="Write a short teaser/excerpt for the post..."
-            className="bg-zinc-900/40 border-zinc-800 text-zinc-300 text-sm focus-visible:ring-[#7CFC00] focus-visible:border-zinc-700 min-h-[80px] resize-none"
+            className={`bg-zinc-900/40 border-zinc-800 text-zinc-300 text-sm focus-visible:ring-[#7CFC00] focus-visible:border-zinc-700 min-h-[80px] resize-none ${
+              excerpt.length > 500 ? "border-red-500/80 focus-visible:ring-red-500" : ""
+            }`}
             rows={3}
           />
+          {excerpt.length > 500 && (
+            <p className="text-[11px] text-red-400">
+              Excerpt exceeds the 500-character limit by {excerpt.length - 500} characters. Please
+              shorten it or click &quot;Trim to 500&quot;.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

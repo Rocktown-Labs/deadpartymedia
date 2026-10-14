@@ -1,6 +1,13 @@
 import { analyzePostInternal, importPostInternal } from "../admin/posts/wordpress/actions";
 import { db } from "@/lib/db";
-import { postImportSources, postArtists, artists, backfillRuns, posts } from "@/lib/db/schema";
+import {
+  postImportSources,
+  postArtists,
+  artists,
+  backfillRuns,
+  posts,
+  users,
+} from "@/lib/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { generateHTML } from "@tiptap/html";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,6 +16,7 @@ import Link from "@tiptap/extension-link";
 import {
   normalizeImportSourceUrl,
   normalizeImportTitle,
+  sanitizeAndTruncateExcerpt,
   shouldReprocessImportedPost,
 } from "@/lib/admin/wordpress-backfill";
 import { decodeHtmlEntities } from "@/lib/utils/html";
@@ -160,6 +168,8 @@ async function fetchImportedDraftPostsStep(limit: number, offset: number) {
 
   const rows = await db
     .select({
+      authorFirstName: users.firstName,
+      authorLastName: users.lastName,
       content: posts.content,
       coverImage: posts.coverImage,
       excerpt: posts.excerpt,
@@ -175,25 +185,33 @@ async function fetchImportedDraftPostsStep(limit: number, offset: number) {
     })
     .from(postImportSources)
     .innerJoin(posts, eq(postImportSources.postId, posts.id))
+    .leftJoin(users, eq(posts.authorId, users.clerkId))
     .where(and(eq(posts.status, "draft")))
     .orderBy(desc(posts.createdAt))
     .limit(limit)
     .offset(offset);
 
-  return rows.map((row) => ({
-    id: row.postId,
-    title: decodeHtmlEntities(row.title),
-    url: row.sourceUrl,
-    excerpt: row.excerpt,
-    content: storedContentToHtml(row.content),
-    date: row.sourcePublishedAt.toISOString(),
-    modified: (row.sourceModifiedAt ?? row.modifiedAt).toISOString(),
-    authorName: "Petty Vandalism",
-    authorSlug: row.sourceAuthorSlug || "pettyvandalism",
-    coverImage: row.coverImage || null,
-    rawCategories: parseSourceCategories(row.sourceCategoriesJson),
-    rawTags: row.rawTags || [],
-  }));
+  return rows.map((row) => {
+    const authorFullName = [row.authorFirstName, row.authorLastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return {
+      id: row.postId,
+      title: decodeHtmlEntities(row.title),
+      url: row.sourceUrl,
+      excerpt: row.excerpt,
+      content: storedContentToHtml(row.content),
+      date: row.sourcePublishedAt.toISOString(),
+      modified: (row.sourceModifiedAt ?? row.modifiedAt).toISOString(),
+      authorName: authorFullName || row.sourceAuthorSlug || "Petty Vandalism",
+      authorSlug: row.sourceAuthorSlug || "pettyvandalism",
+      coverImage: row.coverImage || null,
+      rawCategories: parseSourceCategories(row.sourceCategoriesJson),
+      rawTags: row.rawTags || [],
+    };
+  });
 }
 
 function storedContentToHtml(content: string) {
@@ -390,10 +408,11 @@ async function analyzeAndImportPost(post: any, authorId: string, status: "draft"
 
   return importPostInternal({
     authorId,
+    authorName: post.authorName,
     category: analysis.category,
     contentHtml: post.content,
     coverImageUrl: post.coverImage,
-    excerpt: analysis.excerpt || post.excerpt,
+    excerpt: sanitizeAndTruncateExcerpt(analysis.excerpt || post.excerpt, 500),
     isCoverStory: false,
     newArtistsToCreate,
     rawCategories: post.rawCategories,
