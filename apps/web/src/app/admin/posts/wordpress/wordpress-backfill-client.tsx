@@ -53,7 +53,11 @@ import {
   syncExistingArtistsSpotifyAction,
   syncPublishedWordPressTagsAction,
 } from "./actions";
-import { findDefaultBackfillAuthorId } from "@/lib/admin/wordpress-backfill";
+import {
+  findDefaultBackfillAuthorId,
+  findMatchingAuthorId,
+  sanitizeAndTruncateExcerpt,
+} from "@/lib/admin/wordpress-backfill";
 import type { BackfillAnalysis } from "./actions";
 import type { SpotifyArtist } from "@/lib/api/artists";
 
@@ -127,9 +131,11 @@ export default function WordpressBackfillClient({
   >({});
 
   // Bulk / Sync states
-  const [bulkAuthorId, setBulkAuthorId] = useState(
-    findDefaultBackfillAuthorId(authorOptions, authorOptions[0]?.clerkId || ""),
+  const defaultAuthorId = findDefaultBackfillAuthorId(
+    authorOptions,
+    authorOptions[0]?.clerkId || "",
   );
+  const [bulkAuthorId, setBulkAuthorId] = useState(defaultAuthorId);
   const [bulkStatus, setBulkStatus] = useState<"draft" | "published">("published");
   const [bulkLimit, setBulkLimit] = useState(40);
   const [bulkOffset, setBulkOffset] = useState(0);
@@ -296,19 +302,13 @@ export default function WordpressBackfillClient({
     setEditedExcerpt("");
     setIsCoverStory(false);
 
-    // Find default author that matches "pettyvandalism"
-    // Find default author that matches the post author slug
-    const matchingAuthor = authorOptions.find(
-      (opt) =>
-        opt.clerkId.includes(post.authorSlug) ||
-        opt.name.toLowerCase().includes(post.authorSlug.toLowerCase()),
+    const matchedAuthorId = findMatchingAuthorId(
+      authorOptions,
+      post.authorSlug,
+      post.authorName,
+      defaultAuthorId,
     );
-    setSelectedAuthorId(
-      findDefaultBackfillAuthorId(
-        authorOptions,
-        matchingAuthor?.clerkId || authorOptions[0]?.clerkId || "",
-      ),
-    );
+    setSelectedAuthorId(matchedAuthorId);
     setSelectedStatus(
       post.localStatus === "draft" || post.localStatus === "published"
         ? post.localStatus
@@ -406,10 +406,11 @@ export default function WordpressBackfillClient({
 
       const payload = {
         authorId: selectedAuthorId,
+        authorName: selectedPost.authorName,
         category: selectedCategory,
         contentHtml: selectedPost.content,
         coverImageUrl: selectedPost.coverImage,
-        excerpt: editedExcerpt || selectedPost.excerpt,
+        excerpt: sanitizeAndTruncateExcerpt(editedExcerpt || selectedPost.excerpt, 500),
         isCoverStory,
         newArtistsToCreate,
         rawCategories: selectedPost.rawCategories,
@@ -1073,10 +1074,22 @@ export default function WordpressBackfillClient({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="backfill-excerpt">Excerpt (AI Summary)</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="backfill-excerpt">Excerpt (AI Summary)</Label>
+                      <span
+                        className={`text-[10px] ${
+                          editedExcerpt.length > 500
+                            ? "text-red-400 font-semibold"
+                            : "text-zinc-500"
+                        }`}
+                      >
+                        {editedExcerpt.length}/500
+                      </span>
+                    </div>
                     <Textarea
                       id="backfill-excerpt"
                       value={editedExcerpt}
+                      maxLength={500}
                       onChange={(e) => setEditedExcerpt(e.target.value)}
                       className="bg-[#111111] border-gray-800 h-24"
                     />

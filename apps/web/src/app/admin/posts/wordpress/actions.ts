@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { posts, postArtists, artists, postImportSources } from "@/lib/db/schema";
+import { posts, postArtists, artists, postImportSources, users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { checkRole } from "@/lib/auth/roles";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -18,12 +18,14 @@ import {
   findMatchingImportSource,
   normalizeImportSourceUrl,
   normalizeImportTitle,
+  parseNameParts,
+  sanitizeAndTruncateExcerpt,
 } from "@/lib/admin/wordpress-backfill";
 import { decodeHtmlEntities } from "@/lib/utils/html";
 
 const backfillAnalysisSchema = z.object({
   category: z.enum(["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"]),
-  excerpt: z.string(),
+  excerpt: z.string().max(500),
   detectedArtists: z.array(
     z.object({
       name: z.string(),
@@ -180,7 +182,7 @@ ${cleanText.slice(0, 4000)}
 
 Perform the following tasks:
 1. Classify this post under one of our music categories: COUNTRY, EDM, HARDCORE & ROCK, HIP-HOP & R&B, or OTHER.
-2. Generate a concise, engaging summary/excerpt of the post in 2-3 sentences.
+2. Generate a concise, engaging summary/excerpt of the post in 2-3 sentences (maximum 400 characters).
 3. Identify only the primary subject artist(s), band(s), or DJ(s) the article is about. Prefer artists named in the title, opening paragraph, and final call-to-action. Exclude artists mentioned only as inspirations, comparisons, influences, playlist references, or one-off examples.
 4. For each primary subject artist, extract their default music genre matching our categories, their location/hometown if mentioned, and write a brief professionally-written biography (2-4 sentences) that highlights their background.`;
 
@@ -215,6 +217,7 @@ Perform the following tasks:
 
   return {
     ...object,
+    excerpt: sanitizeAndTruncateExcerpt(object.excerpt, 500),
     artistsMapping,
   };
 }
@@ -236,6 +239,7 @@ interface ImportWordPressPostPayload {
   contentHtml: string;
   coverImageUrl: string | null;
   authorId: string;
+  authorName?: string;
   isCoverStory: boolean;
   sourceUrl: string;
   sourceAuthorSlug: string;
@@ -256,6 +260,98 @@ interface ImportWordPressPostPayload {
   tags?: string[];
 }
 
+export async function resolveOrCreateWordPressAuthor(
+  tx: any,
+  sourceAuthorSlug: string | null | undefined,
+  authorName: string | null | undefined,
+  fallbackAuthorId = "",
+): Promise<string> {
+  const cleanSlug = sourceAuthorSlug?.trim().toLowerCase();
+  const cleanName = authorName?.trim();
+
+  if (!cleanSlug && !cleanName) {
+    return fallbackAuthorId;
+  }
+
+  const existingUsers = await tx
+    .select({
+      clerkId: users.clerkId,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+    })
+    .from(users);
+
+  // 1. Exact clerkId match
+  if (cleanSlug) {
+    const placeholderClerkId = `wp_placeholder:${cleanSlug}`;
+    const matchByClerkId = existingUsers.find(
+      (u: any) =>
+        u.clerkId === placeholderClerkId ||
+        u.clerkId === cleanSlug ||
+        u.clerkId.toLowerCase() === `local_placeholder:${cleanSlug}`,
+    );
+    if (matchByClerkId) {
+      return matchByClerkId.clerkId;
+    }
+  }
+
+  // 2. Name match (case- and whitespace-insensitive)
+  if (cleanName) {
+    const targetName = normalizeImportTitle(cleanName);
+    const matchByName = existingUsers.find((u: any) => {
+      const fullName = [u.firstName, u.lastName].filter(Boolean).join(" ");
+      return normalizeImportTitle(fullName) === targetName;
+    });
+    if (matchByName) {
+      return matchByName.clerkId;
+    }
+  }
+
+  // 3. Match slug against email or clerkId suffix
+  if (cleanSlug) {
+    const matchBySlug = existingUsers.find((u: any) => {
+      const emailPrefix = u.email?.split("@")[0]?.toLowerCase();
+      const clerkSuffix = u.clerkId?.split(":").pop()?.toLowerCase();
+      return emailPrefix === cleanSlug || clerkSuffix === cleanSlug;
+    });
+    if (matchBySlug) {
+      return matchBySlug.clerkId;
+    }
+  }
+
+  // 4. If writer does not exist on ours, create writer profile in backend
+  const slug = cleanSlug || normalizeImportTitle(cleanName || "writer") || "writer";
+  const placeholderClerkId = `wp_placeholder:${slug}`;
+  const nameParts = parseNameParts(cleanName || slug);
+  const placeholderEmail = `${slug}@placeholder.deadpartymedia.local`;
+
+  const [inserted] = await tx
+    .insert(users)
+    .values({
+      clerkId: placeholderClerkId,
+      email: placeholderEmail,
+      firstName: nameParts.firstName,
+      imageUrl: null,
+      lastName: nameParts.lastName,
+      onboardingComplete: true,
+      role: "writer",
+    })
+    .onConflictDoUpdate({
+      target: users.clerkId,
+      set: {
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+        onboardingComplete: true,
+        role: "writer",
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ clerkId: users.clerkId });
+
+  return inserted?.clerkId || placeholderClerkId;
+}
+
 export async function importPostInternal(payload: ImportWordPressPostPayload) {
   const {
     title,
@@ -264,6 +360,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     contentHtml,
     coverImageUrl,
     authorId,
+    authorName,
     isCoverStory,
     sourceUrl,
     sourceAuthorSlug,
@@ -276,7 +373,17 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
     tags = [],
   } = payload;
 
+  const sanitizedExcerpt = sanitizeAndTruncateExcerpt(excerpt, 500);
+
   return await db.transaction(async (tx) => {
+    // 0. Resolve or create WordPress writer
+    const resolvedAuthorId = await resolveOrCreateWordPressAuthor(
+      tx,
+      sourceAuthorSlug,
+      authorName,
+      authorId,
+    );
+
     // 1. Create missing artists
     const artistIds = [...selectedArtistIds];
 
@@ -387,10 +494,10 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
         .set({
           title,
           category,
-          excerpt,
+          excerpt: sanitizedExcerpt,
           content: contentTiptapJson,
           coverImage: mirroredCoverImageUrl,
-          authorId,
+          authorId: resolvedAuthorId,
           status,
           isCoverStory,
           tags,
@@ -420,10 +527,10 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
           title,
           slug: postSlug,
           category,
-          excerpt,
+          excerpt: sanitizedExcerpt,
           content: contentTiptapJson,
           coverImage: mirroredCoverImageUrl,
-          authorId,
+          authorId: resolvedAuthorId,
           status,
           isCoverStory,
           tags,
@@ -465,6 +572,7 @@ export async function importPostInternal(payload: ImportWordPressPostPayload) {
 
     revalidatePath("/admin/posts");
     revalidatePath("/admin/posts/wordpress");
+    revalidatePath("/admin/users");
     revalidatePath("/");
     revalidatePath(`/posts/${postSlug}`);
 

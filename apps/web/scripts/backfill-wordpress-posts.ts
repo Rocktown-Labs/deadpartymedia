@@ -597,10 +597,15 @@ async function main() {
           targetPostId = existingSource[0]?.postId ?? null;
         }
 
+        const postAuthorId = record.authorSlug
+          ? `wp_placeholder:${record.authorSlug}`
+          : options.ownerClerkId;
+
         if (targetPostId) {
           await db
             .update(schema.posts)
             .set({
+              authorId: postAuthorId,
               category: record.category,
               content: record.mirroredContentTiptapJson,
               coverImage: record.mirroredCoverImageUrl,
@@ -619,7 +624,7 @@ async function main() {
           const [insertedPost] = await db
             .insert(schema.posts)
             .values({
-              authorId: options.ownerClerkId,
+              authorId: postAuthorId,
               category: record.category,
               content: record.mirroredContentTiptapJson,
               coverImage: record.mirroredCoverImageUrl,
