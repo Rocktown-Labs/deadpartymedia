@@ -186,6 +186,7 @@ const MEDIUM_GROUP_SQL = buildMediumGroupSql();
 export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
   .validator(
     z.object({
+      artmaker: z.string().optional(),
       limit: z.number().int().min(1).max(100).default(24),
       medium: z.string().optional(),
       offset: z.number().int().min(0).default(0),
@@ -195,6 +196,10 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     try {
       const whereConditions = [eq(artworks.status, "published"), eq(artmakers.status, "published")];
+
+      if (data.artmaker) {
+        whereConditions.push(eq(artmakers.slug, data.artmaker));
+      }
 
       // Filter by the same exclusive group assignment the counts use, so a
       // category always shows exactly the artworks its count promises.
@@ -237,6 +242,14 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
       // problem here degrades the pill badges without losing the wall itself.
       let groupCounts: Record<string, number> = {};
       try {
+        const groupCountConditions = [
+          eq(artworks.status, "published"),
+          eq(artmakers.status, "published"),
+        ];
+        if (data.artmaker) {
+          groupCountConditions.push(eq(artmakers.slug, data.artmaker));
+        }
+
         // Group by the output column position: Postgres does not match the
         // SELECT's CASE expression with a re-expanded copy in GROUP BY.
         const groupCountRows = await db
@@ -246,7 +259,7 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
           })
           .from(artworks)
           .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
-          .where(and(eq(artworks.status, "published"), eq(artmakers.status, "published")))
+          .where(and(...groupCountConditions))
           .groupBy(sql.raw("1"));
 
         for (const row of groupCountRows) {

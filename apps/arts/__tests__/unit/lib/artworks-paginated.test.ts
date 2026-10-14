@@ -49,5 +49,38 @@ describe("Exhibitions pagination and filtering logic", () => {
       // Empty results
       expect(computeNextOffset(0, 0, 0)).toBeNull();
     });
+
+    it("should parse and validate artmaker slug parameter", () => {
+      const validateSearch = (search: Record<string, unknown>) => ({
+        artmaker:
+          typeof search.artmaker === "string" && search.artmaker.trim()
+            ? search.artmaker.trim()
+            : undefined,
+        artwork: typeof search.artwork === "string" ? search.artwork : undefined,
+        medium: typeof search.medium === "string" ? search.medium : undefined,
+        sort:
+          typeof search.sort === "string" && ["recent", "available", "title"].includes(search.sort)
+            ? (search.sort as ExhibitionSortOption)
+            : undefined,
+      });
+
+      expect(validateSearch({ artmaker: "alan-diaz-soto" }).artmaker).toBe("alan-diaz-soto");
+      expect(validateSearch({ artmaker: 123 }).artmaker).toBeUndefined();
+      expect(validateSearch({ artmaker: "" }).artmaker).toBeUndefined();
+      expect(validateSearch({ artmaker: "   " }).artmaker).toBeUndefined();
+    });
+
+    it("should toggle artmaker selection correctly", () => {
+      const toggleArtmaker = (current?: string, next?: string) => {
+        return current === next ? undefined : next;
+      };
+
+      // Select new artmaker
+      expect(toggleArtmaker(undefined, "mel")).toBe("mel");
+      // Deselect when clicking currently active artmaker
+      expect(toggleArtmaker("mel", "mel")).toBeUndefined();
+      // Switch to different artmaker
+      expect(toggleArtmaker("mel", "alan")).toBe("alan");
+    });
   });
 });

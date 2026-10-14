@@ -1,13 +1,15 @@
-import { ArrowDownUp, Check, Filter } from "lucide-react";
+import { ArrowDownUp, Check, Filter, X } from "lucide-react";
 import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 
 export type ExhibitionSortOption = "recent" | "available" | "title";
 
 interface ExhibitionFilterBarProps {
+  activeArtmaker?: { name: string; slug: string } | null;
   activeMedium?: string;
   activeSort: ExhibitionSortOption;
   totalCount: number;
   groupCounts: Record<string, number>;
+  onSelectArtmaker?: (slug?: string) => void;
   onSelectMedium: (medium?: string) => void;
   onSelectSort: (sort: ExhibitionSortOption) => void;
 }
@@ -19,10 +21,12 @@ const SORT_LABELS: Record<ExhibitionSortOption, string> = {
 };
 
 export function ExhibitionFilterBar({
+  activeArtmaker,
   activeMedium,
   activeSort,
   totalCount,
   groupCounts,
+  onSelectArtmaker,
   onSelectMedium,
   onSelectSort,
 }: ExhibitionFilterBarProps) {
@@ -83,20 +87,39 @@ export function ExhibitionFilterBar({
         })}
       </div>
 
-      {/* Control bar: count and sort */}
+      {/* Control bar: count, artist badge, and sort */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-800/80 bg-[#101010]/90 px-4 py-2.5 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <Filter className="size-3.5 text-[#7CFC00]" />
-          <span className="text-xs font-bold text-neutral-400">
-            {totalCount} {totalCount === 1 ? "Artwork" : "Artworks"}
-          </span>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <Filter className="size-3.5 text-[#7CFC00]" />
+            <span className="text-xs font-bold text-neutral-400">
+              {totalCount} {totalCount === 1 ? "Artwork" : "Artworks"}
+            </span>
+          </div>
+
+          {activeArtmaker ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[#7CFC00]/60 bg-[#7CFC00]/10 px-2.5 py-0.5 text-xs text-[#7CFC00]">
+              <span>
+                Artist: <strong className="text-white">{activeArtmaker.name}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => onSelectArtmaker?.(undefined)}
+                aria-label={`Clear ${activeArtmaker.name} filter`}
+                className="ml-1 rounded-full p-0.5 transition-colors hover:bg-neutral-800 hover:text-white"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ) : null}
+
           {activeMedium ? (
             <button
               type="button"
               onClick={() => onSelectMedium(undefined)}
               className="text-[11px] font-semibold text-[#7CFC00] underline-offset-2 hover:underline"
             >
-              Reset filter
+              Reset medium
             </button>
           ) : null}
         </div>
