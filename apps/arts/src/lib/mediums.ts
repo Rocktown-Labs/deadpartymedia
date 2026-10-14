@@ -5,7 +5,7 @@ export const MEDIUM_GROUPS = [
     description: "Acrylic, oil, watercolor, gouache, murals, window painting, and mixed media.",
     icon: Palette,
     label: "Painting",
-    mediums: ["Acrylic", "Oil", "Watercolor", "Gouache", "Murals", "Painting", "Window Painting"],
+    mediums: ["Acrylic", "Oil", "Painting", "Watercolor", "Gouache", "Murals", "Window Painting"],
     slug: "painting",
   },
   {
@@ -13,6 +13,7 @@ export const MEDIUM_GROUPS = [
     icon: Camera,
     label: "Digital",
     mediums: [
+      "Digital",
       "Digital Art",
       "Digital Illustration",
       "Digital Painting",
@@ -29,6 +30,7 @@ export const MEDIUM_GROUPS = [
     icon: Shirt,
     label: "Clothing",
     mediums: [
+      "Clothing",
       "Clothing Design",
       "Fashion",
       "Crochet",
@@ -43,7 +45,7 @@ export const MEDIUM_GROUPS = [
     description: "Ceramics, sculpture, jewelry, paper, vinyl, fabric, and object-based work.",
     icon: Gem,
     label: "Objects",
-    mediums: ["Ceramics", "Sculpture", "Jewelry", "Paper", "Vinyl", "Fabric"],
+    mediums: ["Objects", "Ceramics", "Sculpture", "Jewelry", "Paper", "Vinyl", "Fabric"],
     slug: "objects",
   },
   {
@@ -59,7 +61,7 @@ export const MEDIUM_GROUPS = [
       "Tattooing, collage, glitter, multidisciplinary work, and beautiful category-breakers.",
     icon: Sparkles,
     label: "Mixed Practice",
-    mediums: ["Tattoo", "Collage", "Glitter", "Mixed Media", "Multidisciplinary"],
+    mediums: ["Mixed Practice", "Tattoo", "Collage", "Glitter", "Mixed Media", "Multidisciplinary"],
     slug: "mixed-practice",
   },
 ] as const;

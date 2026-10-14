@@ -208,6 +208,20 @@ export function ArtworkDetailDrawer({
                       </p>
                     </div>
                   ) : null}
+
+                  {artwork.forSale && formattedPrice ? (
+                    <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#7CFC00]/30 bg-[#7CFC00]/10 p-4">
+                      <BadgeDollarSign className="size-7 shrink-0 text-[#7CFC00]" />
+                      <div>
+                        <p className="font-black text-2xl leading-none text-[#7CFC00]">
+                          {formattedPrice}
+                        </p>
+                        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-400">
+                          Available — asking price
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Creator card */}

@@ -536,3 +536,22 @@ export const deleteArtsArtmaker = createServerFn({ method: "POST" })
     await db.delete(artmakers).where(eq(artmakers.id, data.id));
     return { success: true };
   });
+
+// Records a profile view for the given artmaker. Called from the public
+// profile page once per browser session, so router prefetches and crawlers
+// don't inflate the count (issue #141).
+export const recordArtmakerProfileView = createServerFn({ method: "POST" })
+  .validator(z.object({ slug: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    try {
+      const [updated] = await db
+        .update(artmakers)
+        .set({ profileViews: sql`${artmakers.profileViews} + 1` })
+        .where(eq(artmakers.slug, data.slug))
+        .returning({ profileViews: artmakers.profileViews });
+
+      return { success: true, profileViews: updated?.profileViews ?? null };
+    } catch {
+      return { success: false, profileViews: null };
+    }
+  });
