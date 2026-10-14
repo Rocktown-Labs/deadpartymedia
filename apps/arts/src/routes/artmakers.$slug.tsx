@@ -141,7 +141,7 @@ function ArtmakerProfile() {
           Back to Artmakers
         </Link>
 
-        <section className="border border-neutral-800 bg-[#101010]">
+        <section className="rounded-2xl border border-neutral-800 bg-[#101010]">
           <div className="grid gap-8 p-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,1.05fr)] lg:p-8">
             <div>
               {/* Mobile Profile Header: Avatar up high */}
@@ -166,7 +166,7 @@ function ArtmakerProfile() {
                     {artmaker.medium.slice(0, 3).map((medium) => (
                       <span
                         key={medium}
-                        className="border border-[#7CFC00]/40 bg-[#7CFC00]/10 px-2.5 py-1 font-bold text-[#7CFC00] text-[10px] uppercase tracking-[0.14em]"
+                        className="rounded-full border border-[#7CFC00]/40 bg-[#7CFC00]/10 px-2.5 py-1 font-bold text-[#7CFC00] text-[10px] uppercase tracking-[0.14em]"
                       >
                         {medium}
                       </span>
@@ -184,7 +184,7 @@ function ArtmakerProfile() {
                 {artmaker.medium.slice(0, 3).map((medium) => (
                   <span
                     key={medium}
-                    className="border border-[#7CFC00]/40 bg-[#7CFC00]/10 px-3 py-2 text-[#7CFC00] text-xs uppercase tracking-[0.14em]"
+                    className="rounded-full border border-[#7CFC00]/40 bg-[#7CFC00]/10 px-3.5 py-1.5 text-[#7CFC00] text-xs uppercase tracking-[0.14em]"
                   >
                     {medium}
                   </span>
@@ -215,7 +215,7 @@ function ArtmakerProfile() {
                   href={artmaker.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-all hover:border-[#7CFC00] hover:text-[#7CFC00] active:scale-[0.98]"
                 >
                   <Instagram className="size-4" />@{artmaker.instagramUsername}
                 </a>
@@ -223,7 +223,7 @@ function ArtmakerProfile() {
                   href={artmaker.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 border border-[#7CFC00] bg-[#7CFC00] px-4 font-black text-black text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:bg-[#a5ff43]"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#7CFC00] bg-[#7CFC00] px-4 font-black text-black text-xs uppercase tracking-[0.18em] no-underline transition-all hover:bg-[#a5ff43] active:scale-[0.98]"
                 >
                   <CalendarPlus className="size-4" />
                   Commission
@@ -231,7 +231,7 @@ function ArtmakerProfile() {
                 <Link
                   to="/exhibitions"
                   search={{ artmaker: artmaker.slug }}
-                  className="inline-flex h-11 items-center gap-2 border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-700 px-4 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-all hover:border-[#7CFC00] hover:text-[#7CFC00] active:scale-[0.98]"
                 >
                   <ImageIcon className="size-4" />
                   Exhibitions
@@ -241,7 +241,7 @@ function ArtmakerProfile() {
 
             <div className="grid gap-4 lg:grid-cols-[160px_minmax(0,1fr)]">
               {/* Desktop Avatar (Hidden on mobile where avatar sits up high) */}
-              <div className="hidden aspect-square place-items-center overflow-hidden border border-neutral-800 bg-[#080808] lg:grid">
+              <div className="hidden aspect-square place-items-center overflow-hidden rounded-xl border border-neutral-800 bg-[#080808] lg:grid">
                 {artmaker.image ? (
                   <Image
                     src={artmaker.image}
@@ -258,7 +258,7 @@ function ArtmakerProfile() {
               </div>
 
               {/* Featured piece / Recent upload (Sits below buttons on mobile) */}
-              <div className="grid min-h-64 border border-neutral-800 bg-[#080808]">
+              <div className="grid min-h-64 overflow-hidden rounded-xl border border-neutral-800 bg-[#080808]">
                 {featuredArtwork ? (
                   <div
                     role="button"
@@ -306,17 +306,17 @@ function ArtmakerProfile() {
         </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
-          <div className="border border-neutral-800 bg-[#101010] p-5">
+          <div className="rounded-xl border border-neutral-800 bg-[#101010] p-5">
             <p className="font-black text-3xl text-[#7CFC00]">{artworkCount}</p>
             <p className="mt-2 text-neutral-500 text-sm uppercase tracking-[0.18em]">Artworks</p>
           </div>
-          <div className="border border-neutral-800 bg-[#101010] p-5">
+          <div className="rounded-xl border border-neutral-800 bg-[#101010] p-5">
             <h2 className="font-black text-xl">Practice</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {artmaker.medium.map((medium) => (
                 <span
                   key={medium}
-                  className="border border-neutral-700 px-3 py-2 text-neutral-300 text-sm"
+                  className="rounded-full border border-neutral-700 px-3.5 py-1.5 text-neutral-300 text-sm"
                 >
                   {medium}
                 </span>
