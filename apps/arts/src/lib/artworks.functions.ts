@@ -172,10 +172,13 @@ function buildMediumGroupSql() {
     const keywordMatches = group.mediums.map(
       (keyword) => sql`coalesce(${artworks.medium}, '') ilike ${`%${keyword}%`}`,
     );
-    return sql`when ${sql.join(keywordMatches, sql` or `)} then ${group.slug}`;
+    // Slugs come from our own MEDIUM_GROUPS constant; inline them as literals
+    // so the CASE branches never rely on Postgres inferring parameter types.
+    const slugLiteral = sql.raw(`'${group.slug}'`);
+    return sql`when ${sql.join(keywordMatches, sql` or `)} then ${slugLiteral}`;
   });
   const fallback = MEDIUM_GROUPS.at(-1)?.slug ?? "mixed-practice";
-  return sql`case ${sql.join(cases, sql` `)} else ${fallback} end`;
+  return sql`case ${sql.join(cases, sql` `)} else ${sql.raw(`'${fallback}'`)} end`;
 }
 
 const MEDIUM_GROUP_SQL = buildMediumGroupSql();
@@ -233,6 +236,8 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
       // problem here degrades the pill badges without losing the wall itself.
       let groupCounts: Record<string, number> = {};
       try {
+        // Group by the output column position: Postgres does not match the
+        // SELECT's CASE expression with a re-expanded copy in GROUP BY.
         const groupCountRows = await db
           .select({
             mediumGroup: sql<string>`${MEDIUM_GROUP_SQL}`.as("medium_group"),
@@ -241,7 +246,7 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
           .from(artworks)
           .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
           .where(and(eq(artworks.status, "published"), eq(artmakers.status, "published")))
-          .groupBy(sql`${MEDIUM_GROUP_SQL}`);
+          .groupBy(sql.raw("1"));
 
         for (const row of groupCountRows) {
           if (row.mediumGroup) {
