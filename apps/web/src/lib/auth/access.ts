@@ -21,10 +21,11 @@ export const canEdit = async (resourceAuthorId: string): Promise<boolean> => {
     return true;
   }
 
-  // Writers can only edit their own resources
-  const canEditOwn = userId === resourceAuthorId;
+  // Only music writers can edit their own resources
+  const isWriter = await checkRole("writer");
+  const canEditOwn = isWriter && userId === resourceAuthorId;
   withUserContext(logger, userId).debug(
-    { operation: "can_edit", resourceAuthorId, result: canEditOwn },
+    { isWriter, operation: "can_edit", resourceAuthorId, result: canEditOwn },
     canEditOwn ? "Edit permission granted" : "Edit permission denied",
   );
   return canEditOwn;

@@ -5,13 +5,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { getRolesFromMetadata, isArtsInvitation, mergeArtsRole } from "#/lib/roles.ts";
+import {
+  getRolesFromMetadata,
+  isArtsAdminRole,
+  isArtsInvitation,
+  mergeArtsRole,
+} from "#/lib/roles.ts";
 
-export function isArtsAdminRole(role: unknown) {
-  return role === "admin" || role === "super_admin" || role === "arts_admin";
-}
+export { isArtsAdminRole };
 
-async function requireArtsAdmin() {
+export async function requireArtsAdmin() {
   const { isAuthenticated, userId } = await auth();
 
   if (!isAuthenticated || !userId) {

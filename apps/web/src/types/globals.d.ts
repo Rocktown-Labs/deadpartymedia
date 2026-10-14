@@ -16,6 +16,7 @@ declare global {
   interface CustomJwtSessionClaims {
     metadata: {
       role?: Roles;
+      roles?: Roles[];
       // For artists claiming their profile
       artistId?: number;
       // For venues claiming their profile

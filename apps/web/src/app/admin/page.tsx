@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { checkRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
 import { posts, events, musicReleases } from "@/lib/db/schema";
-import { eq, desc, count } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
@@ -17,7 +17,7 @@ export default async function AdminDashboard() {
   const [postsCount] = await db
     .select({ count: count() })
     .from(posts)
-    .where(eq(posts.status, "published"));
+    .where(and(eq(posts.vertical, "music"), eq(posts.status, "published")));
 
   const [musicCount] = await db
     .select({ count: count() })
@@ -27,13 +27,23 @@ export default async function AdminDashboard() {
   const [eventsCount] = await db
     .select({ count: count() })
     .from(events)
-    .where(eq(events.status, "published"));
+    .where(and(eq(events.vertical, "music"), eq(events.status, "published")));
 
   // Get recent posts
-  const recentPosts = await db.select().from(posts).orderBy(desc(posts.createdAt)).limit(5);
+  const recentPosts = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.vertical, "music"))
+    .orderBy(desc(posts.createdAt))
+    .limit(5);
 
   // Get recent events
-  const recentEvents = await db.select().from(events).orderBy(desc(events.createdAt)).limit(5);
+  const recentEvents = await db
+    .select()
+    .from(events)
+    .where(eq(events.vertical, "music"))
+    .orderBy(desc(events.createdAt))
+    .limit(5);
 
   return (
     <div>

@@ -5,6 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { isArtsAdminRole } from "#/lib/roles.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { normalizeStoredImageUrl } from "#/lib/upload.ts";
 
@@ -160,7 +161,12 @@ export const listArtsArticles = createServerFn({ method: "GET" }).handler(async 
 });
 
 export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(async () => {
-  await requireArtsStaff();
+  const staff = await requireArtsStaff();
+  const isSuperOrAdmin = staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
+  const whereClause = isSuperOrAdmin
+    ? eq(posts.vertical, "arts")
+    : and(eq(posts.vertical, "arts"), eq(posts.authorId, staff.userId));
+
   const rows = await db
     .select({
       authorId: posts.authorId,
@@ -176,7 +182,7 @@ export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(a
       title: posts.title,
     })
     .from(posts)
-    .where(eq(posts.vertical, "arts"))
+    .where(whereClause)
     .orderBy(desc(posts.createdAt));
 
   const links = rows.length
@@ -279,13 +285,19 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireArtsStaff();
+    const staff = await requireArtsStaff();
     const [existing] = await db
       .select()
       .from(posts)
       .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     if (!existing) {
       throw new Error("Article not found");
+    }
+
+    const isSuperOrAdmin =
+      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
+    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
+      throw new Error("Unauthorized: You don't have permission to edit this article");
     }
 
     const publishedAt =
@@ -322,13 +334,19 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
 export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireArtsStaff();
+    const staff = await requireArtsStaff();
     const [existing] = await db
       .select()
       .from(posts)
       .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     if (!existing) {
       throw new Error("Article not found");
+    }
+
+    const isSuperOrAdmin =
+      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
+    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
+      throw new Error("Unauthorized: You don't have permission to edit this article");
     }
 
     const nextStatus = existing.status === "published" ? "draft" : "published";
@@ -350,7 +368,21 @@ export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
 export const deleteArtsArticle = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireArtsStaff();
+    const staff = await requireArtsStaff();
+    const [existing] = await db
+      .select({ authorId: posts.authorId, id: posts.id })
+      .from(posts)
+      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
+    if (!existing) {
+      throw new Error("Article not found");
+    }
+
+    const isSuperOrAdmin =
+      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
+    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
+      throw new Error("Unauthorized: You don't have permission to delete this article");
+    }
+
     await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
     await db.delete(posts).where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
     return { success: true };

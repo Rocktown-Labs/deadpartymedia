@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
-import { asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
 import {
   ADMIN_PAGE_SIZE,
@@ -50,14 +50,16 @@ export default async function PostsPage({
   const order = parseSortOrderParam(params.order, "desc");
   const offset = getOffsetFromPage(page, ADMIN_PAGE_SIZE);
 
-  const whereClause = isSuperAdmin ? undefined : eq(posts.authorId, userId);
+  const whereClause = isSuperAdmin
+    ? eq(posts.vertical, "music")
+    : and(eq(posts.vertical, "music"), eq(posts.authorId, userId));
 
-  const totalQuery = db.select({ total: count() }).from(posts);
-  const rowsQuery = db.select().from(posts);
+  const totalQuery = db.select({ total: count() }).from(posts).where(whereClause);
+  const rowsQuery = db.select().from(posts).where(whereClause);
 
   const [totalRows, pagedPosts] = await Promise.all([
-    whereClause ? totalQuery.where(whereClause) : totalQuery,
-    (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
+    totalQuery,
+    rowsQuery
       .orderBy(
         sort === "title"
           ? order === "asc"
