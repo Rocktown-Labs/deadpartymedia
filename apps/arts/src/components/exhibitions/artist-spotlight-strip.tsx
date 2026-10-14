@@ -46,7 +46,7 @@ export function ArtistSpotlightStrip({ artmakers }: ArtistSpotlightStripProps) {
       <div
         tabIndex={0}
         aria-label="Artmakers on the Wall Carousel"
-        className="flex gap-3 overflow-x-auto pb-2 pt-1 scroll-smooth [touch-action:pan-y] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex gap-3 overflow-x-auto pb-2 pt-1 scroll-smooth [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {artmakers.map((artmaker) => {
           const primaryMedium = artmaker.medium[0] ?? "Visual Art";

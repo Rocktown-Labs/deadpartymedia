@@ -1,4 +1,4 @@
-import { Palette, Shirt, Sparkles, Gem, Camera, Scissors } from "lucide-react";
+import { Camera, Gem, Palette, Pen, Shirt, Sparkles } from "lucide-react";
 
 export const MEDIUM_GROUPS = [
   {
@@ -51,7 +51,7 @@ export const MEDIUM_GROUPS = [
   {
     description:
       "Charcoal, graphite, colored pencil, pen, pencil, pastels, and traditional drawing.",
-    icon: Scissors,
+    icon: Pen,
     label: "Drawing",
     mediums: ["Charcoal", "Graphite", "Colored Pencil", "Pen and Pencil", "Pastels", "Drawing"],
     slug: "drawing",

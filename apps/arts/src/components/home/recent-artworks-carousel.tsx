@@ -42,7 +42,7 @@ export function RecentArtworksCarousel({ artworks, onSelectArtwork }: RecentArtw
         <div
           tabIndex={0}
           aria-label="Recent Artwork Uploads"
-          className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 [touch-action:pan-y] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
+          className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
         >
           {artworks.map((artwork) => {
             const formattedPrice =

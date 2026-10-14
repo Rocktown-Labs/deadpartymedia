@@ -1,5 +1,6 @@
+import { Pen } from "lucide-react";
 import { describe, expect, it } from "vite-plus/test";
-import { MEDIUM_GROUPS, getMediumGroupForMedium } from "#/lib/mediums.ts";
+import { getMediumGroup, MEDIUM_GROUPS, getMediumGroupForMedium } from "#/lib/mediums.ts";
 
 describe("medium grouping", () => {
   it("assigns a medium to the first group whose keyword matches", () => {
@@ -32,5 +33,9 @@ describe("medium grouping", () => {
   it("has unique slugs so group counts can never collide", () => {
     const slugs = MEDIUM_GROUPS.map((group) => group.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
+  it("uses the Pen icon for the Drawing medium group", () => {
+    expect(getMediumGroup("drawing")?.icon).toBe(Pen);
   });
 });

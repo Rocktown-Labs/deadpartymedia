@@ -55,7 +55,7 @@ export function EventFilterBar({
       <div
         tabIndex={0}
         aria-label="Filter events"
-        className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 [touch-action:pan-y] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {tabs.map((tab) => {
           const isSelected = activeTab === tab.id;

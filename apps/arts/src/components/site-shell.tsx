@@ -2,7 +2,18 @@ import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/ta
 import { Link, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
-import { ExternalLink, Instagram, LayoutDashboard, ShoppingBag, Youtube } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  Instagram,
+  Layers,
+  LayoutDashboard,
+  Megaphone,
+  Newspaper,
+  ShoppingBag,
+  Users,
+  Youtube,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { type ArtsCart, getArtsCart, updateArtsCartItem } from "#/lib/fourthwall.functions.ts";
 
@@ -16,6 +27,14 @@ const navItems = [
 
 const promoRequestUrl =
   "https://docs.google.com/forms/d/14IqNEQH-PlztSsy8wz-9nUeMKj-1jYOMMpHGSeNB71I/viewform?edit_requested=true&utm_source=ig&utm_medium=social&utm_content=link_in_bio";
+
+const mobileTabs = [
+  { href: undefined, icon: Users, label: "Artmakers", to: "/artmakers" },
+  { href: undefined, icon: Layers, label: "Exhibitions", to: "/exhibitions" },
+  { href: undefined, icon: CalendarDays, label: "Events", to: "/events" },
+  { href: undefined, icon: Newspaper, label: "Articles", to: "/articles" },
+  { href: promoRequestUrl, icon: Megaphone, label: "Promo", to: undefined },
+] as const;
 
 const socialLinks = [
   { href: "https://www.instagram.com/deadpartyy", icon: Instagram, label: "Instagram" },
@@ -225,7 +244,13 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {children}
+      <div
+        className={
+          shouldShowFooter ? "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0" : undefined
+        }
+      >
+        {children}
+      </div>
 
       {isCartOpen ? (
         <div
@@ -453,6 +478,59 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </footer>
+
+          {/* Mobile Native Bottom Tab Bar */}
+          <nav
+            aria-label="Mobile Navigation"
+            className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800/80 bg-[#0A0A0A]/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl shadow-[0_-4px_24px_rgba(0,0,0,0.6)] lg:hidden"
+          >
+            <div className="mx-auto grid max-w-lg grid-cols-5 items-center">
+              {mobileTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = tab.to
+                  ? pathname === tab.to || pathname.startsWith(`${tab.to}/`)
+                  : false;
+
+                if (tab.href) {
+                  return (
+                    <a
+                      key={tab.label}
+                      href={tab.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-h-[48px] flex-col items-center justify-center gap-1 py-1 text-center text-neutral-400 no-underline transition-all duration-150 select-none hover:text-[#7CFC00] active:scale-[0.94] [touch-action:manipulation] [-webkit-touch-callout:none]"
+                      aria-label={`${tab.label} (opens in new tab)`}
+                    >
+                      <Icon className="size-5" />
+                      <span className="flex items-center justify-center gap-0.5 font-bold text-[10px] uppercase tracking-[0.12em]">
+                        {tab.label}
+                        <ExternalLink className="size-2 text-neutral-500" />
+                      </span>
+                    </a>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={tab.label}
+                    to={tab.to}
+                    className={`flex min-h-[48px] flex-col items-center justify-center gap-1 py-1 text-center no-underline transition-all duration-150 select-none active:scale-[0.94] [touch-action:manipulation] [-webkit-touch-callout:none] ${
+                      isActive ? "text-[#7CFC00]" : "text-neutral-400 hover:text-white"
+                    }`}
+                  >
+                    <Icon className={`size-5 ${isActive ? "stroke-[2.5]" : ""}`} />
+                    <span
+                      className={`text-[10px] uppercase tracking-[0.12em] ${
+                        isActive ? "font-black" : "font-bold"
+                      }`}
+                    >
+                      {tab.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
         </>
       ) : null}
     </div>
