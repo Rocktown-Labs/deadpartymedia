@@ -456,7 +456,7 @@ export const updateCurrentArtwork = createServerFn({ method: "POST" })
       slug = await makeUniqueArtworkSlug(data.title);
     }
 
-    const [updated] = await db
+    await db
       .update(artworks)
       .set({
         description: data.description?.trim() || null,
@@ -469,11 +469,23 @@ export const updateCurrentArtwork = createServerFn({ method: "POST" })
         updatedAt: new Date(),
         year: data.year?.trim() || null,
       })
+      .where(eq(artworks.id, data.id));
+
+    // Re-select with the artmaker join so callers get a full ArtworkListItem
+    // (name/slug/city/state), matching what listCurrentArtworks returns.
+    const [enriched] = await db
+      .select(artworkSelect())
+      .from(artworks)
+      .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
       .where(eq(artworks.id, data.id))
-      .returning();
+      .limit(1);
+
+    if (!enriched) {
+      throw new Error("Artwork not found");
+    }
 
     return {
-      artwork: { ...updated, image: normalizeStoredImageUrl(updated.image) },
+      artwork: { ...withNormalizedImages([enriched])[0] } satisfies ArtworkListItem,
       success: true,
     };
   });

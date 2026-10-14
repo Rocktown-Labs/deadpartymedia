@@ -18,18 +18,25 @@ export interface ArtmakerGallerySearch {
   sort?: ArtistGallerySortOption;
 }
 
+type ArtmakerGalleryLoaderData = {
+  artmaker: NonNullable<Awaited<ReturnType<typeof getArtmakerBySlug>>>;
+  artworks: Awaited<ReturnType<typeof listPublishedArtworksByArtmakerSlug>>;
+};
+
 export const Route = createFileRoute("/artmakers/$slug/gallery")({
   component: ArtmakerGallery,
-  head: ({ loaderData }) =>
-    createSeoMeta({
-      description: loaderData?.artmaker
-        ? `Full artwork gallery for ${loaderData.artmaker.name} on Dead Party Arts.`
+  head: ({ loaderData }) => {
+    const data = loaderData as ArtmakerGalleryLoaderData | undefined;
+    return createSeoMeta({
+      description: data?.artmaker
+        ? `Full artwork gallery for ${data.artmaker.name} on Dead Party Arts.`
         : "Artmaker gallery on Dead Party Arts.",
-      image: loaderData?.artworks[0]?.image ?? loaderData?.artmaker?.image,
-      path: loaderData?.artmaker ? `/artmakers/${loaderData.artmaker.slug}/gallery` : "/artmakers",
-      title: loaderData?.artmaker ? `${loaderData.artmaker.name} Gallery` : "Artmaker Gallery",
+      image: data?.artworks[0]?.image ?? data?.artmaker?.image,
+      path: data?.artmaker ? `/artmakers/${data.artmaker.slug}/gallery` : "/artmakers",
+      title: data?.artmaker ? `${data.artmaker.name} Gallery` : "Artmaker Gallery",
       type: "profile",
-    }),
+    });
+  },
   loader: async ({ params }) => {
     const [artmaker, artworks] = await Promise.all([
       getArtmakerBySlug({ data: { slug: params.slug } }),
@@ -54,7 +61,7 @@ export const Route = createFileRoute("/artmakers/$slug/gallery")({
 });
 
 function ArtmakerGallery() {
-  const { artmaker, artworks } = Route.useLoaderData();
+  const { artmaker, artworks } = Route.useLoaderData() as ArtmakerGalleryLoaderData;
   const { artwork, available, medium, sort } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 

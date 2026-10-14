@@ -17,10 +17,17 @@ export interface ArtmakerProfileSearch {
   artwork?: string;
 }
 
+type ArtmakerProfileLoaderData = {
+  artmaker: NonNullable<Awaited<ReturnType<typeof getArtmakerBySlug>>>;
+  artworks: Awaited<ReturnType<typeof listPublishedArtworksByArtmakerSlug>>;
+};
+
 export const Route = createFileRoute("/artmakers/$slug")({
   component: ArtmakerProfile,
   head: ({ loaderData }) => {
-    const artmaker = loaderData?.artmaker;
+    // The CLI-generated route tree is typeless (`as any`), so assert the
+    // loader shape here instead of relying on inference.
+    const artmaker = (loaderData as ArtmakerProfileLoaderData | undefined)?.artmaker;
     const description = artmaker
       ? `${artmaker.name} is an Arkansas artmaker in ${artmaker.city}, ${artmaker.state}, working in ${artmaker.medium.join(", ")}.`
       : "Arkansas artmaker profile on Dead Party Arts.";
@@ -77,7 +84,7 @@ export const Route = createFileRoute("/artmakers/$slug")({
 });
 
 function ArtmakerProfile() {
-  const { artmaker, artworks } = Route.useLoaderData();
+  const { artmaker, artworks } = Route.useLoaderData() as ArtmakerProfileLoaderData;
   const { artwork } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 

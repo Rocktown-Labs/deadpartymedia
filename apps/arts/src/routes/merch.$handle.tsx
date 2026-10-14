@@ -18,7 +18,7 @@ const CART_STORAGE_KEY = "dead-party-arts-cart-id";
 export const Route = createFileRoute("/merch/$handle")({
   component: MerchProductDetailPage,
   head: ({ loaderData }) => {
-    const product = loaderData;
+    const product = loaderData as unknown as ArtsProduct | null;
     const cleanDesc = product
       ? stripHtml(product.description) || `Shop ${product.title} on Dead Party Arts.`
       : "Merch item on Dead Party Arts.";

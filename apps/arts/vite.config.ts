@@ -1,4 +1,4 @@
-import { defineConfig, lazyPlugins } from "vite-plus";
+import { defineConfig, lazyPlugins, type Plugin } from "vite-plus";
 import { devtools } from "@tanstack/devtools-vite";
 
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -33,19 +33,19 @@ const CLIENT_SERVER_STUBS = [
   },
 ];
 
-function stubServerOnlyModulesForClient() {
+function stubServerOnlyModulesForClient(): Plugin {
   return {
     name: "dpmedia:stub-server-only-modules-for-client",
-    applyToEnvironment(env) {
+    applyToEnvironment(env: { name: string }) {
       return env.name === "client";
     },
-    resolveId(source) {
+    resolveId(source: string) {
       if (source === "@dpmedia/db") {
         return "\0dpmedia-client-stub:@dpmedia/db";
       }
       return null;
     },
-    load(id) {
+    load(id: string) {
       if (id.startsWith("\0dpmedia-client-stub:@dpmedia/db")) {
         return CLIENT_SERVER_STUBS[0].code;
       }

@@ -9,6 +9,7 @@
     "dev": "dotenv -e .env.local -- portless",
     "dev:app": "NODE_OPTIONS='--import ./instrument.server.mjs' vp dev",
     "generate-routes": "tsr generate",
+    "check-types": "tsc --noEmit",
     "build": "vp build && if [ -d .output/server ]; then cp instrument.server.mjs .output/server/; fi",
     "preview": "vp preview",
     "test": "vp test run --passWithNoTests",
