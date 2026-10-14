@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getRequestLogger, addRequestIdHeader, getRequestId } from "@/lib/logger/middleware";
 import { withUserContext } from "@/lib/logger/context";
 import { sanitizeError } from "@/lib/logger/sanitize";
-import { parseRole } from "@/lib/auth/role";
+import { getRolesFromMetadata, parseRole } from "@/lib/auth/role";
 import type { Roles } from "@/types/globals";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
@@ -107,7 +107,21 @@ export default clerkMiddleware(async (auth, req) => {
   const onboardingComplete = sessionClaims?.metadata?.onboardingComplete;
   const rawRole = sessionClaims?.metadata?.role;
   const parsedRole = parseRole(rawRole);
-  const role: Roles = parsedRole ?? "fan";
+  const userRoles = getRolesFromMetadata(sessionClaims?.metadata);
+  const isSuperAdmin = userRoles.includes("super_admin");
+  const isMusicWriter = userRoles.includes("writer");
+  const isMusicArtist = userRoles.includes("artist");
+  const isMusicVenue = userRoles.includes("venue");
+  const role: Roles =
+    (isSuperAdmin
+      ? "super_admin"
+      : isMusicWriter
+        ? "writer"
+        : isMusicArtist
+          ? "artist"
+          : isMusicVenue
+            ? "venue"
+            : (parsedRole ?? userRoles[0])) ?? "fan";
 
   // Add user context to logger if authenticated
   if (userId) {

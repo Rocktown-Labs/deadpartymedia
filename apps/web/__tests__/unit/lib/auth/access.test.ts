@@ -50,16 +50,28 @@ describe(canEdit, () => {
     expect(result).toBeTruthy();
   });
 
-  it("should return true when user is resource owner", async () => {
-    vi.mocked(checkRole).mockResolvedValue(false);
+  it("should return true when user is writer and resource owner", async () => {
+    vi.mocked(checkRole)
+      .mockResolvedValueOnce(false) // super_admin check
+      .mockResolvedValueOnce(true); // writer check
     vi.mocked(auth).mockResolvedValue({ userId: "user1" } as any);
 
     const result = await canEdit("user1");
     expect(result).toBeTruthy();
   });
 
+  it("should return false when user is resource owner but not a writer", async () => {
+    vi.mocked(checkRole)
+      .mockResolvedValueOnce(false) // super_admin check
+      .mockResolvedValueOnce(false); // writer check
+    vi.mocked(auth).mockResolvedValue({ userId: "user1" } as any);
+
+    const result = await canEdit("user1");
+    expect(result).toBeFalsy();
+  });
+
   it("should return false when user is not owner and not super_admin", async () => {
-    vi.mocked(checkRole).mockResolvedValue(false);
+    vi.mocked(checkRole).mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     vi.mocked(auth).mockResolvedValue({ userId: "user1" } as any);
 
     const result = await canEdit("user2");

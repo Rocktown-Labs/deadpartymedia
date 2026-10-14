@@ -28,6 +28,30 @@ export function roleOrDefault(value?: unknown, fallback: Roles = "fan"): Roles {
   return parseRole(value) ?? fallback;
 }
 
+export function getRolesFromMetadata(
+  metadata?: { role?: unknown; roles?: unknown } | null,
+): Roles[] {
+  const roles = new Set<Roles>();
+
+  if (Array.isArray(metadata?.roles)) {
+    for (const item of metadata.roles) {
+      const parsed = parseRole(item);
+      if (parsed) {
+        roles.add(parsed);
+      }
+    }
+  }
+
+  if (typeof metadata?.role === "string") {
+    const parsed = parseRole(metadata.role);
+    if (parsed) {
+      roles.add(parsed);
+    }
+  }
+
+  return [...roles];
+}
+
 export const WEB_ROLES: readonly Roles[] = [
   "super_admin",
   "writer",

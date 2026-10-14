@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Mail, UserPlus } from "lucide-react";
 import { useState } from "react";
@@ -14,9 +14,18 @@ import {
   updateArtsUserRole,
 } from "#/lib/admin.functions.ts";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { isArtsAdminRole } from "#/lib/roles.ts";
 
 export const Route = createFileRoute("/admin/users")({
-  beforeLoad: () => requireArtsStaff(),
+  beforeLoad: async () => {
+    const staff = await requireArtsStaff();
+    const canManageStaff =
+      isArtsAdminRole(staff.role) || staff.roles.some((r) => isArtsAdminRole(r));
+    if (!canManageStaff) {
+      throw redirect({ to: "/admin" });
+    }
+    return staff;
+  },
   component: AdminUsers,
   loader: async () => {
     const [usersList, invitations] = await Promise.all([

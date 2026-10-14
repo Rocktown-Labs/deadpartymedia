@@ -123,6 +123,7 @@ export async function createPost(formData: FormData) {
         slug,
         status: validatedData.status as PostInsert["status"],
         title: validatedData.title,
+        vertical: "music",
       })
       .returning();
 
@@ -207,7 +208,11 @@ export async function updatePost(id: number, formData: FormData) {
   // Get the post to check ownership
   let post;
   try {
-    [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+    [post] = await db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")))
+      .limit(1);
   } catch (error) {
     logger.error(
       {
@@ -289,7 +294,7 @@ export async function updatePost(id: number, formData: FormData) {
         title: validatedData.title,
         updatedAt: new Date(),
       })
-      .where(eq(posts.id, id));
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")));
 
     logger.info(
       { operation: "update_post", postId: id, slug, userId },
@@ -417,7 +422,7 @@ export async function bulkUpdatePostStatus(formData: FormData) {
       status: posts.status,
     })
     .from(posts)
-    .where(inArray(posts.id, postIds));
+    .where(and(inArray(posts.id, postIds), eq(posts.vertical, "music")));
 
   if (selectedPosts.length !== postIds.length) {
     throw new Error("One or more selected posts could not be found");
@@ -446,7 +451,7 @@ export async function bulkUpdatePostStatus(formData: FormData) {
       status: statusInput,
       updatedAt: new Date(),
     })
-    .where(inArray(posts.id, postIds));
+    .where(and(inArray(posts.id, postIds), eq(posts.vertical, "music")));
 
   const touchesPublishedState =
     statusInput === "published" || selectedPosts.some((post) => post.status === "published");
@@ -474,7 +479,11 @@ export async function requestDeletePost(id: number) {
   // Get the post to check ownership
   let post;
   try {
-    [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+    [post] = await db
+      .select()
+      .from(posts)
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")))
+      .limit(1);
   } catch (error) {
     logger.error(
       {
@@ -512,7 +521,7 @@ export async function requestDeletePost(id: number) {
   if (isSuperAdmin) {
     // Super admins can delete directly
     try {
-      await db.delete(posts).where(eq(posts.id, id));
+      await db.delete(posts).where(and(eq(posts.id, id), eq(posts.vertical, "music")));
       logger.info(
         { operation: "request_delete_post", postId: id, userId },
         "Post deleted directly by super admin",
@@ -593,14 +602,14 @@ export async function approveDeletePost(id: number) {
     const [post] = await db
       .select({ status: posts.status })
       .from(posts)
-      .where(eq(posts.id, id))
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")))
       .limit(1);
     const existingArtistRelations = await db
       .select({ artistId: postArtists.artistId })
       .from(postArtists)
       .where(eq(postArtists.postId, id));
 
-    await db.delete(posts).where(eq(posts.id, id));
+    await db.delete(posts).where(and(eq(posts.id, id), eq(posts.vertical, "music")));
     logger.info({ operation: "approve_delete_post", postId: id, userId }, "Post deletion approved");
     if (post?.status === "published") {
       revalidateTag("posts", "max");
@@ -648,7 +657,7 @@ export async function denyDeletePost(id: number) {
         deleteRequested: false,
         deleteRequestedAt: null,
       })
-      .where(eq(posts.id, id));
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")));
     logger.info({ operation: "deny_delete_post", postId: id, userId }, "Post deletion denied");
   } catch (error) {
     logger.error(
@@ -683,14 +692,14 @@ export async function deletePost(id: number) {
     const [post] = await db
       .select({ status: posts.status })
       .from(posts)
-      .where(eq(posts.id, id))
+      .where(and(eq(posts.id, id), eq(posts.vertical, "music")))
       .limit(1);
     const existingArtistRelations = await db
       .select({ artistId: postArtists.artistId })
       .from(postArtists)
       .where(eq(postArtists.postId, id));
 
-    await db.delete(posts).where(eq(posts.id, id));
+    await db.delete(posts).where(and(eq(posts.id, id), eq(posts.vertical, "music")));
     logger.info({ operation: "delete_post", postId: id, userId }, "Post deleted successfully");
     if (post?.status === "published") {
       revalidateTag("posts", "max");

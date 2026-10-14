@@ -15,6 +15,7 @@ import { Textarea } from "#/components/ui/textarea.tsx";
 import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
+import { isArtsAdminRole } from "#/lib/roles.ts";
 import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 import {
@@ -48,6 +49,8 @@ export const Route = createFileRoute("/admin/articles")({
 
 function AdminArticles() {
   const staff = Route.useRouteContext();
+  const isSuperOrAdmin =
+    staff.roles?.some((r: string) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
   const { articles: initialArticles, artmakers: initialArtmakers } = Route.useLoaderData();
   const [articles, setArticles] = useState<ArtsArticleListItem[]>(initialArticles);
   const [artmakers, setArtmakers] = useState(initialArtmakers);
@@ -285,39 +288,41 @@ function AdminArticles() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleStatus(article.id)}
-                    title={article.status === "published" ? "Unpublish" : "Publish"}
-                  >
-                    {article.status === "published" ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditEditor(article)}
-                    title="Edit Article"
-                  >
-                    <Edit className="size-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(article.id)}
-                    title="Delete Article"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+                {isSuperOrAdmin || article.authorId === staff.userId ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleStatus(article.id)}
+                      title={article.status === "published" ? "Unpublish" : "Publish"}
+                    >
+                      {article.status === "published" ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditEditor(article)}
+                      title="Edit Article"
+                    >
+                      <Edit className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(article.id)}
+                      title="Delete Article"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

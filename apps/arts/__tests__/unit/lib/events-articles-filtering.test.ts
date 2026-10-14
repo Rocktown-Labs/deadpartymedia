@@ -145,5 +145,37 @@ describe("Events and articles filtering and search logic", () => {
       expect(searchArticles(sampleArticles, undefined, "Hot Springs")).toHaveLength(1);
       expect(searchArticles(sampleArticles, "Tattoo", "Ceramics")).toHaveLength(0);
     });
+
+    it("restricts article modifications to owner unless caller holds admin role", () => {
+      const canManageArticle = (
+        caller: { userId: string; roles: string[]; role?: string },
+        articleAuthorId: string,
+      ) => {
+        const isAdmin =
+          caller.role === "super_admin" ||
+          caller.role === "admin" ||
+          caller.role === "arts_admin" ||
+          caller.roles.some((r) => r === "super_admin" || r === "admin" || r === "arts_admin");
+        return isAdmin || caller.userId === articleAuthorId;
+      };
+
+      const superAdmin = { userId: "admin_user", roles: ["super_admin"] };
+      const artsAdmin = { userId: "arts_admin_user", roles: ["arts_admin"] };
+      const authorWriter = { userId: "user_1", roles: ["arts_writer"] };
+      const otherWriter = { userId: "user_other", roles: ["arts_writer"] };
+
+      // Super admin and arts admin can manage any article
+      expect(canManageArticle(superAdmin, "user_1")).toBe(true);
+      expect(canManageArticle(superAdmin, "user_2")).toBe(true);
+      expect(canManageArticle(artsAdmin, "user_1")).toBe(true);
+      expect(canManageArticle(artsAdmin, "user_2")).toBe(true);
+
+      // Writer can manage their own article
+      expect(canManageArticle(authorWriter, "user_1")).toBe(true);
+
+      // Writer cannot manage another author's article
+      expect(canManageArticle(authorWriter, "user_2")).toBe(false);
+      expect(canManageArticle(otherWriter, "user_1")).toBe(false);
+    });
   });
 });

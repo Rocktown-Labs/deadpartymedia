@@ -19,6 +19,13 @@ export function isArtsStaffRole(role: unknown): role is ArtsStaffRole {
   return typeof role === "string" && (ARTS_STAFF_ROLES as readonly string[]).includes(role);
 }
 
+export const ARTS_ADMIN_ROLES = ["admin", "arts_admin", "super_admin"] as const;
+export type ArtsAdminRole = (typeof ARTS_ADMIN_ROLES)[number];
+
+export function isArtsAdminRole(role: unknown): role is ArtsAdminRole {
+  return typeof role === "string" && (ARTS_ADMIN_ROLES as readonly string[]).includes(role);
+}
+
 interface RoleMetadata {
   role?: unknown;
   roles?: unknown;

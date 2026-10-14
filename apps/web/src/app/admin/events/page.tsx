@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
-import { asc, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -61,14 +61,16 @@ export default async function EventsPage({
   const order = parseSortOrderParam(params.order, "desc");
   const offset = getOffsetFromPage(page, ADMIN_PAGE_SIZE);
 
-  const whereClause = isSuperAdmin ? undefined : eq(events.createdById, userId);
+  const whereClause = isSuperAdmin
+    ? eq(events.vertical, "music")
+    : and(eq(events.vertical, "music"), eq(events.createdById, userId));
 
-  const totalQuery = db.select({ total: count() }).from(events);
-  const rowsQuery = db.select().from(events);
+  const totalQuery = db.select({ total: count() }).from(events).where(whereClause);
+  const rowsQuery = db.select().from(events).where(whereClause);
 
   const [totalRows, filteredEvents] = await Promise.all([
-    whereClause ? totalQuery.where(whereClause) : totalQuery,
-    (whereClause ? rowsQuery.where(whereClause) : rowsQuery)
+    totalQuery,
+    rowsQuery
       .orderBy(
         sort === "title"
           ? order === "asc"
