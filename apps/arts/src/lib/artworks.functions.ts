@@ -208,13 +208,32 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
         orderClause = [desc(artworks.createdAt)];
       }
 
-      const [totalCountRows, groupCountRows] = await Promise.all([
+      const [totalCountRows, itemsRows] = await Promise.all([
         db
           .select({ total: count() })
           .from(artworks)
           .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
           .where(and(...whereConditions)),
         db
+          .select(artworkSelect())
+          .from(artworks)
+          .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+          .where(and(...whereConditions))
+          .orderBy(...orderClause)
+          .limit(data.limit)
+          .offset(data.offset),
+      ]);
+
+      const totalCount = Number(totalCountRows[0]?.total ?? 0);
+      const items = withNormalizedImages(itemsRows) satisfies ArtworkListItem[];
+      const nextOffset = data.offset + itemsRows.length < totalCount ? data.offset + data.limit : null;
+
+      // Counts per group for the filter pills. Every artwork lands in exactly
+      // one group, so these sum to the unfiltered total. Kept isolated so a
+      // problem here degrades the pill badges without losing the wall itself.
+      let groupCounts: Record<string, number> = {};
+      try {
+        const groupCountRows = await db
           .select({
             mediumGroup: sql<string>`${MEDIUM_GROUP_SQL}`.as("medium_group"),
             total: count(),
@@ -222,31 +241,16 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
           .from(artworks)
           .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
           .where(and(eq(artworks.status, "published"), eq(artmakers.status, "published")))
-          .groupBy(sql`${MEDIUM_GROUP_SQL}`),
-      ]);
+          .groupBy(sql`${MEDIUM_GROUP_SQL}`);
 
-      const totalCount = Number(totalCountRows[0]?.total ?? 0);
-
-      // Counts per group for the filter pills. Every artwork lands in exactly
-      // one group, so these sum to the unfiltered total.
-      const groupCounts: Record<string, number> = {};
-      for (const row of groupCountRows) {
-        if (row.mediumGroup) {
-          groupCounts[row.mediumGroup] = Number(row.total);
+        for (const row of groupCountRows) {
+          if (row.mediumGroup) {
+            groupCounts[row.mediumGroup] = Number(row.total);
+          }
         }
+      } catch (error) {
+        console.error("[exhibitions] groupCounts query failed", error);
       }
-
-      const rows = await db
-        .select(artworkSelect())
-        .from(artworks)
-        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
-        .where(and(...whereConditions))
-        .orderBy(...orderClause)
-        .limit(data.limit)
-        .offset(data.offset);
-
-      const items = withNormalizedImages(rows) satisfies ArtworkListItem[];
-      const nextOffset = data.offset + items.length < totalCount ? data.offset + data.limit : null;
 
       return {
         items,
@@ -254,7 +258,8 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
         totalCount,
         groupCounts,
       } satisfies PaginatedArtworksResult;
-    } catch {
+    } catch (error) {
+      console.error("[exhibitions] paged artwork query failed", error);
       return {
         items: [] satisfies ArtworkListItem[],
         nextOffset: null,
