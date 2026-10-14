@@ -1,7 +1,8 @@
 import { db } from "@dpmedia/db";
 import { artmakers, eventArtmakers, events, postArtmakers, posts } from "@dpmedia/db/schema";
+import { auth } from "@clerk/tanstack-react-start/server";
 import { createServerFn } from "@tanstack/react-start";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { createSlug } from "#/lib/slug.ts";
@@ -454,3 +455,82 @@ export const deleteArtsEvent = createServerFn({ method: "POST" })
     await db.delete(events).where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
     return { success: true };
   });
+
+// Events the signed-in artmaker is tagged on. Published only, deduped, with
+// an `upcoming` flag the Studio events page splits into "Upcoming" and "Past"
+// sections (issue #133).
+export const listTaggedEventsForCurrentArtmaker = createServerFn({ method: "GET" }).handler(
+  async () => {
+    try {
+      const { isAuthenticated, userId } = await auth();
+
+      if (!isAuthenticated || !userId) {
+        return [];
+      }
+
+      const [artmaker] = await db
+        .select({ id: artmakers.id })
+        .from(artmakers)
+        .where(eq(artmakers.clerkUserId, userId))
+        .limit(1);
+
+      if (!artmaker) {
+        return [];
+      }
+
+      const rows = await db
+        .select({
+          date: events.date,
+          description: events.description,
+          id: events.id,
+          image: events.image,
+          location: events.location,
+          price: events.price,
+          slug: events.slug,
+          time: events.time,
+          title: events.title,
+          ticketLink: events.ticketLink,
+          venue: events.venue,
+        })
+        .from(eventArtmakers)
+        .innerJoin(events, eq(eventArtmakers.eventId, events.id))
+        .where(and(eq(eventArtmakers.artmakerId, artmaker.id), eq(events.status, "published")))
+        .orderBy(asc(events.date));
+
+      const today = new Date().toISOString().slice(0, 10);
+      const seen = new Set<number>();
+      const tagged: TaggedEventListItem[] = [];
+
+      for (const row of rows) {
+        if (seen.has(row.id)) {
+          continue;
+        }
+        seen.add(row.id);
+        tagged.push({
+          ...row,
+          image: normalizeStoredImageUrl(row.image),
+          upcoming: row.date >= today,
+        });
+      }
+
+      return tagged;
+    } catch {
+      return [];
+    }
+  },
+);
+
+export interface TaggedEventListItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  image: string | null;
+  venue: string;
+  location: string;
+  date: string;
+  time: string | null;
+  ticketLink: string | null;
+  price: string | null;
+  upcoming: boolean;
+}
