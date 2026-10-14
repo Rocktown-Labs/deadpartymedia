@@ -5,8 +5,16 @@ describe("medium grouping", () => {
   it("assigns a medium to the first group whose keyword matches", () => {
     // "Acrylic" appears in the Painting group's keyword list.
     expect(getMediumGroupForMedium("Acrylic paint on a vinyl record").slug).toBe("painting");
-    // "Paper" is an Objects keyword and Painting is checked first but has no hit.
-    expect(getMediumGroupForMedium("Pen on paper + digital editing").slug).toBe("objects");
+    // "Digital" is a keyword of the Digital group, so digital editing counts
+    // as digital work even when mixed with physical media.
+    expect(getMediumGroupForMedium("Pen on paper + digital editing").slug).toBe("digital");
+  });
+
+  it("maps bare group labels to their own group", () => {
+    expect(getMediumGroupForMedium("Digital").slug).toBe("digital");
+    expect(getMediumGroupForMedium("Clothing").slug).toBe("clothing");
+    expect(getMediumGroupForMedium("Objects").slug).toBe("objects");
+    expect(getMediumGroupForMedium("Mixed Practice").slug).toBe("mixed-practice");
   });
 
   it("is case-insensitive", () => {

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
 import {
   ArrowLeft,
@@ -8,8 +9,9 @@ import {
   Instagram,
   MapPin,
 } from "lucide-react";
+import { useEffect } from "react";
 import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
-import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
+import { getArtmakerBySlug, recordArtmakerProfileView } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
 import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 
@@ -87,6 +89,24 @@ function ArtmakerProfile() {
   const { artmaker, artworks } = Route.useLoaderData() as ArtmakerProfileLoaderData;
   const { artwork } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const recordView = useServerFn(recordArtmakerProfileView);
+
+  // Count one view per browser session per profile, after real render — so
+  // router prefetches and crawlers don't inflate the dashboard number.
+  useEffect(() => {
+    const storageKey = `dp-viewed-${artmaker.slug}`;
+    try {
+      if (sessionStorage.getItem(storageKey)) {
+        return;
+      }
+      sessionStorage.setItem(storageKey, "1");
+    } catch {
+      // Storage unavailable (private mode) — skip counting rather than
+      // counting every reload.
+      return;
+    }
+    void recordView({ data: { slug: artmaker.slug } });
+  }, [artmaker.slug, recordView]);
 
   const artworkCount = artworks.length || artmaker.artworkCount;
   const featuredArtwork = artworks[0];

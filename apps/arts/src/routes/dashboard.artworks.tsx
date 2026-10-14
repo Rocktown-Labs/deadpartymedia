@@ -1,5 +1,5 @@
 import { uploadFiles } from "@better-upload/client";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -23,7 +23,8 @@ import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
+import { requireArtmakerDashboardUser, getCurrentArtmaker } from "#/lib/artmakers.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
 import {
   type ArtworkListItem,
@@ -57,11 +58,14 @@ const batchArtworkSchema = z.object({
 export const Route = createFileRoute("/dashboard/artworks")({
   beforeLoad: () => requireArtmakerDashboardUser(),
   component: DashboardArtworks,
-  loader: () => listCurrentArtworks(),
+  loader: async () => {
+    const [artworks, artmaker] = await Promise.all([listCurrentArtworks(), getCurrentArtmaker()]);
+    return { artworks, artmaker };
+  },
 });
 
 function DashboardArtworks() {
-  const initialArtworks = Route.useLoaderData();
+  const { artworks: initialArtworks, artmaker } = Route.useLoaderData();
   const save = useServerFn(saveArtwork);
   const remove = useServerFn(deleteCurrentArtwork);
   const updateArtwork = useServerFn(updateCurrentArtwork);
@@ -238,6 +242,13 @@ function DashboardArtworks() {
 
   const draftCount = form.state.values.items.length;
 
+  // Legacy artworks may hold a free-text medium that isn't one of the site
+  // groups — keep it selectable in the edit form instead of silently hiding it.
+  const editMediumOptions =
+    editMedium && !(MEDIUM_OPTIONS as readonly string[]).includes(editMedium)
+      ? [editMedium, ...MEDIUM_OPTIONS]
+      : MEDIUM_OPTIONS;
+
   return (
     <ArtmakerDashboardShell>
       <div className="mb-8">
@@ -246,6 +257,29 @@ function DashboardArtworks() {
           Add photos of your pieces, name them, and publish. Everything you publish shows up on your
           public page and the exhibition wall.
         </p>
+        {artmaker ? (
+          <p className="mt-3 text-sm text-gray-500">
+            Publishing as{" "}
+            <Link
+              to="/artmakers/$slug"
+              params={{ slug: artmaker.slug }}
+              className="font-bold text-[#7CFC00] no-underline hover:underline"
+            >
+              {artmaker.name}
+            </Link>
+          </p>
+        ) : (
+          <div className="mt-4 max-w-2xl rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-4 text-sm text-yellow-200">
+            You don't have an artist profile yet, so there's nothing to publish to.{" "}
+            <Link
+              to="/onboarding"
+              className="font-bold text-[#7CFC00] no-underline hover:underline"
+            >
+              Set up your profile
+            </Link>{" "}
+            to start publishing.
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
@@ -375,15 +409,22 @@ function DashboardArtworks() {
                               </Field>
                               <div className="grid gap-4 md:grid-cols-2">
                                 <Field label="Medium">
-                                  <Input
+                                  <select
                                     value={item.medium}
-                                    placeholder="e.g. Acrylic on canvas"
                                     onChange={(event) => {
                                       const next = [...field.state.value];
                                       next[index] = { ...item, medium: event.target.value };
                                       field.handleChange(next);
                                     }}
-                                  />
+                                    className="h-10 w-full rounded-md border border-gray-800 bg-[#0A0A0A] px-3 text-white"
+                                  >
+                                    <option value="">Choose a medium…</option>
+                                    {MEDIUM_OPTIONS.map((option) => (
+                                      <option key={option} value={option}>
+                                        {option}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </Field>
                                 <Field label="Year">
                                   <Input
@@ -478,19 +519,43 @@ function DashboardArtworks() {
             <form.Subscribe
               selector={(state) => [state.canSubmit, state.isSubmitting] as const}
               children={([canSubmit, isSubmitting]) => (
-                <Button
-                  type="submit"
-                  disabled={!canSubmit || isSubmitting || draftCount === 0}
-                  className="mt-6 h-12 rounded-lg bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
-                >
-                  {isSubmitting
-                    ? "Publishing…"
-                    : draftCount === 0
-                      ? "Publish to my page"
-                      : draftCount === 1
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button
+                    type="submit"
+                    disabled={!canSubmit || isSubmitting || draftCount === 0}
+                    className="h-12 flex-1 rounded-lg bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43] sm:flex-none"
+                  >
+                    {isSubmitting
+                      ? "Publishing…"
+                      : draftCount === 0
                         ? "Publish to my page"
-                        : `Publish all ${draftCount} pieces`}
-                </Button>
+                        : draftCount === 1
+                          ? "Publish to my page"
+                          : `Publish all ${draftCount} pieces`}
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={draftCount === 0 || isSubmitting}
+                    onClick={() => {
+                      if (
+                        draftCount > 0 &&
+                        !window.confirm(
+                          draftCount === 1
+                            ? "Discard this upload? The photo won't be published."
+                            : `Discard all ${draftCount} uploads? None of them will be published.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      form.reset();
+                      setError("");
+                      toast.success("Upload discarded.");
+                    }}
+                    className="h-12 rounded-lg border border-red-500/60 bg-red-500/10 px-6 font-black text-red-400 text-xs uppercase tracking-[0.18em] hover:bg-red-500/20 hover:text-red-300"
+                  >
+                    Cancel upload
+                  </Button>
+                </div>
               )}
             />
           </form>
@@ -638,11 +703,18 @@ function DashboardArtworks() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Medium">
-                  <Input
+                  <select
                     value={editMedium}
                     onChange={(event) => setEditMedium(event.target.value)}
-                    placeholder="e.g. Acrylic on canvas"
-                  />
+                    className="h-10 w-full rounded-md border border-neutral-800 bg-[#0A0A0A] px-3 text-white"
+                  >
+                    <option value="">Choose a medium…</option>
+                    {editMediumOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Year">
                   <Input
