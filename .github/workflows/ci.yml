@@ -1,0 +1,44 @@
+# CI quality gates for all PRs (issue #127). Lint/format via `vp check`,
+# TypeScript across every workspace that defines check-types, and unit tests.
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format and lint
+        run: pnpm vp check
+
+      - name: Type check
+        run: pnpm turbo run check-types
+
+      - name: Tests
+        run: pnpm turbo run test

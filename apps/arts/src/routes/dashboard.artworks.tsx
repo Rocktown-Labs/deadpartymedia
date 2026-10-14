@@ -115,9 +115,7 @@ function DashboardArtworks() {
       });
 
       setArtworks((current) =>
-        current.map((item) =>
-          item.id === editingArtwork.id ? (res.artwork as ArtworkListItem) : item,
-        ),
+        current.map((item) => (item.id === editingArtwork.id ? res.artwork : item)),
       );
       toast.success("Artwork updated successfully!");
       setEditingArtwork(null);
