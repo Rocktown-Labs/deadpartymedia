@@ -7,6 +7,7 @@ interface ExhibitionFilterBarProps {
   activeMedium?: string;
   activeSort: ExhibitionSortOption;
   totalCount: number;
+  groupCounts: Record<string, number>;
   onSelectMedium: (medium?: string) => void;
   onSelectSort: (sort: ExhibitionSortOption) => void;
 }
@@ -21,6 +22,7 @@ export function ExhibitionFilterBar({
   activeMedium,
   activeSort,
   totalCount,
+  groupCounts,
   onSelectMedium,
   onSelectSort,
 }: ExhibitionFilterBarProps) {
@@ -43,11 +45,19 @@ export function ExhibitionFilterBar({
         >
           {!activeMedium && <Check className="size-3.5 stroke-[3]" />}
           <span>All Mediums</span>
+          <span
+            className={`rounded-full px-1.5 text-[10px] font-black ${
+              !activeMedium ? "bg-black/20 text-black" : "bg-neutral-800 text-neutral-300"
+            }`}
+          >
+            {totalCount}
+          </span>
         </button>
 
         {MEDIUM_GROUPS.map((group) => {
           const isSelected = activeMedium === group.slug;
           const Icon = group.icon;
+          const groupTotal = groupCounts[group.slug] ?? 0;
           return (
             <button
               key={group.slug}
@@ -61,6 +71,13 @@ export function ExhibitionFilterBar({
             >
               <Icon className="size-3.5" />
               <span>{group.label}</span>
+              <span
+                className={`rounded-full px-1.5 text-[10px] font-black ${
+                  isSelected ? "bg-black/20 text-black" : "bg-neutral-800 text-neutral-300"
+                }`}
+              >
+                {groupTotal}
+              </span>
             </button>
           );
         })}

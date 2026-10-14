@@ -3,10 +3,10 @@ import { db } from "@dpmedia/db";
 import { artmakers, artworks } from "@dpmedia/db/schema";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { getMediumGroup } from "#/lib/mediums.ts";
+import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
 
@@ -37,6 +37,8 @@ export interface PaginatedArtworksResult {
   items: ArtworkListItem[];
   nextOffset: number | null;
   totalCount: number;
+  /** Published artwork count per medium group slug. Sums to totalCount. */
+  groupCounts: Record<string, number>;
 }
 
 const artworkInputSchema = z
@@ -159,6 +161,28 @@ export const listPublishedArtworks = createServerFn({ method: "GET" }).handler(a
   }
 });
 
+// Assign every published artwork to exactly ONE medium group so the category
+// counts add up to the total: groups are tested in MEDIUM_GROUPS order and the
+// first keyword hit wins; anything unmatched (including a blank medium) lands
+// in mixed-practice, which is also the card label fallback. Generated from the
+// same MEDIUM_GROUPS table the JS-side getMediumGroupForMedium uses, so the
+// counts and the filter can never drift apart.
+function buildMediumGroupSql() {
+  const cases = MEDIUM_GROUPS.map((group) => {
+    const keywordMatches = group.mediums.map(
+      (keyword) => sql`coalesce(${artworks.medium}, '') ilike ${`%${keyword}%`}`,
+    );
+    // Slugs come from our own MEDIUM_GROUPS constant; inline them as literals
+    // so the CASE branches never rely on Postgres inferring parameter types.
+    const slugLiteral = sql.raw(`'${group.slug}'`);
+    return sql`when ${sql.join(keywordMatches, sql` or `)} then ${slugLiteral}`;
+  });
+  const fallback = MEDIUM_GROUPS.at(-1)?.slug ?? "mixed-practice";
+  return sql`case ${sql.join(cases, sql` `)} else ${sql.raw(`'${fallback}'`)} end`;
+}
+
+const MEDIUM_GROUP_SQL = buildMediumGroupSql();
+
 export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
   .validator(
     z.object({
@@ -170,19 +194,12 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     try {
-      const group = data.medium ? getMediumGroup(data.medium) : null;
-      const mediumMatches = group
-        ? group.mediums.map((candidate) =>
-            ilike(sql<string>`coalesce(${artworks.medium}, '')`, `%${candidate}%`),
-          )
-        : data.medium
-          ? [ilike(sql<string>`coalesce(${artworks.medium}, '')`, `%${data.medium}%`)]
-          : [];
-
       const whereConditions = [eq(artworks.status, "published"), eq(artmakers.status, "published")];
 
-      if (mediumMatches.length > 0) {
-        whereConditions.push(or(...mediumMatches)!);
+      // Filter by the same exclusive group assignment the counts use, so a
+      // category always shows exactly the artworks its count promises.
+      if (data.medium) {
+        whereConditions.push(sql`${MEDIUM_GROUP_SQL} = ${data.medium}`);
       }
 
       let orderClause: any[];
@@ -194,36 +211,66 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
         orderClause = [desc(artworks.createdAt)];
       }
 
-      const [totalCountResult] = await db
-        .select({ total: count() })
-        .from(artworks)
-        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
-        .where(and(...whereConditions));
+      const [totalCountRows, itemsRows] = await Promise.all([
+        db
+          .select({ total: count() })
+          .from(artworks)
+          .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+          .where(and(...whereConditions)),
+        db
+          .select(artworkSelect())
+          .from(artworks)
+          .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+          .where(and(...whereConditions))
+          .orderBy(...orderClause)
+          .limit(data.limit)
+          .offset(data.offset),
+      ]);
 
-      const totalCount = Number(totalCountResult?.total ?? 0);
+      const totalCount = Number(totalCountRows[0]?.total ?? 0);
+      const items = withNormalizedImages(itemsRows) satisfies ArtworkListItem[];
+      const nextOffset =
+        data.offset + itemsRows.length < totalCount ? data.offset + data.limit : null;
 
-      const rows = await db
-        .select(artworkSelect())
-        .from(artworks)
-        .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
-        .where(and(...whereConditions))
-        .orderBy(...orderClause)
-        .limit(data.limit)
-        .offset(data.offset);
+      // Counts per group for the filter pills. Every artwork lands in exactly
+      // one group, so these sum to the unfiltered total. Kept isolated so a
+      // problem here degrades the pill badges without losing the wall itself.
+      let groupCounts: Record<string, number> = {};
+      try {
+        // Group by the output column position: Postgres does not match the
+        // SELECT's CASE expression with a re-expanded copy in GROUP BY.
+        const groupCountRows = await db
+          .select({
+            mediumGroup: sql<string>`${MEDIUM_GROUP_SQL}`.as("medium_group"),
+            total: count(),
+          })
+          .from(artworks)
+          .innerJoin(artmakers, eq(artworks.artmakerId, artmakers.id))
+          .where(and(eq(artworks.status, "published"), eq(artmakers.status, "published")))
+          .groupBy(sql.raw("1"));
 
-      const items = withNormalizedImages(rows) satisfies ArtworkListItem[];
-      const nextOffset = data.offset + items.length < totalCount ? data.offset + data.limit : null;
+        for (const row of groupCountRows) {
+          if (row.mediumGroup) {
+            groupCounts[row.mediumGroup] = Number(row.total);
+          }
+        }
+      } catch (error) {
+        console.error("[exhibitions] groupCounts query failed", error);
+      }
 
       return {
         items,
         nextOffset,
         totalCount,
+        groupCounts,
       } satisfies PaginatedArtworksResult;
-    } catch {
+    } catch (error) {
+      console.error("[exhibitions] paged artwork query failed", error);
       return {
         items: [] satisfies ArtworkListItem[],
         nextOffset: null,
         totalCount: 0,
+        groupCounts: {},
       } satisfies PaginatedArtworksResult;
     }
   });
@@ -258,17 +305,16 @@ export const getArtworkByIdOrSlug = createServerFn({ method: "GET" })
 export const listMediumGroupArtworks = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
-    const group = getMediumGroup(data.slug);
+    // Unknown slugs return nothing; valid slugs use the same exclusive group
+    // assignment as the exhibitions page so every surface agrees on what
+    // belongs to a category.
+    const isValidGroup = MEDIUM_GROUPS.some((group) => group.slug === data.slug);
 
-    if (!group) {
+    if (!isValidGroup) {
       return [] satisfies ArtworkListItem[];
     }
 
     try {
-      const mediumMatches = group.mediums.map((medium) =>
-        ilike(sql<string>`coalesce(${artworks.medium}, '')`, `%${medium}%`),
-      );
-
       const rows = await db
         .select(artworkSelect())
         .from(artworks)
@@ -277,7 +323,7 @@ export const listMediumGroupArtworks = createServerFn({ method: "GET" })
           and(
             eq(artworks.status, "published"),
             eq(artmakers.status, "published"),
-            mediumMatches.length > 0 ? or(...mediumMatches) : undefined,
+            sql`${MEDIUM_GROUP_SQL} = ${data.slug}`,
           ),
         )
         .orderBy(desc(artworks.createdAt));
