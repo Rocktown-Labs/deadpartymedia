@@ -97,21 +97,18 @@ function requireR2Router(): Router {
       profileImages: route({
         fileTypes: IMAGE_TYPES,
         maxFileSize: 1024 * 1024 * 8,
-        maxFiles: 1,
         multipleFiles: false,
         onAfterSignedUrl() {
           return { metadata: getPublicBaseUrlMetadata() };
         },
-        onBeforeUpload() {
+        onBeforeUpload({ file }) {
+          const safeName = file.name
+            .toLowerCase()
+            .replaceAll(/[^a-z0-9.]+/g, "-")
+            .replaceAll(/^-|-$/g, "");
           return {
-            generateObjectInfo: ({ file }) => {
-              const safeName = file.name
-                .toLowerCase()
-                .replaceAll(/[^a-z0-9.]+/g, "-")
-                .replaceAll(/^-|-$/g, "");
-              return {
-                key: `artmaker-profiles/${crypto.randomUUID()}-${safeName || "profile"}`,
-              };
+            objectInfo: {
+              key: `artmaker-profiles/${crypto.randomUUID()}-${safeName || "profile"}`,
             },
           };
         },
