@@ -10,6 +10,7 @@ import {
 import type { ExhibitionSortOption } from "./exhibition-filter-bar.tsx";
 
 interface ArtworkWallGridProps {
+  artmaker?: string;
   initialData: PaginatedArtworksResult;
   medium?: string;
   sort: ExhibitionSortOption;
@@ -17,6 +18,7 @@ interface ArtworkWallGridProps {
 }
 
 export function ArtworkWallGrid({
+  artmaker,
   initialData,
   medium,
   sort,
@@ -25,10 +27,10 @@ export function ArtworkWallGrid({
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ["artworks", { medium, sort }],
+    queryKey: ["artworks", { artmaker, medium, sort }],
     queryFn: async ({ pageParam = 0 }) => {
       return await listPublishedArtworksPaginated({
-        data: { limit: 24, medium, offset: pageParam, sort },
+        data: { artmaker, limit: 24, medium, offset: pageParam, sort },
       });
     },
     initialPageParam: 0,
@@ -66,9 +68,13 @@ export function ArtworkWallGrid({
         <Sparkles className="mx-auto size-8 text-[#7CFC00]/60" />
         <h3 className="mt-4 font-black text-lg text-white">No Artworks Found</h3>
         <p className="mt-2 text-sm text-neutral-400">
-          {medium
-            ? "No published pieces match this medium yet. Try selecting another category."
-            : "The exhibition wall is being curated. Check back soon for new uploads."}
+          {artmaker && medium
+            ? "No published pieces match this artist and medium. Try clearing filters."
+            : artmaker
+              ? "No published pieces by this artist yet. Try selecting another artist or viewing all."
+              : medium
+                ? "No published pieces match this medium yet. Try selecting another category."
+                : "The exhibition wall is being curated. Check back soon for new uploads."}
         </p>
       </div>
     );

@@ -15,9 +15,15 @@ export interface SpotlightArtmaker {
 
 interface ArtistSpotlightStripProps {
   artmakers: SpotlightArtmaker[];
+  selectedArtmakerSlug?: string;
+  onSelectArtmaker?: (slug?: string) => void;
 }
 
-export function ArtistSpotlightStrip({ artmakers }: ArtistSpotlightStripProps) {
+export function ArtistSpotlightStrip({
+  artmakers,
+  selectedArtmakerSlug,
+  onSelectArtmaker,
+}: ArtistSpotlightStripProps) {
   if (artmakers.length === 0) {
     return null;
   }
@@ -33,6 +39,15 @@ export function ArtistSpotlightStrip({ artmakers }: ArtistSpotlightStripProps) {
           <span className="rounded-full bg-neutral-800/80 px-2 py-0.5 text-[11px] font-semibold text-neutral-400">
             {artmakers.length}
           </span>
+          {selectedArtmakerSlug ? (
+            <button
+              type="button"
+              onClick={() => onSelectArtmaker?.(undefined)}
+              className="ml-2 rounded-full border border-neutral-700 bg-neutral-900 px-2.5 py-0.5 text-[11px] font-semibold text-[#7CFC00] hover:border-[#7CFC00] transition-colors"
+            >
+              Clear filter
+            </button>
+          ) : null}
         </div>
         <Link
           to="/artmakers"
@@ -50,6 +65,59 @@ export function ArtistSpotlightStrip({ artmakers }: ArtistSpotlightStripProps) {
       >
         {artmakers.map((artmaker) => {
           const primaryMedium = artmaker.medium[0] ?? "Visual Art";
+          const isSelected = selectedArtmakerSlug === artmaker.slug;
+
+          if (onSelectArtmaker) {
+            return (
+              <button
+                key={artmaker.id}
+                type="button"
+                onClick={() => onSelectArtmaker(isSelected ? undefined : artmaker.slug)}
+                aria-pressed={isSelected}
+                className={`group flex w-52 shrink-0 scroll-snap-align-start items-center gap-3 rounded-xl border p-2.5 text-left text-white transition-[border-color,background-color,box-shadow,transform] duration-150 active:scale-[0.97] [touch-action:manipulation] ${
+                  isSelected
+                    ? "border-[#7CFC00] bg-[#161616] shadow-[0_0_16px_rgba(124,252,0,0.35)]"
+                    : "border-neutral-800/90 bg-[#111111]/80 hover:border-[#7CFC00]/60"
+                }`}
+              >
+                <div
+                  className={`relative size-12 shrink-0 overflow-hidden rounded-lg border bg-neutral-950 ${
+                    isSelected ? "border-[#7CFC00]" : "border-neutral-800"
+                  }`}
+                >
+                  {artmaker.image ? (
+                    <Image
+                      src={artmaker.image}
+                      alt={artmaker.name}
+                      width={96}
+                      height={96}
+                      className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="grid size-full place-items-center font-black text-lg text-[#7CFC00]">
+                      {artmaker.name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3
+                    className={`truncate font-black text-sm tracking-tight ${
+                      isSelected ? "text-[#7CFC00]" : "text-white group-hover:text-[#7CFC00]"
+                    }`}
+                  >
+                    {artmaker.name}
+                  </h3>
+                  <p className="truncate text-xs text-neutral-400">
+                    {artmaker.city}, {artmaker.state}
+                  </p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium text-neutral-500">
+                    {isSelected ? "Selected" : primaryMedium}
+                  </p>
+                </div>
+              </button>
+            );
+          }
+
           return (
             <Link
               key={artmaker.id}

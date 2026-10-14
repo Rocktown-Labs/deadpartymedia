@@ -12,6 +12,7 @@ import { listPublishedArtworksPaginated } from "#/lib/artworks.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
 
 export interface ExhibitionsSearch {
+  artmaker?: string;
   artwork?: string;
   medium?: string;
   sort?: ExhibitionSortOption;
@@ -26,17 +27,18 @@ export const Route = createFileRoute("/exhibitions")({
       path: "/exhibitions",
       title: "Exhibitions",
     }),
-  loaderDeps: ({ search: { medium, sort } }) => ({ medium, sort }),
-  loader: async ({ deps: { medium, sort } }) => {
+  loaderDeps: ({ search: { artmaker, medium, sort } }) => ({ artmaker, medium, sort }),
+  loader: async ({ deps: { artmaker, medium, sort } }) => {
     const [initialArtworks, artmakers] = await Promise.all([
       listPublishedArtworksPaginated({
-        data: { limit: 24, medium, offset: 0, sort: sort ?? "recent" },
+        data: { artmaker, limit: 24, medium, offset: 0, sort: sort ?? "recent" },
       }),
       listArtmakers(),
     ]);
     return { artmakers, initialArtworks };
   },
   validateSearch: (search: Record<string, unknown>): ExhibitionsSearch => ({
+    artmaker: typeof search.artmaker === "string" ? search.artmaker : undefined,
     artwork: typeof search.artwork === "string" ? search.artwork : undefined,
     medium: typeof search.medium === "string" ? search.medium : undefined,
     sort:
@@ -48,9 +50,22 @@ export const Route = createFileRoute("/exhibitions")({
 
 function ExhibitionsPage() {
   const { artmakers, initialArtworks } = Route.useLoaderData();
-  const { artwork, medium, sort } = Route.useSearch();
+  const { artmaker, artwork, medium, sort } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const activeSort: ExhibitionSortOption = sort ?? "recent";
+
+  const activeArtmaker = artmaker
+    ? (artmakers.find((item) => item.slug === artmaker) ?? null)
+    : null;
+
+  const handleSelectArtmaker = (nextArtmaker?: string) => {
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        artmaker: nextArtmaker,
+      }),
+    });
+  };
 
   const handleSelectMedium = (nextMedium?: string) => {
     void navigate({
@@ -98,20 +113,27 @@ function ExhibitionsPage() {
         />
 
         {/* Horizontal artist spotlight strip with Explore All */}
-        <ArtistSpotlightStrip artmakers={artmakers} />
+        <ArtistSpotlightStrip
+          artmakers={artmakers}
+          selectedArtmakerSlug={artmaker}
+          onSelectArtmaker={handleSelectArtmaker}
+        />
 
         {/* Category pills and sort controls */}
         <ExhibitionFilterBar
+          activeArtmaker={activeArtmaker}
           activeMedium={medium}
           activeSort={activeSort}
           totalCount={initialArtworks.totalCount}
           groupCounts={initialArtworks.groupCounts}
+          onSelectArtmaker={handleSelectArtmaker}
           onSelectMedium={handleSelectMedium}
           onSelectSort={handleSelectSort}
         />
 
         {/* Responsive artwork grid with infinite scroll */}
         <ArtworkWallGrid
+          artmaker={artmaker}
           initialData={initialArtworks}
           medium={medium}
           sort={activeSort}
