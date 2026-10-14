@@ -196,17 +196,17 @@ function Home() {
             <div
               tabIndex={0}
               aria-label="Recent Artmakers Carousel"
-              className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 [touch-action:pan-y] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
+              className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:grid md:grid-cols-2 xl:grid-cols-3 md:overflow-visible md:mx-0 md:px-0 md:pb-0"
             >
               {featuredArtmakers.map((artmaker) => (
                 <Link
                   key={artmaker.id}
                   to="/artmakers/$slug"
                   params={{ slug: artmaker.slug }}
-                  className="group w-[300px] shrink-0 [scroll-snap-align:start] border border-neutral-800 bg-[#101010] p-5 no-underline transition-[border-color,transform] duration-150 active:scale-[0.98] hover:border-[#7CFC00] md:w-auto [touch-action:manipulation]"
+                  className="group w-[300px] shrink-0 [scroll-snap-align:start] rounded-xl border border-neutral-800 bg-[#101010] p-5 no-underline transition-[border-color,transform] duration-150 active:scale-[0.98] hover:border-[#7CFC00] md:w-auto [touch-action:manipulation]"
                 >
                   <div className="flex gap-4">
-                    <div className="grid size-20 shrink-0 place-items-center overflow-hidden border border-neutral-800 bg-black">
+                    <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-neutral-800 bg-black">
                       {artmaker.image ? (
                         <Image
                           src={artmaker.image}

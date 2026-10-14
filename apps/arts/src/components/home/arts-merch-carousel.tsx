@@ -38,7 +38,7 @@ export function ArtsMerchCarousel({ products }: ArtsMerchCarouselProps) {
           <div
             tabIndex={0}
             aria-label="Arts Merch Carousel"
-            className="flex gap-6 overflow-x-auto pb-4 -mx-6 px-6 [touch-action:pan-y] [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:gap-8"
+            className="flex gap-6 overflow-x-auto pb-4 -mx-6 px-6 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] md:gap-8"
           >
             {visibleProducts.map((product) => {
               const displayPrice = product.minPrice ? `$${product.minPrice}` : "Available";

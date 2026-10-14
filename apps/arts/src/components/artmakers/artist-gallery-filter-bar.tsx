@@ -39,7 +39,7 @@ export function ArtistGalleryFilterBar({
       <div
         tabIndex={0}
         aria-label="Filter gallery works"
-        className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 [touch-action:pan-y] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <button
           type="button"

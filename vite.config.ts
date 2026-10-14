@@ -2,7 +2,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   fmt: {
-    ignorePatterns: ["apps/arts/src/routeTree.gen.ts"],
+    ignorePatterns: ["apps/arts/src/routeTree.gen.ts", ".agents/**"],
   },
   lint: {
     plugins: ["unicorn", "typescript", "oxc"],

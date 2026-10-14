@@ -19,6 +19,7 @@ export interface EventsSearch {
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
+  errorComponent: EventsErrorFallback,
   head: () =>
     createSeoMeta({
       description:
@@ -41,13 +42,18 @@ export const Route = createFileRoute("/events")({
 });
 
 function isUpcomingEvent(date: string) {
+  if (!date) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return new Date(`${date}T00:00:00`) >= today;
+  const eventDate = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(eventDate.getTime())) return false;
+  return eventDate >= today;
 }
 
 function isThisWeekend(dateStr: string) {
+  if (!dateStr) return false;
   const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const day = now.getDay(); // 0 is Sunday, 5 is Friday, 6 is Saturday
@@ -66,7 +72,10 @@ function isThisWeekend(dateStr: string) {
 }
 
 function formatEventDate(date: string) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+  if (!date) return "";
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -124,10 +133,10 @@ function EventsPage() {
       const term = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (e) =>
-          e.title.toLowerCase().includes(term) ||
-          e.venue.toLowerCase().includes(term) ||
-          e.location.toLowerCase().includes(term) ||
-          e.description.toLowerCase().includes(term),
+          (e.title ?? "").toLowerCase().includes(term) ||
+          (e.venue ?? "").toLowerCase().includes(term) ||
+          (e.location ?? "").toLowerCase().includes(term) ||
+          (e.description ?? "").toLowerCase().includes(term),
       );
     }
 
@@ -284,6 +293,60 @@ function EventsPage() {
             </p>
           </div>
         )}
+      </div>
+    </main>
+  );
+}
+
+function EventsErrorFallback({ error, reset }: { error: unknown; reset: () => void }) {
+  const isChunkError =
+    error instanceof Error &&
+    (error.message.includes("Importing a module script failed") ||
+      error.message.includes("Failed to fetch dynamically imported module") ||
+      error.message.includes("chunk"));
+
+  return (
+    <main className="px-4 pb-24 pt-[calc(var(--navbar-offset)+1.5rem)] sm:px-6">
+      <div className="container mx-auto max-w-7xl">
+        <Link
+          to="/"
+          className="mb-6 inline-flex items-center text-[#7CFC00] text-xs font-black uppercase tracking-[0.2em] no-underline transition-transform duration-200 hover:text-[#a5ff43]"
+        >
+          <ArrowLeft className="mr-2 size-4" />
+          Back to Home
+        </Link>
+        <div className="mx-auto max-w-xl rounded-2xl border border-neutral-800 bg-[#101010]/90 p-8 text-center">
+          <CalendarDays className="mx-auto mb-4 size-12 text-[#7CFC00]/70" />
+          <h2 className="font-black text-white text-xl">
+            {isChunkError ? "App Updated" : "Unable to Load Events"}
+          </h2>
+          <p className="mt-2 text-neutral-400 text-sm">
+            {isChunkError
+              ? "A fresh build of Dead Party Arts is live. Reload the page to view the latest events schedule."
+              : "We ran into an unexpected hiccup fetching the latest arts events. Please try again or refresh the page."}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.location.reload();
+                } else {
+                  reset();
+                }
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-5 font-black text-black text-xs uppercase tracking-[0.16em] transition-colors hover:bg-[#a5ff43] active:scale-95"
+            >
+              Refresh Page
+            </button>
+            <Link
+              to="/"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-800 bg-[#161616] px-5 font-black text-white text-xs uppercase tracking-[0.16em] no-underline transition-colors hover:border-[#7CFC00] active:scale-95"
+            >
+              Back to Home
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );
