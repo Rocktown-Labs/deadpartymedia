@@ -105,6 +105,7 @@ function ExhibitionsPage() {
           activeMedium={medium}
           activeSort={activeSort}
           totalCount={initialArtworks.totalCount}
+          groupCounts={initialArtworks.groupCounts}
           onSelectMedium={handleSelectMedium}
           onSelectSort={handleSelectSort}
         />
