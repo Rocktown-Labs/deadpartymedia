@@ -104,4 +104,42 @@ describe("Artmaker profile and gallery filtering logic", () => {
     const sorted = [...sampleArtworks].sort((a, b) => a.title.localeCompare(b.title));
     expect(sorted.map((w) => w.title)).toEqual(["Crow Study", "Delta Sunset", "Floral Sleeve"]);
   });
+
+  describe("batch pagination logic (batches of 8)", () => {
+    it("computes nextOffset and remaining items for batch size of 8", () => {
+      const computeNextOffset = (offset: number, fetchedCount: number, total: number) => {
+        return offset + fetchedCount < total ? offset + fetchedCount : null;
+      };
+
+      const computeRemaining = (total: number, loadedCount: number) => {
+        return Math.max(0, total - loadedCount);
+      };
+
+      // Scenario: 12 uploads total
+      const totalUploads = 12;
+
+      // Page 1: 8 items loaded
+      const page1Offset = computeNextOffset(0, 8, totalUploads);
+      expect(page1Offset).toBe(8);
+      expect(computeRemaining(totalUploads, 8)).toBe(4);
+
+      // Page 2: remaining 4 items loaded (total 12)
+      const page2Offset = computeNextOffset(8, 4, totalUploads);
+      expect(page2Offset).toBeNull();
+      expect(computeRemaining(totalUploads, 12)).toBe(0);
+    });
+
+    it("handles artists with 8 or fewer uploads without next page", () => {
+      const computeNextOffset = (offset: number, fetchedCount: number, total: number) => {
+        return offset + fetchedCount < total ? offset + fetchedCount : null;
+      };
+
+      // Exactly 8 items
+      expect(computeNextOffset(0, 8, 8)).toBeNull();
+      // Fewer than 8 items (e.g. 3)
+      expect(computeNextOffset(0, 3, 3)).toBeNull();
+      // Zero items
+      expect(computeNextOffset(0, 0, 0)).toBeNull();
+    });
+  });
 });

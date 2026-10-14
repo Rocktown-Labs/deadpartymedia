@@ -1,18 +1,24 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
 import {
+  ArrowDown,
   ArrowLeft,
   BadgeDollarSign,
   CalendarPlus,
   ImageIcon,
   Instagram,
+  Loader2,
   MapPin,
 } from "lucide-react";
 import { useEffect } from "react";
 import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
 import { getArtmakerBySlug, recordArtmakerProfileView } from "#/lib/artmakers.functions.ts";
-import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
+import {
+  type PaginatedArtworksResult,
+  listPublishedArtworksPaginated,
+} from "#/lib/artworks.functions.ts";
 import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 
 export interface ArtmakerProfileSearch {
@@ -21,7 +27,7 @@ export interface ArtmakerProfileSearch {
 
 type ArtmakerProfileLoaderData = {
   artmaker: NonNullable<Awaited<ReturnType<typeof getArtmakerBySlug>>>;
-  artworks: Awaited<ReturnType<typeof listPublishedArtworksByArtmakerSlug>>;
+  initialArtworks: PaginatedArtworksResult;
 };
 
 export const Route = createFileRoute("/artmakers/$slug")({
@@ -29,7 +35,9 @@ export const Route = createFileRoute("/artmakers/$slug")({
   head: ({ loaderData }) => {
     // The CLI-generated route tree is typeless (`as any`), so assert the
     // loader shape here instead of relying on inference.
-    const artmaker = (loaderData as ArtmakerProfileLoaderData | undefined)?.artmaker;
+    const data = loaderData as ArtmakerProfileLoaderData | undefined;
+    const artmaker = data?.artmaker;
+    const firstArtworkImage = data?.initialArtworks?.items[0]?.image;
     const description = artmaker
       ? `${artmaker.name} is an Arkansas artmaker in ${artmaker.city}, ${artmaker.state}, working in ${artmaker.medium.join(", ")}.`
       : "Arkansas artmaker profile on Dead Party Arts.";
@@ -37,7 +45,7 @@ export const Route = createFileRoute("/artmakers/$slug")({
     return {
       ...createSeoMeta({
         description,
-        image: artmaker?.image,
+        image: artmaker?.image ?? firstArtworkImage,
         path: artmaker ? `/artmakers/${artmaker.slug}` : "/artmakers",
         title: artmaker?.name ?? "Artmaker",
         type: "profile",
@@ -69,16 +77,18 @@ export const Route = createFileRoute("/artmakers/$slug")({
     };
   },
   loader: async ({ params }) => {
-    const [artmaker, artworks] = await Promise.all([
+    const [artmaker, initialArtworks] = await Promise.all([
       getArtmakerBySlug({ data: { slug: params.slug } }),
-      listPublishedArtworksByArtmakerSlug({ data: { slug: params.slug } }),
+      listPublishedArtworksPaginated({
+        data: { artmaker: params.slug, limit: 8, offset: 0, sort: "recent" },
+      }),
     ]);
 
     if (!artmaker) {
       throw notFound();
     }
 
-    return { artmaker, artworks };
+    return { artmaker, initialArtworks };
   },
   validateSearch: (search: Record<string, unknown>): ArtmakerProfileSearch => ({
     artwork: typeof search.artwork === "string" ? search.artwork : undefined,
@@ -86,10 +96,30 @@ export const Route = createFileRoute("/artmakers/$slug")({
 });
 
 function ArtmakerProfile() {
-  const { artmaker, artworks } = Route.useLoaderData() as ArtmakerProfileLoaderData;
+  const { artmaker, initialArtworks } = Route.useLoaderData() as ArtmakerProfileLoaderData;
   const { artwork } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const recordView = useServerFn(recordArtmakerProfileView);
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ["artmaker-artworks", artmaker.slug],
+    queryFn: async ({ pageParam = 0 }) => {
+      return await listPublishedArtworksPaginated({
+        data: { artmaker: artmaker.slug, limit: 8, offset: pageParam, sort: "recent" },
+      });
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialData: {
+      pages: [initialArtworks],
+      pageParams: [0],
+    },
+  });
+
+  const allArtworks = data.pages.flatMap((page) => page.items);
+  const totalArtworkCount = data.pages[0]?.totalCount ?? allArtworks.length;
+  const artworkCount = totalArtworkCount || artmaker.artworkCount;
+  const featuredArtwork = allArtworks[0];
 
   // Count one view per browser session per profile, after real render — so
   // router prefetches and crawlers don't inflate the dashboard number.
@@ -107,10 +137,6 @@ function ArtmakerProfile() {
     }
     void recordView({ data: { slug: artmaker.slug } });
   }, [artmaker.slug, recordView]);
-
-  const artworkCount = artworks.length || artmaker.artworkCount;
-  const featuredArtwork = artworks[0];
-  const galleryPreview = artworks.slice(0, 8);
 
   const handleSelectArtwork = (selectedArtwork: { id: number; slug?: string }) => {
     void navigate({
@@ -325,7 +351,7 @@ function ArtmakerProfile() {
           </div>
         </section>
 
-        {artworks.length > 0 ? (
+        {allArtworks.length > 0 ? (
           <section className="mt-8">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -334,7 +360,7 @@ function ArtmakerProfile() {
                 </p>
                 <h2 className="mt-2 font-black text-3xl tracking-tight">Published work</h2>
               </div>
-              {artworks.some((item) => item.forSale) ? (
+              {allArtworks.some((item) => item.forSale) ? (
                 <p className="inline-flex items-center gap-2 text-neutral-400 text-sm">
                   <BadgeDollarSign className="size-4 text-[#7CFC00]" />
                   Some pieces are marked available
@@ -344,7 +370,7 @@ function ArtmakerProfile() {
 
             {/* 2-column mobile / 3-4 column desktop responsive touch grid */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 md:grid-cols-3 xl:grid-cols-4">
-              {galleryPreview.map((item) => (
+              {allArtworks.map((item) => (
                 <article
                   key={item.id}
                   onClick={() => handleSelectArtwork(item)}
@@ -399,16 +425,26 @@ function ArtmakerProfile() {
               ))}
             </div>
 
-            {artworks.length > galleryPreview.length ? (
+            {hasNextPage ? (
               <div className="mt-8 flex justify-center">
-                <Link
-                  to="/artmakers/$slug/gallery"
-                  params={{ slug: artmaker.slug }}
-                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-700 bg-[#121212] px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-all hover:border-[#7CFC00] hover:text-[#7CFC00] active:scale-95"
+                <button
+                  type="button"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl border border-neutral-700 bg-[#121212] px-6 font-black text-white text-xs uppercase tracking-[0.18em] transition-all hover:border-[#7CFC00] hover:text-[#7CFC00] active:scale-95 disabled:opacity-50 [touch-action:manipulation]"
                 >
-                  View full gallery ({artworks.length})
-                  <ImageIcon className="size-4" />
-                </Link>
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin text-[#7CFC00]" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      Load more ({Math.max(0, totalArtworkCount - allArtworks.length)} remaining)
+                      <ArrowDown className="size-4" />
+                    </>
+                  )}
+                </button>
               </div>
             ) : null}
           </section>
@@ -417,7 +453,7 @@ function ArtmakerProfile() {
         {/* URL-driven modal/bottom sheet for artwork inspection */}
         <ArtworkDetailDrawer
           artworkIdentifier={artwork}
-          artworks={artworks}
+          artworks={allArtworks}
           onClose={handleCloseArtwork}
         />
       </div>
