@@ -229,7 +229,8 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
 
       const totalCount = Number(totalCountRows[0]?.total ?? 0);
       const items = withNormalizedImages(itemsRows) satisfies ArtworkListItem[];
-      const nextOffset = data.offset + itemsRows.length < totalCount ? data.offset + data.limit : null;
+      const nextOffset =
+        data.offset + itemsRows.length < totalCount ? data.offset + data.limit : null;
 
       // Counts per group for the filter pills. Every artwork lands in exactly
       // one group, so these sum to the unfiltered total. Kept isolated so a
