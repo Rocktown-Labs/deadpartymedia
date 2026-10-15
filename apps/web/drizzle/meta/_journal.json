@@ -99,6 +99,13 @@
       "when": 1789478685779,
       "tag": "0013_reconcile_venue_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792017064585,
+      "tag": "0014_add_venue_to_role_enum",
+      "breakpoints": true
     }
   ]
 }

@@ -76,5 +76,20 @@ describe("role parser", () => {
       expect(ARTS_ROLES).not.toContain("writer");
       expect(ARTS_ROLES).not.toContain("artist");
     });
+
+    it("correctly partitions roles when excluding arts roles", () => {
+      const allRoles = [
+        "super_admin",
+        "writer",
+        "artist",
+        "venue",
+        "fan",
+        "arts_admin",
+        "arts_writer",
+        "artmaker",
+      ] as const;
+      const webScoped = allRoles.filter((r) => !(ARTS_ROLES as readonly string[]).includes(r));
+      expect(webScoped).toEqual(["super_admin", "writer", "artist", "venue", "fan"]);
+    });
   });
 });

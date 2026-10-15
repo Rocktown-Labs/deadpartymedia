@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import { and, asc, count, desc, ilike, inArray, or } from "drizzle-orm";
+import { and, asc, count, desc, ilike, notInArray, or } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
-import { WEB_ROLES, isArtsRole } from "@/lib/auth/role";
+import { ARTS_ROLES, isArtsRole } from "@/lib/auth/role";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { Badge } from "@/components/ui/badge";
@@ -139,7 +139,7 @@ export default async function UsersPage({
   const usrOrder = parseSortOrderParam(params.usr_order, "desc");
   const artOrder = parseSortOrderParam(params.art_order, "desc");
 
-  const userRoleCondition = inArray(users.role, [...WEB_ROLES]);
+  const userRoleCondition = notInArray(users.role, [...ARTS_ROLES]);
   const userSearchCondition = query
     ? or(
         ilike(users.email, `%${query}%`),
