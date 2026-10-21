@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { sendMusicReleaseSubmissionNotification } from "@/lib/email/notifications";
 import { safeHttpUrl, truncateText } from "@/lib/security";
 import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 type MusicReleaseInsert = typeof musicReleases.$inferInsert;
 
@@ -105,7 +106,10 @@ export async function submitArtistRelease(formData: FormData) {
 
     return { redirectUrl: "/artist-dashboard/releases" as Route, releaseId: createdRelease.id };
   } catch (error) {
-    logger.error({ error, operation: "submit_artist_release", userId }, "Failed to submit release");
+    logger.error(
+      { error: sanitizeError(error), operation: "submit_artist_release", userId },
+      "Failed to submit release",
+    );
     throw error;
   }
 }

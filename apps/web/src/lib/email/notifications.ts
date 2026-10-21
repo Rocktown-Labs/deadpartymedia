@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 import { escapeHtml, isSafeHttpUrl } from "@/lib/security";
 
 const NOTIFICATION_EMAIL = "deadpartyplaylist@gmail.com";
@@ -114,7 +115,7 @@ export async function sendMusicReleaseSubmissionNotification(
     return true;
   } catch (error) {
     logger.error(
-      { error, operation: "notify_music_submission_failure" },
+      { error: sanitizeError(error), operation: "notify_music_submission_failure" },
       "Failed to dispatch music submission notification email",
     );
     return false;
@@ -187,7 +188,7 @@ export async function sendVenueRegistrationNotification(
     return true;
   } catch (error) {
     logger.error(
-      { error, operation: "notify_venue_signup_failure" },
+      { error: sanitizeError(error), operation: "notify_venue_signup_failure" },
       "Failed to dispatch venue registration notification email",
     );
     return false;

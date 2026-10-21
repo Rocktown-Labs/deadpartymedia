@@ -12,6 +12,7 @@ import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { musicReleaseSchema } from "@/lib/validations/music";
 import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 type MusicReleaseInsert = typeof musicReleases.$inferInsert;
 
@@ -91,7 +92,7 @@ export async function createMusicRelease(formData: FormData) {
 
     return { redirectUrl: `/admin/music` as Route, releaseId: release.id };
   } catch (error) {
-    logger.error({ error, operation: "create_music_release" }, "Failed to create music release");
+    logger.error({ error: sanitizeError(error), operation: "create_music_release" }, "Failed to create music release");
     throw error;
   }
 }
@@ -189,7 +190,7 @@ export async function updateMusicRelease(releaseId: number, formData: FormData) 
 
     return { redirectUrl: `/admin/music` as Route };
   } catch (error) {
-    logger.error({ error, operation: "update_music_release" }, "Failed to update music release");
+    logger.error({ error: sanitizeError(error), operation: "update_music_release" }, "Failed to update music release");
     throw error;
   }
 }
@@ -231,7 +232,7 @@ export async function deleteMusicRelease(releaseId: number) {
 
     return { success: true };
   } catch (error) {
-    logger.error({ error, operation: "delete_music_release" }, "Failed to delete music release");
+    logger.error({ error: sanitizeError(error), operation: "delete_music_release" }, "Failed to delete music release");
     throw error;
   }
 }
@@ -291,7 +292,7 @@ export async function bulkUpdateMusicReleaseStatus(
     return { count: updated.length };
   } catch (error) {
     logger.error(
-      { error, operation: "bulk_update_music_release_status" },
+      { error: sanitizeError(error), operation: "bulk_update_music_release_status" },
       "Failed to bulk update status",
     );
     throw error;

@@ -40,7 +40,11 @@ export async function addItem(_prevState: unknown, selectedVariantId: string | u
 
     await addToCart(cartId, [{ merchandiseId: selectedVariantId, quantity: 1 }]);
     revalidatePath("/");
-  } catch {
+  } catch (error) {
+    logger.error(
+      { error: sanitizeError(error), merchandiseId: selectedVariantId, operation: "add_cart_item" },
+      "Failed to add item to cart",
+    );
     return "Error adding item to cart";
   }
 }
@@ -62,7 +66,11 @@ export async function removeItem(_prevState: unknown, merchandiseId: string) {
     } else {
       return "Item not found in cart";
     }
-  } catch {
+  } catch (error) {
+    logger.error(
+      { error: sanitizeError(error), merchandiseId, operation: "remove_cart_item" },
+      "Failed to remove item from cart",
+    );
     return "Error removing item from cart";
   }
 }
