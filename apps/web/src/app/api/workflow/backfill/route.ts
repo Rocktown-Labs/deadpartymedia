@@ -1,17 +1,22 @@
 import { start } from "workflow/api";
 import { wordpressBackfillWorkflow } from "@/app/workflows/wordpress-backfill";
 import { checkRole } from "@/lib/auth/roles";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { backfillRuns } from "@/lib/db/schema";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const log = getRequestLogger(request);
+
   // Verify super admin role (since this triggers bulk background import)
   const isSuperAdmin = await checkRole("super_admin");
   if (!isSuperAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let runId: string | undefined;
   try {
     const body = await request.json();
     const { limit = 40, offset = 0, authorId, status = "published", source = "wordpress" } = body;
@@ -27,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Generate our own unique tracker runId
-    const runId = crypto.randomUUID();
+    runId = crypto.randomUUID();
 
     // Record the run in the database
     await db.insert(backfillRuns).values({
@@ -50,6 +55,11 @@ export async function POST(request: Request) {
       },
     ]);
 
+    log.info(
+      { authorId, limit, offset, runId, source, status, workflowRunId: run.runId },
+      "Started WordPress backfill workflow",
+    );
+
     return NextResponse.json({
       success: true,
       runId,
@@ -60,7 +70,10 @@ export async function POST(request: Request) {
           : "WordPress backfill background workflow started successfully.",
     });
   } catch (error) {
-    console.error("Failed to start WordPress backfill workflow:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "start_wordpress_backfill", runId },
+      "Failed to start WordPress backfill workflow",
+    );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
       { status: 500 },

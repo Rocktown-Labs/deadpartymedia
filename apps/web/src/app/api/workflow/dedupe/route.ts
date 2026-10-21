@@ -1,19 +1,24 @@
 import { start } from "workflow/api";
 import { postDedupeWorkflow } from "@/app/workflows/post-dedupe";
 import { checkRole } from "@/lib/auth/roles";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { backfillRuns } from "@/lib/db/schema";
+import { getRequestLogger } from "@/lib/logger/middleware";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
-export async function POST(_request: Request) {
+export async function POST(request: NextRequest) {
+  const log = getRequestLogger(request);
+
   // Verify super admin role
   const isSuperAdmin = await checkRole("super_admin");
   if (!isSuperAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  let runId: string | undefined;
   try {
-    const runId = `dedupe-${crypto.randomUUID()}`;
+    runId = `dedupe-${crypto.randomUUID()}`;
 
     // Record the run in the database
     await db.insert(backfillRuns).values({
@@ -27,6 +32,8 @@ export async function POST(_request: Request) {
     // Trigger the workflow
     const run = await start(postDedupeWorkflow, [{ runId }]);
 
+    log.info({ runId, workflowRunId: run.runId }, "Started post deduplication workflow");
+
     return NextResponse.json({
       success: true,
       runId,
@@ -34,7 +41,10 @@ export async function POST(_request: Request) {
       message: "Post deduplication background workflow started successfully.",
     });
   } catch (error) {
-    console.error("Failed to start post deduplication workflow:", error);
+    log.error(
+      { error: sanitizeError(error), operation: "start_post_dedupe", runId },
+      "Failed to start post deduplication workflow",
+    );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },
       { status: 500 },

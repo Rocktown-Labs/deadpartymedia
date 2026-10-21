@@ -445,7 +445,11 @@ export async function getCart(
     });
 
     return transformCart(data, currency);
-  } catch {
+  } catch (error) {
+    logger.error(
+      { cartId, error: sanitizeError(error), operation: "get_cart" },
+      "Failed to fetch cart",
+    );
     return undefined;
   }
 }

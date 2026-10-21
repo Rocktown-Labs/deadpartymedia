@@ -10,6 +10,7 @@ import { generateSlug, ensureUniqueSlug } from "@/lib/utils/slug";
 import { revalidatePath } from "next/cache";
 import { eventSchema } from "@/lib/validations/event";
 import { logger } from "@/lib/logger";
+import { sanitizeError } from "@/lib/logger/sanitize";
 
 type EventInsert = typeof events.$inferInsert;
 
@@ -106,7 +107,7 @@ export async function createVenueEvent(formData: FormData) {
     return { redirectUrl: "/venue-dashboard" as Route, eventId: event.id };
   } catch (error) {
     logger.error(
-      { error, operation: "create_venue_event", userId },
+      { error: sanitizeError(error), operation: "create_venue_event", userId },
       "Failed to create venue event",
     );
     throw error;
