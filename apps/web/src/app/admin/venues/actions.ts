@@ -76,7 +76,10 @@ export async function createVenue(formData: FormData) {
     revalidatePath("/admin/venues");
     return { redirectUrl: "/admin/venues" as Route, venueId: venue.id };
   } catch (error) {
-    logger.error({ error: sanitizeError(error), operation: "create_venue" }, "Failed to create venue");
+    logger.error(
+      { error: sanitizeError(error), operation: "create_venue" },
+      "Failed to create venue",
+    );
     throw error;
   }
 }
@@ -154,7 +157,10 @@ export async function updateVenue(venueId: number, formData: FormData) {
     revalidatePath("/admin/venues");
     return { redirectUrl: "/admin/venues" as Route, venueId };
   } catch (error) {
-    logger.error({ error: sanitizeError(error), operation: "update_venue" }, "Failed to update venue");
+    logger.error(
+      { error: sanitizeError(error), operation: "update_venue" },
+      "Failed to update venue",
+    );
     throw error;
   }
 }
@@ -176,7 +182,10 @@ export async function deleteVenue(venueId: number) {
     revalidatePath("/admin/venues");
     return { success: true };
   } catch (error) {
-    logger.error({ error: sanitizeError(error), operation: "delete_venue" }, "Failed to delete venue");
+    logger.error(
+      { error: sanitizeError(error), operation: "delete_venue" },
+      "Failed to delete venue",
+    );
     throw error;
   }
 }
