@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../../bindings";
 import { musicAccountRoutes } from "./account";
+import { musicAdminRoutes } from "./admin";
 import { musicArtistsRoutes } from "./artists";
 import { musicCartRoutes } from "./cart";
 import { musicCommentsRoutes } from "./comments";
@@ -35,6 +36,7 @@ musicRouter.route("/products", musicProductsRoutes);
 musicRouter.route("/upload", musicUploadRoutes);
 musicRouter.route("/", musicCartRoutes); // /cart/*
 musicRouter.route("/", musicSubmissionsRoutes); // POST /submissions/music-release
+musicRouter.route("/", musicAdminRoutes); // /admin/* (staff CRUD)
 
 // Routers whose paths are fully qualified internally
 musicRouter.route("/", musicAccountRoutes); // /auth/me, /onboarding/profile

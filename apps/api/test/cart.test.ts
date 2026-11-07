@@ -14,24 +14,19 @@ afterEach(() => {
 
 function stubFetch(responses: Array<{ body: unknown; status?: number }>) {
   let call = 0;
-  const fetchMock = vi.fn(async () => {
-    const response = responses[Math.min(call, responses.length - 1)] as {
-      body: unknown;
-      status?: number;
-    };
-    if (response.status && response.status >= 400) {
+  const fetchMock = vi.fn(
+    async (_input: string | URL | Request, _init?: RequestInit): Promise<Response> => {
+      const response = responses[Math.min(call, responses.length - 1)] as {
+        body: unknown;
+        status?: number;
+      };
       call += 1;
       return new Response(JSON.stringify(response.body), {
         headers: { "content-type": "application/json" },
-        status: response.status,
+        status: response.status && response.status >= 400 ? response.status : 200,
       });
-    }
-    call += 1;
-    return new Response(JSON.stringify(response.body), {
-      headers: { "content-type": "application/json" },
-      status: 200,
-    });
-  });
+    },
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
