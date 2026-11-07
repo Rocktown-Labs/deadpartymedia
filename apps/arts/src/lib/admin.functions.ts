@@ -12,6 +12,23 @@ import {
   mergeArtsRole,
 } from "#/lib/roles.ts";
 
+type ArtsApi = typeof import("#/lib/api-proxy.ts");
+
+let artsApiPromise: Promise<ArtsApi> | null = null;
+
+/**
+ * Load the API proxy lazily. api-proxy.ts statically imports
+ * `@tanstack/react-start/server`, which re-exports
+ * `@tanstack/start-server-core`; its `#tanstack-*` subpath imports only
+ * resolve under the full TanStack Start build plugin (disabled under
+ * VITEST), so an eager top-level import would break unit tests that load
+ * this module. Handlers never run in those tests.
+ */
+function loadArtsApi(): Promise<ArtsApi> {
+  artsApiPromise ??= import("#/lib/api-proxy.ts");
+  return artsApiPromise;
+}
+
 export { isArtsAdminRole };
 
 export async function requireArtsAdmin() {
@@ -35,8 +52,149 @@ export async function requireArtsAdmin() {
   return { role: user.publicMetadata.role as string, userId };
 }
 
+interface ApiRecentArtmaker {
+  createdAt: string;
+  id: number;
+  name: string;
+  slug: string;
+  status: (typeof artmakers.$inferSelect)["status"];
+}
+
+interface ApiRecentArtwork {
+  artmakerName: string;
+  createdAt: string;
+  id: number;
+  slug: string;
+  status: (typeof artworks.$inferSelect)["status"];
+  title: string;
+}
+
+interface ApiRecentArticle {
+  createdAt: string;
+  id: number;
+  slug: string;
+  status: (typeof posts.$inferSelect)["status"];
+  title: string;
+}
+
+interface ApiRecentEvent {
+  createdAt: string;
+  id: number;
+  slug: string;
+  status: (typeof events.$inferSelect)["status"];
+  title: string;
+}
+
+interface ApiArtsAdminOverview {
+  counts: { articles: number; artmakers: number; artworks: number; events: number };
+  isDegraded: boolean;
+  recentArtmakers: ApiRecentArtmaker[];
+  recentArtworks: ApiRecentArtwork[];
+  recentArticles: ApiRecentArticle[];
+  recentEvents: ApiRecentEvent[];
+}
+
+interface ApiAdminArtmakerListItem {
+  bio: string | null;
+  city: string;
+  createdAt: string;
+  hidden: boolean;
+  id: number;
+  image: string | null;
+  instagramUsername: string;
+  medium: string[];
+  name: string;
+  slug: string;
+  state: string;
+  status: (typeof artmakers.$inferSelect)["status"];
+}
+
+function reviveAdminArtmaker(row: ApiAdminArtmakerListItem) {
+  return { ...row, createdAt: new Date(row.createdAt) };
+}
+
+interface ApiArtsStaffUserRow {
+  clerkId: string;
+  email: string;
+  firstName: string | null;
+  id: number;
+  lastName: string | null;
+  role: (typeof users.$inferSelect)["role"];
+  updatedAt: string;
+}
+
+function reviveStaffUser(row: ApiArtsStaffUserRow) {
+  return { ...row, updatedAt: new Date(row.updatedAt) };
+}
+
+interface ApiUserRow extends Omit<typeof users.$inferSelect, "createdAt" | "updatedAt"> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+function reviveUserRow(row: ApiUserRow): typeof users.$inferSelect {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
 export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
+
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/admin/overview");
+      if (!response.ok) {
+        return {
+          counts: { articles: 0, artmakers: 0, artworks: 0, events: 0 },
+          error: `Arts API request failed (API ${response.status})`,
+          isDegraded: true,
+          recentArticles: [],
+          recentArtmakers: [],
+          recentArtworks: [],
+          recentEvents: [],
+        };
+      }
+      // Revive the recents' Date fields the API serialized as ISO strings.
+      // Returned as a fresh object literal so `isDegraded` keeps its `false`
+      // literal in the handler's inferred union (the admin UI narrows on it).
+      const overview = (await response.json()) as ApiArtsAdminOverview;
+      return {
+        counts: overview.counts,
+        isDegraded: false,
+        recentArticles: overview.recentArticles.map((row) => ({
+          ...row,
+          createdAt: new Date(row.createdAt),
+        })),
+        recentArtmakers: overview.recentArtmakers.map((row) => ({
+          ...row,
+          createdAt: new Date(row.createdAt),
+        })),
+        recentArtworks: overview.recentArtworks.map((row) => ({
+          ...row,
+          createdAt: new Date(row.createdAt),
+        })),
+        recentEvents: overview.recentEvents.map((row) => ({
+          ...row,
+          createdAt: new Date(row.createdAt),
+        })),
+      };
+    } catch (error) {
+      return {
+        counts: { articles: 0, artmakers: 0, artworks: 0, events: 0 },
+        error: error instanceof Error ? error.message : "Arts database query failed.",
+        isDegraded: true,
+        recentArticles: [],
+        recentArtmakers: [],
+        recentArtworks: [],
+        recentEvents: [],
+      };
+    }
+  }
 
   try {
     const [artmakerCount] = await db
@@ -141,6 +299,21 @@ export const getArtsAdminOverview = createServerFn({ method: "GET" }).handler(as
 export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
 
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/admin/artmakers");
+      if (!response.ok) {
+        return [];
+      }
+      const rows = (await response.json()) as ApiAdminArtmakerListItem[];
+      return rows.map(reviveAdminArtmaker);
+    } catch {
+      return [];
+    }
+  }
+
   return db
     .select({
       bio: artmakers.bio,
@@ -163,6 +336,21 @@ export const listAdminArtmakers = createServerFn({ method: "GET" }).handler(asyn
 
 export const listArtsStaffUsers = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
+
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/admin/users");
+      if (!response.ok) {
+        return [];
+      }
+      const rows = (await response.json()) as ApiArtsStaffUserRow[];
+      return rows.map(reviveStaffUser);
+    } catch {
+      return [];
+    }
+  }
 
   return db
     .select({
@@ -197,6 +385,26 @@ export const updateArtsUserRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const caller = await requireArtsAdmin();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/users/${data.userId}/role`, {
+        json: data,
+        method: "POST",
+      });
+      if (response.status === 403) {
+        throw new Error("Unauthorized: Only super admins can grant super_admin role");
+      }
+      if (response.status === 404) {
+        throw new Error("User not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to update user role (API ${response.status})`);
+      }
+      const result = (await response.json()) as { success: boolean; user: ApiUserRow };
+      return { success: true, user: reviveUserRow(result.user) };
+    }
 
     if (caller.role === "arts_admin" && data.role === "super_admin") {
       throw new Error("Unauthorized: Only super admins can grant super_admin role");
@@ -260,6 +468,19 @@ export const inviteArtsUser = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireArtsAdmin();
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/invitations", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to invite user (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     const client = clerkClient();
     // Dual-role model (#92): the invited person gets a single role in both
     // the legacy field and the roles array so role checks stay consistent.
@@ -286,6 +507,28 @@ export const inviteArtsUser = createServerFn({ method: "POST" })
 
 export const listArtsInvitations = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsAdmin();
+
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/admin/invitations");
+      if (!response.ok) {
+        return [];
+      }
+      // Clerk createdAt is a unix timestamp (number) — no Date revival needed.
+      return (await response.json()) as {
+        createdAt: number;
+        emailAddress: string;
+        id: string;
+        role: string;
+        status: string;
+      }[];
+    } catch {
+      return [];
+    }
+  }
+
   try {
     const client = clerkClient();
     const response = await client.invitations.getInvitationList();

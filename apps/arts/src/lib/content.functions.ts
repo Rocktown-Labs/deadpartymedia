@@ -9,6 +9,23 @@ import { isArtsAdminRole } from "#/lib/roles.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { normalizeStoredImageUrl } from "#/lib/upload.ts";
 
+type ArtsApi = typeof import("#/lib/api-proxy.ts");
+
+let artsApiPromise: Promise<ArtsApi> | null = null;
+
+/**
+ * Load the API proxy lazily. api-proxy.ts statically imports
+ * `@tanstack/react-start/server`, which re-exports
+ * `@tanstack/start-server-core`; its `#tanstack-*` subpath imports only
+ * resolve under the full TanStack Start build plugin (disabled under
+ * VITEST), so an eager top-level import would break unit tests that load
+ * this module. Handlers never run in those tests.
+ */
+function loadArtsApi(): Promise<ArtsApi> {
+  artsApiPromise ??= import("#/lib/api-proxy.ts");
+  return artsApiPromise;
+}
+
 export interface ArtsEventListItem {
   id: number;
   slug: string;
@@ -45,7 +62,77 @@ export interface ArtsArticleListItem {
   }[];
 }
 
+interface ApiArtsEventListItem extends Omit<ArtsEventListItem, "createdAt"> {
+  createdAt: string;
+}
+
+/** Revive Date fields the API serializes as ISO strings. */
+function reviveEvent(item: ApiArtsEventListItem): ArtsEventListItem {
+  return { ...item, createdAt: new Date(item.createdAt) };
+}
+
+interface ApiArtsArticleListItem extends Omit<ArtsArticleListItem, "publishedAt" | "createdAt"> {
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+function reviveArticle(item: ApiArtsArticleListItem): ArtsArticleListItem {
+  return {
+    ...item,
+    createdAt: new Date(item.createdAt),
+    publishedAt: item.publishedAt ? new Date(item.publishedAt) : null,
+  };
+}
+
+interface ApiPostRow extends Omit<
+  typeof posts.$inferSelect,
+  "createdAt" | "updatedAt" | "publishedAt" | "deleteRequestedAt"
+> {
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  deleteRequestedAt: string | null;
+}
+
+function revivePostRow(row: ApiPostRow): typeof posts.$inferSelect {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    deleteRequestedAt: row.deleteRequestedAt ? new Date(row.deleteRequestedAt) : null,
+    publishedAt: row.publishedAt ? new Date(row.publishedAt) : null,
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+interface ApiEventRow extends Omit<typeof events.$inferSelect, "createdAt" | "updatedAt"> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+function reviveEventRow(row: ApiEventRow): typeof events.$inferSelect {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
 export const listArtsEvents = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/events");
+      if (!response.ok) {
+        return [] satisfies ArtsEventListItem[];
+      }
+      const rows = (await response.json()) as ApiArtsEventListItem[];
+      return rows.map(reviveEvent) satisfies ArtsEventListItem[];
+    } catch {
+      return [] satisfies ArtsEventListItem[];
+    }
+  }
+
   try {
     const rows = await db
       .select({
@@ -78,6 +165,18 @@ export const listArtsEvents = createServerFn({ method: "GET" }).handler(async ()
 
 export const listArtsAdminEvents = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
+
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    const response = await artsApiFetch("/arts/admin/events");
+    if (!response.ok) {
+      throw new Error(`Failed to load events (API ${response.status})`);
+    }
+    const rows = (await response.json()) as ApiArtsEventListItem[];
+    return rows.map(reviveEvent) satisfies ArtsEventListItem[];
+  }
+
   const rows = await db
     .select({
       createdAt: events.createdAt,
@@ -105,6 +204,21 @@ export const listArtsAdminEvents = createServerFn({ method: "GET" }).handler(asy
 });
 
 export const listArtsArticles = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/articles");
+      if (!response.ok) {
+        return [] satisfies ArtsArticleListItem[];
+      }
+      const rows = (await response.json()) as ApiArtsArticleListItem[];
+      return rows.map(reviveArticle) satisfies ArtsArticleListItem[];
+    } catch {
+      return [] satisfies ArtsArticleListItem[];
+    }
+  }
+
   try {
     const rows = await db
       .select({
@@ -162,6 +276,19 @@ export const listArtsArticles = createServerFn({ method: "GET" }).handler(async 
 
 export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(async () => {
   const staff = await requireArtsStaff();
+
+  // Phase 1 flip: proxy to the platform API when configured. The API
+  // applies the same writer/admin scoping from the verified session.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    const response = await artsApiFetch("/arts/admin/articles");
+    if (!response.ok) {
+      throw new Error(`Failed to load articles (API ${response.status})`);
+    }
+    const rows = (await response.json()) as ApiArtsArticleListItem[];
+    return rows.map(reviveArticle) satisfies ArtsArticleListItem[];
+  }
+
   const isSuperOrAdmin = staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
   const whereClause = isSuperOrAdmin
     ? eq(posts.vertical, "arts")
@@ -231,6 +358,21 @@ export const createArtsArticle = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const staff = await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/articles", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create article (API ${response.status})`);
+      }
+      const result = (await response.json()) as { article: ApiPostRow; success: boolean };
+      return { article: revivePostRow(result.article), success: true };
+    }
+
     const baseSlug = createSlug(data.title);
 
     let slug = baseSlug;
@@ -286,6 +428,27 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const staff = await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/articles/${data.id}`, {
+        json: data,
+        method: "PATCH",
+      });
+      if (response.status === 404) {
+        throw new Error("Article not found");
+      }
+      if (response.status === 403) {
+        throw new Error("Unauthorized: You don't have permission to edit this article");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to update article (API ${response.status})`);
+      }
+      const result = (await response.json()) as { article: ApiPostRow; success: boolean };
+      return { article: revivePostRow(result.article), success: true };
+    }
+
     const [existing] = await db
       .select()
       .from(posts)
@@ -335,6 +498,26 @@ export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     const staff = await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/articles/${data.id}/toggle`, {
+        method: "POST",
+      });
+      if (response.status === 404) {
+        throw new Error("Article not found");
+      }
+      if (response.status === 403) {
+        throw new Error("Unauthorized: You don't have permission to edit this article");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to toggle article status (API ${response.status})`);
+      }
+      const result = (await response.json()) as { article: ApiPostRow; success: boolean };
+      return { article: revivePostRow(result.article), success: true };
+    }
+
     const [existing] = await db
       .select()
       .from(posts)
@@ -369,6 +552,25 @@ export const deleteArtsArticle = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     const staff = await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/articles/${data.id}`, {
+        method: "DELETE",
+      });
+      if (response.status === 404) {
+        throw new Error("Article not found");
+      }
+      if (response.status === 403) {
+        throw new Error("Unauthorized: You don't have permission to delete this article");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to delete article (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     const [existing] = await db
       .select({ authorId: posts.authorId, id: posts.id })
       .from(posts)
@@ -409,6 +611,21 @@ export const createArtsEvent = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const staff = await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/events", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create event (API ${response.status})`);
+      }
+      const result = (await response.json()) as { event: ApiEventRow; success: boolean };
+      return { event: reviveEventRow(result.event), success: true };
+    }
+
     const baseSlug = createSlug(data.title);
 
     let slug = baseSlug;
@@ -458,6 +675,23 @@ export const toggleArtsEventStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/events/${data.id}/toggle`, {
+        method: "POST",
+      });
+      if (response.status === 404) {
+        throw new Error("Event not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to toggle event status (API ${response.status})`);
+      }
+      const result = (await response.json()) as { event: ApiEventRow; success: boolean };
+      return { event: reviveEventRow(result.event), success: true };
+    }
+
     const [existing] = await db
       .select()
       .from(events)
@@ -484,6 +718,19 @@ export const deleteArtsEvent = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/events/${data.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete event (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     await db.delete(events).where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
     return { success: true };
   });
@@ -493,6 +740,23 @@ export const deleteArtsEvent = createServerFn({ method: "POST" })
 // sections (issue #133).
 export const listTaggedEventsForCurrentArtmaker = createServerFn({ method: "GET" }).handler(
   async () => {
+    // Phase 1 flip: proxy to the platform API when configured. The API
+    // returns [] for anonymous callers and artmakers without tagged events,
+    // same as the source.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch("/arts/events/tagged");
+        if (!response.ok) {
+          return [];
+        }
+        // TaggedEventListItem has no Date fields — no revival needed.
+        return (await response.json()) as TaggedEventListItem[];
+      } catch {
+        return [];
+      }
+    }
+
     try {
       const { isAuthenticated, userId } = await auth();
 

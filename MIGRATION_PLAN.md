@@ -5,6 +5,7 @@
 **Status:** In progress — Phase 0 ✅ complete, Phase 1 ✅ implemented (API extracted, tests + dev-run green; frontend flip pending). Decisions marked ✅ are locked; ⚠️ items are open gates.
 
 **Progress log:**
+
 - 2026-11-07: Phase 0 merged on branch (`packages/db/http`, `@dpmedia/contracts`, `@dpmedia/auth` scaffold, cleanup) — issue #159.
 - 2026-11-07: Phase 1 routers ported (web's 32 API routes → `/music/*`, arts' server fns → `/arts/*`), mounted, 66 tests green, `wrangler dev` boots. Frontend flip to the API = follow-up (issue #160). **Blocked on user:** valid Neon `DATABASE_URL` for local dev (the one in `apps/web/.env` is stale — password rejected), Cloudflare credentials for deploy, Clerk dashboard export for Phase 4.
 

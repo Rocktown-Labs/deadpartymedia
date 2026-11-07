@@ -7,6 +7,7 @@ import { getDb } from "../../db";
 import { firstIssueMessage, invalid, notFound, parseJsonBody } from "../../lib/arts-errors";
 import {
   ARTS_ADMIN_ROLES,
+  ARTS_STAFF_ROLES,
   getRolesFromMetadata as getArtsRolesFromMetadata,
   mergeArtsRole,
 } from "../../lib/arts-roles";
@@ -24,10 +25,10 @@ import type { AppEnv } from "../../bindings";
  *   inviteArtsUser        → POST /admin/invitations
  *   listArtsInvitations   → GET  /admin/invitations
  *
- * The source guarded overview/users with requireArtsStaff() and the
- * role/invitation mutations with requireArtsAdmin(); this router tightens
- * all five to requireRole(c, ARTS_ADMIN_ROLES) per the Phase 1 router spec
- * (see the port report). Clerk writes go through clerkClient(c.env) with
+ * Guards mirror the source exactly: overview/staff-users use
+ * requireRole(c, ARTS_STAFF_ROLES) (staff incl. arts_writer) and the
+ * role/invitation mutations use requireRole(c, ARTS_ADMIN_ROLES).
+ * Clerk writes go through clerkClient(c.env) with
  * the source's metadata merge and DB users-row sync preserved.
  */
 export const artsAdminRoutes = new Hono<AppEnv>();
@@ -61,9 +62,9 @@ function getPrimaryRole(claims: Record<string, unknown>): string | null {
   return typeof metadata?.role === "string" ? metadata.role : null;
 }
 
-// getArtsAdminOverview
+// getArtsAdminOverview — source guard: requireArtsStaff (staff incl. arts_writer)
 artsAdminRoutes.get("/admin/overview", async (c) => {
-  requireRole(c, ARTS_ADMIN_ROLES);
+  requireRole(c, ARTS_STAFF_ROLES);
 
   const db = getDb(c.env);
   try {
@@ -166,9 +167,9 @@ artsAdminRoutes.get("/admin/overview", async (c) => {
   }
 });
 
-// listArtsStaffUsers
+// listArtsStaffUsers — source guard: requireArtsStaff
 artsAdminRoutes.get("/admin/users", async (c) => {
-  requireRole(c, ARTS_ADMIN_ROLES);
+  requireRole(c, ARTS_STAFF_ROLES);
 
   const db = getDb(c.env);
   return c.json(

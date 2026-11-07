@@ -30,7 +30,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "catalog:",
-    "nitro": "npm:nitro-nightly@latest",
+    "nitro": "npm:nitro-nightly@3.0.1-20261008-023340-cef53050",
     "tailwindcss": "^4.1.18",
     "typescript": "catalog:",
     "vite": "catalog:",
