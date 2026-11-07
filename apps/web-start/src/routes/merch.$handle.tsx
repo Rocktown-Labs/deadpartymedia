@@ -1,4 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { apiPost, getCartId, setCartId } from "../lib/api-client";
 import { apiFetch } from "../lib/api";
 import { formatVariantPrice, type ApiProduct } from "../lib/products";
 
@@ -37,6 +40,29 @@ export const Route = createFileRoute("/merch/$handle")({
 function MerchDetailPage() {
   const { product } = Route.useLoaderData();
   const available = product.variants.filter((variant) => variant.availableForSale);
+  const [selected, setSelected] = useState<string | null>(available[0]?.id ?? null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function addToCart() {
+    if (!selected) {
+      return;
+    }
+    setBusy(true);
+    setMessage(null);
+    const result = await apiPost<{ cartId: string }>("/music/cart/items", {
+      cartId: getCartId() ?? undefined,
+      merchandiseId: selected,
+      quantity: 1,
+    });
+    setBusy(false);
+    if (!result.ok || !result.data?.cartId) {
+      setMessage(result.error ?? "Could not add to cart");
+      return;
+    }
+    setCartId(result.data.cartId);
+    setMessage("Added to cart ✓");
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-6 pt-24 pb-20">
@@ -60,8 +86,15 @@ function MerchDetailPage() {
             <ul className="space-y-2">
               {available.map((variant) => (
                 <li
-                  className="flex items-center justify-between rounded-md border border-white/10 px-4 py-2 text-sm"
+                  className={
+                    selected === variant.id
+                      ? "flex items-center justify-between rounded-md border border-[#7CFC00]/60 bg-[#7CFC00]/5 px-4 py-2 text-sm"
+                      : "flex cursor-pointer items-center justify-between rounded-md border border-white/10 px-4 py-2 text-sm"
+                  }
                   key={variant.id}
+                  onClick={() => {
+                    setSelected(variant.id);
+                  }}
                 >
                   <span>
                     {variant.selectedOptions.map((option) => option.value).join(" / ") ||
@@ -74,6 +107,22 @@ function MerchDetailPage() {
           ) : (
             <p className="text-gray-400">Currently sold out.</p>
           )}
+
+          {available.length > 0 ? (
+            <div className="mt-4">
+              <Button
+                className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90"
+                disabled={busy}
+                onClick={() => {
+                  void addToCart();
+                }}
+                type="button"
+              >
+                {busy ? "Adding…" : "Add to cart"}
+              </Button>
+              {message ? <p className="mt-2 text-sm text-gray-300">{message}</p> : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

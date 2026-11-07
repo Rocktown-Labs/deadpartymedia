@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArtistDashboardRouteImport } from './routes/artist-dashboard'
+import { Route as CartRouteImport } from './routes/cart'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CountryRouteImport } from './routes/country'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -67,6 +68,11 @@ const AdminRoute = AdminRouteImport.update({
 const ArtistDashboardRoute = ArtistDashboardRouteImport.update({
   id: '/artist-dashboard',
   path: '/artist-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/artist-dashboard': typeof ArtistDashboardRouteWithChildren
+  '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
   '/donate': typeof DonateRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/artist-dashboard': typeof ArtistDashboardRouteWithChildren
+  '/cart': typeof CartRoute
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/artist-dashboard'
+    | '/cart'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/cart'
     | '/contact'
     | '/country'
     | '/donate'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/artist-dashboard'
+    | '/cart'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -492,6 +504,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   ArtistDashboardRoute: typeof ArtistDashboardRouteWithChildren
+  CartRoute: typeof CartRoute
   ContactRoute: typeof ContactRoute
   CountryRoute: typeof CountryRoute
   DashboardRoute: typeof DashboardRouteWithChildren
@@ -547,6 +560,13 @@ declare module '@tanstack/react-router' {
       path: '/artist-dashboard'
       fullPath: '/artist-dashboard'
       preLoaderRoute: typeof ArtistDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -868,6 +888,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   ArtistDashboardRoute: ArtistDashboardRouteWithChildren,
+  CartRoute: CartRoute,
   ContactRoute: ContactRoute,
   CountryRoute: CountryRoute,
   DashboardRoute: DashboardRouteWithChildren,
