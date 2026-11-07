@@ -27,6 +27,17 @@ describe("lib/api/base (Phase 1 flip)", () => {
     expect(resolveApiPath("/api/venues")).toBe("http://localhost:8787/music/venues");
   });
 
+  it("remaps the renamed music-releases resource", () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:8787");
+    expect(resolveApiPath("/api/music")).toBe("http://localhost:8787/music/releases");
+    expect(resolveApiPath("/api/music?limit=10")).toBe(
+      "http://localhost:8787/music/releases?limit=10",
+    );
+    expect(resolveApiPath("/api/music/some-slug")).toBe(
+      "http://localhost:8787/music/releases/some-slug",
+    );
+  });
+
   it("leaves non-/api paths untouched", () => {
     vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:8787");
     expect(resolveApiPath("/about")).toBe("/about");

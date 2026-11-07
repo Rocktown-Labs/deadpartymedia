@@ -8,98 +8,255 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as AboutRouteImport } from "./routes/about";
-import { Route as VenuesRouteImport } from "./routes/venues";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as VenuesRouteImport } from './routes/venues'
+import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
+import { Route as ArticlesIndexRouteImport } from './routes/articles.index'
+import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
+import { Route as EventsIndexRouteImport } from './routes/events.index'
+import { Route as MusicIndexRouteImport } from './routes/music.index'
 
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AboutRoute = AboutRouteImport.update({
-  id: "/about",
-  path: "/about",
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VenuesRoute = VenuesRouteImport.update({
-  id: "/venues",
-  path: "/venues",
+  id: '/venues',
+  path: '/venues',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const ArticleSlugRoute = ArticleSlugRouteImport.update({
+  id: '/article/$slug',
+  path: '/article/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArticlesIndexRoute = ArticlesIndexRouteImport.update({
+  id: '/articles/',
+  path: '/articles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
+  id: '/artists/',
+  path: '/artists/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MusicIndexRoute = MusicIndexRouteImport.update({
+  id: '/music/',
+  path: '/music/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/venues": typeof VenuesRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/venues': typeof VenuesRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/articles/': typeof ArticlesIndexRoute
+  '/artists/': typeof ArtistsIndexRoute
+  '/events/': typeof EventsIndexRoute
+  '/music/': typeof MusicIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/venues": typeof VenuesRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/venues': typeof VenuesRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/articles': typeof ArticlesIndexRoute
+  '/artists': typeof ArtistsIndexRoute
+  '/events': typeof EventsIndexRoute
+  '/music': typeof MusicIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/venues": typeof VenuesRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/venues': typeof VenuesRoute
+  '/article/$slug': typeof ArticleSlugRoute
+  '/articles/': typeof ArticlesIndexRoute
+  '/artists/': typeof ArtistsIndexRoute
+  '/events/': typeof EventsIndexRoute
+  '/music/': typeof MusicIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/about" | "/venues";
-  fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/about" | "/venues";
-  id: "__root__" | "/" | "/about" | "/venues";
-  fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/venues'
+    | '/article/$slug'
+    | '/articles/'
+    | '/artists/'
+    | '/events/'
+    | '/music/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/about'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/venues'
+    | '/article/$slug'
+    | '/articles'
+    | '/artists'
+    | '/events'
+    | '/music'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/venues'
+    | '/article/$slug'
+    | '/articles/'
+    | '/artists/'
+    | '/events/'
+    | '/music/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AboutRoute: typeof AboutRoute;
-  VenuesRoute: typeof VenuesRoute;
+  IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VenuesRoute: typeof VenuesRoute
+  ArticleSlugRoute: typeof ArticleSlugRoute
+  ArticlesIndexRoute: typeof ArticlesIndexRoute
+  ArtistsIndexRoute: typeof ArtistsIndexRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+  MusicIndexRoute: typeof MusicIndexRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/venues": {
-      id: "/venues";
-      path: "/venues";
-      fullPath: "/venues";
-      preLoaderRoute: typeof VenuesRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/venues': {
+      id: '/venues'
+      path: '/venues'
+      fullPath: '/venues'
+      preLoaderRoute: typeof VenuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/article/$slug': {
+      id: '/article/$slug'
+      path: '/article/$slug'
+      fullPath: '/article/$slug'
+      preLoaderRoute: typeof ArticleSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/articles/': {
+      id: '/articles/'
+      path: '/articles'
+      fullPath: '/articles/'
+      preLoaderRoute: typeof ArticlesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artists/': {
+      id: '/artists/'
+      path: '/artists'
+      fullPath: '/artists/'
+      preLoaderRoute: typeof ArtistsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/': {
+      id: '/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/music/': {
+      id: '/music/'
+      path: '/music'
+      fullPath: '/music/'
+      preLoaderRoute: typeof MusicIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   VenuesRoute: VenuesRoute,
-};
+  ArticleSlugRoute: ArticleSlugRoute,
+  ArticlesIndexRoute: ArticlesIndexRoute,
+  ArtistsIndexRoute: ArtistsIndexRoute,
+  EventsIndexRoute: EventsIndexRoute,
+  MusicIndexRoute: MusicIndexRoute,
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { startInstance } from "./start.ts";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

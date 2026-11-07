@@ -21,6 +21,16 @@ export function isExternalApi(): boolean {
   return Boolean(apiBaseUrl());
 }
 
+/**
+ * Known route renames from the Next.js app's /api namespace to the platform
+ * API worker (apps/api). Everything else maps /api/X -> /music/X.
+ */
+const API_PATH_RENAMES: Record<string, string> = {
+  // web's /api/music/* is the music-releases resource; the API router
+  // serves it at /music/releases/*.
+  "/api/music": "/music/releases",
+};
+
 /** Remap an internal /api path to the external API worker, when configured. */
 export function resolveApiPath(path: string): string {
   const base = apiBaseUrl();
@@ -28,7 +38,18 @@ export function resolveApiPath(path: string): string {
     return path;
   }
   const normalized = base.replace(/\/$/, "");
-  return `${normalized}/music/${path.slice("/api/".length)}`;
+  const queryIndex = path.indexOf("?");
+  const pathname = queryIndex === -1 ? path : path.slice(0, queryIndex);
+  const query = queryIndex === -1 ? "" : path.slice(queryIndex);
+
+  const renamedKey = Object.keys(API_PATH_RENAMES).find(
+    (key) => pathname === key || pathname.startsWith(`${key}/`),
+  );
+  if (renamedKey) {
+    const target = API_PATH_RENAMES[renamedKey] as string;
+    return `${normalized}${target}${pathname.slice(renamedKey.length)}${query}`;
+  }
+  return `${normalized}/music/${pathname.slice("/api/".length)}${query}`;
 }
 
 type ClerkJsSession = { getToken: () => Promise<string | null> } | null | undefined;
