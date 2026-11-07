@@ -1,0 +1,27 @@
+{
+  "name": "@dpmedia/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "better-auth": "^1.7.18",
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "@dpmedia/config": "workspace:*",
+    "@types/bcrypt": "^6.0.0",
+    "@types/pg": "^8.15.6",
+    "pg": "^8.16.3",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

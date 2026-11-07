@@ -6,6 +6,8 @@ allowBuilds:
   esbuild: true
   lightningcss: true
   msw: false
+  workerd: true
+  bcrypt: true
 
 catalog:
   "@better-auth/expo": 1.4.9
@@ -13,6 +15,7 @@ catalog:
   better-auth: 1.4.9
   convex: ^1.31.2
   dotenv: 17.2.3
+  drizzle-orm: ^0.45.1
   typescript: ^5
   zod: ^4.1.13
   vite: npm:@voidzero-dev/vite-plus-core@0.2.2

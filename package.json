@@ -49,6 +49,10 @@
     "arts:db:migrate": "pnpm --filter arts db:migrate",
     "arts:db:push": "pnpm --filter arts db:push",
     "arts:db:studio": "pnpm --filter arts db:studio",
+    "api:dev": "pnpm --filter api dev",
+    "api:deploy": "pnpm --filter api deploy",
+    "api:test": "pnpm --filter api test",
+    "api:check-types": "pnpm --filter api check-types",
     "fix": "vp check --fix"
   },
   "dependencies": {
