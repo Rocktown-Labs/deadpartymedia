@@ -5,6 +5,7 @@ import { musicArtistsRoutes } from "./artists";
 import { musicCommentsRoutes } from "./comments";
 import { musicEventsRoutes } from "./events";
 import { musicOgRoutes } from "./og";
+import { musicOnboardingRoutes } from "./onboarding";
 import { musicPostsRoutes } from "./posts";
 import { musicProductsRoutes } from "./products";
 import { musicReleasesRoutes } from "./releases";
@@ -33,6 +34,7 @@ musicRouter.route("/upload", musicUploadRoutes);
 
 // Routers whose paths are fully qualified internally
 musicRouter.route("/", musicAccountRoutes); // /auth/me, /onboarding/profile
+musicRouter.route("/", musicOnboardingRoutes); // POST /onboarding/{artist,fan,venue}
 musicRouter.route("/", musicUserActivityRoutes); // /user/*
 musicRouter.route("/", musicCommentsRoutes); // /articles/:slug/comments
 musicRouter.route("/", musicSpotifyRoutes); // /spotify/*

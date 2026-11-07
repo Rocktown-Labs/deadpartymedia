@@ -47,6 +47,7 @@ import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in.index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up.index'
 import { Route as VenueDashboardIndexRouteImport } from './routes/venue-dashboard.index'
+import { Route as VenueDashboardEventsNewRouteImport } from './routes/venue-dashboard.events.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -238,6 +239,11 @@ const VenueDashboardIndexRoute = VenueDashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => VenueDashboardRoute,
 } as any)
+const VenueDashboardEventsNewRoute = VenueDashboardEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => VenueDashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/venue-dashboard/': typeof VenueDashboardIndexRoute
+  '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/venue-dashboard': typeof VenueDashboardIndexRoute
+  '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/venue-dashboard/': typeof VenueDashboardIndexRoute
+  '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/venue-dashboard/'
+    | '/venue-dashboard/events/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -433,6 +443,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/venue-dashboard'
+    | '/venue-dashboard/events/new'
   id:
     | '__root__'
     | '/'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/venue-dashboard/'
+    | '/venue-dashboard/events/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -775,6 +787,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VenueDashboardIndexRouteImport
       parentRoute: typeof VenueDashboardRoute
     }
+    '/venue-dashboard/events/new': {
+      id: '/venue-dashboard/events/new'
+      path: '/events/new'
+      fullPath: '/venue-dashboard/events/new'
+      preLoaderRoute: typeof VenueDashboardEventsNewRouteImport
+      parentRoute: typeof VenueDashboardRoute
+    }
   }
 }
 
@@ -832,10 +851,12 @@ const MerchRouteWithChildren = MerchRoute._addFileChildren(MerchRouteChildren)
 
 interface VenueDashboardRouteChildren {
   VenueDashboardIndexRoute: typeof VenueDashboardIndexRoute
+  VenueDashboardEventsNewRoute: typeof VenueDashboardEventsNewRoute
 }
 
 const VenueDashboardRouteChildren: VenueDashboardRouteChildren = {
   VenueDashboardIndexRoute: VenueDashboardIndexRoute,
+  VenueDashboardEventsNewRoute: VenueDashboardEventsNewRoute,
 }
 
 const VenueDashboardRouteWithChildren = VenueDashboardRoute._addFileChildren(
