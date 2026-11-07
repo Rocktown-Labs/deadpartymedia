@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { createAuth } from "../src";

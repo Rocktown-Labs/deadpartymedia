@@ -2,7 +2,11 @@
 
 **Branch:** `tanstack-cloudflare-migration`
 **Date:** 2026-11-07
-**Status:** Draft — decisions below marked ✅ are locked; ⚠️ items are open gates.
+**Status:** In progress — Phase 0 ✅ complete, Phase 1 ✅ implemented (API extracted, tests + dev-run green; frontend flip pending). Decisions marked ✅ are locked; ⚠️ items are open gates.
+
+**Progress log:**
+- 2026-11-07: Phase 0 merged on branch (`packages/db/http`, `@dpmedia/contracts`, `@dpmedia/auth` scaffold, cleanup) — issue #159.
+- 2026-11-07: Phase 1 routers ported (web's 32 API routes → `/music/*`, arts' server fns → `/arts/*`), mounted, 66 tests green, `wrangler dev` boots. Frontend flip to the API = follow-up (issue #160). **Blocked on user:** valid Neon `DATABASE_URL` for local dev (the one in `apps/web/.env` is stale — password rejected), Cloudflare credentials for deploy, Clerk dashboard export for Phase 4.
 
 ---
 
@@ -32,12 +36,12 @@ Migrate the platform from **Next.js + Clerk + Vercel + Neon (per-app backends)**
 
 ## Open gate ⚠️ — Phase 2 database target
 
-| | D1 | PlanetScale Postgres + Hyperdrive | Stay Neon + Hyperdrive |
-|---|---|---|---|
-| Schema work | SQLite rewrite (enums→checks, `jsonb`→text JSON, `text[].array()`→JSON text, `serial`→int) + ETL | None — pg dialect keeps working | None |
-| Ops | Cloudflare-native: bindings, Time Travel, read replication, no creds | Branching, deploy requests, Insights — matches existing RocktownLabs PlanetScale workflows | Current CI (`web-db-migrate.yml` Neon branch dry-run) keeps working |
-| Cost | ~Workers paid ($5/mo) | PlanetScale plan (~$29+/mo) | Current |
-| Risk | Mechanical but wide 17-table rewrite; loses pg features | pg→pg dump/restore | Lowest effort |
+|             | D1                                                                                               | PlanetScale Postgres + Hyperdrive                                                          | Stay Neon + Hyperdrive                                              |
+| ----------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Schema work | SQLite rewrite (enums→checks, `jsonb`→text JSON, `text[].array()`→JSON text, `serial`→int) + ETL | None — pg dialect keeps working                                                            | None                                                                |
+| Ops         | Cloudflare-native: bindings, Time Travel, read replication, no creds                             | Branching, deploy requests, Insights — matches existing RocktownLabs PlanetScale workflows | Current CI (`web-db-migrate.yml` Neon branch dry-run) keeps working |
+| Cost        | ~Workers paid ($5/mo)                                                                            | PlanetScale plan (~$29+/mo)                                                                | Current                                                             |
+| Risk        | Mechanical but wide 17-table rewrite; loses pg features                                          | pg→pg dump/restore                                                                         | Lowest effort                                                       |
 
 **Lean:** PlanetScale Postgres + Hyperdrive (no rewrite + team's existing PlanetScale ops). Nothing upstream changes regardless of the choice — the gate only affects Phase 2 mechanics. Staying on Neon is a legitimate fallback.
 
@@ -88,6 +92,7 @@ Frontends become pure — no DB drivers ship in frontend bundles (kills the `stu
 ## Phases
 
 ### Phase 0 — Foundations (no behavior change)
+
 - Consolidate web's local schema copy into `packages/db`; add a driver factory (Neon HTTP driver for Workers; `pg` Pool for Node/Vercel — both needed during transition).
 - Populate `packages/contracts` with zod schemas (port web `lib/validations/*`, arts `lib/artmakers.ts`, etc.).
 - Scaffold `packages/auth`: better-auth factory, drizzle adapter, bcrypt `password.verify` config (Clerk-import ready), admin plugin (roles).
@@ -96,6 +101,7 @@ Frontends become pure — no DB drivers ship in frontend bundles (kills the `stu
 - Acceptance: `pnpm check`, `check-types`, `test` green; apps unchanged.
 
 ### Phase 1 — One Hono API on Workers, data still on Neon
+
 - `apps/api`: Hono worker (`cf init`/`cf dev`/`cf deploy`), Clerk JWT verification behind a `getAuth()` interface (swappable in Phase 4 without touching routes).
 - Port web's 32 routes → `/music/*` **with identical response shapes** (existing react-query hooks work unchanged).
 - Port arts' 60 server fns → `/arts/*` REST; arts server fns become thin HTTP callers (loader signatures unchanged).
@@ -104,17 +110,20 @@ Frontends become pure — no DB drivers ship in frontend bundles (kills the `stu
 - Acceptance: both sites fully functional against the API on Neon; staging parity on response shapes; rollback = env flip.
 
 ### Phase 2 — Database gate ⚠️ + move
+
 - Decide D1 vs PlanetScale Postgres vs stay-Neon (see gate above).
 - ETL/cutover with verification (counts/checksums), rollback window; replace `web-db-migrate.yml` with the chosen DB's migration flow.
 - Acceptance: API reads/writes the new target; Neon frozen read-only for a week.
 
 ### Phase 3 — `apps/web` → TanStack Start
+
 - Per the official guide: <https://tanstack.com/start/latest/docs/framework/react/migrate-from-next-js>
 - Route mapping (`app/layout.tsx`→`__root.tsx`, `[slug]`→`$slug`, API routes already gone from the app, `sitemap.ts`/`robots.ts`→server routes, `generateMetadata`→route `head()`), `proxy.ts` guards→`beforeLoad` (arts' `requireUser` pattern is the template), `next/image`→Unpic, `next/font`→fontsource, typed routes native, `revalidatePath`/`revalidateTag`→`router.invalidate()` + query invalidation.
 - Components port nearly free (shadcn, TipTap, react-form/table). Keep Next.js running until parity; Playwright e2e both apps; inventory URLs/redirects/status/canonicals first.
 - Deploy to Workers via `@cloudflare/vite-plugin`.
 
 ### Phase 4 — Auth cutover (Clerk → better-auth)
+
 - Run the better-auth Clerk import (IDs + passwords preserved); mount better-auth in the API (`app.all("/auth/*")`), CORS + `trustedOrigins` for all app origins; `crossSubDomainCookies` for `.deadpartymedia.com`; OIDC provider plugin for `deadpartyarts.com`.
 - Frontends: `ClerkProvider`→`authClient`, guards swap (`getSession` server fn + `beforeLoad`), roles move from Clerk `publicMetadata` → `users` table.
 - e2e rework: drop `@clerk/testing`, adopt better-auth `test-utils` plugin.
@@ -122,6 +131,7 @@ Frontends become pure — no DB drivers ship in frontend bundles (kills the `stu
 - Acceptance: login works on all domains; Safari-tested SSO; Clerk kept paused (not deleted) for a rollback window.
 
 ### Phase 5 — Domains, AMA, decommission
+
 - `deadpartyarts.com` primary + 301s from `arts.deadpartymedia.com/*`; canonicals/sitemaps updated; arts hosting Vercel→Workers.
 - Scaffold `apps/ama` (third TanStack Start frontend consuming the same API; new `/ama/*` routers + any awards/voting tables).
 - Vercel decommission: Blob→R2 (done in P1), Workflow backfill→standalone scripts, PostHog `/ingest`→Worker route, analytics swap. Keep DNS rollback for a week. Monitor GSC after each cutover.

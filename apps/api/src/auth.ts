@@ -84,9 +84,7 @@ export function getAuth(c: { get(key: "auth"): AuthContext | null }): AuthContex
   return c.get("auth");
 }
 
-export function requireAuth(
-  c: { get(key: "auth"): AuthContext | null },
-): AuthContext {
+export function requireAuth(c: { get(key: "auth"): AuthContext | null }): AuthContext {
   const auth = c.get("auth");
   if (!auth) {
     throw new HTTPException(401, {
@@ -117,15 +115,11 @@ export function requireRole(
  * `admin` alias for super_admin).
  */
 export function getRolesFromMetadata(claims: Record<string, unknown>): string[] {
-  const metadata = claims.metadata as
-    | { role?: unknown; roles?: unknown }
-    | undefined;
+  const metadata = claims.metadata as { role?: unknown; roles?: unknown } | undefined;
   const roles = new Set<string>();
   const claimedRole = typeof metadata?.role === "string" ? metadata.role : null;
   const claimedRoles = Array.isArray(metadata?.roles)
-    ? (metadata?.roles as unknown[]).filter(
-        (role): role is string => typeof role === "string",
-      )
+    ? (metadata?.roles as unknown[]).filter((role): role is string => typeof role === "string")
     : [];
 
   for (const role of [...claimedRoles, ...(claimedRole ? [claimedRole] : [])]) {

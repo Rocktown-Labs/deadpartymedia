@@ -10,10 +10,10 @@ import type { Bindings } from "../bindings";
 export function r2Configured(env: Bindings): boolean {
   return Boolean(
     env.CLOUDFLARE_R2_ACCOUNT_ID &&
-      env.CLOUDFLARE_R2_ACCESS_KEY_ID &&
-      env.CLOUDFLARE_R2_SECRET_ACCESS_KEY &&
-      env.CLOUDFLARE_R2_BUCKET &&
-      env.CLOUDFLARE_R2_PUBLIC_URL,
+    env.CLOUDFLARE_R2_ACCESS_KEY_ID &&
+    env.CLOUDFLARE_R2_SECRET_ACCESS_KEY &&
+    env.CLOUDFLARE_R2_BUCKET &&
+    env.CLOUDFLARE_R2_PUBLIC_URL,
   );
 }
 

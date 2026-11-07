@@ -1,0 +1,623 @@
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { artmakers, eventArtmakers, events, postArtmakers, posts } from "@dpmedia/db/schema";
+import { getAuth, getRolesFromMetadata, requireRole } from "../../auth";
+import { getDb } from "../../db";
+import {
+  idFromParam,
+  notFound,
+  parseJsonBody,
+  parseJsonBodyWithParam,
+} from "../../lib/arts-errors";
+import { normalizeStoredImageUrl } from "../../lib/arts-images";
+import { ARTS_ADMIN_ROLES, ARTS_STAFF_ROLES } from "../../lib/arts-roles";
+import {
+  articleCreateSchema,
+  articleUpdateSchema,
+  eventCreateSchema,
+} from "../../lib/arts-schemas";
+import { createSlug } from "../../lib/arts-slug";
+import type { AppEnv } from "../../bindings";
+
+/**
+ * Ported from apps/arts/src/lib/content.functions.ts — arts posts/events:
+ * public listings, staff/admin CRUD with writer scoping, and the
+ * artmaker-tagged events feed.
+ *
+ * fn → endpoint mapping (mirrors the source file order):
+ *   listArtsEvents                       → GET    /events
+ *   listArtsAdminEvents                  → GET    /admin/events
+ *   listArtsArticles                     → GET    /articles
+ *   listArtsAdminArticles                → GET    /admin/articles
+ *   createArtsArticle                    → POST   /admin/articles
+ *   updateArtsArticle                    → PATCH  /admin/articles/:id
+ *   toggleArtsArticleStatus              → POST   /admin/articles/:id/toggle
+ *   deleteArtsArticle                    → DELETE /admin/articles/:id
+ *   createArtsEvent                      → POST   /admin/events
+ *   toggleArtsEventStatus                → POST   /admin/events/:id/toggle
+ *   deleteArtsEvent                      → DELETE /admin/events/:id
+ *   listTaggedEventsForCurrentArtmaker   → GET    /events/tagged
+ *
+ * Source guards that threw redirect() became requireRole() → 401/403 JSON;
+ * success bodies are byte-identical to what the server functions returned.
+ * Writer scoping uses roles from the verified Clerk session claims
+ * (requireRole's source of truth) instead of a live Clerk user fetch.
+ */
+export const artsContentRoutes = new Hono<AppEnv>();
+
+interface ArtsEventListItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  image: string | null;
+  venue: string;
+  location: string;
+  date: string;
+  time: string | null;
+  ticketLink: string | null;
+  price: string | null;
+  status: "draft" | "published" | "past";
+  createdAt: Date;
+}
+
+interface ArtsArticleListItem {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string | null;
+  status: "draft" | "published" | "archived";
+  publishedAt: Date | null;
+  tags: string[] | null;
+  authorId: string;
+  createdAt: Date;
+  artmakerIds: number[];
+  artmakers: {
+    id: number;
+    name: string;
+    slug: string;
+  }[];
+}
+
+interface TaggedEventListItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  image: string | null;
+  venue: string;
+  location: string;
+  date: string;
+  time: string | null;
+  ticketLink: string | null;
+  price: string | null;
+  upcoming: boolean;
+}
+
+// listArtsEvents
+artsContentRoutes.get("/events", async (c) => {
+  try {
+    const db = getDb(c.env);
+    const rows = await db
+      .select({
+        createdAt: events.createdAt,
+        date: events.date,
+        description: events.description,
+        id: events.id,
+        image: events.image,
+        location: events.location,
+        price: events.price,
+        slug: events.slug,
+        status: events.status,
+        ticketLink: events.ticketLink,
+        time: events.time,
+        title: events.title,
+        venue: events.venue,
+      })
+      .from(events)
+      .where(and(eq(events.vertical, "arts"), eq(events.status, "published")))
+      .orderBy(events.date);
+
+    return c.json(
+      rows.map((row) => ({
+        ...row,
+        image: normalizeStoredImageUrl(c.env, row.image),
+      })) satisfies ArtsEventListItem[],
+    );
+  } catch {
+    return c.json([] satisfies ArtsEventListItem[]);
+  }
+});
+
+// listArtsAdminEvents
+artsContentRoutes.get("/admin/events", async (c) => {
+  requireRole(c, ARTS_STAFF_ROLES);
+
+  const db = getDb(c.env);
+  const rows = await db
+    .select({
+      createdAt: events.createdAt,
+      date: events.date,
+      description: events.description,
+      id: events.id,
+      image: events.image,
+      location: events.location,
+      price: events.price,
+      slug: events.slug,
+      status: events.status,
+      ticketLink: events.ticketLink,
+      time: events.time,
+      title: events.title,
+      venue: events.venue,
+    })
+    .from(events)
+    .where(eq(events.vertical, "arts"))
+    .orderBy(desc(events.createdAt));
+
+  return c.json(
+    rows.map((row) => ({
+      ...row,
+      image: normalizeStoredImageUrl(c.env, row.image),
+    })) satisfies ArtsEventListItem[],
+  );
+});
+
+// listArtsArticles
+artsContentRoutes.get("/articles", async (c) => {
+  try {
+    const db = getDb(c.env);
+    const rows = await db
+      .select({
+        authorId: posts.authorId,
+        content: posts.content,
+        coverImage: posts.coverImage,
+        createdAt: posts.createdAt,
+        excerpt: posts.excerpt,
+        id: posts.id,
+        publishedAt: posts.publishedAt,
+        slug: posts.slug,
+        status: posts.status,
+        tags: posts.tags,
+        title: posts.title,
+      })
+      .from(posts)
+      .where(and(eq(posts.vertical, "arts"), eq(posts.status, "published")))
+      .orderBy(desc(posts.publishedAt));
+
+    const links = rows.length
+      ? await db
+          .select({
+            artmakerId: postArtmakers.artmakerId,
+            name: artmakers.name,
+            postId: postArtmakers.postId,
+            slug: artmakers.slug,
+          })
+          .from(postArtmakers)
+          .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
+          .where(
+            inArray(
+              postArtmakers.postId,
+              rows.map((row) => row.id),
+            ),
+          )
+      : [];
+
+    return c.json(
+      rows.map((row) => {
+        const rowLinks = links.filter((link) => link.postId === row.id);
+        return {
+          ...row,
+          coverImage: normalizeStoredImageUrl(c.env, row.coverImage),
+          artmakerIds: rowLinks.map((link) => link.artmakerId),
+          artmakers: rowLinks.map((link) => ({
+            id: link.artmakerId,
+            name: link.name,
+            slug: link.slug,
+          })),
+        };
+      }) satisfies ArtsArticleListItem[],
+    );
+  } catch {
+    return c.json([] satisfies ArtsArticleListItem[]);
+  }
+});
+
+// listArtsAdminArticles — arts_writer only sees their own articles.
+artsContentRoutes.get("/admin/articles", async (c) => {
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const isSuperOrAdmin = getRolesFromMetadata(auth.claims).some((role) =>
+    (ARTS_ADMIN_ROLES as readonly string[]).includes(role),
+  );
+  const whereClause = isSuperOrAdmin
+    ? eq(posts.vertical, "arts")
+    : and(eq(posts.vertical, "arts"), eq(posts.authorId, auth.userId));
+
+  const db = getDb(c.env);
+  const rows = await db
+    .select({
+      authorId: posts.authorId,
+      content: posts.content,
+      coverImage: posts.coverImage,
+      createdAt: posts.createdAt,
+      excerpt: posts.excerpt,
+      id: posts.id,
+      publishedAt: posts.publishedAt,
+      slug: posts.slug,
+      status: posts.status,
+      tags: posts.tags,
+      title: posts.title,
+    })
+    .from(posts)
+    .where(whereClause)
+    .orderBy(desc(posts.createdAt));
+
+  const links = rows.length
+    ? await db
+        .select({
+          artmakerId: postArtmakers.artmakerId,
+          name: artmakers.name,
+          postId: postArtmakers.postId,
+          slug: artmakers.slug,
+        })
+        .from(postArtmakers)
+        .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
+        .where(
+          inArray(
+            postArtmakers.postId,
+            rows.map((row) => row.id),
+          ),
+        )
+    : [];
+
+  return c.json(
+    rows.map((row) => {
+      const rowLinks = links.filter((link) => link.postId === row.id);
+      return {
+        ...row,
+        coverImage: normalizeStoredImageUrl(c.env, row.coverImage),
+        artmakerIds: rowLinks.map((link) => link.artmakerId),
+        artmakers: rowLinks.map((link) => ({
+          id: link.artmakerId,
+          name: link.name,
+          slug: link.slug,
+        })),
+      };
+    }) satisfies ArtsArticleListItem[],
+  );
+});
+
+// createArtsArticle
+artsContentRoutes.post("/admin/articles", async (c) => {
+  const data = await parseJsonBody(c, articleCreateSchema);
+
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const baseSlug = createSlug(data.title);
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, slug));
+    if (existing.length === 0) {
+      break;
+    }
+    counter += 1;
+    slug = `${baseSlug}-${counter}`;
+  }
+
+  const [created] = await db
+    .insert(posts)
+    .values({
+      authorId: auth.userId,
+      category: "OTHER",
+      content: data.content,
+      coverImage: data.coverImage || null,
+      excerpt: data.excerpt,
+      publishedAt: data.status === "published" ? new Date() : null,
+      slug,
+      status: data.status,
+      title: data.title,
+      vertical: "arts",
+    })
+    .returning();
+
+  if (!created) {
+    throw new Error("Failed to create article");
+  }
+
+  if (data.artmakerIds?.length) {
+    await db.insert(postArtmakers).values(
+      data.artmakerIds.map((artmakerId) => ({
+        artmakerId,
+        postId: created.id,
+      })),
+    );
+  }
+
+  return c.json({ article: created, success: true });
+});
+
+// updateArtsArticle
+artsContentRoutes.patch("/admin/articles/:id", async (c) => {
+  const data = await parseJsonBodyWithParam(c, articleUpdateSchema, "id");
+
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const [existing] = await db
+    .select()
+    .from(posts)
+    .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
+  if (!existing) {
+    throw notFound("Article not found");
+  }
+
+  const isSuperOrAdmin = getRolesFromMetadata(auth.claims).some((role) =>
+    (ARTS_ADMIN_ROLES as readonly string[]).includes(role),
+  );
+  if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
+    throw new HTTPException(403, {
+      res: Response.json({
+        error: "Unauthorized: You don't have permission to edit this article",
+      }),
+    });
+  }
+
+  const publishedAt =
+    data.status === "published" && !existing.publishedAt ? new Date() : existing.publishedAt;
+
+  const [updated] = await db
+    .update(posts)
+    .set({
+      content: data.content,
+      coverImage: data.coverImage || null,
+      excerpt: data.excerpt,
+      publishedAt,
+      status: data.status,
+      title: data.title,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
+    .returning();
+
+  await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
+
+  if (data.artmakerIds?.length) {
+    await db.insert(postArtmakers).values(
+      data.artmakerIds.map((artmakerId) => ({
+        artmakerId,
+        postId: data.id,
+      })),
+    );
+  }
+
+  return c.json({ article: updated, success: true });
+});
+
+// toggleArtsArticleStatus
+artsContentRoutes.post("/admin/articles/:id/toggle", async (c) => {
+  const id = idFromParam(c);
+
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const [existing] = await db
+    .select()
+    .from(posts)
+    .where(and(eq(posts.id, id), eq(posts.vertical, "arts")));
+  if (!existing) {
+    throw notFound("Article not found");
+  }
+
+  const isSuperOrAdmin = getRolesFromMetadata(auth.claims).some((role) =>
+    (ARTS_ADMIN_ROLES as readonly string[]).includes(role),
+  );
+  if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
+    throw new HTTPException(403, {
+      res: Response.json({
+        error: "Unauthorized: You don't have permission to edit this article",
+      }),
+    });
+  }
+
+  const nextStatus = existing.status === "published" ? "draft" : "published";
+  const publishedAt = nextStatus === "published" ? new Date() : existing.publishedAt;
+
+  const [updated] = await db
+    .update(posts)
+    .set({
+      publishedAt,
+      status: nextStatus,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(posts.id, id), eq(posts.vertical, "arts")))
+    .returning();
+
+  return c.json({ article: updated, success: true });
+});
+
+// deleteArtsArticle
+artsContentRoutes.delete("/admin/articles/:id", async (c) => {
+  const id = idFromParam(c);
+
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const [existing] = await db
+    .select({ authorId: posts.authorId, id: posts.id })
+    .from(posts)
+    .where(and(eq(posts.id, id), eq(posts.vertical, "arts")));
+  if (!existing) {
+    throw notFound("Article not found");
+  }
+
+  const isSuperOrAdmin = getRolesFromMetadata(auth.claims).some((role) =>
+    (ARTS_ADMIN_ROLES as readonly string[]).includes(role),
+  );
+  if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
+    throw new HTTPException(403, {
+      res: Response.json({
+        error: "Unauthorized: You don't have permission to delete this article",
+      }),
+    });
+  }
+
+  await db.delete(postArtmakers).where(eq(postArtmakers.postId, id));
+  await db.delete(posts).where(and(eq(posts.id, id), eq(posts.vertical, "arts")));
+  return c.json({ success: true });
+});
+
+// createArtsEvent
+artsContentRoutes.post("/admin/events", async (c) => {
+  const data = await parseJsonBody(c, eventCreateSchema);
+
+  const auth = requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const baseSlug = createSlug(data.title);
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (true) {
+    const existing = await db.select({ id: events.id }).from(events).where(eq(events.slug, slug));
+    if (existing.length === 0) {
+      break;
+    }
+    counter += 1;
+    slug = `${baseSlug}-${counter}`;
+  }
+
+  const [created] = await db
+    .insert(events)
+    .values({
+      createdById: auth.userId,
+      date: data.date,
+      description: data.description,
+      genre: data.genre,
+      image: data.image || null,
+      location: data.location,
+      price: data.price || null,
+      slug,
+      status: data.status,
+      ticketLink: data.ticketLink || null,
+      time: data.time || null,
+      title: data.title,
+      venue: data.venue,
+      vertical: "arts",
+    })
+    .returning();
+
+  if (!created) {
+    throw new Error("Failed to create event");
+  }
+
+  if (data.artmakerIds?.length) {
+    await db.insert(eventArtmakers).values(
+      data.artmakerIds.map((artmakerId) => ({
+        artmakerId,
+        eventId: created.id,
+      })),
+    );
+  }
+
+  return c.json({ event: created, success: true });
+});
+
+// toggleArtsEventStatus
+artsContentRoutes.post("/admin/events/:id/toggle", async (c) => {
+  const id = idFromParam(c);
+
+  requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  const [existing] = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.id, id), eq(events.vertical, "arts")));
+  if (!existing) {
+    throw notFound("Event not found");
+  }
+
+  const nextStatus = existing.status === "published" ? "draft" : "published";
+
+  const [updated] = await db
+    .update(events)
+    .set({
+      status: nextStatus,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(events.id, id), eq(events.vertical, "arts")))
+    .returning();
+
+  return c.json({ event: updated, success: true });
+});
+
+// deleteArtsEvent
+artsContentRoutes.delete("/admin/events/:id", async (c) => {
+  const id = idFromParam(c);
+
+  requireRole(c, ARTS_STAFF_ROLES);
+  const db = getDb(c.env);
+  await db.delete(events).where(and(eq(events.id, id), eq(events.vertical, "arts")));
+  return c.json({ success: true });
+});
+
+// listTaggedEventsForCurrentArtmaker — events the signed-in artmaker is
+// tagged on. Published only, deduped, with an `upcoming` flag. Anonymous
+// callers get [] (the source returned [] rather than redirecting here).
+artsContentRoutes.get("/events/tagged", async (c) => {
+  try {
+    const auth = getAuth(c);
+    if (!auth) {
+      return c.json([]);
+    }
+
+    const db = getDb(c.env);
+    const [artmaker] = await db
+      .select({ id: artmakers.id })
+      .from(artmakers)
+      .where(eq(artmakers.clerkUserId, auth.userId))
+      .limit(1);
+
+    if (!artmaker) {
+      return c.json([]);
+    }
+
+    const rows = await db
+      .select({
+        date: events.date,
+        description: events.description,
+        id: events.id,
+        image: events.image,
+        location: events.location,
+        price: events.price,
+        slug: events.slug,
+        time: events.time,
+        title: events.title,
+        ticketLink: events.ticketLink,
+        venue: events.venue,
+      })
+      .from(eventArtmakers)
+      .innerJoin(events, eq(eventArtmakers.eventId, events.id))
+      .where(and(eq(eventArtmakers.artmakerId, artmaker.id), eq(events.status, "published")))
+      .orderBy(asc(events.date));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const seen = new Set<number>();
+    const tagged: TaggedEventListItem[] = [];
+
+    for (const row of rows) {
+      if (seen.has(row.id)) {
+        continue;
+      }
+      seen.add(row.id);
+      tagged.push({
+        ...row,
+        image: normalizeStoredImageUrl(c.env, row.image),
+        upcoming: row.date >= today,
+      });
+    }
+
+    return c.json(tagged);
+  } catch {
+    return c.json([]);
+  }
+});

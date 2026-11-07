@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 /**
  * Read-only smoke test against the real Neon database.
@@ -48,34 +48,28 @@ async function connectionWorks(): Promise<string | null> {
 }
 
 describe.skipIf(!hasDatabase)("Neon read-only smoke", () => {
-  it(
-    "healthz reports db up",
-    async (context) => {
-      const problem = await connectionWorks();
-      if (problem) {
-        console.warn(`[smoke] skipping — DATABASE_URL rejected: ${problem}`);
-        context.skip();
-      }
-      const { app } = await import("../src/index");
-      const response = await app.request("/healthz", {}, process.env as never);
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ db: "up", status: "ok" });
-    },
-  );
+  it("healthz reports db up", async (context) => {
+    const problem = await connectionWorks();
+    if (problem) {
+      console.warn(`[smoke] skipping — DATABASE_URL rejected: ${problem}`);
+      context.skip();
+    }
+    const { app } = await import("../src/index");
+    const response = await app.request("/healthz", {}, process.env as never);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ db: "up", status: "ok" });
+  });
 
-  it(
-    "GET /music/venues returns the venue directory",
-    async (context) => {
-      const problem = await connectionWorks();
-      if (problem) {
-        console.warn(`[smoke] skipping — DATABASE_URL rejected: ${problem}`);
-        context.skip();
-      }
-      const { app } = await import("../src/index");
-      const response = await app.request("/music/venues", {}, process.env as never);
-      expect(response.status).toBe(200);
-      const body = (await response.json()) as unknown;
-      expect(Array.isArray(body)).toBe(true);
-    },
-  );
+  it("GET /music/venues returns the venue directory", async (context) => {
+    const problem = await connectionWorks();
+    if (problem) {
+      console.warn(`[smoke] skipping — DATABASE_URL rejected: ${problem}`);
+      context.skip();
+    }
+    const { app } = await import("../src/index");
+    const response = await app.request("/music/venues", {}, process.env as never);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as unknown;
+    expect(Array.isArray(body)).toBe(true);
+  });
 });

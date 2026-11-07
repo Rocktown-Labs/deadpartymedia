@@ -249,8 +249,8 @@ importers:
         specifier: ^0.31.9
         version: 0.31.10
       drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.2(@cloudflare/workers-types@5.20261107.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(gel@2.2.0)(kysely@0.29.8)(pg@8.22.0)
+        specifier: 'catalog:'
+        version: 0.45.4(@cloudflare/workers-types@5.20261107.1)(@neondatabase/serverless@1.2.0)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(gel@2.2.0)(kysely@0.29.8)(pg@8.22.0)
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
@@ -17454,6 +17454,11 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.38.0
 
+  '@opentelemetry/core@2.3.0(@opentelemetry/api@1.9.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/semantic-conventions': 1.38.0
+
   '@opentelemetry/core@2.3.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -17715,7 +17720,7 @@ snapshots:
   '@opentelemetry/resources@2.3.0(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      '@opentelemetry/core': 2.3.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.3.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
   '@opentelemetry/resources@2.3.0(@opentelemetry/api@1.9.1)':

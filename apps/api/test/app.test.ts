@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { createApp } from "../src/index";
 
 const env = {
@@ -37,9 +37,7 @@ describe("app wiring", () => {
       },
       env,
     );
-    expect(response.headers.get("access-control-allow-origin")).toBe(
-      "https://deadpartymedia.com",
-    );
+    expect(response.headers.get("access-control-allow-origin")).toBe("https://deadpartymedia.com");
   });
 
   it("does not echo unknown origins", async () => {

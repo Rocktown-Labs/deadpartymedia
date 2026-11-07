@@ -1,11 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
-import {
-  artists,
-  events,
-  musicReleases,
-  posts,
-  venues,
-} from "@dpmedia/db/schema";
+import { artists, events, musicReleases, posts, venues } from "@dpmedia/db/schema";
 import type { NeonHttpDb } from "@dpmedia/db/http";
 
 /**

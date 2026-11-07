@@ -1,11 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { Hono } from "hono";
-import {
-  clerkAuth,
-  getRolesFromMetadata,
-  requireAuth,
-  requireRole,
-} from "../src/auth";
+import { clerkAuth, getRolesFromMetadata, requireAuth, requireRole } from "../src/auth";
 import type { AppEnv } from "../src/bindings";
 
 const env = {
@@ -46,9 +41,7 @@ describe("clerk auth middleware", () => {
 
 describe("role parsing from Clerk claims", () => {
   it("maps legacy admin alias to super_admin", () => {
-    expect(
-      getRolesFromMetadata({ metadata: { role: "admin" } }),
-    ).toEqual(["super_admin"]);
+    expect(getRolesFromMetadata({ metadata: { role: "admin" } })).toEqual(["super_admin"]);
   });
 
   it("merges roles array and single role", () => {

@@ -1,0 +1,47 @@
+name: Deploy API (dev)
+
+# Deploys the dpmedia-api Cloudflare Worker.
+# Requires repo secrets: CLOUDFLARE_API_TOKEN (Workers edit permission)
+# and CLOUDFLARE_ACCOUNT_ID. Until then this workflow will fail fast at
+# the deploy step — everything before it (install/build/typecheck) still
+# validates the branch.
+on:
+  push:
+    branches:
+      - tanstack-cloudflare-migration
+    paths:
+      - "apps/api/**"
+      - "packages/db/**"
+      - "packages/contracts/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter api check-types
+
+      - name: Test
+        run: pnpm --filter api test
+
+      - name: Deploy worker
+        working-directory: apps/api
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

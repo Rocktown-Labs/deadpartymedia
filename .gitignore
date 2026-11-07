@@ -16,6 +16,9 @@ out/
 build/
 dist/
 
+# Cloudflare wrangler local state
+.wrangler/
+
 # Production
 *.log
 *.pid

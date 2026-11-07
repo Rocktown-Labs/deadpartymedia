@@ -24,6 +24,9 @@ export interface Bindings {
   FW_STOREFRONT_TOKEN?: string;
   FW_CHECKOUT_URL?: string;
   FW_ARTS_COLLECTION_ID?: string;
+  /** Site metadata for OG image generation (defaults handled in lib/og-image.ts) */
+  NEXT_PUBLIC_SITE_URL?: string;
+  NEXT_PUBLIC_MEDIA_URL?: string;
 }
 
 /** Authenticated user context attached by the clerk auth middleware. */
