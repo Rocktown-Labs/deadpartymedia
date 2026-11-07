@@ -37,6 +37,7 @@ import { Route as DashboardSavedRouteImport } from './routes/dashboard.saved'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
+import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
 import { Route as MusicIndexRouteImport } from './routes/music.index'
 import { Route as MusicSlugRouteImport } from './routes/music.$slug'
 import { Route as SignInIndexRouteImport } from './routes/sign-in.index'
@@ -182,6 +183,11 @@ const EventsSlugRoute = EventsSlugRouteImport.update({
   path: '/events/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MerchHandleRoute = MerchHandleRouteImport.update({
+  id: '/$handle',
+  path: '/$handle',
+  getParentRoute: () => MerchRoute,
+} as any)
 const MusicIndexRoute = MusicIndexRouteImport.update({
   id: '/music/',
   path: '/music/',
@@ -214,7 +220,7 @@ export interface FileRoutesByFullPath {
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/saved': typeof DashboardSavedRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/music/$slug': typeof MusicSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
@@ -246,7 +253,7 @@ export interface FileRoutesByTo {
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/dashboard/saved': typeof DashboardSavedRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/music/$slug': typeof MusicSlugRoute
   '/admin': typeof AdminIndexRoute
   '/articles': typeof ArticlesIndexRoute
@@ -281,7 +289,7 @@ export interface FileRoutesById {
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
-  '/merch': typeof MerchRoute
+  '/merch': typeof MerchRouteWithChildren
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/dashboard/saved': typeof DashboardSavedRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/merch/$handle': typeof MerchHandleRoute
   '/music/$slug': typeof MusicSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/dashboard/saved'
     | '/dashboard/settings'
     | '/events/$slug'
+    | '/merch/$handle'
     | '/music/$slug'
     | '/admin/'
     | '/articles/'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/dashboard/saved'
     | '/dashboard/settings'
     | '/events/$slug'
+    | '/merch/$handle'
     | '/music/$slug'
     | '/admin'
     | '/articles'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/dashboard/saved'
     | '/dashboard/settings'
     | '/events/$slug'
+    | '/merch/$handle'
     | '/music/$slug'
     | '/admin/'
     | '/articles/'
@@ -418,7 +430,7 @@ export interface RootRouteChildren {
   EdmRoute: typeof EdmRoute
   HardcoreRoute: typeof HardcoreRoute
   HipHopRBRoute: typeof HipHopRBRoute
-  MerchRoute: typeof MerchRoute
+  MerchRoute: typeof MerchRouteWithChildren
   OtherRoute: typeof OtherRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -634,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/merch/$handle': {
+      id: '/merch/$handle'
+      path: '/$handle'
+      fullPath: '/merch/$handle'
+      preLoaderRoute: typeof MerchHandleRouteImport
+      parentRoute: typeof MerchRoute
+    }
     '/music/': {
       id: '/music/'
       path: '/music'
@@ -695,6 +714,16 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface MerchRouteChildren {
+  MerchHandleRoute: typeof MerchHandleRoute
+}
+
+const MerchRouteChildren: MerchRouteChildren = {
+  MerchHandleRoute: MerchHandleRoute,
+}
+
+const MerchRouteWithChildren = MerchRoute._addFileChildren(MerchRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -706,7 +735,7 @@ const rootRouteChildren: RootRouteChildren = {
   EdmRoute: EdmRoute,
   HardcoreRoute: HardcoreRoute,
   HipHopRBRoute: HipHopRBRoute,
-  MerchRoute: MerchRoute,
+  MerchRoute: MerchRouteWithChildren,
   OtherRoute: OtherRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

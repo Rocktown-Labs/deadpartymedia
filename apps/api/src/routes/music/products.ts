@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { getProducts } from "../../lib/fourthwall";
+import { getProduct, getProducts } from "../../lib/fourthwall";
 import type { AppEnv } from "../../bindings";
 
 /**
@@ -45,6 +45,22 @@ musicProductsRoutes.get("/", async (c) => {
   const products = await getProducts(c.env, currency, limit);
 
   return c.json(products, 200, {
+    "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400",
+  });
+});
+
+/**
+ * Product detail by handle. The Next.js merch pages read Fourthwall through
+ * the "use server" lib client; with the frontend flip the by-handle lookup
+ * lives here so both frontends can consume it.
+ */
+musicProductsRoutes.get("/:handle", async (c) => {
+  const currency = parseCurrency(c.req.query("currency"));
+  const product = await getProduct(c.env, c.req.param("handle"), currency);
+  if (!product) {
+    return c.json({ error: "Product not found" }, 404);
+  }
+  return c.json(product, 200, {
     "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400",
   });
 });

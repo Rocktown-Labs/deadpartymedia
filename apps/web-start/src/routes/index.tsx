@@ -31,10 +31,11 @@ interface HomeRelease {
 }
 
 interface HomeProduct {
-  id: string | number;
-  image?: string | null;
-  name: string;
-  price?: string | null;
+  featuredImage: { url: string } | null;
+  handle: string;
+  id: string;
+  title: string;
+  variants: { price: { amount: string; currencyCode: string } }[];
 }
 
 interface HomeLoaderData {
@@ -202,12 +203,27 @@ function HomePage() {
           <section className="mb-14">
             <h2 className="mb-5 text-2xl font-black">Merch</h2>
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {products.map((product) => (
-                <li className="rounded-md border border-white/10 p-4" key={product.id}>
-                  <h3 className="font-bold">{product.name}</h3>
-                  {product.price ? <p className="text-sm text-[#7CFC00]">{product.price}</p> : null}
-                </li>
-              ))}
+              {products.map((product) => {
+                const variant = product.variants[0];
+                const amount = variant ? Number.parseFloat(variant.price.amount) : undefined;
+                return (
+                  <li className="rounded-md border border-white/10 p-4" key={product.id}>
+                    {product.featuredImage ? (
+                      <img
+                        alt={product.title}
+                        className="mb-2 w-full rounded-md border border-white/10"
+                        src={product.featuredImage.url}
+                      />
+                    ) : null}
+                    <h3 className="font-bold">{product.title}</h3>
+                    {amount !== undefined && Number.isFinite(amount) ? (
+                      <p className="text-sm text-[#7CFC00]">
+                        {variant?.price.currencyCode} {amount.toFixed(2)}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ) : null}

@@ -33,7 +33,7 @@ function NotFound() {
 
 function RootDocument() {
   return (
-    <html lang="en">
+    <html className="dark" lang="en">
       <head>
         <HeadContent />
       </head>
