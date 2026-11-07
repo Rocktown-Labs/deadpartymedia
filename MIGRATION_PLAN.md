@@ -6,8 +6,10 @@
 
 **Progress log:**
 
-- 2026-11-07: Phase 0 merged on branch (`packages/db/http`, `@dpmedia/contracts`, `@dpmedia/auth` scaffold, cleanup) — issue #159.
-- 2026-11-07: Phase 1 routers ported (web's 32 API routes → `/music/*`, arts' server fns → `/arts/*`), mounted, 66 tests green, `wrangler dev` boots. Frontend flip to the API = follow-up (issue #160). **Blocked on user:** valid Neon `DATABASE_URL` for local dev (the one in `apps/web/.env` is stale — password rejected), Cloudflare credentials for deploy, Clerk dashboard export for Phase 4.
+- 2026-11-07: Phase 0 complete on branch (`packages/db/http`, `@dpmedia/contracts`, `@dpmedia/auth` scaffold, cleanup) — issue #159.
+- 2026-11-07: Phase 1 **complete**: API extracted (web's 32 routes → `/music/*`, arts' fns → `/arts/*`, 66 API tests), **web frontend flipped** (all 29 fetch sites via env-gated `apiFetch`, 338 web tests), **arts frontend flipped** (45 env-gated proxy branches across all server-fn files, guards mirror source, 79 arts tests). `wrangler dev` + `web-start` SSR verified live. PR #166.
+- 2026-11-07: Phase 3 **started**: `apps/web-start` scaffolded alongside Next.js (per the official migration guide) — `__root`, `/about` at full metadata parity, `/venues` reading the platform API, route inventory in `apps/web-start/MIGRATION.md`. Next.js remains runnable until parity. Issue #162.
+- **Blocked on user:** valid Neon `DATABASE_URL` for local dev (the one in `apps/web/.env` is stale — password rejected on both HTTP + WS transports), Cloudflare credentials for deploy, Clerk dashboard export for Phase 4.
 
 ---
 
