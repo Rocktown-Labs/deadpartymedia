@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CountryRouteImport } from './routes/country'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -18,15 +19,22 @@ import { Route as DonateRouteImport } from './routes/donate'
 import { Route as EdmRouteImport } from './routes/edm'
 import { Route as HardcoreRouteImport } from './routes/hardcore'
 import { Route as HipHopRBRouteImport } from './routes/hip-hop-r-b'
+import { Route as MerchRouteImport } from './routes/merch'
 import { Route as OtherRouteImport } from './routes/other'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as WritersRouteImport } from './routes/writers'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as ArticlesIndexRouteImport } from './routes/articles.index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardCommentsRouteImport } from './routes/dashboard.comments'
+import { Route as DashboardHistoryRouteImport } from './routes/dashboard.history'
+import { Route as DashboardSavedRouteImport } from './routes/dashboard.saved'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as MusicIndexRouteImport } from './routes/music.index'
@@ -42,6 +50,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -79,6 +92,11 @@ const HipHopRBRoute = HipHopRBRouteImport.update({
   path: '/hip-hop-r-b',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MerchRoute = MerchRouteImport.update({
+  id: '/merch',
+  path: '/merch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OtherRoute = OtherRouteImport.update({
   id: '/other',
   path: '/other',
@@ -104,6 +122,11 @@ const WritersRoute = WritersRouteImport.update({
   path: '/writers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ArticleSlugRoute = ArticleSlugRouteImport.update({
   id: '/article/$slug',
   path: '/article/$slug',
@@ -123,6 +146,31 @@ const ArtistsSlugRoute = ArtistsSlugRouteImport.update({
   id: '/artists/$slug',
   path: '/artists/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardCommentsRoute = DashboardCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardHistoryRoute = DashboardHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSavedRoute = DashboardSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
   id: '/events/',
@@ -158,13 +206,15 @@ const SignUpIndexRoute = SignUpIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/donate': typeof DonateRoute
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
+  '/merch': typeof MerchRoute
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -172,10 +222,16 @@ export interface FileRoutesByFullPath {
   '/writers': typeof WritersRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/dashboard/comments': typeof DashboardCommentsRoute
+  '/dashboard/history': typeof DashboardHistoryRoute
+  '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/music/$slug': typeof MusicSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/events/': typeof EventsIndexRoute
   '/music/': typeof MusicIndexRoute
   '/sign-in/': typeof SignInIndexRoute
@@ -186,11 +242,11 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
-  '/dashboard': typeof DashboardRoute
   '/donate': typeof DonateRoute
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
+  '/merch': typeof MerchRoute
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -198,10 +254,16 @@ export interface FileRoutesByTo {
   '/writers': typeof WritersRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/dashboard/comments': typeof DashboardCommentsRoute
+  '/dashboard/history': typeof DashboardHistoryRoute
+  '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/music/$slug': typeof MusicSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/articles': typeof ArticlesIndexRoute
   '/artists': typeof ArtistsIndexRoute
+  '/dashboard': typeof DashboardIndexRoute
   '/events': typeof EventsIndexRoute
   '/music': typeof MusicIndexRoute
   '/sign-in': typeof SignInIndexRoute
@@ -211,13 +273,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/donate': typeof DonateRoute
   '/edm': typeof EdmRoute
   '/hardcore': typeof HardcoreRoute
   '/hip-hop-r-b': typeof HipHopRBRoute
+  '/merch': typeof MerchRoute
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -225,10 +289,16 @@ export interface FileRoutesById {
   '/writers': typeof WritersRoute
   '/article/$slug': typeof ArticleSlugRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/dashboard/comments': typeof DashboardCommentsRoute
+  '/dashboard/history': typeof DashboardHistoryRoute
+  '/dashboard/saved': typeof DashboardSavedRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
   '/events/$slug': typeof EventsSlugRoute
   '/music/$slug': typeof MusicSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
   '/artists/': typeof ArtistsIndexRoute
+  '/dashboard/': typeof DashboardIndexRoute
   '/events/': typeof EventsIndexRoute
   '/music/': typeof MusicIndexRoute
   '/sign-in/': typeof SignInIndexRoute
@@ -239,6 +309,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/admin'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -246,6 +317,7 @@ export interface FileRouteTypes {
     | '/edm'
     | '/hardcore'
     | '/hip-hop-r-b'
+    | '/merch'
     | '/other'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -253,10 +325,16 @@ export interface FileRouteTypes {
     | '/writers'
     | '/article/$slug'
     | '/artists/$slug'
+    | '/dashboard/comments'
+    | '/dashboard/history'
+    | '/dashboard/saved'
+    | '/dashboard/settings'
     | '/events/$slug'
     | '/music/$slug'
+    | '/admin/'
     | '/articles/'
     | '/artists/'
+    | '/dashboard/'
     | '/events/'
     | '/music/'
     | '/sign-in/'
@@ -267,11 +345,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/country'
-    | '/dashboard'
     | '/donate'
     | '/edm'
     | '/hardcore'
     | '/hip-hop-r-b'
+    | '/merch'
     | '/other'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -279,10 +357,16 @@ export interface FileRouteTypes {
     | '/writers'
     | '/article/$slug'
     | '/artists/$slug'
+    | '/dashboard/comments'
+    | '/dashboard/history'
+    | '/dashboard/saved'
+    | '/dashboard/settings'
     | '/events/$slug'
     | '/music/$slug'
+    | '/admin'
     | '/articles'
     | '/artists'
+    | '/dashboard'
     | '/events'
     | '/music'
     | '/sign-in'
@@ -291,6 +375,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/admin'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -298,6 +383,7 @@ export interface FileRouteTypes {
     | '/edm'
     | '/hardcore'
     | '/hip-hop-r-b'
+    | '/merch'
     | '/other'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -305,10 +391,16 @@ export interface FileRouteTypes {
     | '/writers'
     | '/article/$slug'
     | '/artists/$slug'
+    | '/dashboard/comments'
+    | '/dashboard/history'
+    | '/dashboard/saved'
+    | '/dashboard/settings'
     | '/events/$slug'
     | '/music/$slug'
+    | '/admin/'
     | '/articles/'
     | '/artists/'
+    | '/dashboard/'
     | '/events/'
     | '/music/'
     | '/sign-in/'
@@ -318,13 +410,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ContactRoute: typeof ContactRoute
   CountryRoute: typeof CountryRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   DonateRoute: typeof DonateRoute
   EdmRoute: typeof EdmRoute
   HardcoreRoute: typeof HardcoreRoute
   HipHopRBRoute: typeof HipHopRBRoute
+  MerchRoute: typeof MerchRoute
   OtherRoute: typeof OtherRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -356,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -407,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HipHopRBRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/merch': {
+      id: '/merch'
+      path: '/merch'
+      fullPath: '/merch'
+      preLoaderRoute: typeof MerchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/other': {
       id: '/other'
       path: '/other'
@@ -442,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WritersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/article/$slug': {
       id: '/article/$slug'
       path: '/article/$slug'
@@ -469,6 +584,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/artists/$slug'
       preLoaderRoute: typeof ArtistsSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/comments': {
+      id: '/dashboard/comments'
+      path: '/comments'
+      fullPath: '/dashboard/comments'
+      preLoaderRoute: typeof DashboardCommentsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/history': {
+      id: '/dashboard/history'
+      path: '/history'
+      fullPath: '/dashboard/history'
+      preLoaderRoute: typeof DashboardHistoryRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/saved': {
+      id: '/dashboard/saved'
+      path: '/saved'
+      fullPath: '/dashboard/saved'
+      preLoaderRoute: typeof DashboardSavedRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/events/': {
       id: '/events/'
@@ -515,16 +665,48 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface DashboardRouteChildren {
+  DashboardCommentsRoute: typeof DashboardCommentsRoute
+  DashboardHistoryRoute: typeof DashboardHistoryRoute
+  DashboardSavedRoute: typeof DashboardSavedRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardCommentsRoute: DashboardCommentsRoute,
+  DashboardHistoryRoute: DashboardHistoryRoute,
+  DashboardSavedRoute: DashboardSavedRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminRoute: AdminRouteWithChildren,
   ContactRoute: ContactRoute,
   CountryRoute: CountryRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   DonateRoute: DonateRoute,
   EdmRoute: EdmRoute,
   HardcoreRoute: HardcoreRoute,
   HipHopRBRoute: HipHopRBRoute,
+  MerchRoute: MerchRoute,
   OtherRoute: OtherRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
