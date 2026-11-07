@@ -5,6 +5,10 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * web-start — the TanStack Start successor to apps/web (Next.js),
@@ -21,6 +25,14 @@ const config = defineConfig({
   envPrefix: ["VITE_", "NEXT_PUBLIC_"],
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      // Same resolution quirk as apps/arts: the Clerk TanStack server module
+      // must resolve to its built dist file.
+      "@clerk/tanstack-react-start/server": path.resolve(
+        __dirname,
+        "node_modules/@clerk/tanstack-react-start/dist/server/index.js",
+      ),
+    },
   },
   test: {
     passWithNoTests: true,

@@ -1,10 +1,14 @@
+import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createStart } from "@tanstack/react-start";
 
+const hasClerkServerKeys = Boolean(process.env.CLERK_SECRET_KEY);
+
 /**
- * Minimal Start configuration for the scaffold. Auth middleware (Clerk,
- * matching apps/arts' proven pattern) is added here when the first
- * authenticated route migrates; better-auth replaces it in Phase 4.
+ * Clerk middleware is only mounted when server keys are configured (the
+ * same pattern as apps/arts) — public routes work without Clerk, and the
+ * authenticated routes (dashboard, admin) require keys in .env.local.
+ * Phase 4 (MIGRATION_PLAN.md) swaps this for better-auth session handling.
  */
 export const startInstance = createStart(() => ({
-  requestMiddleware: [],
+  requestMiddleware: hasClerkServerKeys ? [clerkMiddleware()] : [],
 }));

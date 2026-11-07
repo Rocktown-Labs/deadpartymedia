@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "portless",
+    "dev": "dotenv -e .env.local -- portless",
     "dev:app": "vp dev",
     "generate-routes": "tsr generate",
     "check-types": "tsc -p tsconfig.json --noEmit",
@@ -12,6 +12,7 @@
     "test": "vp test run --passWithNoTests"
   },
   "dependencies": {
+    "@clerk/tanstack-react-start": "^1.4.12",
     "@tanstack/react-query": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
