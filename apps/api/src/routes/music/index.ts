@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "../../bindings";
 import { musicAccountRoutes } from "./account";
 import { musicArtistsRoutes } from "./artists";
+import { musicCartRoutes } from "./cart";
 import { musicCommentsRoutes } from "./comments";
 import { musicEventsRoutes } from "./events";
 import { musicOgRoutes } from "./og";
@@ -10,6 +11,7 @@ import { musicPostsRoutes } from "./posts";
 import { musicProductsRoutes } from "./products";
 import { musicReleasesRoutes } from "./releases";
 import { musicSpotifyRoutes } from "./spotify";
+import { musicSubmissionsRoutes } from "./submissions";
 import { musicUploadRoutes } from "./upload";
 import { musicUserActivityRoutes } from "./user-activity";
 import { musicVenuesRoutes } from "./venues";
@@ -31,6 +33,8 @@ musicRouter.route("/events", musicEventsRoutes);
 musicRouter.route("/releases", musicReleasesRoutes);
 musicRouter.route("/products", musicProductsRoutes);
 musicRouter.route("/upload", musicUploadRoutes);
+musicRouter.route("/", musicCartRoutes); // /cart/*
+musicRouter.route("/", musicSubmissionsRoutes); // POST /submissions/music-release
 
 // Routers whose paths are fully qualified internally
 musicRouter.route("/", musicAccountRoutes); // /auth/me, /onboarding/profile
