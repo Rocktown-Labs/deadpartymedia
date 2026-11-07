@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery } from "@tanstack/react-query";
 
 export interface Writer {
@@ -14,7 +15,7 @@ export interface Writer {
 export function useWriters() {
   return useQuery<Writer[]>({
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/writers", { signal });
+      const response = await apiFetch("/api/writers", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch writers");
       }
@@ -28,7 +29,7 @@ export function useWriter(id: number) {
   return useQuery<Writer>({
     enabled: !!id,
     queryFn: async ({ signal }) => {
-      const response = await fetch(`/api/writers/${id}`, { signal });
+      const response = await apiFetch(`/api/writers/${id}`, { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch writer");
       }

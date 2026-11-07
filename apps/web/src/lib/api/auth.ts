@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClerk } from "@clerk/nextjs";
 
@@ -67,7 +68,7 @@ export function useLogout() {
 export function useCurrentUser() {
   return useQuery<User | null>({
     queryFn: async () => {
-      const response = await fetch("/api/auth/me");
+      const response = await apiFetch("/api/auth/me");
       if (response.status === 401) {
         return null;
       }

@@ -1,0 +1,44 @@
+{
+  "name": "web-start",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "portless",
+    "dev:app": "vp dev",
+    "generate-routes": "tsr generate",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "build": "vp build",
+    "preview": "vp preview",
+    "test": "vp test run --passWithNoTests"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "latest",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "@tanstack/router-plugin": "latest",
+    "lucide-react": "^0.546.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dpmedia/config": "workspace:*",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/router-cli": "latest",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "dotenv": "catalog:",
+    "nitro": "npm:nitro-nightly@latest",
+    "tailwindcss": "^4.1.18",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  },
+  "portless": {
+    "name": "start.deadpartymedia",
+    "script": "dev:app"
+  }
+}

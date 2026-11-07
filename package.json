@@ -21,6 +21,7 @@
     "dev": "turbo run dev --filter=web --filter=native",
     "dev:web": "turbo run dev --filter=web",
     "dev:arts": "turbo run dev --filter=arts",
+    "dev:webstart": "turbo run dev --filter=web-start",
     "dev:native": "turbo run dev --filter=native",
     "dev:all": "turbo run dev",
     "build": "turbo run build",

@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 import type { EventList } from "./events";
@@ -58,7 +59,7 @@ export function useArtists(genre?: string) {
   return useQuery<Artist[]>({
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await fetch(`/api/artists${params}`);
+      const response = await apiFetch(`/api/artists${params}`);
       if (!response.ok) {
         throw new Error("Failed to fetch artists");
       }
@@ -99,7 +100,7 @@ export function useArtistsPage({
       if (claimed !== undefined) {
         params.set("claimed", String(claimed));
       }
-      const response = await fetch(`/api/artists?${params.toString()}`);
+      const response = await apiFetch(`/api/artists?${params.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch artists");
       }
@@ -113,7 +114,7 @@ export function useArtist(slug: string) {
   return useQuery<Artist>({
     enabled: !!slug,
     queryFn: async () => {
-      const response = await fetch(`/api/artists/${slug}`);
+      const response = await apiFetch(`/api/artists/${slug}`);
       if (!response.ok) {
         throw new Error("Failed to fetch artist");
       }
@@ -127,7 +128,7 @@ export function useArtistArticles(slug: string) {
   return useQuery<ArticleList[]>({
     enabled: !!slug,
     queryFn: async () => {
-      const response = await fetch(`/api/artists/${slug}/articles`);
+      const response = await apiFetch(`/api/artists/${slug}/articles`);
       if (!response.ok) {
         throw new Error("Failed to fetch artist articles");
       }
@@ -141,7 +142,7 @@ export function useArtistEvents(slug: string) {
   return useQuery<EventList[]>({
     enabled: !!slug,
     queryFn: async () => {
-      const response = await fetch(`/api/artists/${slug}/events`);
+      const response = await apiFetch(`/api/artists/${slug}/events`);
       if (!response.ok) {
         throw new Error("Failed to fetch artist events");
       }
@@ -155,7 +156,7 @@ export function useCurrentUserArtist() {
   return useQuery<Artist | null>({
     queryFn: async () => {
       try {
-        const response = await fetch("/api/artists/me");
+        const response = await apiFetch("/api/artists/me");
         if (!response.ok) {
           if (response.status === 404) {
             return null;
@@ -208,7 +209,7 @@ export function useUpdateArtist() {
         formData.append("image", input.image);
       }
 
-      const response = await fetch("/api/artists/me", {
+      const response = await apiFetch("/api/artists/me", {
         body: formData,
         method: "PATCH",
       });
@@ -233,7 +234,7 @@ export function useSearchSpotifyArtists(query: string) {
       if (!query || query.length < 5) {
         return [];
       }
-      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
+      const response = await apiFetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: response.statusText }));
         throw new Error(errorData.error || `Failed to search Spotify (${response.status})`);
@@ -254,7 +255,7 @@ export function useSpotifyArtistById(id: string | null) {
       if (!id) {
         return null;
       }
-      const response = await fetch(`/api/spotify/artist/${encodeURIComponent(id)}`);
+      const response = await apiFetch(`/api/spotify/artist/${encodeURIComponent(id)}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Artist not found");

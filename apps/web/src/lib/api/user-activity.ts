@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 
@@ -45,7 +46,7 @@ export interface PaginatedResponse<T> {
 export function useReadArticles() {
   return useQuery<PaginatedResponse<ArticleRead>>({
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/user/articles/read", { signal });
+      const response = await apiFetch("/api/user/articles/read", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch read articles");
       }
@@ -61,7 +62,7 @@ export function useMarkArticleRead() {
 
   return useMutation({
     mutationFn: async (articleId: number) => {
-      const response = await fetch("/api/user/articles/read", {
+      const response = await apiFetch("/api/user/articles/read", {
         body: JSON.stringify({ article_id: articleId }),
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export function useSavedArticles(options: UseSavedArticlesOptions = {}) {
   return useQuery<PaginatedResponse<SavedArticle>>({
     enabled: options.enabled ?? true,
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/user/articles/saved", { signal });
+      const response = await apiFetch("/api/user/articles/saved", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch saved articles");
       }
@@ -106,7 +107,7 @@ export function useSaveArticle() {
 
   return useMutation({
     mutationFn: async (articleId: number) => {
-      const response = await fetch("/api/user/articles/saved", {
+      const response = await apiFetch("/api/user/articles/saved", {
         body: JSON.stringify({ article_id: articleId }),
         headers: {
           "Content-Type": "application/json",
@@ -130,7 +131,7 @@ export function useUnsaveArticle() {
 
   return useMutation({
     mutationFn: async (savedId: number) => {
-      const response = await fetch(`/api/user/articles/saved/${savedId}`, {
+      const response = await apiFetch(`/api/user/articles/saved/${savedId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -149,7 +150,7 @@ export function useUnsaveArticle() {
 export function useUserComments() {
   return useQuery<PaginatedResponse<UserComment>>({
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/user/comments", { signal });
+      const response = await apiFetch("/api/user/comments", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch user comments");
       }
@@ -164,7 +165,7 @@ export function useUserComments() {
 export function useDashboardStats() {
   return useQuery<DashboardStats>({
     queryFn: async ({ signal }) => {
-      const response = await fetch("/api/user/stats", { signal });
+      const response = await apiFetch("/api/user/stats", { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch dashboard stats");
       }
