@@ -28,6 +28,7 @@ musicEventsRoutes.get("/", async (c) => {
   try {
     const genre = c.req.query("genre");
     const status = c.req.query("status");
+    const venue = c.req.query("venue");
     const limit = clampInt(c.req.query("limit"), 100, 1, 100);
     const offset = clampInt(c.req.query("offset"), 0, 0, 100_000);
 
@@ -37,6 +38,11 @@ musicEventsRoutes.get("/", async (c) => {
     const conditions = [eq(events.status, "published")];
     if (genre && isEventGenre(genre)) {
       conditions.push(eq(events.genre, genre));
+    }
+    if (venue) {
+      // Venue-dashboard filter: exact venue-name match (the web app's
+      // venue dashboard queries events for the signed-in venue).
+      conditions.push(eq(events.venue, venue));
     }
     const today = getLocalDateKey();
     if (status === "upcoming") {

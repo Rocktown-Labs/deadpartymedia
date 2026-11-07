@@ -2,6 +2,11 @@ import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { createServerFn } from "@tanstack/react-start";
 
 export interface Session {
+  metadata: {
+    artistId?: number;
+    onboardingComplete?: boolean;
+    venueId?: number;
+  };
   roles: string[];
   userId: string | null;
 }
@@ -35,12 +40,16 @@ export const getSession = createServerFn({ method: "GET" }).handler(async (): Pr
   try {
     const { userId } = await auth();
     if (!userId) {
-      return { roles: [], userId: null };
+      return { metadata: {}, roles: [], userId: null };
     }
     const user = await clerkClient().users.getUser(userId);
-    return { roles: rolesFromMetadata(user.publicMetadata), userId };
+    return {
+      metadata: (user.publicMetadata ?? {}) as Session["metadata"],
+      roles: rolesFromMetadata(user.publicMetadata),
+      userId,
+    };
   } catch {
     // No Clerk middleware mounted (missing server keys) — anonymous.
-    return { roles: [], userId: null };
+    return { metadata: {}, roles: [], userId: null };
   }
 });

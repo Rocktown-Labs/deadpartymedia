@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ArtistDashboardRouteImport } from './routes/artist-dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CountryRouteImport } from './routes/country'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -23,11 +24,13 @@ import { Route as MerchRouteImport } from './routes/merch'
 import { Route as OtherRouteImport } from './routes/other'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as VenueDashboardRouteImport } from './routes/venue-dashboard'
 import { Route as VenuesRouteImport } from './routes/venues'
 import { Route as WritersRouteImport } from './routes/writers'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ArticleSlugRouteImport } from './routes/article.$slug'
 import { Route as ArticlesIndexRouteImport } from './routes/articles.index'
+import { Route as ArtistDashboardIndexRouteImport } from './routes/artist-dashboard.index'
 import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -40,8 +43,10 @@ import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
 import { Route as MusicIndexRouteImport } from './routes/music.index'
 import { Route as MusicSlugRouteImport } from './routes/music.$slug'
+import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as SignInIndexRouteImport } from './routes/sign-in.index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up.index'
+import { Route as VenueDashboardIndexRouteImport } from './routes/venue-dashboard.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -56,6 +61,11 @@ const AboutRoute = AboutRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistDashboardRoute = ArtistDashboardRouteImport.update({
+  id: '/artist-dashboard',
+  path: '/artist-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -113,6 +123,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VenueDashboardRoute = VenueDashboardRouteImport.update({
+  id: '/venue-dashboard',
+  path: '/venue-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VenuesRoute = VenuesRouteImport.update({
   id: '/venues',
   path: '/venues',
@@ -137,6 +152,11 @@ const ArticlesIndexRoute = ArticlesIndexRouteImport.update({
   id: '/articles/',
   path: '/articles/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ArtistDashboardIndexRoute = ArtistDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ArtistDashboardRoute,
 } as any)
 const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
   id: '/artists/',
@@ -198,6 +218,11 @@ const MusicSlugRoute = MusicSlugRouteImport.update({
   path: '/music/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: '/onboarding/',
+  path: '/onboarding/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignInIndexRoute = SignInIndexRouteImport.update({
   id: '/sign-in/',
   path: '/sign-in/',
@@ -208,11 +233,17 @@ const SignUpIndexRoute = SignUpIndexRouteImport.update({
   path: '/sign-up/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VenueDashboardIndexRoute = VenueDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VenueDashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/artist-dashboard': typeof ArtistDashboardRouteWithChildren
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -224,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/venue-dashboard': typeof VenueDashboardRouteWithChildren
   '/venues': typeof VenuesRoute
   '/writers': typeof WritersRoute
   '/article/$slug': typeof ArticleSlugRoute
@@ -237,12 +269,15 @@ export interface FileRoutesByFullPath {
   '/music/$slug': typeof MusicSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
+  '/artist-dashboard/': typeof ArtistDashboardIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/events/': typeof EventsIndexRoute
   '/music/': typeof MusicIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/venue-dashboard/': typeof VenueDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -270,18 +305,22 @@ export interface FileRoutesByTo {
   '/music/$slug': typeof MusicSlugRoute
   '/admin': typeof AdminIndexRoute
   '/articles': typeof ArticlesIndexRoute
+  '/artist-dashboard': typeof ArtistDashboardIndexRoute
   '/artists': typeof ArtistsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/events': typeof EventsIndexRoute
   '/music': typeof MusicIndexRoute
+  '/onboarding': typeof OnboardingIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/venue-dashboard': typeof VenueDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/artist-dashboard': typeof ArtistDashboardRouteWithChildren
   '/contact': typeof ContactRoute
   '/country': typeof CountryRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -293,6 +332,7 @@ export interface FileRoutesById {
   '/other': typeof OtherRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/venue-dashboard': typeof VenueDashboardRouteWithChildren
   '/venues': typeof VenuesRoute
   '/writers': typeof WritersRoute
   '/article/$slug': typeof ArticleSlugRoute
@@ -306,12 +346,15 @@ export interface FileRoutesById {
   '/music/$slug': typeof MusicSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/articles/': typeof ArticlesIndexRoute
+  '/artist-dashboard/': typeof ArtistDashboardIndexRoute
   '/artists/': typeof ArtistsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/events/': typeof EventsIndexRoute
   '/music/': typeof MusicIndexRoute
+  '/onboarding/': typeof OnboardingIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/venue-dashboard/': typeof VenueDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -319,6 +362,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/artist-dashboard'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -330,6 +374,7 @@ export interface FileRouteTypes {
     | '/other'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/venue-dashboard'
     | '/venues'
     | '/writers'
     | '/article/$slug'
@@ -343,12 +388,15 @@ export interface FileRouteTypes {
     | '/music/$slug'
     | '/admin/'
     | '/articles/'
+    | '/artist-dashboard/'
     | '/artists/'
     | '/dashboard/'
     | '/events/'
     | '/music/'
+    | '/onboarding/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/venue-dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -376,17 +424,21 @@ export interface FileRouteTypes {
     | '/music/$slug'
     | '/admin'
     | '/articles'
+    | '/artist-dashboard'
     | '/artists'
     | '/dashboard'
     | '/events'
     | '/music'
+    | '/onboarding'
     | '/sign-in'
     | '/sign-up'
+    | '/venue-dashboard'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
+    | '/artist-dashboard'
     | '/contact'
     | '/country'
     | '/dashboard'
@@ -398,6 +450,7 @@ export interface FileRouteTypes {
     | '/other'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/venue-dashboard'
     | '/venues'
     | '/writers'
     | '/article/$slug'
@@ -411,18 +464,22 @@ export interface FileRouteTypes {
     | '/music/$slug'
     | '/admin/'
     | '/articles/'
+    | '/artist-dashboard/'
     | '/artists/'
     | '/dashboard/'
     | '/events/'
     | '/music/'
+    | '/onboarding/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/venue-dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  ArtistDashboardRoute: typeof ArtistDashboardRouteWithChildren
   ContactRoute: typeof ContactRoute
   CountryRoute: typeof CountryRoute
   DashboardRoute: typeof DashboardRouteWithChildren
@@ -434,6 +491,7 @@ export interface RootRouteChildren {
   OtherRoute: typeof OtherRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  VenueDashboardRoute: typeof VenueDashboardRouteWithChildren
   VenuesRoute: typeof VenuesRoute
   WritersRoute: typeof WritersRoute
   ArticleSlugRoute: typeof ArticleSlugRoute
@@ -444,6 +502,7 @@ export interface RootRouteChildren {
   ArtistsIndexRoute: typeof ArtistsIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   MusicIndexRoute: typeof MusicIndexRoute
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
   SignInIndexRoute: typeof SignInIndexRoute
   SignUpIndexRoute: typeof SignUpIndexRoute
 }
@@ -469,6 +528,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/artist-dashboard': {
+      id: '/artist-dashboard'
+      path: '/artist-dashboard'
+      fullPath: '/artist-dashboard'
+      preLoaderRoute: typeof ArtistDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -548,6 +614,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/venue-dashboard': {
+      id: '/venue-dashboard'
+      path: '/venue-dashboard'
+      fullPath: '/venue-dashboard'
+      preLoaderRoute: typeof VenueDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/venues': {
       id: '/venues'
       path: '/venues'
@@ -582,6 +655,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/articles/'
       preLoaderRoute: typeof ArticlesIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/artist-dashboard/': {
+      id: '/artist-dashboard/'
+      path: '/'
+      fullPath: '/artist-dashboard/'
+      preLoaderRoute: typeof ArtistDashboardIndexRouteImport
+      parentRoute: typeof ArtistDashboardRoute
     }
     '/artists/': {
       id: '/artists/'
@@ -667,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MusicSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/': {
+      id: '/onboarding/'
+      path: '/onboarding'
+      fullPath: '/onboarding/'
+      preLoaderRoute: typeof OnboardingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign-in/': {
       id: '/sign-in/'
       path: '/sign-in'
@@ -681,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/venue-dashboard/': {
+      id: '/venue-dashboard/'
+      path: '/'
+      fullPath: '/venue-dashboard/'
+      preLoaderRoute: typeof VenueDashboardIndexRouteImport
+      parentRoute: typeof VenueDashboardRoute
+    }
   }
 }
 
@@ -693,6 +787,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface ArtistDashboardRouteChildren {
+  ArtistDashboardIndexRoute: typeof ArtistDashboardIndexRoute
+}
+
+const ArtistDashboardRouteChildren: ArtistDashboardRouteChildren = {
+  ArtistDashboardIndexRoute: ArtistDashboardIndexRoute,
+}
+
+const ArtistDashboardRouteWithChildren = ArtistDashboardRoute._addFileChildren(
+  ArtistDashboardRouteChildren,
+)
 
 interface DashboardRouteChildren {
   DashboardCommentsRoute: typeof DashboardCommentsRoute
@@ -724,10 +830,23 @@ const MerchRouteChildren: MerchRouteChildren = {
 
 const MerchRouteWithChildren = MerchRoute._addFileChildren(MerchRouteChildren)
 
+interface VenueDashboardRouteChildren {
+  VenueDashboardIndexRoute: typeof VenueDashboardIndexRoute
+}
+
+const VenueDashboardRouteChildren: VenueDashboardRouteChildren = {
+  VenueDashboardIndexRoute: VenueDashboardIndexRoute,
+}
+
+const VenueDashboardRouteWithChildren = VenueDashboardRoute._addFileChildren(
+  VenueDashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  ArtistDashboardRoute: ArtistDashboardRouteWithChildren,
   ContactRoute: ContactRoute,
   CountryRoute: CountryRoute,
   DashboardRoute: DashboardRouteWithChildren,
@@ -739,6 +858,7 @@ const rootRouteChildren: RootRouteChildren = {
   OtherRoute: OtherRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  VenueDashboardRoute: VenueDashboardRouteWithChildren,
   VenuesRoute: VenuesRoute,
   WritersRoute: WritersRoute,
   ArticleSlugRoute: ArticleSlugRoute,
@@ -749,6 +869,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArtistsIndexRoute: ArtistsIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   MusicIndexRoute: MusicIndexRoute,
+  OnboardingIndexRoute: OnboardingIndexRoute,
   SignInIndexRoute: SignInIndexRoute,
   SignUpIndexRoute: SignUpIndexRoute,
 }
