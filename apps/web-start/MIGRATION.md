@@ -26,10 +26,10 @@ authenticated route.
 | `merch/…`, `cart/…`                                      | `merch…`, `cart…`                                   | pending                                        |
 | `writers/page.tsx`                                       | `writers.index.tsx`                                 | pending                                        |
 | `donate/page.tsx`                                        | `donate.tsx`                                        | pending                                        |
-| `sign-in/[[...rest]]`, `sign-up/[[...rest]]`             | `sign-in.$`, `sign-up.$`                            | pending (needs Clerk)                          |
-| `onboarding/…`                                           | `onboarding…`                                       | pending (needs Clerk)                          |
-| `dashboard/…`, `artist-dashboard/…`, `venue-dashboard/…` | pathless layouts `_dashboards/…`                    | pending (needs Clerk)                          |
-| `admin/…` (24 pages)                                     | `_admin/…` + `beforeLoad` guards                    | pending (needs Clerk)                          |
+| `sign-in/[[...rest]]`, `sign-up/[[...rest]]`             | `sign-in.index.tsx`, `sign-up.index.tsx`            | ✅ ported (Clerk v6 query-param flow)          |
+| `onboarding/…`                                           | `onboarding…`                                       | pending (auth wired; flows pending)            |
+| `dashboard/…`, `artist-dashboard/…`, `venue-dashboard/…` | `_dashboards/…` layouts + `beforeLoad` guards       | guard ✅ proven on `/dashboard`; pages pending |
+| `admin/…` (24 pages)                                     | `_admin/…` + `beforeLoad` guards                    | pending (auth wired; pages pending)            |
 | `sitemap.ts`, `robots.ts`                                | `sitemap[.]xml.ts`, `robots[.]txt.ts` server routes | ✅ ported (API-driven)                         |
 | `not-found.tsx`                                          | `__root.tsx` `notFoundComponent`                    | ✅ ported                                      |
 | `api/**` (32 routes)                                     | —                                                   | ✅ already extracted to `apps/api`             |
