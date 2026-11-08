@@ -1,21 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { apiFetch } from "../lib/api";
 
 interface ArticleListItem {
   category: string;
-  comment_count?: number;
   cover_image: string | null;
-  created_at: string;
   excerpt: string;
   id: number;
   published_at: string | null;
   slug: string;
   title: string;
-  views: number;
 }
 
-interface ArticlesLoaderData {
+interface LoaderData {
   articles: ArticleListItem[];
   error: string | null;
 }
@@ -23,17 +22,14 @@ interface ArticlesLoaderData {
 const CATEGORIES = ["ALL", "COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
 
 /**
- * Ported from apps/web/src/app/articles/page.tsx (+ client). The loader reads
- * the platform API (GET /music/posts); category filtering is client-side over
- * the loaded list. The full article-card UI port (shadcn kit) comes with the
- * visual-parity pass — see MIGRATION.md.
+ * Ported from apps/web/src/app/articles/articles-page-client.tsx — the
+ * visual parity pass uses the shadcn card grid with category filter pills,
+ * matching the source layout.
  */
 export const Route = createFileRoute("/articles/")({
   component: ArticlesPage,
-  head: () => ({
-    meta: [{ title: "Articles | Dead Party Media" }],
-  }),
-  loader: async (): Promise<ArticlesLoaderData> => {
+  head: () => ({ meta: [{ title: "Articles | Dead Party Media" }] }),
+  loader: async (): Promise<LoaderData> => {
     try {
       const data = await apiFetch<{ results: ArticleListItem[] }>("/music/posts?limit=50");
       return { articles: data.results, error: null };
@@ -45,23 +41,23 @@ export const Route = createFileRoute("/articles/")({
 
 function ArticlesPage() {
   const { articles, error } = Route.useLoaderData();
-  const [category, setCategory] = useState<"ALL" | (typeof CATEGORIES)[number]>("ALL");
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("ALL");
 
   const filtered =
     category === "ALL" ? articles : articles.filter((article) => article.category === category);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 pt-24 pb-20">
+    <main className="mx-auto max-w-5xl px-6 pt-24 pb-20">
       <h1 className="mb-2 text-4xl font-black">Articles</h1>
-      <p className="mb-8 text-sm text-gray-400">Served by the platform API (GET /music/posts)</p>
+      <p className="mb-8 text-sm text-gray-400">Covering Arkansas music across every genre</p>
 
       <div className="mb-8 flex flex-wrap gap-2">
         {CATEGORIES.map((item) => (
           <button
             className={
               category === item
-                ? "rounded-full border border-[#7CFC00] bg-[#7CFC00]/10 px-4 py-1.5 text-sm text-[#7CFC00]"
-                : "rounded-full border border-white/15 px-4 py-1.5 text-sm text-gray-300 hover:border-white/30"
+                ? "rounded-full border border-[#7CFC00] bg-[#7CFC00]/10 px-4 py-1.5 text-sm font-medium text-[#7CFC00]"
+                : "rounded-full border border-white/15 px-4 py-1.5 text-sm font-medium text-gray-300 transition-colors hover:border-white/30"
             }
             key={item}
             onClick={() => {
@@ -79,16 +75,39 @@ function ArticlesPage() {
       ) : filtered.length === 0 ? (
         <p className="text-gray-400">No articles found.</p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((article) => (
-            <li
-              className="rounded-md border border-white/10 p-4 hover:border-[#7CFC00]/40"
-              key={article.id}
-            >
-              <Link params={{ slug: article.slug }} to="/article/$slug">
-                <span className="text-xs text-[#7CFC00]">{article.category}</span>
-                <h2 className="text-xl font-bold">{article.title}</h2>
-                <p className="mt-1 line-clamp-2 text-sm text-gray-400">{article.excerpt}</p>
+            <li key={article.id}>
+              <Link className="group" params={{ slug: article.slug }} to="/article/$slug">
+                <Card className="h-full overflow-hidden border-white/10 bg-zinc-950 transition-colors group-hover:border-[#7CFC00]/40">
+                  {article.cover_image ? (
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        alt={article.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        src={article.cover_image}
+                      />
+                    </div>
+                  ) : null}
+                  <CardContent className="p-4">
+                    <Badge className="mb-2 bg-[#7CFC00]/10 text-[#7CFC00]" variant="secondary">
+                      {article.category}
+                    </Badge>
+                    <h2 className="mb-1 font-bold leading-tight group-hover:text-[#7CFC00]">
+                      {article.title}
+                    </h2>
+                    <p className="line-clamp-2 text-sm text-gray-400">{article.excerpt}</p>
+                    {article.published_at ? (
+                      <p className="mt-2 text-xs text-gray-600">
+                        {new Date(article.published_at).toLocaleDateString("en-US", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    ) : null}
+                  </CardContent>
+                </Card>
               </Link>
             </li>
           ))}

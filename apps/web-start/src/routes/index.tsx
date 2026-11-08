@@ -1,44 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  ArticleGrid,
+  ArticleSpotlight,
+  MerchSection,
+  MusicSection,
+  ShowsStrip,
+  type HomeArticle,
+  type HomeEvent,
+  type HomeProduct,
+  type HomeRelease,
+} from "../components/home/home-sections";
 import { apiFetch } from "../lib/api";
 import { getSiteDefaults } from "../lib/seo";
 
-interface HomeArticle {
-  excerpt: string;
-  id: number;
-  published_at: string | null;
-  slug: string;
-  title: string;
-  cover_image?: string | null;
-  category: string;
-}
+const { defaultDescription, siteName } = getSiteDefaults();
 
-interface HomeEvent {
-  artists: { name: string }[];
-  date: string;
-  id: number;
-  slug: string;
-  title: string;
-  venue: string;
-}
-
-interface HomeRelease {
-  artistName: string;
-  coverArt: string | null;
-  id: number;
-  releaseType: "Album" | "Single" | "EP";
-  slug: string;
-  title: string;
-}
-
-interface HomeProduct {
-  featuredImage: { url: string } | null;
-  handle: string;
-  id: string;
-  title: string;
-  variants: { price: { amount: string; currencyCode: string } }[];
-}
-
-interface HomeLoaderData {
+interface LoaderData {
   articles: HomeArticle[];
   error: boolean;
   events: HomeEvent[];
@@ -46,12 +25,38 @@ interface HomeLoaderData {
   releases: HomeRelease[];
 }
 
-const { defaultDescription, siteName } = getSiteDefaults();
+function transformArticle(article: {
+  author?: { name?: string };
+  category: string;
+  cover_image?: string | null;
+  excerpt: string;
+  id: number;
+  published_at: string | null;
+  created_at: string;
+  slug: string;
+  title: string;
+}): HomeArticle {
+  const dateSource = article.published_at ?? article.created_at;
+  return {
+    author: article.author?.name ?? "Unknown",
+    category: article.category,
+    cover_image: article.cover_image ?? null,
+    date: new Date(dateSource).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    excerpt: article.excerpt,
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+  };
+}
 
 /**
- * Ported from apps/web/src/app/page.tsx: data is fetched in the loader
- * (server-rendered initial HTML, no client fetch waterfall) with the same
- * Promise.allSettled graceful-degradation semantics as the Next.js page.
+ * Ported from apps/web/src/app/page.tsx + homepage-client.tsx: the visual
+ * parity pass replaces the simplified layout with the real section
+ * composition — spotlight hero, article grid, shows table, music, merch.
  */
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -65,16 +70,17 @@ export const Route = createFileRoute("/")({
       { title: `${siteName} | Arkansas Music, Events & Culture` },
     ],
   }),
-  loader: async (): Promise<HomeLoaderData> => {
+  loader: async (): Promise<LoaderData> => {
     const [articles, events, releases, products] = await Promise.allSettled([
-      apiFetch<{ results: HomeArticle[] }>("/music/posts?limit=100"),
+      apiFetch<{ results: Parameters<typeof transformArticle>[0][] }>("/music/posts?limit=100"),
       apiFetch<{ results: HomeEvent[] }>("/music/events?status=upcoming&limit=100"),
       apiFetch<HomeRelease[]>("/music/releases?limit=10"),
       apiFetch<HomeProduct[]>("/music/products?currency=USD&limit=5"),
     ]);
 
+    const rawArticles = articles.status === "fulfilled" ? articles.value.results : [];
     return {
-      articles: articles.status === "fulfilled" ? articles.value.results : [],
+      articles: rawArticles.map(transformArticle),
       error: articles.status === "rejected",
       events: events.status === "fulfilled" ? events.value.results : [],
       products: products.status === "fulfilled" ? products.value : [],
@@ -85,170 +91,53 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { articles, error, events, products, releases } = Route.useLoaderData();
-  const [hero, ...rest] = articles;
-  const latest = rest.slice(0, 6);
+  const featured = articles.slice(0, 4);
+  const hero = featured[0];
+  const secondary = featured.slice(1, 4);
+  const featuredSlugs = new Set(featured.map((article) => article.slug));
+  const archive = articles.filter((article) => !featuredSlugs.has(article.slug)).slice(0, 6);
 
   return (
     <main>
-      <section className="border-b border-white/10">
-        <div className="mx-auto max-w-5xl px-6 pt-16 pb-12">
-          <p className="mb-2 font-mono text-sm text-[#7CFC00]">arkansas music · events · culture</p>
-          {hero ? (
-            <>
-              <Link params={{ slug: hero.slug }} to="/article/$slug">
-                <h1 className="mb-3 max-w-3xl text-4xl font-black leading-tight hover:text-[#7CFC00] md:text-6xl">
-                  {hero.title}
-                </h1>
-              </Link>
-              <p className="max-w-2xl text-lg text-gray-400">{hero.excerpt}</p>
-              <p className="mt-2 text-sm text-gray-500">
-                {hero.category}
-                {hero.published_at
-                  ? ` | ${new Date(hero.published_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}`
-                  : ""}
-              </p>
-            </>
-          ) : (
-            <h1 className="mb-3 text-4xl font-black md:text-6xl">{siteName}</h1>
-          )}
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-5xl px-6 pt-12 pb-20">
-        {error ? (
-          <p className="mb-12 rounded-md border border-red-500/40 px-4 py-3 text-red-400">
+      {error ? (
+        <section className="mx-auto max-w-5xl px-6 pt-16">
+          <p className="rounded-md border border-red-500/40 px-4 py-3 text-red-400">
             Latest articles failed to load — refresh to retry.
           </p>
-        ) : null}
+        </section>
+      ) : null}
 
-        {latest.length > 0 ? (
-          <section className="mb-14">
-            <h2 className="mb-5 text-2xl font-black">Latest Articles</h2>
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {latest.map((article) => (
-                <li
-                  className="rounded-md border border-white/10 p-4 hover:border-[#7CFC00]/40"
-                  key={article.id}
-                >
-                  <Link params={{ slug: article.slug }} to="/article/$slug">
-                    <span className="text-xs text-[#7CFC00]">{article.category}</span>
-                    <h3 className="font-bold">{article.title}</h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-400">{article.excerpt}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+      <ArticleSpotlight hero={hero} secondary={secondary} />
+      <ArticleGrid articles={archive} />
+      <ShowsStrip events={events} />
+      <MusicSection releases={releases} />
+      <MerchSection products={products} />
 
-        {events.length > 0 ? (
-          <section className="mb-14">
-            <div className="mb-5 flex items-baseline justify-between">
-              <h2 className="text-2xl font-black">Upcoming Events</h2>
-              <Link className="text-sm text-[#7CFC00] hover:underline" to="/events">
-                All events
-              </Link>
-            </div>
-            <ul className="space-y-3">
-              {events.slice(0, 6).map((event) => (
-                <li
-                  className="flex items-baseline justify-between rounded-md border border-white/10 px-4 py-3"
-                  key={event.id}
-                >
-                  <div>
-                    <Link
-                      className="font-semibold hover:text-[#7CFC00]"
-                      params={{ slug: event.slug }}
-                      to="/events/$slug"
-                    >
-                      {event.title}
-                    </Link>
-                    <p className="text-sm text-gray-500">
-                      {event.venue}
-                      {event.artists.length > 0
-                        ? ` | ${event.artists.map((a) => a.name).join(", ")}`
-                        : ""}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-sm text-[#7CFC00]">{event.date}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {releases.length > 0 ? (
-          <section className="mb-14">
-            <div className="mb-5 flex items-baseline justify-between">
-              <h2 className="text-2xl font-black">New Music</h2>
-              <Link className="text-sm text-[#7CFC00] hover:underline" to="/music">
-                All releases
-              </Link>
-            </div>
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {releases.slice(0, 5).map((release) => (
-                <li className="rounded-md border border-white/10 p-4" key={release.id}>
-                  <Link params={{ slug: release.slug }} to="/music/$slug">
-                    <span className="text-xs text-[#7CFC00]">{release.releaseType}</span>
-                    <h3 className="font-bold">{release.title}</h3>
-                    <p className="text-sm text-gray-500">{release.artistName}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {products.length > 0 ? (
-          <section className="mb-14">
-            <h2 className="mb-5 text-2xl font-black">Merch</h2>
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {products.map((product) => {
-                const variant = product.variants[0];
-                const amount = variant ? Number.parseFloat(variant.price.amount) : undefined;
-                return (
-                  <li className="rounded-md border border-white/10 p-4" key={product.id}>
-                    {product.featuredImage ? (
-                      <img
-                        alt={product.title}
-                        className="mb-2 w-full rounded-md border border-white/10"
-                        src={product.featuredImage.url}
-                      />
-                    ) : null}
-                    <h3 className="font-bold">{product.title}</h3>
-                    {amount !== undefined && Number.isFinite(amount) ? (
-                      <p className="text-sm text-[#7CFC00]">
-                        {variant?.price.currencyCode} {amount.toFixed(2)}
-                      </p>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
-
-        <nav className="flex flex-wrap gap-3 border-t border-white/10 pt-8 text-sm">
-          {[
-            { label: "Artists", to: "/artists" },
-            { label: "Articles", to: "/articles" },
-            { label: "Events", to: "/events" },
-            { label: "Music", to: "/music" },
-            { label: "Venues", to: "/venues" },
-            { label: "Writers", to: "/writers" },
-            { label: "About", to: "/about" },
-            { label: "Support", to: "/donate" },
-          ].map((item) => (
+      <section className="mx-auto max-w-5xl px-6 pb-20">
+        <div className="rounded-2xl border border-[#7CFC00]/20 bg-gradient-to-br from-zinc-950 to-[#0A0A0A] p-10 text-center">
+          <h2 className="mb-3 text-3xl font-black">
+            Your premier destination for all things music in{" "}
+            <span className="text-[#7CFC00]">Arkansas</span>
+          </h2>
+          <p className="mx-auto mb-6 max-w-xl text-gray-400">
+            Local rappers, country singers, hardcore bands, EDM DJs — we celebrate it all.
+          </p>
+          <nav className="flex flex-wrap items-center justify-center gap-3">
             <Link
-              className="rounded-md border border-white/10 px-3 py-1.5 text-gray-300 hover:border-[#7CFC00]/40 hover:text-[#7CFC00]"
-              key={item.to}
-              to={item.to}
+              className="flex items-center gap-1 rounded-md border border-[#7CFC00]/40 px-4 py-2 text-sm text-[#7CFC00] hover:bg-[#7CFC00]/10"
+              to="/artists"
             >
-              {item.label}
+              Browse Artists <ArrowRight className="h-4 w-4" />
             </Link>
-          ))}
-        </nav>
-      </div>
+            <Link
+              className="flex items-center gap-1 rounded-md border border-white/10 px-4 py-2 text-sm text-gray-300 hover:border-[#7CFC00]/40 hover:text-[#7CFC00]"
+              to="/donate"
+            >
+              Support the Scene
+            </Link>
+          </nav>
+        </div>
+      </section>
     </main>
   );
 }
