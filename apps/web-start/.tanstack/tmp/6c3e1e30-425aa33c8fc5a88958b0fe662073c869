@@ -1,0 +1,56 @@
+import { createFileRoute } from "@tanstack/react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import { AdminDataTable } from "../components/admin/admin-data-table";
+import { apiFetchWithAuth } from "../lib/api";
+import { apiPost } from "../lib/api-client";
+
+interface VenueRow {
+  city: string;
+  id: number;
+  name: string;
+  slug: string;
+  state: string;
+}
+
+const columnHelper = createColumnHelper<Row>();
+
+/**
+ * Admin venues list — tanstack-table on the shared
+ * AdminDataTable (bulk no actions for venues).
+ */
+export const Route = createFileRoute("/admin/venues/")({
+  component: () => {
+    const { error, rows } = Route.useLoaderData();
+    if (error) {
+      return <p className="rounded-md border border-red-500/40 px-4 py-3 text-red-400">{error}</p>;
+    }
+    return (
+      <AdminDataTable
+        bulkAction={undefined}
+        columns={[
+      columnHelper.accessor("name", {
+        cell: (info) => <span className="font-semibold">{info.getValue()}</span>,
+        header: "Venue",
+      }),
+      columnHelper.accessor("city", { header: "City" }),
+      columnHelper.accessor("state", { header: "State" }),
+      columnHelper.accessor("slug", { header: "Slug" }),
+    ]}
+        initialRows={rows}
+        subtitle="Staff-scoped via the platform API"
+        title="Venues"
+      />
+    );
+  },
+  head: () => ({ meta: [{ title: "Admin: Venues | Dead Party Media" }] }),
+  loader: async () => {
+    const data = await apiFetchWithAuth<{ venues: VenueRow[]; total: number }>(
+        "/music/admin/venues?limit=100",
+      ).catch(() => null);
+    if (!data) {
+      return { error: "Failed to load venues", rows: [] as never[] };
+    }
+    return { error: null, rows: data.venues };
+  },
+});

@@ -776,6 +776,19 @@ musicAdminRoutes.get("/admin/artists", async (c) => {
   return c.json({ artists: allArtists, total: Number(totalRows[0]?.total ?? 0) });
 });
 
+// GET /admin/artists/:id — full row for the edit screen.
+musicAdminRoutes.get("/admin/artists/:id", async (c) => {
+  const id = idParam(c);
+  requireRole(c, MUSIC_ADMIN_ROLES);
+  const db = getDb(c.env);
+
+  const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
+  if (!artist) {
+    return c.json({ error: "Artist not found" }, 404);
+  }
+  return c.json({ artist });
+});
+
 // createArtist
 musicAdminRoutes.post("/admin/artists", async (c) => {
   requireRole(c, MUSIC_ADMIN_ROLES);
@@ -1062,6 +1075,22 @@ musicAdminRoutes.get("/admin/events", async (c) => {
   ]);
 
   return c.json({ events: filteredEvents, total: Number(totalRows[0]?.total ?? 0) });
+});
+
+// GET /admin/events/:id — full row for the edit screen.
+musicAdminRoutes.get("/admin/events/:id", async (c) => {
+  const id = idParam(c);
+  const auth = requireRole(c, MUSIC_ADMIN_ROLES);
+  const db = getDb(c.env);
+
+  const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
+  if (!event) {
+    return c.json({ error: "Event not found" }, 404);
+  }
+  if (!canEditResource(auth, event.createdById ?? "")) {
+    return c.json({ error: "You do not have permission to edit this event" }, 403);
+  }
+  return c.json({ event });
 });
 
 // createEvent — vertical defaults to "music" via the schema default, as
@@ -1354,6 +1383,22 @@ musicAdminRoutes.get("/admin/music", async (c) => {
   });
 });
 
+// GET /admin/music/:id — full row for the edit screen.
+musicAdminRoutes.get("/admin/music/:id", async (c) => {
+  const id = idParam(c);
+  const auth = requireRole(c, MUSIC_ADMIN_ROLES);
+  const db = getDb(c.env);
+
+  const [release] = await db.select().from(musicReleases).where(eq(musicReleases.id, id)).limit(1);
+  if (!release) {
+    return c.json({ error: "Release not found" }, 404);
+  }
+  if (!canEditResource(auth, release.authorId)) {
+    return c.json({ error: "You do not have permission to edit this release" }, 403);
+  }
+  return c.json({ release });
+});
+
 // createMusicRelease
 musicAdminRoutes.post("/admin/music", async (c) => {
   const auth = requireRole(c, MUSIC_ADMIN_ROLES);
@@ -1615,6 +1660,19 @@ musicAdminRoutes.get("/admin/venues", async (c) => {
       zip: venue.zip,
     })),
   });
+});
+
+// GET /admin/venues/:id — full row for the edit screen.
+musicAdminRoutes.get("/admin/venues/:id", async (c) => {
+  const id = idParam(c);
+  requireRole(c, MUSIC_ADMIN_ROLES);
+  const db = getDb(c.env);
+
+  const [venue] = await db.select().from(venues).where(eq(venues.id, id)).limit(1);
+  if (!venue) {
+    return c.json({ error: "Venue not found" }, 404);
+  }
+  return c.json({ venue });
 });
 
 // createVenue

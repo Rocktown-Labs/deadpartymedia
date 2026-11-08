@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminTable } from "../components/admin/admin-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import { AdminDataTable } from "../components/admin/admin-data-table";
 import { apiFetchWithAuth } from "../lib/api";
+import { apiPost } from "../lib/api-client";
 
 interface ArtistRow {
   claimed: boolean;
@@ -10,47 +12,52 @@ interface ArtistRow {
   slug: string;
 }
 
+const columnHelper = createColumnHelper<ArtistRow>();
+
 /**
- * Admin artists list — ported from the Next admin
- * artists table (data+route; the tanstack-table client
- * with bulk actions is the visual parity pass). Writers are scoped to their
- * own rows by the API.
+ * Admin artists list — tanstack-table on the shared
+ * AdminDataTable (bulk toggle + pagination).
  */
 export const Route = createFileRoute("/admin/artists/")({
   component: () => {
-    const { error, rows, total } = Route.useLoaderData();
+    const { error, rows } = Route.useLoaderData();
+    if (error) {
+      return <p className="rounded-md border border-red-500/40 px-4 py-3 text-red-400">{error}</p>;
+    }
     return (
-      <AdminTable
+      <AdminDataTable
+        bulkAction={{
+          apply: async (row: ArtistRow) =>
+            (await apiPost(`/music/admin/artists/${row.id}/visibility`, {})).ok,
+          label: "Toggle visibility",
+          toggle: (row: ArtistRow) => ({ ...row, claimed: !row.claimed }),
+        }}
         columns={[
-          {
-            key: "name",
-            label: "Artist",
-            render: (row: ArtistRow) => <span className="font-semibold">{row.name}</span>,
-          },
-          { key: "genre", label: "Genre" },
-          {
-            key: "claimed",
-            label: "Claimed",
-            render: (row: ArtistRow) => (row.claimed ? "Yes" : "No"),
-          },
-          { key: "slug", label: "Slug" },
+          columnHelper.accessor("name", {
+            cell: (info) => <span className="font-semibold">{info.getValue()}</span>,
+            header: "Artist",
+          }),
+          columnHelper.accessor("genre", { header: "Genre" }),
+          columnHelper.accessor("claimed", {
+            cell: (info) => (info.getValue() ? "Yes" : "No"),
+            header: "Claimed",
+          }),
+          columnHelper.accessor("slug", { header: "Slug" }),
         ]}
-        error={error}
-        rows={rows}
-        subtitle="Served by the platform API (staff-scoped)"
+        initialRows={rows}
+        subtitle="Staff-scoped via the platform API"
         title="Artists"
-        total={total}
       />
     );
   },
   head: () => ({ meta: [{ title: "Admin: Artists | Dead Party Media" }] }),
   loader: async () => {
     const data = await apiFetchWithAuth<{ artists: ArtistRow[]; total: number }>(
-      "/music/admin/artists?limit=50",
+      "/music/admin/artists?limit=100",
     ).catch(() => null);
     if (!data) {
-      return { error: "Failed to load artists", rows: [], total: 0 };
+      return { error: "Failed to load artists", rows: [] as never[] };
     }
-    return { error: null, rows: data.artists, total: data.total };
+    return { error: null, rows: data.artists };
   },
 });

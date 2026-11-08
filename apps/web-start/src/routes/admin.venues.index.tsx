@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminTable } from "../components/admin/admin-table";
+import { createColumnHelper } from "@tanstack/react-table";
+import { AdminDataTable } from "../components/admin/admin-data-table";
 import { apiFetchWithAuth } from "../lib/api";
 
 interface VenueRow {
@@ -10,43 +11,44 @@ interface VenueRow {
   state: string;
 }
 
+const columnHelper = createColumnHelper<VenueRow>();
+
 /**
- * Admin venues list — ported from the Next admin
- * venues table (data+route; the tanstack-table client
- * with bulk actions is the visual parity pass). Writers are scoped to their
- * own rows by the API.
+ * Admin venues list — tanstack-table on the shared
+ * AdminDataTable (bulk no actions for venues).
  */
 export const Route = createFileRoute("/admin/venues/")({
   component: () => {
-    const { error, rows, total } = Route.useLoaderData();
+    const { error, rows } = Route.useLoaderData();
+    if (error) {
+      return <p className="rounded-md border border-red-500/40 px-4 py-3 text-red-400">{error}</p>;
+    }
     return (
-      <AdminTable
+      <AdminDataTable
+        bulkAction={undefined}
         columns={[
-          {
-            key: "name",
-            label: "Venue",
-            render: (row: VenueRow) => <span className="font-semibold">{row.name}</span>,
-          },
-          { key: "city", label: "City" },
-          { key: "state", label: "State" },
-          { key: "slug", label: "Slug" },
+          columnHelper.accessor("name", {
+            cell: (info) => <span className="font-semibold">{info.getValue()}</span>,
+            header: "Venue",
+          }),
+          columnHelper.accessor("city", { header: "City" }),
+          columnHelper.accessor("state", { header: "State" }),
+          columnHelper.accessor("slug", { header: "Slug" }),
         ]}
-        error={error}
-        rows={rows}
-        subtitle="Served by the platform API (staff-scoped)"
+        initialRows={rows}
+        subtitle="Staff-scoped via the platform API"
         title="Venues"
-        total={total}
       />
     );
   },
   head: () => ({ meta: [{ title: "Admin: Venues | Dead Party Media" }] }),
   loader: async () => {
     const data = await apiFetchWithAuth<{ venues: VenueRow[]; total: number }>(
-      "/music/admin/venues?limit=50",
+      "/music/admin/venues?limit=100",
     ).catch(() => null);
     if (!data) {
-      return { error: "Failed to load venues", rows: [], total: 0 };
+      return { error: "Failed to load venues", rows: [] as never[] };
     }
-    return { error: null, rows: data.venues, total: data.total };
+    return { error: null, rows: data.venues };
   },
 });
