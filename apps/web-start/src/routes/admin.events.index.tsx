@@ -57,6 +57,7 @@ export const Route = createFileRoute("/admin/events/")({
           }),
         ]}
         initialRows={rows}
+        newTo="/admin/events/new"
         subtitle="Staff-scoped via the platform API"
         title="Events"
       />

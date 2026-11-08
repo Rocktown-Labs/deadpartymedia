@@ -36,6 +36,7 @@ export const Route = createFileRoute("/admin/venues/")({
           columnHelper.accessor("slug", { header: "Slug" }),
         ]}
         initialRows={rows}
+        newTo="/admin/venues/new"
         subtitle="Staff-scoped via the platform API"
         title="Venues"
       />

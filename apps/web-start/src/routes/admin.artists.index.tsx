@@ -45,6 +45,7 @@ export const Route = createFileRoute("/admin/artists/")({
           columnHelper.accessor("slug", { header: "Slug" }),
         ]}
         initialRows={rows}
+        newTo="/admin/artists/new"
         subtitle="Staff-scoped via the platform API"
         title="Artists"
       />

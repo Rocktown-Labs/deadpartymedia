@@ -40,17 +40,25 @@ function AdminIndex() {
           </li>
         ))}
         {isSuperAdmin ? (
-          <li className="rounded-md border border-white/10 p-4">
-            <h2 className="font-bold">Users</h2>
-            <p className="text-sm text-gray-500">
-              roles & invitations — screens port with the users tranche
-            </p>
-          </li>
+          <>
+            <li className="rounded-md border border-white/10 p-4 hover:border-[#7CFC00]/40">
+              <Link to="/admin/users">
+                <h2 className="font-bold">Users</h2>
+                <p className="text-sm text-gray-500">roles & role changes</p>
+              </Link>
+            </li>
+            <li className="rounded-md border border-white/10 p-4 hover:border-[#7CFC00]/40">
+              <Link to="/admin/invitations">
+                <h2 className="font-bold">Invitations</h2>
+                <p className="text-sm text-gray-500">pending invites</p>
+              </Link>
+            </li>
+          </>
         ) : null}
       </ul>
       <p className="mt-6 text-xs text-gray-600">
-        Editors (create/update/toggle) port with the admin UI parity pass — the full CRUD API
-        surface is live.
+        Each section list links to entity editors. AI assist + WordPress import remain on the
+        Next.js admin until the visual parity pass.
       </p>
     </>
   );

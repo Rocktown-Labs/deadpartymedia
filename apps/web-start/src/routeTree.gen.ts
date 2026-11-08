@@ -49,14 +49,23 @@ import { Route as SignInIndexRouteImport } from './routes/sign-in.index'
 import { Route as SignUpIndexRouteImport } from './routes/sign-up.index'
 import { Route as VenueDashboardIndexRouteImport } from './routes/venue-dashboard.index'
 import { Route as AdminArtistsIndexRouteImport } from './routes/admin.artists.index'
+import { Route as AdminArtistsIdRouteImport } from './routes/admin.artists.$id'
+import { Route as AdminArtistsNewRouteImport } from './routes/admin.artists.new'
 import { Route as AdminEventsIndexRouteImport } from './routes/admin.events.index'
+import { Route as AdminEventsIdRouteImport } from './routes/admin.events.$id'
+import { Route as AdminEventsNewRouteImport } from './routes/admin.events.new'
 import { Route as AdminInvitationsIndexRouteImport } from './routes/admin.invitations.index'
+import { Route as AdminInvitationsNewRouteImport } from './routes/admin.invitations.new'
 import { Route as AdminMusicIndexRouteImport } from './routes/admin.music.index'
+import { Route as AdminMusicIdRouteImport } from './routes/admin.music.$id'
+import { Route as AdminMusicNewRouteImport } from './routes/admin.music.new'
 import { Route as AdminPostsIndexRouteImport } from './routes/admin.posts.index'
 import { Route as AdminPostsIdRouteImport } from './routes/admin.posts.$id'
 import { Route as AdminPostsNewRouteImport } from './routes/admin.posts.new'
 import { Route as AdminUsersIndexRouteImport } from './routes/admin.users.index'
 import { Route as AdminVenuesIndexRouteImport } from './routes/admin.venues.index'
+import { Route as AdminVenuesIdRouteImport } from './routes/admin.venues.$id'
+import { Route as AdminVenuesNewRouteImport } from './routes/admin.venues.new'
 import { Route as VenueDashboardEventsNewRouteImport } from './routes/venue-dashboard.events.new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -259,9 +268,29 @@ const AdminArtistsIndexRoute = AdminArtistsIndexRouteImport.update({
   path: '/artists/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminArtistsIdRoute = AdminArtistsIdRouteImport.update({
+  id: '/artists/$id',
+  path: '/artists/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminArtistsNewRoute = AdminArtistsNewRouteImport.update({
+  id: '/artists/new',
+  path: '/artists/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
   id: '/events/',
   path: '/events/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsIdRoute = AdminEventsIdRouteImport.update({
+  id: '/events/$id',
+  path: '/events/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsNewRoute = AdminEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInvitationsIndexRoute = AdminInvitationsIndexRouteImport.update({
@@ -269,9 +298,24 @@ const AdminInvitationsIndexRoute = AdminInvitationsIndexRouteImport.update({
   path: '/invitations/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInvitationsNewRoute = AdminInvitationsNewRouteImport.update({
+  id: '/invitations/new',
+  path: '/invitations/new',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMusicIndexRoute = AdminMusicIndexRouteImport.update({
   id: '/music/',
   path: '/music/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMusicIdRoute = AdminMusicIdRouteImport.update({
+  id: '/music/$id',
+  path: '/music/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMusicNewRoute = AdminMusicNewRouteImport.update({
+  id: '/music/new',
+  path: '/music/new',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPostsIndexRoute = AdminPostsIndexRouteImport.update({
@@ -297,6 +341,16 @@ const AdminUsersIndexRoute = AdminUsersIndexRouteImport.update({
 const AdminVenuesIndexRoute = AdminVenuesIndexRouteImport.update({
   id: '/venues/',
   path: '/venues/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVenuesIdRoute = AdminVenuesIdRouteImport.update({
+  id: '/venues/$id',
+  path: '/venues/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminVenuesNewRoute = AdminVenuesNewRouteImport.update({
+  id: '/venues/new',
+  path: '/venues/new',
   getParentRoute: () => AdminRoute,
 } as any)
 const VenueDashboardEventsNewRoute = VenueDashboardEventsNewRouteImport.update({
@@ -345,8 +399,17 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/venue-dashboard/': typeof VenueDashboardIndexRoute
+  '/admin/artists/$id': typeof AdminArtistsIdRoute
+  '/admin/artists/new': typeof AdminArtistsNewRoute
+  '/admin/events/$id': typeof AdminEventsIdRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/invitations/new': typeof AdminInvitationsNewRoute
+  '/admin/music/$id': typeof AdminMusicIdRoute
+  '/admin/music/new': typeof AdminMusicNewRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/venues/$id': typeof AdminVenuesIdRoute
+  '/admin/venues/new': typeof AdminVenuesNewRoute
   '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
   '/admin/artists/': typeof AdminArtistsIndexRoute
   '/admin/events/': typeof AdminEventsIndexRoute
@@ -392,8 +455,17 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/venue-dashboard': typeof VenueDashboardIndexRoute
+  '/admin/artists/$id': typeof AdminArtistsIdRoute
+  '/admin/artists/new': typeof AdminArtistsNewRoute
+  '/admin/events/$id': typeof AdminEventsIdRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/invitations/new': typeof AdminInvitationsNewRoute
+  '/admin/music/$id': typeof AdminMusicIdRoute
+  '/admin/music/new': typeof AdminMusicNewRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/venues/$id': typeof AdminVenuesIdRoute
+  '/admin/venues/new': typeof AdminVenuesNewRoute
   '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
   '/admin/artists': typeof AdminArtistsIndexRoute
   '/admin/events': typeof AdminEventsIndexRoute
@@ -444,8 +516,17 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/venue-dashboard/': typeof VenueDashboardIndexRoute
+  '/admin/artists/$id': typeof AdminArtistsIdRoute
+  '/admin/artists/new': typeof AdminArtistsNewRoute
+  '/admin/events/$id': typeof AdminEventsIdRoute
+  '/admin/events/new': typeof AdminEventsNewRoute
+  '/admin/invitations/new': typeof AdminInvitationsNewRoute
+  '/admin/music/$id': typeof AdminMusicIdRoute
+  '/admin/music/new': typeof AdminMusicNewRoute
   '/admin/posts/$id': typeof AdminPostsIdRoute
   '/admin/posts/new': typeof AdminPostsNewRoute
+  '/admin/venues/$id': typeof AdminVenuesIdRoute
+  '/admin/venues/new': typeof AdminVenuesNewRoute
   '/venue-dashboard/events/new': typeof VenueDashboardEventsNewRoute
   '/admin/artists/': typeof AdminArtistsIndexRoute
   '/admin/events/': typeof AdminEventsIndexRoute
@@ -497,8 +578,17 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/venue-dashboard/'
+    | '/admin/artists/$id'
+    | '/admin/artists/new'
+    | '/admin/events/$id'
+    | '/admin/events/new'
+    | '/admin/invitations/new'
+    | '/admin/music/$id'
+    | '/admin/music/new'
     | '/admin/posts/$id'
     | '/admin/posts/new'
+    | '/admin/venues/$id'
+    | '/admin/venues/new'
     | '/venue-dashboard/events/new'
     | '/admin/artists/'
     | '/admin/events/'
@@ -544,8 +634,17 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/venue-dashboard'
+    | '/admin/artists/$id'
+    | '/admin/artists/new'
+    | '/admin/events/$id'
+    | '/admin/events/new'
+    | '/admin/invitations/new'
+    | '/admin/music/$id'
+    | '/admin/music/new'
     | '/admin/posts/$id'
     | '/admin/posts/new'
+    | '/admin/venues/$id'
+    | '/admin/venues/new'
     | '/venue-dashboard/events/new'
     | '/admin/artists'
     | '/admin/events'
@@ -595,8 +694,17 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/venue-dashboard/'
+    | '/admin/artists/$id'
+    | '/admin/artists/new'
+    | '/admin/events/$id'
+    | '/admin/events/new'
+    | '/admin/invitations/new'
+    | '/admin/music/$id'
+    | '/admin/music/new'
     | '/admin/posts/$id'
     | '/admin/posts/new'
+    | '/admin/venues/$id'
+    | '/admin/venues/new'
     | '/venue-dashboard/events/new'
     | '/admin/artists/'
     | '/admin/events/'
@@ -922,11 +1030,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArtistsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/artists/$id': {
+      id: '/admin/artists/$id'
+      path: '/artists/$id'
+      fullPath: '/admin/artists/$id'
+      preLoaderRoute: typeof AdminArtistsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/artists/new': {
+      id: '/admin/artists/new'
+      path: '/artists/new'
+      fullPath: '/admin/artists/new'
+      preLoaderRoute: typeof AdminArtistsNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/events/': {
       id: '/admin/events/'
       path: '/events'
       fullPath: '/admin/events/'
       preLoaderRoute: typeof AdminEventsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/$id': {
+      id: '/admin/events/$id'
+      path: '/events/$id'
+      fullPath: '/admin/events/$id'
+      preLoaderRoute: typeof AdminEventsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/new': {
+      id: '/admin/events/new'
+      path: '/events/new'
+      fullPath: '/admin/events/new'
+      preLoaderRoute: typeof AdminEventsNewRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/invitations/': {
@@ -936,11 +1072,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInvitationsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invitations/new': {
+      id: '/admin/invitations/new'
+      path: '/invitations/new'
+      fullPath: '/admin/invitations/new'
+      preLoaderRoute: typeof AdminInvitationsNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/music/': {
       id: '/admin/music/'
       path: '/music'
       fullPath: '/admin/music/'
       preLoaderRoute: typeof AdminMusicIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/music/$id': {
+      id: '/admin/music/$id'
+      path: '/music/$id'
+      fullPath: '/admin/music/$id'
+      preLoaderRoute: typeof AdminMusicIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/music/new': {
+      id: '/admin/music/new'
+      path: '/music/new'
+      fullPath: '/admin/music/new'
+      preLoaderRoute: typeof AdminMusicNewRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/posts/': {
@@ -978,6 +1135,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVenuesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/venues/$id': {
+      id: '/admin/venues/$id'
+      path: '/venues/$id'
+      fullPath: '/admin/venues/$id'
+      preLoaderRoute: typeof AdminVenuesIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/venues/new': {
+      id: '/admin/venues/new'
+      path: '/venues/new'
+      fullPath: '/admin/venues/new'
+      preLoaderRoute: typeof AdminVenuesNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/venue-dashboard/events/new': {
       id: '/venue-dashboard/events/new'
       path: '/events/new'
@@ -990,8 +1161,17 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminArtistsIdRoute: typeof AdminArtistsIdRoute
+  AdminArtistsNewRoute: typeof AdminArtistsNewRoute
+  AdminEventsIdRoute: typeof AdminEventsIdRoute
+  AdminEventsNewRoute: typeof AdminEventsNewRoute
+  AdminInvitationsNewRoute: typeof AdminInvitationsNewRoute
+  AdminMusicIdRoute: typeof AdminMusicIdRoute
+  AdminMusicNewRoute: typeof AdminMusicNewRoute
   AdminPostsIdRoute: typeof AdminPostsIdRoute
   AdminPostsNewRoute: typeof AdminPostsNewRoute
+  AdminVenuesIdRoute: typeof AdminVenuesIdRoute
+  AdminVenuesNewRoute: typeof AdminVenuesNewRoute
   AdminArtistsIndexRoute: typeof AdminArtistsIndexRoute
   AdminEventsIndexRoute: typeof AdminEventsIndexRoute
   AdminInvitationsIndexRoute: typeof AdminInvitationsIndexRoute
@@ -1003,8 +1183,17 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminArtistsIdRoute: AdminArtistsIdRoute,
+  AdminArtistsNewRoute: AdminArtistsNewRoute,
+  AdminEventsIdRoute: AdminEventsIdRoute,
+  AdminEventsNewRoute: AdminEventsNewRoute,
+  AdminInvitationsNewRoute: AdminInvitationsNewRoute,
+  AdminMusicIdRoute: AdminMusicIdRoute,
+  AdminMusicNewRoute: AdminMusicNewRoute,
   AdminPostsIdRoute: AdminPostsIdRoute,
   AdminPostsNewRoute: AdminPostsNewRoute,
+  AdminVenuesIdRoute: AdminVenuesIdRoute,
+  AdminVenuesNewRoute: AdminVenuesNewRoute,
   AdminArtistsIndexRoute: AdminArtistsIndexRoute,
   AdminEventsIndexRoute: AdminEventsIndexRoute,
   AdminInvitationsIndexRoute: AdminInvitationsIndexRoute,

@@ -54,6 +54,7 @@ export const Route = createFileRoute("/admin/music/")({
           }),
         ]}
         initialRows={rows}
+        newTo="/admin/music/new"
         subtitle="Staff-scoped via the platform API"
         title="Music"
       />
