@@ -63,3 +63,8 @@ export function createApp() {
 export const app = createApp();
 
 export default app;
+
+/** Hono RPC type — import this in frontends for type-safe API calls:
+ *  `const client = hc<AppType>("http://localhost:8787")`
+ */
+export type AppType = typeof app;
