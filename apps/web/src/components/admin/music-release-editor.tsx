@@ -44,7 +44,7 @@ import { toast } from "sonner";
 import NextImage from "next/image";
 import { validateImageFile } from "@/lib/upload";
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
@@ -575,11 +575,11 @@ export function MusicReleaseEditor({
         initialData?.id ? "Release updated successfully" : "Release created successfully",
       );
       if (result?.redirectUrl) {
-        router.push(result.redirectUrl as Route);
+        router.navigate({ to: result.redirectUrl });
       } else {
-        router.push("/admin/music" as Route);
+        router.navigate({ to: "/admin/music" });
       }
-      router.refresh();
+      router.invalidate();
     } catch (error) {
       if (isNextRedirectError(error)) {
         return;
@@ -1194,7 +1194,7 @@ export function MusicReleaseEditor({
 
               {coverArt && (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
-                  <NextImage src={coverArt} alt="Cover Art Preview" fill className="object-cover" />
+                  <NextImage src={coverArt} alt="Cover Art Preview"className="object-cover" />
                   <button
                     type="button"
                     onClick={() => setCoverArt("")}

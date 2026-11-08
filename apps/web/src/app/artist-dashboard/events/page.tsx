@@ -10,8 +10,8 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { Calendar, MapPin, ExternalLink } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import { format } from "date-fns";
 
 export default function ArtistEventsPage() {
@@ -114,12 +114,12 @@ export default function ArtistEventsPage() {
                 <div className="flex gap-4">
                   {event.image && (
                     <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                      <Image src={event.image} alt={event.title} fill className="object-cover" />
+                      <img src={event.image} alt={event.title}className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
-                      <Link href={`/events/${event.slug}`}>
+                      <Link to={`/events/${event.slug}`}>
                         <h3 className="text-xl font-semibold text-white hover:text-[#7CFC00] transition-colors line-clamp-2">
                           {event.title}
                         </h3>
@@ -139,7 +139,7 @@ export default function ArtistEventsPage() {
                       </div>
                       {event.ticket_link && (
                         <a
-                          href={event.ticket_link}
+                          to={event.ticket_link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-[#7CFC00] hover:underline"

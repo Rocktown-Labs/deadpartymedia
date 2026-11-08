@@ -7,7 +7,7 @@ import { ProductProvider } from "@/components/product/product-context";
 import { ProductDescription } from "@/components/product/product-description";
 import type { Product } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { cache } from "react";
 
 interface ProductPageProps {
@@ -102,7 +102,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="container mx-auto px-6">
             <div className="max-w-7xl">
               <Link
-                href="/merch"
+                to="/merch"
                 className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />

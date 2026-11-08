@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { ArrowLeft, RefreshCw } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 export default function AdminError({
@@ -34,7 +34,7 @@ export default function AdminError({
           Try Again
         </button>
         <Link
-          href="/admin"
+          to="/admin"
           className="inline-flex h-10 items-center justify-center gap-2 border border-gray-700 bg-transparent px-4 text-xs font-black uppercase tracking-wider text-white transition-colors hover:border-gray-500 hover:bg-white/5"
         >
           <ArrowLeft className="h-4 w-4" />

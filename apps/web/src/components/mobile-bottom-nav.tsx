@@ -1,13 +1,13 @@
 "use client";
 
 import { Home, Music, Calendar, ShoppingBag, Mic2 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import type { Route } from "next";
-import { usePathname } from "next/navigation";
+import { useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 export default function MobileBottomNav() {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
 
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
     return null;
@@ -29,7 +29,7 @@ export default function MobileBottomNav() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors",
                 isActive ? "text-[#7CFC00]" : "text-gray-400",

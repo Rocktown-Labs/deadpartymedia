@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+// next/image replaced with <img> (see migration guide)
+import { Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2, Upload, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -367,7 +367,7 @@ export default function EventFlyerImportClient({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <Link
-            href="/admin/events"
+            to="/admin/events"
             className="mb-3 inline-flex items-center text-sm text-[#7CFC00]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -443,7 +443,7 @@ export default function EventFlyerImportClient({
                 }`}
               >
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-gray-800">
-                  <Image src={item.previewUrl} alt={item.fileName} fill className="object-cover" />
+                  <img src={item.previewUrl} alt={item.fileName}className="object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">Flyer {index + 1}</p>
@@ -476,11 +476,10 @@ export default function EventFlyerImportClient({
               <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
                 <div className="space-y-4">
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-800 bg-black">
-                    <Image
+                    <img
                       src={activeItem.previewUrl}
                       alt={activeItem.fileName}
-                      fill
-                      className="object-contain"
+                                           className="object-contain"
                     />
                   </div>
                   {activeItem.error && (

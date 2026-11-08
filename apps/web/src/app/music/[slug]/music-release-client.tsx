@@ -3,10 +3,10 @@
 import { useMemo } from "react";
 import { ArrowLeft, Calendar, Share2, Edit, Disc3, ExternalLink, Music, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
+// next/image replaced with <img> (see migration guide)
+import { Link } from "@tanstack/react-router";
 import type { Route } from "next";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/tanstack-react-start";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useMusicRelease } from "@/lib/api/music";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-black mb-4">Release Not Found</h1>
-          <Link href="/music" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/music" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Return to Music
           </Link>
         </div>
@@ -85,7 +85,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
           <div className="max-w-4xl mx-auto">
             {/* Back Button */}
             <Link
-              href="/music"
+              to="/music"
               className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -116,7 +116,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
               <div className="text-xl md:text-2xl font-bold text-zinc-300 mb-6">
                 {release.artistSlug ? (
                   <Link
-                    href={`/artists/${release.artistSlug}`}
+                    to={`/artists/${release.artistSlug}`}
                     className="hover:text-[#7CFC00] transition-colors"
                   >
                     by {release.artistName}
@@ -138,7 +138,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                   Share Release
                 </Button>
                 {canEdit && (
-                  <Link href={`/admin/music/${release.id}` as Route}>
+                  <Link to={`/admin/music/${release.id}` as Route}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -156,11 +156,10 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12 items-start">
               <div className="md:col-span-6">
                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl">
-                  <Image
+                  <img
                     src={release.coverArt || "/placeholder.svg"}
                     alt={release.title}
-                    fill
-                    priority
+                                      
                     className="object-cover"
                   />
                 </div>
@@ -185,7 +184,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {release.spotifyUrl && (
                       <a
-                        href={release.spotifyUrl}
+                        to={release.spotifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:border-[#1DB954] hover:bg-[#1DB954]/10 transition-all group"
@@ -200,7 +199,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
 
                     {release.appleMusicUrl && (
                       <a
-                        href={release.appleMusicUrl}
+                        to={release.appleMusicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:border-pink-500 hover:bg-pink-500/10 transition-all group"
@@ -215,7 +214,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
 
                     {release.bandcampUrl && (
                       <a
-                        href={release.bandcampUrl}
+                        to={release.bandcampUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:border-cyan-400 hover:bg-cyan-400/10 transition-all group"
@@ -232,7 +231,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
 
                     {release.youtubeUrl && (
                       <a
-                        href={release.youtubeUrl}
+                        to={release.youtubeUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:border-red-500 hover:bg-red-500/10 transition-all group"
@@ -267,11 +266,10 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                 <div className="flex items-start gap-4">
                   {release.artistImage && (
                     <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 border border-zinc-700">
-                      <Image
+                      <img
                         src={release.artistImage}
                         alt={release.artistName}
-                        fill
-                        className="object-cover"
+                                               className="object-cover"
                       />
                     </div>
                   )}
@@ -281,7 +279,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                     <p className="text-sm text-zinc-300 leading-relaxed">{release.artistBio}</p>
                     {release.artistSlug && (
                       <Link
-                        href={`/artists/${release.artistSlug}`}
+                        to={`/artists/${release.artistSlug}`}
                         className="inline-block mt-3 text-xs font-mono font-bold text-[#7CFC00] hover:underline"
                       >
                         View Artist Profile →

@@ -1,5 +1,5 @@
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -136,11 +136,11 @@ export default async function ArtistsPage({
         <h1 className="text-3xl font-black">Artists</h1>
         <div className="flex flex-wrap gap-2">
           {isSuperAdmin && (
-            <Link href="/admin/artists/import">
+            <Link to="/admin/artists/import">
               <Button variant="outline">Import Artist List</Button>
             </Link>
           )}
-          <Link href="/admin/artists/new">
+          <Link to="/admin/artists/new">
             <Button>Create New Artist</Button>
           </Link>
         </div>
@@ -239,11 +239,11 @@ export default async function ArtistsPage({
                   <TableRow key={artist.id} className="border-gray-800 hover:bg-gray-900">
                     <TableCell className="px-6 py-3">
                       <Link
-                        href={`/admin/artists/${artist.id}`}
+                        to={`/admin/artists/${artist.id}`}
                         className="block h-11 w-11 overflow-hidden rounded-md border border-gray-800 bg-[#0A0A0A]"
                         aria-label={`Edit ${artist.name}`}
                       >
-                        <Image
+                        <img
                           src={artist.image || "/placeholder.svg"}
                           alt=""
                           width={44}
@@ -254,7 +254,7 @@ export default async function ArtistsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <Link
-                        href={`/admin/artists/${artist.id}`}
+                        to={`/admin/artists/${artist.id}`}
                         className="font-bold transition-colors hover:text-[#7CFC00]"
                       >
                         {artist.name}
@@ -288,7 +288,7 @@ export default async function ArtistsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/admin/artists/${artist.id}`}>
+                        <Link to={`/admin/artists/${artist.id}`}>
                           <Button variant="outline" size="sm">
                             Edit
                           </Button>

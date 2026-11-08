@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -55,7 +55,7 @@ export default async function AdminMusicSubmissionsPage() {
     <div>
       <div className="mb-6">
         <Link
-          href={"/admin/music" as Route}
+          to={"/admin/music" as Route}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -74,13 +74,13 @@ export default async function AdminMusicSubmissionsPage() {
       {/* Tabs navigation */}
       <div className="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
         <Link
-          href={"/admin/music" as Route}
+          to={"/admin/music" as Route}
           className="px-3 py-1.5 rounded-md text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition"
         >
           All Releases
         </Link>
         <Link
-          href={"/admin/music/submissions" as Route}
+          to={"/admin/music/submissions" as Route}
           className="px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-800 text-white flex items-center gap-2"
         >
           <span>Artist Submissions</span>

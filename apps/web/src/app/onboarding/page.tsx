@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import Image from "next/image";
+import { useUser } from "@clerk/tanstack-react-start";
+// next/image replaced with <img> (see migration guide)
 import { FanOnboarding } from "./fan-onboarding";
 import { ArtistOnboarding } from "./artist-onboarding";
 import { VenueOnboarding } from "./venue-onboarding";
@@ -198,7 +198,7 @@ export default function OnboardingPage() {
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Image
+            <img
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}

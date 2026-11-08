@@ -11,8 +11,8 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { BookOpen, Calendar } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import { formatDistanceToNow } from "date-fns";
 
 export default function HistoryPage() {
@@ -83,17 +83,16 @@ export default function HistoryPage() {
               return (
                 <Link
                   key={item.id}
-                  href={`/article/${article.slug}`}
+                  to={`/article/${article.slug}`}
                   className="block bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
                 >
                   <div className="flex gap-4">
                     {article.cover_image && (
                       <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                        <Image
+                        <img
                           src={article.cover_image}
                           alt={article.title}
-                          fill
-                          className="object-cover"
+                                                   className="object-cover"
                         />
                       </div>
                     )}

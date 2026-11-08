@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { and, asc, count, desc, ilike, notInArray, or } from "drizzle-orm";
@@ -478,7 +478,7 @@ export default async function UsersPage({
                       <TableRow key={profile.id} className="border-gray-800 hover:bg-[#0F0F0F]">
                         <TableCell>
                           <Link
-                            href={`/admin/users/${profile.id}` as Route}
+                            to={`/admin/users/${profile.id}` as Route}
                             className="font-medium text-white underline-offset-4 hover:text-[#7CFC00] hover:underline"
                           >
                             {formatUserName(profile)}

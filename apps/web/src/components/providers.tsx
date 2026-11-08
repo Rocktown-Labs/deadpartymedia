@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ClerkProvider, useUser } from "@clerk/nextjs";
+import { ClerkProvider, useUser } from "@clerk/tanstack-react-start";
 import { Toaster } from "./ui/sonner";
 import posthog from "posthog-js";
 import { useRef } from "react";

@@ -2,7 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 
 interface DashboardBackButtonProps {
   fallbackHref?: Route;
@@ -15,7 +15,7 @@ export function DashboardBackButton({
 }: DashboardBackButtonProps) {
   return (
     <Link
-      href={fallbackHref}
+      to={fallbackHref}
       className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-6 transition-all duration-300 transform hover:scale-110 px-0"
     >
       <ArrowLeft className="w-4 h-4 mr-2" />

@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useArticles } from "@/lib/api/articles";
 import { PageTitleHeader } from "@/components/page-title-header";
@@ -20,7 +20,7 @@ export default function HardcorePage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href={"/articles" as any}
+            to={"/articles" as any}
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -32,7 +32,7 @@ export default function HardcorePage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles && articles.length > 0 ? (
               articles.map((article) => (
-                <Link key={article.id} href={`/article/${article.slug}`}>
+                <Link key={article.id} to={`/article/${article.slug}`}>
                   <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
                     <div className="relative overflow-hidden bg-[#111111] h-40">
                       <img

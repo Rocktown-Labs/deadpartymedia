@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import { db } from "@/lib/db";
 import { musicReleases, artists } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -31,7 +31,7 @@ export default async function ArtistReleasesPage() {
       <main className="pt-36 pb-20">
         <div className="container mx-auto px-6 max-w-5xl">
           <Link
-            href={"/artist-dashboard" as Route}
+            to={"/artist-dashboard" as Route}
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-6 text-sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -45,7 +45,7 @@ export default async function ArtistReleasesPage() {
                 Track your music submissions, review statuses, and published features.
               </p>
             </div>
-            <Link href={"/artist-dashboard/releases/new" as Route}>
+            <Link to={"/artist-dashboard/releases/new" as Route}>
               <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold gap-2">
                 <Plus className="w-4 h-4" /> Submit New Release
               </Button>
@@ -60,7 +60,7 @@ export default async function ArtistReleasesPage() {
                 Have a new single, album, or music video? Submit it to the Dead Party editorial team
                 to get featured.
               </p>
-              <Link href={"/artist-dashboard/releases/new" as Route}>
+              <Link to={"/artist-dashboard/releases/new" as Route}>
                 <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
                   Submit Your First Release
                 </Button>
@@ -82,11 +82,10 @@ export default async function ArtistReleasesPage() {
                     <div className="flex items-center gap-4">
                       {release.coverArt ? (
                         <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-800 bg-black shrink-0">
-                          <Image
+                          <img
                             src={release.coverArt}
                             alt={release.title}
-                            fill
-                            className="object-cover"
+                                                       className="object-cover"
                           />
                         </div>
                       ) : (
@@ -140,7 +139,7 @@ export default async function ArtistReleasesPage() {
                       )}
 
                       {isApproved && (
-                        <Link href={`/music/${release.slug}` as Route}>
+                        <Link to={`/music/${release.slug}` as Route}>
                           <Button
                             variant="ghost"
                             size="sm"

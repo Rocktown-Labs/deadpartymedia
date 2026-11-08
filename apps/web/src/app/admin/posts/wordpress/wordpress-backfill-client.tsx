@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -459,7 +459,7 @@ export default function WordpressBackfillClient({
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/posts">
+          <Link to="/admin/posts">
             <Button variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -954,7 +954,7 @@ export default function WordpressBackfillClient({
                             </Badge>
                           )}
                           <a
-                            href={post.url}
+                            to={post.url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-gray-500 hover:text-white transition-colors"
@@ -993,7 +993,7 @@ export default function WordpressBackfillClient({
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
                         {isPublished ? (
-                          <Link href={`/admin/posts/${post.importedPostId}`}>
+                          <Link to={`/admin/posts/${post.importedPostId}`}>
                             <Button variant="outline" size="sm" className="gap-2">
                               <BookOpen className="h-3.5 w-3.5" />
                               Edit Post
@@ -1009,7 +1009,7 @@ export default function WordpressBackfillClient({
                               <Sparkles className="h-3.5 w-3.5" />
                               Backfill with AI
                             </Button>
-                            <Link href={`/admin/posts/${post.importedPostId}`}>
+                            <Link to={`/admin/posts/${post.importedPostId}`}>
                               <Button variant="outline" size="sm" className="gap-2">
                                 <BookOpen className="h-3.5 w-3.5" />
                                 Edit Post

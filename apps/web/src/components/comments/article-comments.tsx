@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
+import { SignInButton, useUser, Show } from "@clerk/tanstack-react-start";
+import { useLocation } from "@tanstack/react-router";
 import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { useArticleComments, useCreateComment } from "@/lib/api/articles";
@@ -30,7 +30,7 @@ export function ArticleComments({
   articleId,
   articleTitle,
 }: ArticleCommentsProps) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const commentsHref = buildCommentsHref(pathname);
   const { isSignedIn, user: currentUser } = useUser();
   const { data: comments } = useArticleComments(slug);
@@ -76,7 +76,7 @@ export function ArticleComments({
     <section id="comments" className="mt-16 border-t border-gray-800 pt-8 scroll-mt-28">
       <h2 className="text-2xl font-black mb-6">{headingText}</h2>
 
-      <SignedIn>
+      <Show when="signed-in">
         <form onSubmit={handleCommentSubmit} className="mb-8">
           <textarea
             value={commentText}
@@ -98,9 +98,9 @@ export function ArticleComments({
             </p>
           ) : null}
         </form>
-      </SignedIn>
+      </Show>
 
-      <SignedOut>
+      <Show when="signed-out">
         <div className="mb-8 p-4 bg-[#111111] border border-gray-800 rounded-lg">
           <p className="text-gray-400 mb-3">Sign in to leave a comment</p>
           <SignInButton mode="modal">
@@ -125,7 +125,7 @@ export function ArticleComments({
             </a>
           </p>
         </div>
-      </SignedOut>
+      </Show>
 
       <div className="space-y-6">
         {comments && Array.isArray(comments) && comments.length > 0 ? (

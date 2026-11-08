@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
 
 const { siteName, siteUrl } = getSiteDefaults();
@@ -58,7 +58,7 @@ export default function WritersPage() {
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -85,7 +85,7 @@ export default function WritersPage() {
                 </h2>
                 <p className="text-gray-300 leading-relaxed mb-4">{writer.bio}</p>
                 <p className="text-gray-400 mb-2">Cash tag: {writer.cashTag}</p>
-                <a href="#" className="text-[#7CFC00] hover:text-[#7CFC00]/80 transition-colors">
+                <a to="#" className="text-[#7CFC00] hover:text-[#7CFC00]/80 transition-colors">
                   {writer.instagram}
                 </a>
               </div>

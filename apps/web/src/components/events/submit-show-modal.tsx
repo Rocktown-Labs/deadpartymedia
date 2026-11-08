@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/tanstack-react-start";
 import { toast } from "sonner";
 import { Sparkles, AlertCircle } from "lucide-react";
 

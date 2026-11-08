@@ -2,10 +2,10 @@
 
 import { useRef } from "react";
 import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import { Spotify } from "@/components/ui/svgs/spotify";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
 import { ArtistStructuredData } from "@/components/seo/structured-data";
 import posthogClient from "posthog-js";
@@ -96,7 +96,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Artist Not Found</h1>
-          <Link href="/artists" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/artists" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Back to Artists
           </Link>
         </div>
@@ -128,7 +128,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                   <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
                     {artist.image && (
                       <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden shrink-0 border border-gray-800 bg-[#0E0E0E]">
-                        <Image src={artist.image} alt={artist.name} fill className="object-cover" />
+                        <img src={artist.image} alt={artist.name}className="object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 w-full">
@@ -156,7 +156,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                     <div className="flex gap-4">
                       {artist.instagram && (
                         <a
-                          href={artist.instagram}
+                          to={artist.instagram}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-400 hover:text-[#7CFC00] transition-colors"
@@ -167,7 +167,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                       )}
                       {artist.twitter && (
                         <a
-                          href={artist.twitter}
+                          to={artist.twitter}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-400 hover:text-[#7CFC00] transition-colors"
@@ -178,7 +178,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                       )}
                       {artist.tiktok && (
                         <a
-                          href={artist.tiktok}
+                          to={artist.tiktok}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-400 hover:text-[#7CFC00] transition-colors text-sm font-bold"
@@ -189,7 +189,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                       )}
                       {artist.spotify_url && (
                         <a
-                          href={artist.spotify_url}
+                          to={artist.spotify_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-400 hover:text-[#1DB954] transition-colors"
@@ -200,7 +200,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                       )}
                       {artist.website && (
                         <a
-                          href={artist.website}
+                          to={artist.website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-gray-400 hover:text-[#7CFC00] transition-colors"
@@ -252,15 +252,14 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                     {articlesArray.map((article) => (
                       <Link
                         key={article.id}
-                        href={`/article/${article.slug}`}
+                        to={`/article/${article.slug}`}
                         className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
                       >
                         <div className="aspect-video relative overflow-hidden">
-                          <Image
+                          <img
                             src={article.cover_image || "/placeholder.svg"}
                             alt={article.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <div className="p-4">
@@ -288,15 +287,14 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                     {eventsArray.map((event) => (
                       <Link
                         key={event.id}
-                        href={`/events/${event.slug}`}
+                        to={`/events/${event.slug}`}
                         className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
                       >
                         <div className="aspect-video relative overflow-hidden">
-                          <Image
+                          <img
                             src={event.image || "/placeholder.svg"}
                             alt={event.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <div className="p-4">

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Image from "next/image";
-import Link from "next/link";
+// next/image replaced with <img> (see migration guide)
+import { Link } from "@tanstack/react-router";
 import type { Route } from "next";
 import { Check, X, Disc, ExternalLink, Pencil, Music, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -176,7 +176,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                 {/* Cover art */}
                 <div className="relative w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800 flex items-center justify-center">
                   {sub.coverArt ? (
-                    <Image src={sub.coverArt} alt={sub.title} fill className="object-cover" />
+                    <img src={sub.coverArt} alt={sub.title}className="object-cover" />
                   ) : (
                     <Disc className="w-10 h-10 text-zinc-600" />
                   )}
@@ -242,7 +242,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                   <div className="flex flex-wrap gap-2 pt-2">
                     {sub.spotifyUrl && (
                       <a
-                        href={sub.spotifyUrl}
+                        to={sub.spotifyUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-[#1DB954]/20 hover:text-[#1DB954] text-zinc-300 transition"
@@ -252,7 +252,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                     )}
                     {sub.appleMusicUrl && (
                       <a
-                        href={sub.appleMusicUrl}
+                        to={sub.appleMusicUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-[#FA2D48]/20 hover:text-[#FA2D48] text-zinc-300 transition"
@@ -262,7 +262,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                     )}
                     {sub.bandcampUrl && (
                       <a
-                        href={sub.bandcampUrl}
+                        to={sub.bandcampUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-[#1DA0C3]/20 hover:text-[#1DA0C3] text-zinc-300 transition"
@@ -272,7 +272,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                     )}
                     {sub.youtubeUrl && (
                       <a
-                        href={sub.youtubeUrl}
+                        to={sub.youtubeUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-[#FF0000]/20 hover:text-[#FF0000] text-zinc-300 transition"
@@ -319,7 +319,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                     </>
                   )}
 
-                  <Link href={`/admin/music/${sub.id}` as Route}>
+                  <Link to={`/admin/music/${sub.id}` as Route}>
                     <Button
                       size="sm"
                       variant="outline"

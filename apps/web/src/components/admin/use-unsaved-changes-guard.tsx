@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 import type { Route } from "next";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,7 +86,7 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
         return;
       }
 
-      router.push(href);
+      router.navigate({ to: href });
     },
     [fallbackHref, isDirty, router],
   );
@@ -94,7 +94,7 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
   const discardChanges = useCallback(() => {
     const href = pendingHref ?? fallbackHref;
     setPendingHref(null);
-    router.push(href);
+    router.navigate({ to: href });
   }, [fallbackHref, pendingHref, router]);
 
   const UnsavedChangesDialog = (

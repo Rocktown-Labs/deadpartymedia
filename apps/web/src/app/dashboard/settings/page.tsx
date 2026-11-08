@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/tanstack-react-start";
 import { updateUserProfile } from "./actions";
 import { userUpdateSchema } from "@/lib/validations/user";
 import type { UserUpdateInput } from "@/lib/validations/user";

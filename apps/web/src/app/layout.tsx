@@ -1,6 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+// Fonts loaded via @fontsource-variable/* in __root.tsx
 import { Analytics } from "@vercel/analytics/next";
 import { connection } from "next/server";
 import "./globals.css";
@@ -12,15 +12,9 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
+
+
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
@@ -89,7 +83,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://img.clerk.com" />
         <link rel="preconnect" href="https://uqzzcjms8tqaey09.public.blob.vercel-storage.com" />
       </head>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
+      <body className={`antialiased`}>
         <Providers>
           <CartProvider cartPromise={cart}>
             <Navbar />

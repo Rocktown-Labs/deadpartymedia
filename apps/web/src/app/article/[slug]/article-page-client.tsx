@@ -12,11 +12,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
+// next/image replaced with <img> (see migration guide)
+import { Link } from "@tanstack/react-router";
 import type { Route } from "next";
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/tanstack-react-start";
+import { useRouter } from "@tanstack/react-router";
 import { useMarkArticleRead, useSaveArticle, useSavedArticles } from "@/lib/api/user-activity";
 import { ArticleStructuredData } from "@/components/seo/structured-data";
 import posthogClient from "posthog-js";
@@ -233,7 +233,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-black mb-4">Article Not Found</h1>
-          <Link href="/" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Return to Home
           </Link>
         </div>
@@ -304,7 +304,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                     Share
                   </Button>
                   {canEdit && (
-                    <Link href={`/admin/posts/${article.id}`} passHref>
+                    <Link to={`/admin/posts/${article.id}`} passHref>
                       <Button
                         variant="outline"
                         size="sm"
@@ -320,7 +320,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
 
               {/* Featured Image */}
               <div className="mb-12">
-                <Image
+                <img
                   src={article.cover_image || "/placeholder.svg"}
                   alt={article.title}
                   width={800}
@@ -340,7 +340,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   {article.tags.map((tag) => (
                     <Link
                       key={tag}
-                      href={`/music?tag=${encodeURIComponent(tag)}`}
+                      to={`/music?tag=${encodeURIComponent(tag)}`}
                       className="border border-gray-800 bg-[#111111] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
                     >
                       #{tag}
@@ -357,14 +357,13 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {article.artists.map((artist) => (
-                      <Link key={artist.id} href={`/artists/${artist.slug}`}>
+                      <Link key={artist.id} to={`/artists/${artist.slug}`}>
                         <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer flex flex-row group min-h-36">
                           <div className="relative w-28 h-full overflow-hidden shrink-0 border-r border-gray-800">
-                            <Image
+                            <img
                               src={artist.image || "/placeholder.svg"}
                               alt={artist.name}
-                              fill
-                              className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
+                                                           className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
                           <div className="p-5 flex-1 flex flex-col justify-center min-w-0">

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { redirectToCheckout, removeItem, updateItemQuantity } from "@/app/cart/actions";
 import { useCart } from "./cart-context";
-import Image from "next/image";
+// next/image replaced with <img> (see migration guide)
 import { DEFAULT_OPTION } from "@/lib/constants";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import posthog from "posthog-js";
@@ -79,11 +79,10 @@ export default function CartModal() {
                   <div key={item.id} className="flex gap-4 border-b border-gray-800 pb-4">
                     {/* Product Image */}
                     <div className="relative w-20 h-20 shrink-0 bg-gray-900 rounded-lg overflow-hidden">
-                      <Image
+                      <img
                         src={item.merchandise.product.featuredImage.url || "/placeholder.svg"}
                         alt={item.merchandise.product.title}
-                        fill
-                        className="object-cover"
+                                               className="object-cover"
                       />
                     </div>
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, HeartHandshake, DollarSign, ExternalLink, Sparkles } from "lucide-react";
 import { PageTitleHeader } from "@/components/page-title-header";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
@@ -31,7 +31,7 @@ export default function DonatePage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-4xl">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -63,7 +63,7 @@ export default function DonatePage() {
                   Cash App Cashtag
                 </span>
                 <a
-                  href="https://cash.app/$deadpartymedia"
+                  to="https://cash.app/$deadpartymedia"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full py-3 px-6 rounded-xl bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-black uppercase tracking-wider text-sm transition-colors shadow-lg"
@@ -95,7 +95,7 @@ export default function DonatePage() {
                   Contributor Pool
                 </span>
                 <a
-                  href="https://cash.app/$deadpartywriters"
+                  to="https://cash.app/$deadpartywriters"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full py-3 px-6 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-wider text-sm transition-colors shadow-lg"

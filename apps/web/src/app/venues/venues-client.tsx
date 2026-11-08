@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import {
   useReactTable,
   getCoreRowModel,
@@ -122,7 +122,7 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
           <div className="py-1 hidden md:block">
             {row.original.phone ? (
               <a
-                href={`tel:${row.original.phone}`}
+                to={`tel:${row.original.phone}`}
                 className="text-xs text-zinc-400 hover:text-[#7CFC00] flex items-center gap-1 font-mono"
               >
                 <Phone className="w-3 h-3" />
@@ -141,7 +141,7 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
           <div className="py-1 text-right">
             {row.original.website && isSafeHttpUrl(row.original.website) ? (
               <a
-                href={row.original.website}
+                to={row.original.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center text-xs font-bold font-mono uppercase tracking-wider text-[#7CFC00] hover:underline"
@@ -183,7 +183,7 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

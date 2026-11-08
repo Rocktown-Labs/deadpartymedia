@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
+import { Link } from "@tanstack/react-router";
+// next/image replaced with <img> (see migration guide)
 import type { Route } from "next";
 import { ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,7 +63,7 @@ export function MerchCarousel({
             <h2 className="text-5xl lg:text-6xl font-black tracking-tight">{heading}</h2>
           </div>
           <Link
-            href={ctaHref}
+            to={ctaHref}
             className="text-sm tracking-wider uppercase font-bold text-[#7CFC00] hover:text-[#7CFC00]/80 transition-colors flex items-center space-x-2"
           >
             <span>{ctaLabel}</span>
@@ -91,17 +91,16 @@ export function MerchCarousel({
             {visibleProducts.map((product) => (
               <Link
                 key={product.id}
-                href={`/merch/${product.handle}` as Route}
-                prefetch={false}
+                to={`/merch/${product.handle}` as Route}
+               
                 className="shrink-0 min-w-[300px] max-w-[300px]"
               >
                 <div className="group cursor-pointer">
                   <div className="relative h-96 mb-6 overflow-hidden bg-black rounded-lg">
-                    <Image
+                    <img
                       src={product.featuredImage.url || "/placeholder.svg"}
                       alt={product.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
                     <div className="absolute top-4 left-4">

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/empty";
 import { Edit, User, MapPin, Music, Link as LinkIcon, Save } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { getErrorMessage } from "@/lib/utils/error";
 
 interface ValidationIssue {
@@ -512,7 +512,7 @@ export default function ArtistProfilePage() {
                       <div className="flex flex-wrap gap-4">
                         {artist.spotify_url && (
                           <a
-                            href={artist.spotify_url}
+                            to={artist.spotify_url}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#7CFC00] hover:underline"
@@ -522,7 +522,7 @@ export default function ArtistProfilePage() {
                         )}
                         {artist.instagram && (
                           <a
-                            href={artist.instagram}
+                            to={artist.instagram}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#7CFC00] hover:underline"
@@ -532,7 +532,7 @@ export default function ArtistProfilePage() {
                         )}
                         {artist.twitter && (
                           <a
-                            href={artist.twitter}
+                            to={artist.twitter}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#7CFC00] hover:underline"
@@ -542,7 +542,7 @@ export default function ArtistProfilePage() {
                         )}
                         {artist.tiktok && (
                           <a
-                            href={artist.tiktok}
+                            to={artist.tiktok}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#7CFC00] hover:underline"
@@ -552,7 +552,7 @@ export default function ArtistProfilePage() {
                         )}
                         {artist.website && (
                           <a
-                            href={artist.website}
+                            to={artist.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[#7CFC00] hover:underline"
@@ -565,7 +565,7 @@ export default function ArtistProfilePage() {
                   )}
 
                   <div className="pt-6 border-t border-gray-800">
-                    <Link href={`/artists/${artist.slug}`}>
+                    <Link to={`/artists/${artist.slug}`}>
                       <Button variant="outline" className="border-gray-700 text-white">
                         View Public Profile
                       </Button>

@@ -403,7 +403,7 @@ export function ArtistReleaseForm({
 
               {coverArt ? (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
-                  <NextImage src={coverArt} alt="Artwork Preview" fill className="object-cover" />
+                  <NextImage src={coverArt} alt="Artwork Preview"className="object-cover" />
                   <button
                     type="button"
                     onClick={() => setCoverArt("")}

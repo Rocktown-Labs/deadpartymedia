@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Archive, CheckCircle2, FilePenLine } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -258,7 +258,7 @@ export function PostsTable({
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <Link
-                      href={`/admin/posts/${post.id}`}
+                      to={`/admin/posts/${post.id}`}
                       className="font-bold transition-colors hover:text-[#7CFC00]"
                     >
                       {post.title}
@@ -297,7 +297,7 @@ export function PostsTable({
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/admin/posts/${post.id}`}>
+                      <Link to={`/admin/posts/${post.id}`}>
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>
