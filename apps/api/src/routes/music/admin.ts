@@ -472,6 +472,24 @@ musicAdminRoutes.get("/admin/posts", async (c) => {
   });
 });
 
+// GET /admin/posts/:id — full row for the edit screen (content included).
+musicAdminRoutes.get("/admin/posts/:id", async (c) => {
+  const id = idParam(c);
+  const auth = requireRole(c, MUSIC_ADMIN_ROLES);
+  const db = getDb(c.env);
+
+  const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
+  if (!post) {
+    return c.json({ error: "Post not found" }, 404);
+  }
+
+  if (!canEditResource(auth, post.authorId)) {
+    return c.json({ error: "You do not have permission to edit this post" }, 403);
+  }
+
+  return c.json({ post });
+});
+
 // createPost
 musicAdminRoutes.post("/admin/posts", async (c) => {
   const auth = requireRole(c, MUSIC_ADMIN_ROLES);

@@ -1,0 +1,70 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { AdminTable } from "../../components/admin/admin-table";
+import { RoleSelect } from "../../components/admin/role-select";
+import { apiFetchWithAuth } from "../../lib/api";
+
+interface UserRow {
+  clerkId: string;
+  createdAt: string;
+  email: string;
+  firstName: string | null;
+  id: number;
+  lastName: string | null;
+  onboardingComplete: boolean;
+  role: string;
+}
+
+/**
+ * Admin users screen — ported from apps/web/src/app/admin/users (data+route;
+ * the 700-line client table with search/filters is the visual parity pass).
+ * Role updates POST to the API's dual-dispatch role endpoint.
+ */
+export const Route = createFileRoute("/admin/users/")({
+  component: () => {
+    const { error, rows, total } = Route.useLoaderData();
+    return (
+      <AdminTable
+        columns={[
+          {
+            key: "email",
+            label: "Email",
+            render: (row: UserRow) => <span className="font-semibold">{row.email}</span>,
+          },
+          {
+            key: "firstName",
+            label: "Name",
+            render: (row: UserRow) =>
+              [row.firstName, row.lastName].filter(Boolean).join(" ") || "—",
+          },
+          {
+            key: "role",
+            label: "Role",
+            render: (row: UserRow) => (
+              <RoleSelect clerkId={row.clerkId} currentRole={row.role} />
+            ),
+          },
+          {
+            key: "onboardingComplete",
+            label: "Onboarded",
+            render: (row: UserRow) => (row.onboardingComplete ? "Yes" : "No"),
+          },
+        ]}
+        error={error}
+        rows={rows}
+        subtitle="super_admin only — role changes sync Clerk metadata"
+        title="Users"
+        total={total}
+      />
+    );
+  },
+  head: () => ({ meta: [{ title: "Admin: Users | Dead Party Media" }] }),
+  loader: async () => {
+    const data = await apiFetchWithAuth<{ total: number; users: UserRow[] }>(
+      "/music/admin/users?limit=50",
+    ).catch(() => null);
+    if (!data) {
+      return { error: "Failed to load users", rows: [], total: 0 };
+    }
+    return { error: null, rows: data.users, total: data.total };
+  },
+});

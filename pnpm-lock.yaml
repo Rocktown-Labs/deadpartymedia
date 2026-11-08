@@ -836,9 +836,24 @@ importers:
       '@tanstack/react-start':
         specifier: latest
         version: 1.169.4(@voidzero-dev/vite-plus-core@0.2.2(@types/node@22.20.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.28.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rolldown@1.2.16)(rollup@4.55.1)(webpack@5.104.1(esbuild@0.28.2))
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@tanstack/router-plugin':
         specifier: latest
         version: 1.168.48(@tanstack/react-router@1.170.46(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@voidzero-dev/vite-plus-core@0.2.2(@types/node@22.20.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.55.1)(webpack@5.104.1(esbuild@0.28.2))
+      '@tiptap/extension-image':
+        specifier: ^2.9.2
+        version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))
+      '@tiptap/extension-link':
+        specifier: ^2.27.2
+        version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)
+      '@tiptap/react':
+        specifier: ^2.9.2
+        version: 2.27.2(@tiptap/core@2.27.2(@tiptap/pm@2.27.2))(@tiptap/pm@2.27.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@tiptap/starter-kit':
+        specifier: ^2.9.2
+        version: 2.27.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
