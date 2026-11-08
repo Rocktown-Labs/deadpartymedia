@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { EntityForm, type EntityField } from "../components/admin/entity-form";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 const fields: EntityField[] = [
   { key: "name", label: "Name", placeholder: "Artist name" },

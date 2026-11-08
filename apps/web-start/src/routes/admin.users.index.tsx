@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminTable } from "../components/admin/admin-table";
 import { RoleSelect } from "../components/admin/role-select";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 interface UserRow {
   clerkId: string;

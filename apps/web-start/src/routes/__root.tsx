@@ -1,10 +1,16 @@
-import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Link, Scripts } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Footer } from "../components/footer";
 import { Navbar } from "../components/navbar";
 import AppClerkProvider from "../integrations/clerk/provider";
 import appCss from "../styles.css?url";
 
-export const Route = createRootRoute({
+interface MyRouterContext {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     links: [{ href: appCss, rel: "stylesheet" }],
     meta: [
@@ -17,8 +23,8 @@ export const Route = createRootRoute({
       { title: "Dead Party Media" },
     ],
   }),
-  component: RootDocument,
   notFoundComponent: NotFound,
+  shellComponent: RootDocument,
 });
 
 function NotFound() {
@@ -33,7 +39,7 @@ function NotFound() {
   );
 }
 
-function RootDocument() {
+function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html className="dark" lang="en">
       <head>
@@ -41,11 +47,11 @@ function RootDocument() {
       </head>
       <body className="min-h-screen bg-[#0A0A0A] text-white antialiased">
         <AppClerkProvider>
-          <Navbar />
-          <div className="pt-16">
-            <Outlet />
-          </div>
-          <Footer />
+          <QueryClientProvider client={Route.useRouteContext().queryClient}>
+            <Navbar />
+            <div className="pt-16">{children}</div>
+            <Footer />
+          </QueryClientProvider>
         </AppClerkProvider>
         <Scripts />
       </body>

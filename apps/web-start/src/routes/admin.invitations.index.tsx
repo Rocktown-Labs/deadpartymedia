@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminTable } from "../components/admin/admin-table";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 interface InvitationRow {
   createdAt: number | string;

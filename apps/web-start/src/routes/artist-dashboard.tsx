@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 import { getSession } from "../lib/auth.functions";
 
 interface MyArtist {

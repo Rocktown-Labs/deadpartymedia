@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { PostEditor, type PostFormValue } from "../components/admin/post-editor";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 interface PostRow {
   category: string;

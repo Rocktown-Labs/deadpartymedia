@@ -1,9 +1,6 @@
 /**
  * Server-side client for the platform API worker (apps/api).
- *
- * Loaders run on the server for the initial request, so public API reads
- * need no auth plumbing here. API_URL defaults to the local wrangler dev
- * server; production sets it to the deployed worker origin.
+ * Loaders run on the server — public reads need no auth plumbing.
  */
 const API_URL = process.env.API_URL ?? "http://localhost:8787";
 

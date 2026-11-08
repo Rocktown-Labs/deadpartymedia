@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PostsTable, type PostsTableRow } from "../components/admin/posts-table";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 /**
  * Admin posts list — the tanstack-table client with selection + bulk

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createColumnHelper } from "@tanstack/react-table";
 import { AdminDataTable } from "../components/admin/admin-data-table";
-import { apiFetchWithAuth } from "../lib/api";
+import { apiFetchWithAuth } from "../lib/api.server";
 
 interface VenueRow {
   city: string;
