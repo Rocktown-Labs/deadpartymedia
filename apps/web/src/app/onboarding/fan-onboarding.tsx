@@ -2,9 +2,9 @@
 
 import { useActionState, useEffect, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/tanstack-react-start";
+import { useUser, useSession } from "@clerk/nextjs";
 import type { Route } from "next";
-// next/image replaced with <img> (see migration guide)
+import Image from "next/image";
 import {
   initialFormState,
   mergeForm,
@@ -77,7 +77,7 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <img
+            <Image
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}

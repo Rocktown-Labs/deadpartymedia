@@ -2,9 +2,9 @@
 
 import { useState, useActionState, useEffect, useRef, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/tanstack-react-start";
+import { useUser, useSession } from "@clerk/nextjs";
 import type { Route } from "next";
-// next/image replaced with <img> (see migration guide)
+import Image from "next/image";
 import { MapPin, Instagram, Twitter, Phone, Upload, X } from "lucide-react";
 import {
   initialFormState,
@@ -227,7 +227,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <img
+            <Image
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}
@@ -600,9 +600,10 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                             </div>
                             {field.state.value && (
                               <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                                <img
+                                <Image
                                   src={field.state.value}
                                   alt="Profile preview"
+                                  fill
                                   className="object-cover"
                                 />
                               </div>

@@ -1,16 +1,16 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
-// next/image replaced with <img> (see migration guide)
+import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
-import { SignIn } from "@clerk/tanstack-react-start";
+import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center px-6 py-20 pt-[calc(var(--navbar-offset)+1.5rem)] pb-28 lg:pb-20">
       <div className="w-full max-w-md">
         <Link
-          to="/"
+          href="/"
           className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -18,7 +18,7 @@ export default function SignInPage() {
         </Link>
 
         <div className="text-center mb-8">
-          <img
+          <Image
             src="/images/dead-party-logo.png"
             alt="Dead Party Media"
             width={80}

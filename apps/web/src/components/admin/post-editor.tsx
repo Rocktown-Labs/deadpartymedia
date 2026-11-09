@@ -983,7 +983,7 @@ export function PostEditor({
                   </div>
                 ) : (
                   <div className="relative aspect-video border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
-                    <NextImage src={coverImage} alt="Cover preview" className="object-cover" />
+                    <NextImage src={coverImage} alt="Cover preview" fill className="object-cover" />
                     <button
                       type="button"
                       onClick={() => setCoverImage("")}

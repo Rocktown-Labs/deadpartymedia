@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -104,7 +104,7 @@ export default async function AdminVenuesPage({
             Manage concert venues, stages, booking rates, and production specs.
           </p>
         </div>
-        <Link to={"/admin/venues/new" as Route}>
+        <Link href={"/admin/venues/new" as Route}>
           <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
             Add New Venue
           </Button>

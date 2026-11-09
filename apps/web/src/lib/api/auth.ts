@@ -1,6 +1,6 @@
 import { apiFetch } from "./base";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useClerk } from "@clerk/tanstack-react-start";
+import { useClerk } from "@clerk/nextjs";
 
 export interface User {
   id: string;

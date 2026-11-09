@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -136,7 +136,7 @@ export default async function AdminMusicPage({
             Manage Arkansas album and single releases, streaming links, and discography.
           </p>
         </div>
-        <Link to={"/admin/music/new" as Route}>
+        <Link href={"/admin/music/new" as Route}>
           <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
             Create New Release
           </Button>
@@ -146,13 +146,13 @@ export default async function AdminMusicPage({
       {/* Navigation tabs */}
       <div className="flex gap-2 mb-6 border-b border-zinc-800 pb-3">
         <Link
-          to={"/admin/music" as Route}
+          href={"/admin/music" as Route}
           className="px-3 py-1.5 rounded-md text-sm font-medium bg-zinc-800 text-white"
         >
           All Releases ({totalCount})
         </Link>
         <Link
-          to={"/admin/music/submissions" as Route}
+          href={"/admin/music/submissions" as Route}
           className="px-3 py-1.5 rounded-md text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-900 transition flex items-center gap-2"
         >
           <span>Artist Submissions</span>

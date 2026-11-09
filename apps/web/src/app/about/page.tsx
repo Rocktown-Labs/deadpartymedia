@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
-// next/image replaced with <img> (see migration guide)
-import { Link } from "@tanstack/react-router";
+import Image from "next/image";
+import Link from "next/link";
 import { connection } from "next/server";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
 
@@ -45,7 +45,7 @@ export default async function AboutPage() {
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
           <Link
-            to="/"
+            href="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -54,7 +54,7 @@ export default async function AboutPage() {
 
           <div className="text-center mb-16">
             <div className="mb-8">
-              <img
+              <Image
                 src="/images/dead-party-logo.png"
                 alt="Dead Party Media Logo"
                 width={150}

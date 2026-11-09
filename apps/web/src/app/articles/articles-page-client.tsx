@@ -1,5 +1,5 @@
 "use client";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useArticles } from "@/lib/api/articles";
@@ -35,7 +35,7 @@ export default function ArticlesPage() {
   };
 
   const ArticleCard = ({ article }: { article: ArticleList }) => (
-    <Link to={`/article/${article.slug}`}>
+    <Link href={`/article/${article.slug}`}>
       <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
         <div className="relative h-52 overflow-hidden bg-[#111111]">
           <img
@@ -63,7 +63,7 @@ export default function ArticlesPage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            to="/"
+            href="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -92,7 +92,7 @@ export default function ArticlesPage() {
                       <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }} />
                     </div>
                     <Link
-                      to={categoryHref}
+                      href={categoryHref}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all

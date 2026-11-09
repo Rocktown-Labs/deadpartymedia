@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import { notFound, redirect } from "next/navigation";
 import { canManageUsers } from "@/lib/auth/access";
@@ -105,7 +105,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
     <div className="space-y-6">
       <div className="space-y-3">
         <Link
-          to={"/admin/users" as Route}
+          href={"/admin/users" as Route}
           className={cn(buttonVariants({ variant: "outline" }), "border-gray-700")}
         >
           <ArrowLeft className="mr-2 size-4" />
@@ -240,7 +240,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                       <TableCell>{post.updatedAt.toLocaleString()}</TableCell>
                       <TableCell>
                         <Link
-                          to={`/posts/${post.slug}` as Route}
+                          href={`/posts/${post.slug}` as Route}
                           target="_blank"
                           rel="noreferrer"
                           className={buttonVariants({ size: "sm", variant: "outline" })}

@@ -1,11 +1,11 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { FilePenLine, ExternalLink, MapPin, Building2 } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -133,14 +133,14 @@ export function VenuesTable({
                       )}
                       <div>
                         <Link
-                          to={`/admin/venues/${venue.id}` as Route}
+                          href={`/admin/venues/${venue.id}` as Route}
                           className="font-medium text-zinc-100 hover:text-[#7CFC00] transition-colors"
                         >
                           {venue.name}
                         </Link>
                         {venue.website && (
                           <a
-                            to={venue.website}
+                            href={venue.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 mt-0.5"
@@ -190,7 +190,7 @@ export function VenuesTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link to={`/admin/venues/${venue.id}` as Route}>
+                      <Link href={`/admin/venues/${venue.id}` as Route}>
                         <Button
                           variant="ghost"
                           size="sm"

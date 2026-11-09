@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/tanstack-react-start";
+import { useUser } from "@clerk/nextjs";
 import posthog from "posthog-js";
 import { useRef } from "react";
 

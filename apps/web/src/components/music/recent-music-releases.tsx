@@ -1,7 +1,7 @@
 "use client";
 
-// next/image replaced with <img>
-import { Link } from "@tanstack/react-router";
+import Image from "next/image";
+import Link from "next/link";
 import type { Route } from "next";
 import { ExternalLink, Disc3 } from "lucide-react";
 
@@ -49,7 +49,7 @@ export function RecentMusicReleases({
             </p>
           </div>
           <Link
-            to="/music"
+            href="/music"
             className="text-xs font-mono font-bold text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1.5"
           >
             Explore All Music →
@@ -65,12 +65,13 @@ export function RecentMusicReleases({
                 className="group relative flex flex-col rounded-xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00]/60 transition-all p-3 overflow-hidden shadow-lg"
               >
                 <Link
-                  to={releaseHref}
+                  href={releaseHref}
                   className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-3 block"
                 >
-                  <img
+                  <Image
                     src={release.coverArt || "/placeholder.svg"}
                     alt={release.title}
+                    fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {release.type && (
@@ -81,7 +82,7 @@ export function RecentMusicReleases({
                 </Link>
 
                 <div className="flex flex-col flex-1 min-w-0">
-                  <Link to={releaseHref}>
+                  <Link href={releaseHref}>
                     <h3
                       className="font-bold text-sm text-white group-hover:text-[#7CFC00] transition-colors truncate"
                       title={release.title}
@@ -92,8 +93,7 @@ export function RecentMusicReleases({
 
                   {release.artistSlug ? (
                     <Link
-                      to="/artists/$slug"
-                      params={{ slug: release.artistSlug }}
+                      href={`/artists/${release.artistSlug}`}
                       className="text-xs text-zinc-400 hover:text-white truncate transition-colors mt-0.5"
                     >
                       {release.artistName}

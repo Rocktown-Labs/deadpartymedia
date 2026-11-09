@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import type { ComponentType, SVGProps } from "react";
 import { ExternalLink } from "lucide-react";
@@ -11,7 +11,7 @@ import { Reddit } from "@/components/ui/svgs/reddit";
 import { Spotify } from "@/components/ui/svgs/spotify";
 import { Threads } from "@/components/ui/svgs/threads";
 import { Youtube } from "@/components/ui/svgs/youtube";
-import { useLocation } from "@tanstack/react-router";
+import { usePathname } from "next/navigation";
 
 interface SocialLink {
   name: string;
@@ -50,7 +50,7 @@ const EXTERNAL_LINK_PROPS = {
 } as const;
 
 export default function Footer() {
-  const pathname = useLocation().pathname;
+  const pathname = usePathname();
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
     return null;
   }
@@ -112,7 +112,7 @@ export default function Footer() {
                 {FOOTER_NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}
-                    to={link.href}
+                    href={link.href}
                     className="block text-sm text-gray-400 hover:text-[#7CFC00] transition-colors"
                   >
                     {link.label}

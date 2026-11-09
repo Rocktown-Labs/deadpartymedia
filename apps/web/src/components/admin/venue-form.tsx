@@ -341,7 +341,7 @@ export function VenueForm({
             <div className="mt-1 flex items-center gap-4">
               {image ? (
                 <div className="relative w-32 h-24 rounded border border-zinc-700 overflow-hidden bg-zinc-900">
-                  <NextImage src={image} alt="Venue" className="object-cover" />
+                  <NextImage src={image} alt="Venue" fill className="object-cover" />
                   <button
                     type="button"
                     onClick={() => setImage("")}

@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -107,11 +107,11 @@ export default async function PostsPage({
         <h1 className="text-3xl font-black">Articles</h1>
         <div className="flex gap-4">
           {isSuperAdmin && (
-            <Link to="/admin/posts/wordpress">
+            <Link href="/admin/posts/wordpress">
               <Button variant="outline">WordPress Backfill</Button>
             </Link>
           )}
-          <Link to="/admin/posts/new">
+          <Link href="/admin/posts/new">
             <Button>Create New Article</Button>
           </Link>
         </div>

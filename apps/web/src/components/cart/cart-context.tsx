@@ -154,9 +154,9 @@ export function CartProvider({
   cartPromise,
 }: {
   children: React.ReactNode;
-  cartPromise?: Promise<Cart | undefined>;
+  cartPromise: Promise<Cart | undefined>;
 }) {
-  const initialCart = use(cartPromise ?? Promise.resolve(undefined));
+  const initialCart = use(cartPromise);
   const [optimisticCart, updateOptimisticCart] = useOptimistic(initialCart, cartReducer);
 
   const updateCartItem = (merchandiseId: string, updateType: UpdateType) => {

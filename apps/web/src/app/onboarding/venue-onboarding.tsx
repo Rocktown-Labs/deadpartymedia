@@ -2,9 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState, startTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/tanstack-react-start";
+import { useUser, useSession } from "@clerk/nextjs";
 import type { Route } from "next";
-// next/image replaced with <img> (see migration guide)
+import Image from "next/image";
 import { MapPin, Globe, Phone, Users, Building2, DollarSign, Mail, Upload, X } from "lucide-react";
 import { validateImageFile } from "@/lib/upload";
 import {
@@ -133,7 +133,7 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-10">
-            <img
+            <Image
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}
@@ -412,9 +412,10 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
                     <div className="flex items-center gap-4">
                       {field.state.value ? (
                         <div className="relative w-28 h-20 rounded border border-zinc-700 overflow-hidden bg-zinc-900">
-                          <img
+                          <Image
                             src={field.state.value}
                             alt="Venue preview"
+                            fill
                             className="object-cover"
                           />
                           <button

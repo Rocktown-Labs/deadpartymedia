@@ -11,8 +11,8 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { MessageSquare, Calendar, Reply } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-// next/image replaced with <img> (see migration guide)
+import Link from "next/link";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 
 export default function CommentsPage() {
@@ -83,16 +83,17 @@ export default function CommentsPage() {
                 <div className="flex gap-4 mb-4">
                   {comment.article.cover_image && (
                     <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden">
-                      <img
+                      <Image
                         src={comment.article.cover_image}
                         alt={comment.article.title}
+                        fill
                         className="object-cover"
                       />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <Link
-                      to={`/article/${comment.article.slug}`}
+                      href={`/article/${comment.article.slug}`}
                       className="text-lg font-semibold text-white hover:text-[#7CFC00] transition-colors line-clamp-2"
                     >
                       {comment.article.title}

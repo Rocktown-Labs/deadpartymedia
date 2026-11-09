@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ export default function UserMenu() {
   const handleSignOut = async () => {
     try {
       await logout.mutateAsync();
-      router.navigate({ to: "/" });
+      router.push("/");
     } catch (error) {
       console.error("Error signing out:", error);
     }

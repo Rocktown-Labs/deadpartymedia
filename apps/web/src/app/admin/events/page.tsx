@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { auth } from "@clerk/nextjs/server";
@@ -112,11 +112,11 @@ export default async function EventsPage({
         <h1 className="text-3xl font-black">Events</h1>
         <div className="flex flex-wrap gap-3">
           {(isSuperAdmin || isWriter) && (
-            <Link to="/admin/events/import">
+            <Link href="/admin/events/import">
               <Button variant="outline">AI Flyer Import</Button>
             </Link>
           )}
-          <Link to="/admin/events/new">
+          <Link href="/admin/events/new">
             <Button>Create New Event</Button>
           </Link>
         </div>
@@ -210,7 +210,7 @@ export default async function EventsPage({
                   <TableRow key={event.id} className="border-gray-800 hover:bg-gray-900">
                     <TableCell className="px-6 py-4">
                       <Link
-                        to={`/admin/events/${event.id}`}
+                        href={`/admin/events/${event.id}`}
                         className="font-bold transition-colors hover:text-[#7CFC00]"
                       >
                         {event.title}
@@ -239,7 +239,7 @@ export default async function EventsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <Link to={`/admin/events/${event.id}`}>
+                        <Link href={`/admin/events/${event.id}`}>
                           <Button variant="outline" size="sm">
                             Edit
                           </Button>

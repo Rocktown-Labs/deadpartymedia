@@ -10,9 +10,9 @@ import {
   Phone,
   Globe,
 } from "lucide-react";
-// next/image replaced with <img> (see migration guide)
-import { Link } from "@tanstack/react-router";
-import { useRouter } from "@tanstack/react-router";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEvent } from "@/lib/api/events";
 import { useVenues } from "@/lib/api/venues";
 import { isSafeHttpUrl } from "@/lib/security";
@@ -78,7 +78,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Event Not Found</h1>
-          <Link to="/events" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link href="/events" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Back to Events
           </Link>
         </div>
@@ -124,7 +124,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
               {/* Event Image */}
               {event.image && (
                 <div className="relative mb-8 flex max-h-[80vh] min-h-[320px] items-center justify-center overflow-hidden rounded-lg border border-gray-800 bg-black md:min-h-[560px]">
-                  <img src={event.image} alt={event.title} className="object-contain" />
+                  <Image src={event.image} alt={event.title} fill className="object-contain" />
                 </div>
               )}
 
@@ -147,14 +147,15 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                         {event.artists.map((artist) => (
                           <Link
                             key={artist.id}
-                            to={`/artists/${artist.slug}`}
+                            href={`/artists/${artist.slug}`}
                             className="flex items-center gap-4 p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg hover:border-[#7CFC00] transition-colors"
                           >
                             {artist.image && (
                               <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0">
-                                <img
+                                <Image
                                   src={artist.image}
                                   alt={artist.name}
+                                  fill
                                   className="object-cover"
                                 />
                               </div>
@@ -245,7 +246,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                       <div className="mt-4 pt-3 border-t border-gray-800 flex flex-col gap-2">
                         {matchedVenue.website && isSafeHttpUrl(matchedVenue.website) && (
                           <a
-                            to={matchedVenue.website}
+                            href={matchedVenue.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-[#7CFC00] hover:underline flex items-center gap-1 font-mono uppercase font-bold"
@@ -256,7 +257,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                         )}
                         {matchedVenue.phone && (
                           <a
-                            to={`tel:${matchedVenue.phone}`}
+                            href={`tel:${matchedVenue.phone}`}
                             className="text-xs text-gray-400 hover:text-white flex items-center gap-1 font-mono"
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -265,7 +266,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                         )}
                         {matchedVenue.address && (
                           <a
-                            to={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${matchedVenue.name} ${matchedVenue.address} ${matchedVenue.city} AR`)}`}
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${matchedVenue.name} ${matchedVenue.address} ${matchedVenue.city} AR`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-gray-400 hover:text-[#7CFC00] flex items-center gap-1"
@@ -281,7 +282,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                   {/* Ticket Link */}
                   {event.ticket_link && isSafeHttpUrl(event.ticket_link) && (
                     <a
-                      to={event.ticket_link}
+                      href={event.ticket_link}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#7CFC00] px-6 py-3 text-center font-bold text-black transition-colors hover:bg-[#7CFC00]/90"

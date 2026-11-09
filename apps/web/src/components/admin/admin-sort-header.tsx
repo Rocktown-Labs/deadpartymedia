@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { createUrl } from "@/lib/utils";
@@ -59,7 +59,7 @@ export function AdminSortHeader({
 
   return (
     <Link
-      to={createUrl(pathname, nextParams) as Route}
+      href={createUrl(pathname, nextParams) as Route}
       className={cn(
         "inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors hover:text-white",
         isFieldActive ? "text-[#7CFC00] hover:text-[#7CFC00]" : undefined,

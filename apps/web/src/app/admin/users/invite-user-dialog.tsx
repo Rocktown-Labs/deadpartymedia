@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteUser } from "./actions";
 import type { Roles } from "@/types/globals";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/utils/error";
 import { toast } from "sonner";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { revokeInvitation } from "./actions";
 import { toast } from "sonner";

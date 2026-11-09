@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-// next/image replaced with <img> (see migration guide)
+import Link from "next/link";
+import Image from "next/image";
 import type { Route } from "next";
 import CartModal from "./cart/cart-modal";
 import { ChevronDown, LayoutDashboard } from "lucide-react";
-import { SignInButton, SignUpButton, UserButton, Show } from "@clerk/tanstack-react-start";
-import { useUser } from "@clerk/tanstack-react-start";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
 // Extract constants for better maintainability
@@ -49,8 +49,8 @@ export default function Navbar() {
         </div>
         {/* Mobile Bar (< lg) */}
         <div className="flex items-center justify-between py-4 lg:hidden">
-          <Link to="/">
-            <img
+          <Link href="/">
+            <Image
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={48}
@@ -60,7 +60,7 @@ export default function Navbar() {
           </Link>
           <div className="flex items-center gap-2">
             <CartModal />
-            <Show when="signed-out">
+            <SignedOut>
               <div className="flex items-center gap-2">
                 <SignInButton mode="modal">
                   <button
@@ -81,11 +81,11 @@ export default function Navbar() {
                   </button>
                 </SignUpButton>
               </div>
-            </Show>
-            <Show when="signed-in">
+            </SignedOut>
+            <SignedIn>
               <div className="flex items-center gap-2">
                 <Link
-                  to={dashboardHref}
+                  href={dashboardHref}
                   className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
                 >
                   <LayoutDashboard className="h-4 w-4" />
@@ -103,7 +103,7 @@ export default function Navbar() {
                   }}
                 />
               </div>
-            </Show>
+            </SignedIn>
           </div>
         </div>
 
@@ -111,7 +111,7 @@ export default function Navbar() {
         <div className="hidden lg:block">
           {/* Top Row: Masthead (Logo & Subtitle) + Actions */}
           <div className="py-3.5 flex items-center justify-between gap-6">
-            <Link to="/" className="group inline-flex flex-col">
+            <Link href="/" className="group inline-flex flex-col">
               <div className="text-2xl xl:text-3xl font-black tracking-tighter whitespace-nowrap leading-none">
                 <span className="text-[#7CFC00]">DEAD</span>
                 <span className="text-white"> PARTY</span>
@@ -125,7 +125,7 @@ export default function Navbar() {
             {/* Desktop Actions */}
             <div className="flex items-center gap-3">
               <CartModal />
-              <Show when="signed-out">
+              <SignedOut>
                 <div className="flex items-center gap-2">
                   <SignInButton mode="modal">
                     <button
@@ -148,11 +148,11 @@ export default function Navbar() {
                     </button>
                   </SignUpButton>
                 </div>
-              </Show>
-              <Show when="signed-in">
+              </SignedOut>
+              <SignedIn>
                 <div className="flex items-center gap-2">
                   <Link
-                    to={dashboardHref}
+                    href={dashboardHref}
                     className="flex h-10 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors bg-transparent text-white px-3"
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -172,14 +172,14 @@ export default function Navbar() {
                     }}
                   />
                 </div>
-              </Show>
+              </SignedIn>
             </div>
           </div>
 
           {/* Bottom Row: Menu Navigation */}
           <nav className="border-t border-gray-800/60 py-2.5 flex items-center justify-center gap-8">
             <Link
-              to="/music"
+              href="/music"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Music
@@ -193,7 +193,7 @@ export default function Navbar() {
               onMouseLeave={() => setIsArticlesDropdownOpen(false)}
             >
               <Link
-                to={"/articles" as Route}
+                href={"/articles" as Route}
                 className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group flex items-center gap-1"
               >
                 Articles
@@ -203,7 +203,7 @@ export default function Navbar() {
               {isArticlesDropdownOpen && (
                 <div className="absolute top-full left-0 mt-2 w-48 bg-[#0A0A0A] border border-gray-800 rounded-lg shadow-xl py-2 z-50">
                   <Link
-                    to={"/articles" as Route}
+                    href={"/articles" as Route}
                     className="block px-4 py-2 text-sm font-bold text-[#7CFC00] hover:bg-gray-900 transition-colors border-b border-gray-800/60 mb-1"
                   >
                     All Articles
@@ -211,7 +211,7 @@ export default function Navbar() {
                   {MUSIC_GENRES.map((genre) => (
                     <Link
                       key={genre.name}
-                      to={genre.href}
+                      href={genre.href}
                       className="block px-4 py-2 text-sm hover:bg-gray-900 hover:text-[#7CFC00] transition-colors"
                     >
                       {genre.name}
@@ -222,35 +222,35 @@ export default function Navbar() {
             </div>
 
             <Link
-              to="/events"
+              href="/events"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Shows
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
-              to="/artists"
+              href="/artists"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Artists
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
-              to={"/venues" as Route}
+              href={"/venues" as Route}
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Venues
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
-              to="/merch"
+              href="/merch"
               className="text-sm font-medium tracking-wider uppercase hover:text-[#7CFC00] transition-colors relative group"
             >
               Merch
               <div className="absolute -bottom-1 left-0 w-0 h-px bg-[#7CFC00] transition-all duration-300 group-hover:w-full" />
             </Link>
             <Link
-              to={"/donate" as Route}
+              href={"/donate" as Route}
               className="text-sm font-medium tracking-wider uppercase hover:text-purple-400 text-zinc-300 transition-colors relative group"
             >
               Donate

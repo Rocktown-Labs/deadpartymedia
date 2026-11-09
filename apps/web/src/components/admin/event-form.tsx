@@ -320,7 +320,7 @@ export function EventForm({
             </div>
             {image && (
               <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                <NextImage src={image} alt="Event image preview" className="object-cover" />
+                <NextImage src={image} alt="Event image preview" fill className="object-cover" />
               </div>
             )}
           </div>

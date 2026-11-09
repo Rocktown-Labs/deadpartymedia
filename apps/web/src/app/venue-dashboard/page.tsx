@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import { Link } from "@tanstack/react-router";
-// next/image replaced with <img> (see migration guide)
+import Link from "next/link";
+import Image from "next/image";
 import { db } from "@/lib/db";
 import { venues, events } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -38,7 +38,7 @@ export default async function VenueDashboardPage() {
             You don&apos;t have a venue associated with your account yet. Complete venue setup to
             manage shows and booking info.
           </p>
-          <Link to={"/onboarding" as Route}>
+          <Link href={"/onboarding" as Route}>
             <Button className="w-full bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
               Complete Venue Setup
             </Button>
@@ -74,7 +74,7 @@ export default async function VenueDashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Link to={"/venue-dashboard/events/new" as Route}>
+              <Link href={"/venue-dashboard/events/new" as Route}>
                 <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold gap-2">
                   <Plus className="w-4 h-4" /> Submit New Show
                 </Button>
@@ -121,7 +121,7 @@ export default async function VenueDashboardPage() {
                 <h2 className="text-lg font-bold mb-4">Venue Profile</h2>
                 {venue.image && (
                   <div className="relative w-full h-44 rounded-lg overflow-hidden mb-4 border border-zinc-800">
-                    <img src={venue.image} alt={venue.name} className="object-cover" />
+                    <Image src={venue.image} alt={venue.name} fill className="object-cover" />
                   </div>
                 )}
                 {venue.description && (
@@ -144,7 +144,7 @@ export default async function VenueDashboardPage() {
                     <div className="flex items-center gap-2 text-zinc-300">
                       <Globe className="w-4 h-4 text-zinc-400 shrink-0" />
                       <a
-                        to={venue.website}
+                        href={venue.website}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[#7CFC00] hover:underline flex items-center gap-1 truncate"
@@ -163,7 +163,7 @@ export default async function VenueDashboardPage() {
               <div className="bg-[#111111] border border-zinc-800 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold">Upcoming &amp; Past Shows</h2>
-                  <Link to={"/venue-dashboard/events/new" as Route}>
+                  <Link href={"/venue-dashboard/events/new" as Route}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -217,7 +217,7 @@ export default async function VenueDashboardPage() {
                             <span>• {evt.genre}</span>
                           </div>
                         </div>
-                        <Link to={`/events/${evt.slug}` as Route}>
+                        <Link href={`/events/${evt.slug}` as Route}>
                           <Button
                             variant="ghost"
                             size="sm"

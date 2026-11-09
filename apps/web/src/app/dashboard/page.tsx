@@ -12,9 +12,9 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/tanstack-react-start";
+import { useUser } from "@clerk/nextjs";
 import type { Route } from "next";
 import * as Sentry from "@sentry/nextjs";
 import posthog from "posthog-js";
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             {statsCards.map((card) => {
               const Icon = card.icon;
               return (
-                <Link key={card.title} to={card.href}>
+                <Link key={card.title} href={card.href}>
                   <div className="cursor-pointer rounded-lg border border-gray-800 bg-[#111111] p-3 transition-colors hover:border-[#7CFC00] sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Icon className={`h-5 w-5 sm:h-8 sm:w-8 ${card.color}`} />
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             {actionButtons.map((button) => {
               const Icon = button.icon;
               return (
-                <Link key={button.title} to={button.href}>
+                <Link key={button.title} href={button.href}>
                   <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                     <Icon className="w-6 h-6 text-[#7CFC00]" />
                     <div className="text-left">

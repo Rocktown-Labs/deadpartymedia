@@ -1,11 +1,11 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Archive, CheckCircle2, FilePenLine, Disc, ExternalLink } from "lucide-react";
-import { useRouter } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -232,7 +232,7 @@ export function MusicReleasesTable({
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Link
-                        to={`/admin/music/${release.id}` as Route}
+                        href={`/admin/music/${release.id}` as Route}
                         className="font-bold text-white hover:text-[#7CFC00] transition-colors"
                       >
                         {release.title}
@@ -270,7 +270,7 @@ export function MusicReleasesTable({
                     <div className="flex items-center justify-end gap-2">
                       {release.status === "published" && (
                         <Link
-                          to={`/music/${release.slug}` as Route}
+                          href={`/music/${release.slug}` as Route}
                           target="_blank"
                           className="p-1.5 text-zinc-400 hover:text-white transition-colors"
                           title="View on site"
@@ -278,7 +278,7 @@ export function MusicReleasesTable({
                           <ExternalLink className="w-4 h-4" />
                         </Link>
                       )}
-                      <Link to={`/admin/music/${release.id}` as Route}>
+                      <Link href={`/admin/music/${release.id}` as Route}>
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>

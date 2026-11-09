@@ -1,8 +1,8 @@
 "use client";
 
-import { useUser } from "@clerk/tanstack-react-start";
-import { Link } from "@tanstack/react-router";
-import { useRouter } from "@tanstack/react-router";
+import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { Route } from "next";
 import { parseRole } from "@/lib/auth/role";
@@ -79,7 +79,7 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
           <span className="font-bold text-[#7CFC00] flex items-center gap-2">
             <span>👁️</span> Super Admin Preview: Viewing Music Artist Dashboard
           </span>
-          <Link to="/admin" className="text-white hover:underline font-mono">
+          <Link href="/admin" className="text-white hover:underline font-mono">
             Return to Admin Desk →
           </Link>
         </div>

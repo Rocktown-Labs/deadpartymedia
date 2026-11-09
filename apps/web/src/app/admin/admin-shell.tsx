@@ -1,10 +1,10 @@
 "use client";
 
-// next/image replaced with <img> (see migration guide)
+import Image from "next/image";
 import { useLayoutEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Route } from "next";
-import { useLocation, useRouter } from "@tanstack/react-router";
+import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
@@ -83,7 +83,7 @@ function isActiveRoute(pathname: string, href: Route) {
 }
 
 export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps) {
-  const pathname = useLocation().pathname;
+  const pathname = usePathname();
   const router = useRouter();
   const [navbarHeight, setNavbarHeight] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -161,7 +161,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
               </div>
             ) : (
               <div className="flex items-center justify-center py-1">
-                <img
+                <Image
                   src="/images/dead-party-logo.png"
                   alt="Dead Party Media"
                   width={26}

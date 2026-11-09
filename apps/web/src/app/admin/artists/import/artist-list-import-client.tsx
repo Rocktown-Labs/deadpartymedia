@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { ArrowLeft, Check, FileUp, Search, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -164,7 +164,7 @@ export function ArtistListImportClient({
   return (
     <div className="space-y-6">
       <Link
-        to="/admin/artists"
+        href="/admin/artists"
         className="inline-flex items-center gap-2 text-sm font-bold text-[#7CFC00]"
       >
         <ArrowLeft className="h-4 w-4" />

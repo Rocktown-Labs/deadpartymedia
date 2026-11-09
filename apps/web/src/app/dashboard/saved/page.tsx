@@ -11,8 +11,8 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { Bookmark, Calendar, X } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-// next/image replaced with <img> (see migration guide)
+import Link from "next/link";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -114,13 +114,14 @@ export default function SavedPage() {
                   key={item.id}
                   className="bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
                 >
-                  <Link to={`/article/${article.slug}`} className="block">
+                  <Link href={`/article/${article.slug}`} className="block">
                     <div className="flex gap-4">
                       {article.cover_image && (
                         <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                          <img
+                          <Image
                             src={article.cover_image}
                             alt={article.title}
+                            fill
                             className="object-cover"
                           />
                         </div>

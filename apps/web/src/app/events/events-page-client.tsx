@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ArrowLeft, MapPin, Clock, Table as TableIcon, LayoutGrid, Sparkles } from "lucide-react";
-// next/image replaced with <img> (see migration guide)
-import { Link } from "@tanstack/react-router";
+import Image from "next/image";
+import Link from "next/link";
 import { useEvents } from "@/lib/api/events";
 import { isActiveEventDate, isPastEventDateKey } from "@/lib/events/date-state";
 import { PageTitleHeader } from "@/components/page-title-header";
@@ -36,7 +36,7 @@ export default function EventsPage() {
         <div className="container mx-auto px-6">
           {/* Back Button */}
           <Link
-            to="/"
+            href="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -137,12 +137,13 @@ export default function EventsPage() {
               {gridDisplayEvents.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {gridDisplayEvents.map((event) => (
-                    <Link key={event.id} to={`/events/${event.slug}`}>
+                    <Link key={event.id} href={`/events/${event.slug}`}>
                       <article className="bg-[#111111] border border-zinc-800 rounded-xl overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-col group">
                         <div className="relative h-72 overflow-hidden bg-black">
-                          <img
+                          <Image
                             src={event.image || "/placeholder.svg"}
                             alt={event.title}
+                            fill
                             className="object-contain transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
