@@ -238,7 +238,10 @@ export default async function UsersPage({
         )
         .limit(ADMIN_PAGE_SIZE)
         .offset(getOffsetFromPage(artPage, ADMIN_PAGE_SIZE)),
-      (await clerkClient()).invitations.getInvitationList(),
+      (await clerkClient()).invitations.getInvitationList({
+        limit: 500,
+        status: "pending",
+      }),
     ]);
 
   const allInvitations = [...invitationsResult.data]
@@ -348,7 +351,7 @@ export default async function UsersPage({
                         sortParam="inv_sort"
                       />
                     </TableHead>
-                    <TableHead className="w-[180px] text-xs font-bold uppercase tracking-wider text-gray-300">
+                    <TableHead className="w-[280px] text-xs font-bold uppercase tracking-wider text-gray-300">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -371,6 +374,7 @@ export default async function UsersPage({
                         <RevokeInvitationButton
                           invitationId={invitation.id}
                           email={invitation.emailAddress}
+                          url={invitation.url}
                         />
                       </TableCell>
                     </TableRow>

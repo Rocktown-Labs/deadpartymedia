@@ -90,6 +90,8 @@ export async function createArtist(formData: FormData) {
     try {
       await client.invitations.createInvitation({
         emailAddress: validatedData.email,
+        expiresInDays: 7,
+        ignoreExisting: true,
         publicMetadata: {
           artistId: artist.id.toString(),
           role: "artist",
@@ -205,6 +207,8 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
   try {
     await client.invitations.createInvitation({
       emailAddress: email,
+      expiresInDays: 7,
+      ignoreExisting: true,
       publicMetadata: {
         artistId: artistId.toString(),
         role: "artist",

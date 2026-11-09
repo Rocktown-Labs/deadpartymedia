@@ -130,6 +130,8 @@ export async function inviteUser(
 
     await client.invitations.createInvitation({
       emailAddress: validatedData.email,
+      expiresInDays: 7,
+      ignoreExisting: true,
       publicMetadata,
       redirectUrl: buildInvitationRedirectUrl(redirectUrl || defaultRedirectUrl),
     });
@@ -399,6 +401,8 @@ export async function inviteArtistProfile(formData: FormData) {
   try {
     await client.invitations.createInvitation({
       emailAddress: artist.email,
+      expiresInDays: 7,
+      ignoreExisting: true,
       publicMetadata: {
         artistId: String(artist.id),
         role: "artist",
@@ -497,6 +501,74 @@ export async function revokeInvitation(invitationId: string) {
   } catch (error) {
     return {
       error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to revoke invitation"),
+      success: false,
+    };
+  }
+}
+
+export async function resendInvitation(invitationId: string, email?: string, role?: Roles) {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in" as Route);
+  }
+
+  if (!(await canManageUsers())) {
+    throw new Error("Unauthorized: Only super admins can resend invitations");
+  }
+
+  const client = await clerkClient();
+
+  try {
+    let targetEmail = email?.trim().toLowerCase();
+    let targetMetadata: Record<string, unknown> | undefined;
+    let targetRole: Roles = role || "fan";
+
+    const invitationsList = await client.invitations.getInvitationList({
+      limit: 500,
+      status: "pending",
+    });
+
+    const targetInvitation = invitationsList.data.find((inv) => inv.id === invitationId);
+    if (targetInvitation) {
+      targetEmail = targetInvitation.emailAddress;
+      targetMetadata = (targetInvitation.publicMetadata as Record<string, unknown>) || undefined;
+      const metaRole = targetMetadata?.role as Roles | undefined;
+      if (metaRole && VALID_INVITE_ROLES.has(metaRole)) {
+        targetRole = metaRole;
+      }
+    }
+
+    if (!targetEmail) {
+      return {
+        error: "Pending invitation not found or email address missing",
+        success: false,
+      };
+    }
+
+    // Attempt to revoke old invitation first if still active
+    try {
+      await client.invitations.revokeInvitation(invitationId);
+    } catch {
+      // Continue even if revocation fails (e.g. already revoked or expired)
+    }
+
+    const defaultRedirectUrl = getInviteRedirectUrl(targetRole);
+    const newInvitation = await client.invitations.createInvitation({
+      emailAddress: targetEmail,
+      expiresInDays: 7,
+      ignoreExisting: true,
+      publicMetadata: targetMetadata,
+      redirectUrl: buildInvitationRedirectUrl(defaultRedirectUrl),
+    });
+
+    revalidatePath("/admin/users");
+    return {
+      success: true,
+      url: newInvitation.url,
+    };
+  } catch (error) {
+    return {
+      error: getNestedErrorMessage(error) ?? getErrorMessage(error, "Failed to resend invitation"),
       success: false,
     };
   }
