@@ -1,17 +1,12 @@
 # Test files
 tests/
 **/tests/
-**/test_*.py
-**/*_test.py
-**/*.test.py
 __tests__/
 **/__tests__/
 testdata/
 **/testdata/
 fixtures/
 **/fixtures/
-__fixtures__/
-**/__fixtures__/
 sample-data/
 **/sample-data/
 
@@ -19,16 +14,11 @@ sample-data/
 .env
 .env.*
 !.env.example
+.dev.vars
+.dev.vars.*
 *.log
-*.pyc
-__pycache__/
-**/__pycache__/
-.pytest_cache/
-**/.pytest_cache/
 .coverage
 htmlcov/
-.mypy_cache/
-.ruff_cache/
 
 # Docker files
 Dockerfile
@@ -66,9 +56,10 @@ node_modules/
 docs/
 
 # Build artifacts (will be generated during build)
-apps/server/.venv/
-apps/server/staticfiles/
-apps/server/media/
+**/.next/
+**/.output/
+**/dist/
+**/coverage/
 
 # Native app files (not needed for API)
 apps/native/

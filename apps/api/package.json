@@ -1,0 +1,39 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./type": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.27.0",
+    "@dpmedia/contracts": "workspace:*",
+    "@dpmedia/db": "workspace:*",
+    "@neondatabase/serverless": "^1.2.0",
+    "@tiptap/extension-image": "^2.9.2",
+    "@tiptap/extension-link": "^2.27.2",
+    "@tiptap/html": "^2.9.2",
+    "@tiptap/starter-kit": "^2.9.2",
+    "aws4fetch": "^1.0.20",
+    "drizzle-orm": "catalog:",
+    "hono": "^4.13.17",
+    "workers-og": "^0.0.27",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dpmedia/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^4.158.0"
+  }
+}

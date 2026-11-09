@@ -3,6 +3,7 @@ import { venues } from "@dpmedia/db/schema";
 import { createServerFn } from "@tanstack/react-start";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { artsApiConfigured, artsApiFetch } from "#/lib/api-proxy.ts";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { createSlug } from "#/lib/slug.ts";
 
@@ -19,7 +20,30 @@ export interface VenueListItem {
   createdAt: Date;
 }
 
+interface ApiVenueListItem extends Omit<VenueListItem, "createdAt"> {
+  createdAt: string;
+}
+
+/** Revive Date fields the API serializes as ISO strings. */
+function reviveVenue<T extends { createdAt: string }>(venue: T): T & { createdAt: Date } {
+  return { ...venue, createdAt: new Date(venue.createdAt) };
+}
+
 export const listArtsVenues = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured.
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/venues");
+      if (!response.ok) {
+        return [] satisfies VenueListItem[];
+      }
+      const rows = (await response.json()) as ApiVenueListItem[];
+      return rows.map(reviveVenue) satisfies VenueListItem[];
+    } catch {
+      return [] satisfies VenueListItem[];
+    }
+  }
+
   try {
     const rows = await db
       .select({
@@ -78,6 +102,25 @@ export const createArtsVenue = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/venues", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create venue (API ${response.status})`);
+      }
+      const result = (await response.json()) as { venue?: ApiVenueListItem };
+      // Preserve the original return type: `venue: VenueListItem` — the
+      // source returned the drizzle row (or undefined on empty returning())
+      // under the same non-optional type.
+      return {
+        success: true,
+        venue: result.venue ? reviveVenue(result.venue) : undefined,
+      } as { success: boolean; venue: VenueListItem };
+    }
+
     const slug = await makeUniqueVenueSlug(data.name);
 
     const [created] = await db
@@ -112,6 +155,25 @@ export const updateArtsVenue = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/venues/${data.id}`, {
+        json: data,
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update venue (API ${response.status})`);
+      }
+      const result = (await response.json()) as { venue?: ApiVenueListItem };
+      // Preserve the original return type: `venue: VenueListItem` — the
+      // source returned the drizzle row (or undefined on a missing id)
+      // under the same non-optional type.
+      return {
+        success: true,
+        venue: result.venue ? reviveVenue(result.venue) : undefined,
+      } as { success: boolean; venue: VenueListItem };
+    }
+
     const [updated] = await db
       .update(venues)
       .set({
@@ -134,6 +196,17 @@ export const deleteArtsVenue = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/venues/${data.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete venue (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     await db.delete(venues).where(eq(venues.id, data.id));
     return { success: true };
   });

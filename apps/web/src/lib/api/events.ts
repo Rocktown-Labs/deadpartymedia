@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery } from "@tanstack/react-query";
 
 export interface Event {
@@ -50,7 +51,7 @@ export function useEvents(genre?: string) {
   return useQuery<EventList[]>({
     queryFn: async () => {
       const params = genre ? `?genre=${genre}` : "";
-      const response = await fetch(`/api/events${params}`);
+      const response = await apiFetch(`/api/events${params}`);
       const data = await response.json();
       // Handle pagination format: {results: [], count: 0}
       if (Array.isArray(data)) {
@@ -69,7 +70,7 @@ export function useEvent(slug: string) {
   return useQuery<Event>({
     enabled: !!slug,
     queryFn: async () => {
-      const response = await fetch(`/api/events/${slug}`);
+      const response = await apiFetch(`/api/events/${slug}`);
       if (!response.ok) {
         throw new Error("Failed to fetch event");
       }

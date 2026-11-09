@@ -13,6 +13,11 @@
         "CLERK_PUBLISHABLE_KEY",
         "VITE_CLERK_PUBLISHABLE_KEY",
         "CLERK_SECRET_KEY",
+        "CLERK_WEBHOOK_SIGNING_SECRET",
+        "SPOTIFY_CLIENT_ID",
+        "SPOTIFY_CLIENT_SECRET",
+        "WEB_APP_URL",
+        "ARTS_APP_URL",
         "DATABASE_URL",
         "SERVER_URL",
         "VITE_APP_TITLE",
@@ -37,7 +42,10 @@
         "CLOUDFLARE_ACCOUNT_ID",
         "CLOUDFLARE_API_TOKEN",
         "CLOUDFLARE_API_KEY",
-        "CLOUDFLARE_AI_MODEL"
+        "CLOUDFLARE_AI_MODEL",
+        "API_URL",
+        "API_BASE_URL",
+        "NEXT_PUBLIC_API_URL"
       ]
     },
     "check-types": {

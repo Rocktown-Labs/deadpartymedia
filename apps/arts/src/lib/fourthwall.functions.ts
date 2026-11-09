@@ -1,6 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+type ArtsApi = typeof import("#/lib/api-proxy.ts");
+
+let artsApiPromise: Promise<ArtsApi> | null = null;
+
+/**
+ * Load the API proxy lazily. api-proxy.ts statically imports
+ * `@tanstack/react-start/server`, which re-exports
+ * `@tanstack/start-server-core`; its `#tanstack-*` subpath imports only
+ * resolve under the full TanStack Start build plugin (disabled under
+ * VITEST), so an eager top-level import would break unit tests that load
+ * this module. Handlers never run in those tests.
+ */
+function loadArtsApi(): Promise<ArtsApi> {
+  artsApiPromise ??= import("#/lib/api-proxy.ts");
+  return artsApiPromise;
+}
+
 const FOURTHWALL_API_URL =
   process.env.VITE_FW_API_URL ??
   process.env.NEXT_PUBLIC_FW_API_URL ??
@@ -226,6 +243,20 @@ async function getOrCreateCart(cartId?: string) {
 }
 
 export const getArtsProducts = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/products");
+      if (!response.ok) {
+        return [] satisfies ArtsProduct[];
+      }
+      return (await response.json()) as ArtsProduct[];
+    } catch {
+      return [] satisfies ArtsProduct[];
+    }
+  }
+
   try {
     const collectionPath = ARTS_COLLECTION_ID
       ? `collections/${ARTS_COLLECTION_ID}/products`
@@ -247,6 +278,20 @@ export const getArtsProductByHandle = createServerFn({ method: "GET" })
       return null;
     }
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch(`/arts/products/${encodeURIComponent(data.handle)}`);
+        if (!response.ok) {
+          return null;
+        }
+        return (await response.json()) as ArtsProduct | null;
+      } catch {
+        return null;
+      }
+    }
+
     try {
       const product = await fourthwallFetch<FourthwallProduct>(
         `products/${data.handle}?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
@@ -264,12 +309,35 @@ export const getArtsCart = createServerFn({ method: "GET" })
       return null;
     }
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/cart?cartId=${encodeURIComponent(data.cartId)}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load cart (API ${response.status})`);
+      }
+      return (await response.json()) as ArtsCart;
+    }
+
     return fetchCart(data.cartId);
   });
 
 export const addArtsCartItem = createServerFn({ method: "POST" })
   .validator(cartLineSchema)
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/cart/items", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to add cart item (API ${response.status})`);
+      }
+      return (await response.json()) as ArtsCart;
+    }
+
     const cart = await getOrCreateCart(data.cartId);
     const updated = await fourthwallFetch<FourthwallCart>(
       `carts/${cart.id}/add?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
@@ -287,6 +355,21 @@ export const addArtsCartItem = createServerFn({ method: "POST" })
 export const updateArtsCartItem = createServerFn({ method: "POST" })
   .validator(cartLineSchema)
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured. The API
+    // routes quantity 0 to Fourthwall's remove endpoint, any other quantity
+    // to change — same split as the source.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/cart/items", {
+        json: data,
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update cart item (API ${response.status})`);
+      }
+      return (await response.json()) as ArtsCart;
+    }
+
     const cart = await getOrCreateCart(data.cartId);
     const endpoint = data.quantity === 0 ? "remove" : "change";
     const updated = await fourthwallFetch<FourthwallCart>(

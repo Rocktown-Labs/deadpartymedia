@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface Article {
@@ -82,7 +83,7 @@ export function buildPostsApiPath(category?: string, options: UseArticlesOptions
 export function useArticles(category?: string, options: UseArticlesOptions = {}) {
   return useQuery<ArticleList[]>({
     queryFn: async () => {
-      const response = await fetch(buildPostsApiPath(category, options));
+      const response = await apiFetch(buildPostsApiPath(category, options));
       const data = await response.json();
       // Handle pagination format: {results: [], count: 0}
       if (Array.isArray(data)) {
@@ -101,7 +102,7 @@ export function useArticle(slug: string) {
   return useQuery<Article>({
     enabled: !!slug,
     queryFn: async () => {
-      const response = await fetch(`/api/posts/${slug}`);
+      const response = await apiFetch(`/api/posts/${slug}`);
       if (!response.ok) {
         throw new Error("Failed to fetch article");
       }
@@ -125,7 +126,7 @@ export function useArticleComments(slug: string) {
   return useQuery<Comment[]>({
     enabled: !!slug,
     queryFn: async ({ signal }) => {
-      const response = await fetch(`/api/articles/${slug}/comments`, { signal });
+      const response = await apiFetch(`/api/articles/${slug}/comments`, { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch comments");
       }
@@ -155,7 +156,7 @@ export function useCreateComment() {
       content: string;
       parent?: number;
     }) => {
-      const response = await fetch(`/api/articles/${slug}/comments`, {
+      const response = await apiFetch(`/api/articles/${slug}/comments`, {
         body: JSON.stringify({ content, parent }),
         headers: {
           "Content-Type": "application/json",

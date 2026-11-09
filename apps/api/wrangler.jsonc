@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dpmedia-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "WEB_APP_URL": "https://deadpartymedia.com",
+    "ARTS_APP_URL": "https://arts.deadpartymedia.com",
+    "NEXT_PUBLIC_SITE_URL": "https://www.deadpartymedia.com",
+  },
+  // Secrets (wrangler secret put / .dev.vars locally):
+  //   DATABASE_URL, CLERK_SECRET_KEY, CLERK_PUBLISHABLE_KEY,
+  //   CLERK_WEBHOOK_SIGNING_SECRET, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET,
+  //   CLOUDFLARE_R2_ACCOUNT_ID, CLOUDFLARE_R2_ACCESS_KEY_ID,
+  //   CLOUDFLARE_R2_SECRET_ACCESS_KEY, CLOUDFLARE_R2_BUCKET, CLOUDFLARE_R2_PUBLIC_URL
+}

@@ -7,6 +7,10 @@
     "apps/web": {
       "name": "deadpartymedia",
       "script": "dev:app"
+    },
+    "apps/web-start": {
+      "name": "start.deadpartymedia",
+      "script": "dev:app"
     }
   }
 }

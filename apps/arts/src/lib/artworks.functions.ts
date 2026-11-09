@@ -10,6 +10,23 @@ import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
 
+type ArtsApi = typeof import("#/lib/api-proxy.ts");
+
+let artsApiPromise: Promise<ArtsApi> | null = null;
+
+/**
+ * Load the API proxy lazily. api-proxy.ts statically imports
+ * `@tanstack/react-start/server`, which re-exports
+ * `@tanstack/start-server-core`; its `#tanstack-*` subpath imports only
+ * resolve under the full TanStack Start build plugin (disabled under
+ * VITEST), so an eager top-level import would break unit tests that load
+ * this module. Handlers never run in those tests.
+ */
+function loadArtsApi(): Promise<ArtsApi> {
+  artsApiPromise ??= import("#/lib/api-proxy.ts");
+  return artsApiPromise;
+}
+
 function withNormalizedImages<T extends { image: string | null }>(rows: T[]): T[] {
   return rows.map((row) => ({ ...row, image: normalizeStoredImageUrl(row.image) }));
 }
@@ -39,6 +56,32 @@ export interface PaginatedArtworksResult {
   totalCount: number;
   /** Published artwork count per medium group slug. Sums to totalCount. */
   groupCounts: Record<string, number>;
+}
+
+interface ApiArtworkListItem extends Omit<ArtworkListItem, "createdAt"> {
+  createdAt: string;
+}
+
+/** Revive Date fields the API serializes as ISO strings. */
+function reviveArtwork(item: ApiArtworkListItem): ArtworkListItem {
+  return { ...item, createdAt: new Date(item.createdAt) };
+}
+
+interface ApiArtworkRow extends Omit<typeof artworks.$inferSelect, "createdAt" | "updatedAt"> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+function reviveArtworkRow(row: ApiArtworkRow): typeof artworks.$inferSelect {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function emptyArtworksPage(): PaginatedArtworksResult {
+  return { groupCounts: {}, items: [], nextOffset: null, totalCount: 0 };
 }
 
 const artworkInputSchema = z
@@ -194,6 +237,39 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
     }),
   )
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const params = new URLSearchParams();
+        if (data.artmaker) {
+          params.set("artmaker", data.artmaker);
+        }
+        params.set("limit", String(data.limit));
+        if (data.medium) {
+          params.set("medium", data.medium);
+        }
+        params.set("offset", String(data.offset));
+        params.set("sort", data.sort);
+
+        const response = await artsApiFetch(`/arts/artworks?${params.toString()}`);
+        if (!response.ok) {
+          return emptyArtworksPage();
+        }
+        const result = (await response.json()) as Omit<PaginatedArtworksResult, "items"> & {
+          items: ApiArtworkListItem[];
+        };
+        return {
+          items: result.items.map(reviveArtwork),
+          nextOffset: result.nextOffset,
+          totalCount: result.totalCount,
+          groupCounts: result.groupCounts,
+        } satisfies PaginatedArtworksResult;
+      } catch {
+        return emptyArtworksPage();
+      }
+    }
+
     try {
       const whereConditions = [eq(artworks.status, "published"), eq(artmakers.status, "published")];
 
@@ -291,6 +367,23 @@ export const listPublishedArtworksPaginated = createServerFn({ method: "GET" })
 export const getArtworkByIdOrSlug = createServerFn({ method: "GET" })
   .validator(z.object({ identifier: z.string().min(1) }))
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch(
+          `/arts/artworks/${encodeURIComponent(data.identifier)}`,
+        );
+        if (!response.ok) {
+          return null;
+        }
+        const artwork = (await response.json()) as ApiArtworkListItem | null;
+        return artwork ? reviveArtwork(artwork) : null;
+      } catch {
+        return null;
+      }
+    }
+
     try {
       const isNumeric = /^\d+$/.test(data.identifier);
       const condition = isNumeric
@@ -350,6 +443,23 @@ export const listMediumGroupArtworks = createServerFn({ method: "GET" })
 export const listPublishedArtworksByArtmakerSlug = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch(
+          `/arts/artworks/by-artmaker/${encodeURIComponent(data.slug)}`,
+        );
+        if (!response.ok) {
+          return [] satisfies ArtworkListItem[];
+        }
+        const rows = (await response.json()) as ApiArtworkListItem[];
+        return rows.map(reviveArtwork) satisfies ArtworkListItem[];
+      } catch {
+        return [] satisfies ArtworkListItem[];
+      }
+    }
+
     try {
       const rows = await db
         .select(artworkSelect())
@@ -377,6 +487,17 @@ export const listCurrentArtworks = createServerFn({ method: "GET" }).handler(asy
     return [] satisfies ArtworkListItem[];
   }
 
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    const response = await artsApiFetch("/arts/dashboard/artworks");
+    if (!response.ok) {
+      throw new Error(`Failed to load artworks (API ${response.status})`);
+    }
+    const rows = (await response.json()) as ApiArtworkListItem[];
+    return rows.map(reviveArtwork) satisfies ArtworkListItem[];
+  }
+
   const rows = await db
     .select(artworkSelect())
     .from(artworks)
@@ -391,6 +512,21 @@ export const saveArtwork = createServerFn({ method: "POST" })
   .validator(artworkInputSchema)
   .handler(async ({ data }) => {
     const artmakerId = await getCurrentArtmakerId();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/dashboard/artworks", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save artwork (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artwork: ApiArtworkRow; success: boolean };
+      return { artwork: reviveArtworkRow(result.artwork), success: true };
+    }
+
     const slug = await makeUniqueArtworkSlug(data.title);
     const [created] = await db
       .insert(artworks)
@@ -418,6 +554,21 @@ export const deleteCurrentArtwork = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     const artmakerId = await getCurrentArtmakerId();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/dashboard/artworks/${data.id}`, {
+        method: "DELETE",
+      });
+      if (response.status === 404) {
+        throw new Error("Artwork not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to delete artwork (API ${response.status})`);
+      }
+      return { success: true };
+    }
 
     const [existing] = await db
       .select({ id: artworks.id })
@@ -453,6 +604,23 @@ export const updateCurrentArtwork = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const artmakerId = await getCurrentArtmakerId();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/dashboard/artworks/${data.id}`, {
+        json: data,
+        method: "PATCH",
+      });
+      if (response.status === 404) {
+        throw new Error("Artwork not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to update artwork (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artwork: ApiArtworkListItem; success: boolean };
+      return { artwork: reviveArtwork(result.artwork), success: true };
+    }
 
     const [existing] = await db
       .select({ id: artworks.id, slug: artworks.slug, title: artworks.title })
@@ -506,6 +674,17 @@ export const updateCurrentArtwork = createServerFn({ method: "POST" })
 export const listAdminArtworks = createServerFn({ method: "GET" }).handler(async () => {
   await requireArtsStaff();
 
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    const response = await artsApiFetch("/arts/admin/artworks");
+    if (!response.ok) {
+      throw new Error(`Failed to load artworks (API ${response.status})`);
+    }
+    const rows = (await response.json()) as ApiArtworkListItem[];
+    return rows.map(reviveArtwork) satisfies ArtworkListItem[];
+  }
+
   const rows = await db
     .select(artworkSelect())
     .from(artworks)
@@ -531,6 +710,20 @@ export const createArtsArtwork = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/artworks", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create artwork (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artwork: ApiArtworkRow; success: boolean };
+      return { artwork: reviveArtworkRow(result.artwork), success: true };
+    }
 
     const slug = await makeUniqueArtworkSlug(data.title);
     const [created] = await db
@@ -572,6 +765,23 @@ export const updateArtsArtwork = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireArtsStaff();
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artworks/${data.id}`, {
+        json: data,
+        method: "PATCH",
+      });
+      if (response.status === 404) {
+        throw new Error("Artwork not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to update artwork (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artwork: ApiArtworkRow; success: boolean };
+      return { artwork: reviveArtworkRow(result.artwork), success: true };
+    }
+
     const [updated] = await db
       .update(artworks)
       .set({
@@ -599,6 +809,22 @@ export const toggleArtsArtworkStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireArtsStaff();
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artworks/${data.id}/status`, {
+        method: "POST",
+      });
+      if (response.status === 404) {
+        throw new Error("Artwork not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to toggle artwork status (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artwork: ApiArtworkRow; success: boolean };
+      return { artwork: reviveArtworkRow(result.artwork), success: true };
+    }
+
     const [existing] = await db.select().from(artworks).where(eq(artworks.id, data.id));
     if (!existing) {
       throw new Error("Artwork not found");
@@ -625,6 +851,18 @@ export const deleteArtsArtwork = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artworks/${data.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete artwork (API ${response.status})`);
+      }
+      return { success: true };
+    }
 
     await db.delete(artworks).where(eq(artworks.id, data.id));
     return { success: true };

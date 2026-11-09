@@ -16,6 +16,9 @@ out/
 build/
 dist/
 
+# Cloudflare wrangler local state
+.wrangler/
+
 # Production
 *.log
 *.pid
@@ -28,6 +31,8 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.dev.vars
+.dev.vars.*
 apps/server/.env
 apps/server/.env.production
 apps/web/.env.local

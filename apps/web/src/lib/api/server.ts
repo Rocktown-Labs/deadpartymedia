@@ -40,13 +40,23 @@ const getRequestBaseUrl = async (): Promise<string> => {
 const METADATA_REVALIDATE_SECONDS = 300;
 
 /**
- * Server-side API client for fetching data from Next.js API routes.
- * Used for generating metadata in Next.js server components.
+ * Server-side API client for fetching data for metadata generation.
+ *
+ * When NEXT_PUBLIC_API_URL is configured (Phase 1 flip), /api/* endpoints
+ * are served by the platform API worker (/music/*) instead of this app's
+ * own routes.
  */
 const serverFetch = async <T>(endpoint: string): Promise<T> => {
-  const baseUrl = await getRequestBaseUrl();
-  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-  const url = `${normalizedBaseUrl}${endpoint}`;
+  const externalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let url: string;
+  if (externalApiBase && endpoint.startsWith("/api/")) {
+    const base = externalApiBase.replace(/\/$/, "");
+    url = `${base}/music/${endpoint.slice("/api/".length)}`;
+  } else {
+    const baseUrl = await getRequestBaseUrl();
+    const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    url = `${normalizedBaseUrl}${endpoint}`;
+  }
 
   const response = await fetch(url, {
     headers: {

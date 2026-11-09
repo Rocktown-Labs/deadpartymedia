@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery } from "@tanstack/react-query";
 
 export interface MusicReleaseData {
@@ -59,7 +60,7 @@ export function useMusicReleases(filters?: MusicReleasesFilters) {
 
   return useQuery<MusicReleaseData[]>({
     queryFn: async () => {
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       if (!res.ok) {
         throw new Error("Failed to fetch music releases");
       }
@@ -74,7 +75,7 @@ export function useMusicRelease(slug: string) {
   return useQuery<MusicReleaseData>({
     enabled: Boolean(slug),
     queryFn: async () => {
-      const res = await fetch(`/api/music/${slug}`);
+      const res = await apiFetch(`/api/music/${slug}`);
       if (!res.ok) {
         throw new Error("Failed to fetch music release");
       }

@@ -21,6 +21,23 @@ import {
 import { createSlug } from "#/lib/slug.ts";
 import { getPublicUploadUrl, normalizeStoredImageUrl } from "#/lib/upload.ts";
 
+type ArtsApi = typeof import("#/lib/api-proxy.ts");
+
+let artsApiPromise: Promise<ArtsApi> | null = null;
+
+/**
+ * Load the API proxy lazily. api-proxy.ts statically imports
+ * `@tanstack/react-start/server`, which re-exports
+ * `@tanstack/start-server-core`; its `#tanstack-*` subpath imports only
+ * resolve under the full TanStack Start build plugin (disabled under
+ * VITEST), so an eager top-level import would break unit tests that load
+ * this module. Handlers never run in those tests.
+ */
+function loadArtsApi(): Promise<ArtsApi> {
+  artsApiPromise ??= import("#/lib/api-proxy.ts");
+  return artsApiPromise;
+}
+
 // Re-exported for existing role unit tests and call sites.
 export {
   getRolesFromMetadata,
@@ -146,7 +163,36 @@ async function makeUniqueArtmakerSlug(name: string, currentId?: number) {
   }
 }
 
+interface ApiArtmakerRow extends Omit<typeof artmakers.$inferSelect, "createdAt" | "updatedAt"> {
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Revive Date fields the API serializes as ISO strings. */
+function reviveArtmakerRow(row: ApiArtmakerRow): typeof artmakers.$inferSelect {
+  return {
+    ...row,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
 export const listArtmakers = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    try {
+      const response = await artsApiFetch("/arts/artmakers");
+      if (!response.ok) {
+        return [] satisfies ArtmakerListItem[];
+      }
+      // ArtmakerListItem has no Date fields — no revival needed.
+      return (await response.json()) as ArtmakerListItem[];
+    } catch {
+      return [] satisfies ArtmakerListItem[];
+    }
+  }
+
   try {
     const rows = await db
       .select({
@@ -185,6 +231,20 @@ export const listArtmakers = createServerFn({ method: "GET" }).handler(async () 
 export const getArtmakerBySlug = createServerFn({ method: "GET" })
   .validator(slugInputSchema)
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch(`/arts/artmakers/${encodeURIComponent(data.slug)}`);
+        if (!response.ok) {
+          return null;
+        }
+        return (await response.json()) as ArtmakerListItem | null;
+      } catch {
+        return null;
+      }
+    }
+
     try {
       const [artmaker] = await db
         .select({
@@ -218,6 +278,18 @@ export const getArtmakerBySlug = createServerFn({ method: "GET" })
   });
 
 export const getCurrentArtmaker = createServerFn({ method: "GET" }).handler(async () => {
+  // Phase 1 flip: proxy to the platform API when configured. The API
+  // returns null for anonymous callers, same as the source.
+  const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+  if (artsApiConfigured()) {
+    const response = await artsApiFetch("/arts/dashboard/artmaker");
+    if (!response.ok) {
+      throw new Error(`Failed to load artmaker profile (API ${response.status})`);
+    }
+    const artmaker = (await response.json()) as ApiArtmakerRow | null;
+    return artmaker ? reviveArtmakerRow(artmaker) : null;
+  }
+
   assertClerkServerConfigured();
 
   const { isAuthenticated, userId } = await auth();
@@ -244,6 +316,20 @@ export const saveArtmakerOnboarding = createServerFn({ method: "POST" })
 
     if (!isAuthenticated || !userId) {
       throw redirect({ to: "/" });
+    }
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/artmakers/onboarding/artmaker", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save artmaker onboarding (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artmaker: ApiArtmakerRow; success: boolean };
+      return { artmaker: reviveArtmakerRow(result.artmaker), success: true };
     }
 
     const [existing] = await db
@@ -363,6 +449,23 @@ export const saveFanOnboarding = createServerFn({ method: "POST" })
       throw redirect({ to: "/" });
     }
 
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/artmakers/onboarding/fan", {
+        json: data,
+        method: "POST",
+      });
+      if (response.status === 400) {
+        // The API surfaces the source's verified-email guard as a 400.
+        throw new Error("A verified email is required to finish onboarding.");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to save fan onboarding (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     const client = clerkClient();
     const clerkUser = await client.users.getUser(userId);
     const primaryEmail =
@@ -427,6 +530,23 @@ export const createArtsArtmakerStub = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch("/arts/admin/artmakers", {
+        json: data,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to create artmaker stub (API ${response.status})`);
+      }
+      return (await response.json()) as {
+        artmaker: { id: number; name: string; slug: string };
+        success: boolean;
+      };
+    }
+
     const slug = await makeUniqueArtmakerSlug(data.name);
     const instagramUsername = normalizeInstagramUsername(data.instagramUsername);
     const [created] = await db
@@ -474,6 +594,24 @@ export const updateArtsArtmaker = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artmakers/${data.id}`, {
+        json: data,
+        method: "PATCH",
+      });
+      if (response.status === 404) {
+        throw new Error("Artmaker not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to update artmaker (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artmaker: ApiArtmakerRow; success: boolean };
+      return { artmaker: reviveArtmakerRow(result.artmaker), success: true };
+    }
+
     const [existing] = await db
       .select({
         hidden: artmakers.hidden,
@@ -511,6 +649,23 @@ export const toggleArtsArtmakerVisibility = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artmakers/${data.id}/visibility`, {
+        method: "POST",
+      });
+      if (response.status === 404) {
+        throw new Error("Artmaker not found");
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to toggle artmaker visibility (API ${response.status})`);
+      }
+      const result = (await response.json()) as { artmaker: ApiArtmakerRow; success: boolean };
+      return { artmaker: reviveArtmakerRow(result.artmaker), success: true };
+    }
+
     const [existing] = await db.select().from(artmakers).where(eq(artmakers.id, data.id));
     if (!existing) {
       throw new Error("Artmaker not found");
@@ -533,6 +688,19 @@ export const deleteArtsArtmaker = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
     await requireArtsStaff();
+
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      const response = await artsApiFetch(`/arts/admin/artmakers/${data.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete artmaker (API ${response.status})`);
+      }
+      return { success: true };
+    }
+
     await db.delete(artmakers).where(eq(artmakers.id, data.id));
     return { success: true };
   });
@@ -543,6 +711,23 @@ export const deleteArtsArtmaker = createServerFn({ method: "POST" })
 export const recordArtmakerProfileView = createServerFn({ method: "POST" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
+    // Phase 1 flip: proxy to the platform API when configured.
+    const { artsApiConfigured, artsApiFetch } = await loadArtsApi();
+    if (artsApiConfigured()) {
+      try {
+        const response = await artsApiFetch(
+          `/arts/artmakers/${encodeURIComponent(data.slug)}/profile-view`,
+          { method: "POST" },
+        );
+        if (!response.ok) {
+          return { success: false, profileViews: null };
+        }
+        return (await response.json()) as { success: boolean; profileViews: number | null };
+      } catch {
+        return { success: false, profileViews: null };
+      }
+    }
+
     try {
       const [updated] = await db
         .update(artmakers)

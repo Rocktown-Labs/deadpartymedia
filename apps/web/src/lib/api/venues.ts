@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery } from "@tanstack/react-query";
 
 export interface Venue {
@@ -23,7 +24,7 @@ export function useVenues() {
   return useQuery<Venue[]>({
     queryKey: ["venues"],
     queryFn: async () => {
-      const response = await fetch("/api/venues");
+      const response = await apiFetch("/api/venues");
       if (!response.ok) {
         throw new Error("Failed to fetch venues");
       }

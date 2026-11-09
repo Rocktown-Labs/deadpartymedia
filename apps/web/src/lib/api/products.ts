@@ -1,3 +1,4 @@
+import { apiFetch } from "./base";
 import { useQuery } from "@tanstack/react-query";
 import type { Product } from "@/lib/types";
 
@@ -59,7 +60,7 @@ export function useProducts(options: UseProductsOptions = {}) {
   return useQuery<Product[]>({
     enabled: options.enabled ?? true,
     queryFn: async ({ signal }) => {
-      const response = await fetch(apiPath, { signal });
+      const response = await apiFetch(apiPath, { signal });
       if (!response.ok) {
         throw new Error("Failed to fetch products");
       }
