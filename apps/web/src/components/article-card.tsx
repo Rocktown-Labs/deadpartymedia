@@ -21,14 +21,14 @@ interface ArticleCardProps {
 
 export default function ArticleCard({ article, categoryColor = "#7CFC00" }: ArticleCardProps) {
   return (
-    <Link key={article.id} to={`/article/${article.slug}`}>
+    <Link key={article.id} to="/article/$slug" params={{ slug: article.slug }}>
       <article className="group cursor-pointer">
         {/* Image */}
         <div className="relative h-80 mb-6 overflow-hidden bg-black">
           <img
             src={article.image || "/placeholder.svg"}
             alt={article.title}
-                       className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
+            className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
           />
           <div className="absolute top-4 left-4">
             <span

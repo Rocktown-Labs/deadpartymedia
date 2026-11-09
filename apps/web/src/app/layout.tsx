@@ -12,10 +12,6 @@ import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 
-
-
-
-
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
 

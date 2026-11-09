@@ -16,7 +16,6 @@ export default async function NotFound() {
             width={88}
             height={88}
             className="mx-auto mb-6"
-           
           />
           <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#7CFC00]">404 ERROR</p>
           <h1 className="mb-3 text-3xl font-black leading-tight sm:text-5xl">Page Not Found</h1>

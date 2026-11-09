@@ -75,7 +75,7 @@ export default function MerchPageClient() {
                       <img
                         src={product.featuredImage.url || "/placeholder.svg"}
                         alt={product.title}
-                                               className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                       <div className="absolute top-4 left-4">

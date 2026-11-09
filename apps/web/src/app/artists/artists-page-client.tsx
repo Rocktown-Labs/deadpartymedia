@@ -143,7 +143,7 @@ export default function ArtistsPageClient() {
                       <img
                         src={artist.image || "/placeholder.svg"}
                         alt={artist.name}
-                                               className="object-cover object-top md:object-center group-hover:scale-110 transition-transform duration-300"
+                        className="object-cover object-top md:object-center group-hover:scale-110 transition-transform duration-300"
                       />
                     </div>
                     <div className="p-4 md:p-6 flex-1 flex flex-col justify-center md:justify-start min-w-0">

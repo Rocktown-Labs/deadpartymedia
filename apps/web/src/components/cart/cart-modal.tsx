@@ -82,7 +82,7 @@ export default function CartModal() {
                       <img
                         src={item.merchandise.product.featuredImage.url || "/placeholder.svg"}
                         alt={item.merchandise.product.title}
-                                               className="object-cover"
+                        className="object-cover"
                       />
                     </div>
 

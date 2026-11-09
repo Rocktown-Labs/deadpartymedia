@@ -34,7 +34,7 @@ export function Gallery({ product }: { product: Product }) {
         {images[imageIndex] && (
           <img
             className="h-full w-full object-contain"
-                       sizes="(min-width: 1024px) 66vw, 100vw"
+            sizes="(min-width: 1024px) 66vw, 100vw"
             alt={images[imageIndex]?.altText as string}
             src={(images[imageIndex]?.url as string) || "/placeholder.svg"}
             style={{ position: "absolute", inset: 0 }}

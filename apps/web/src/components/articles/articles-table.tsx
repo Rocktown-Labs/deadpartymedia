@@ -45,13 +45,14 @@ export function ArticlesTable({
             <div className="flex items-center gap-4 sm:gap-6 py-4">
               {/* Cover Art Thumbnail */}
               <Link
-                to={`/article/${article.slug}`}
+                to="/article/$slug"
+                params={{ slug: article.slug }}
                 className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-[#7CFC00]/60 transition-colors group"
               >
                 <img
                   src={imageSrc}
                   alt={article.title}
-                                   className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </Link>
 
@@ -65,7 +66,8 @@ export function ArticlesTable({
                 </div>
 
                 <Link
-                  to={`/article/${article.slug}`}
+                  to="/article/$slug"
+                  params={{ slug: article.slug }}
                   className="font-black text-base sm:text-lg text-white hover:text-[#7CFC00] transition-colors line-clamp-1 sm:line-clamp-2 leading-snug group"
                   title={article.title}
                 >
@@ -84,7 +86,8 @@ export function ArticlesTable({
                     </span>
                   </span>
                   <Link
-                    to={`/article/${article.slug}`}
+                    to="/article/$slug"
+                    params={{ slug: article.slug }}
                     className="text-xs font-bold text-[#7CFC00] hover:underline uppercase tracking-wider shrink-0 flex items-center gap-1 ml-2"
                   >
                     Read Story <ArrowRight className="w-3.5 h-3.5" />

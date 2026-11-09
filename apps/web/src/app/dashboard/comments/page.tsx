@@ -86,7 +86,7 @@ export default function CommentsPage() {
                       <img
                         src={comment.article.cover_image}
                         alt={comment.article.title}
-                                               className="object-cover"
+                        className="object-cover"
                       />
                     </div>
                   )}

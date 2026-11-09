@@ -1194,7 +1194,7 @@ export function MusicReleaseEditor({
 
               {coverArt && (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
-                  <NextImage src={coverArt} alt="Cover Art Preview"className="object-cover" />
+                  <NextImage src={coverArt} alt="Cover Art Preview" className="object-cover" />
                   <button
                     type="button"
                     onClick={() => setCoverArt("")}

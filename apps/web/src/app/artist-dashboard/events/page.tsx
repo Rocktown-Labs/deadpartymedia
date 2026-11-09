@@ -114,7 +114,7 @@ export default function ArtistEventsPage() {
                 <div className="flex gap-4">
                   {event.image && (
                     <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                      <img src={event.image} alt={event.title}className="object-cover" />
+                      <img src={event.image} alt={event.title} className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

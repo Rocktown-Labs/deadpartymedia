@@ -92,7 +92,6 @@ export function MerchCarousel({
               <Link
                 key={product.id}
                 to={`/merch/${product.handle}` as Route}
-               
                 className="shrink-0 min-w-[300px] max-w-[300px]"
               >
                 <div className="group cursor-pointer">
@@ -100,7 +99,7 @@ export function MerchCarousel({
                     <img
                       src={product.featuredImage.url || "/placeholder.svg"}
                       alt={product.title}
-                                           className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
                     <div className="absolute top-4 left-4">

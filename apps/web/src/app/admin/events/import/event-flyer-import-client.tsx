@@ -366,10 +366,7 @@ export default function EventFlyerImportClient({
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <Link
-            to="/admin/events"
-            className="mb-3 inline-flex items-center text-sm text-[#7CFC00]"
-          >
+          <Link to="/admin/events" className="mb-3 inline-flex items-center text-sm text-[#7CFC00]">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Events
           </Link>
@@ -443,7 +440,7 @@ export default function EventFlyerImportClient({
                 }`}
               >
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-gray-800">
-                  <img src={item.previewUrl} alt={item.fileName}className="object-cover" />
+                  <img src={item.previewUrl} alt={item.fileName} className="object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">Flyer {index + 1}</p>
@@ -479,7 +476,7 @@ export default function EventFlyerImportClient({
                     <img
                       src={activeItem.previewUrl}
                       alt={activeItem.fileName}
-                                           className="object-contain"
+                      className="object-contain"
                     />
                   </div>
                   {activeItem.error && (

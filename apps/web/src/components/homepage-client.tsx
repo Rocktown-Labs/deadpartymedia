@@ -121,13 +121,11 @@ export default function HomepageClient({
               </div>
             </div>
           ) : heroArticle ? (
-            <Link to={`/article/${heroArticle.slug}`}>
+            <Link to="/article/$slug" params={{ slug: heroArticle.slug }}>
               <article className="relative group cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 hover:border-[#7CFC00] transition-all duration-300 shadow-2xl h-[400px] sm:h-[500px] lg:h-[560px] bg-zinc-950">
                 <img
                   src={heroArticle.image || heroArticle.cover_image || "/placeholder.svg"}
                   alt={heroArticle.title || "Featured Spotlight"}
-                                  
-                 
                   className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-85"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/65 to-black/20" />
@@ -187,14 +185,15 @@ export default function HomepageClient({
                 return (
                   <Link
                     key={article.slug}
-                    to={`/article/${article.slug}`}
+                    to="/article/$slug"
+                    params={{ slug: article.slug }}
                     className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-950/80 hover:border-[#7CFC00] hover:bg-zinc-900/40 transition-all overflow-hidden shadow-lg"
                   >
                     <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
                       <img
                         src={img}
                         alt={article.title}
-                                               className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {article.category && (
                         <span className="absolute top-3 left-3 bg-black/80 backdrop-blur-xs text-[10px] font-mono font-bold text-[#7CFC00] px-2 py-0.5 rounded border border-[#7CFC00]/30 uppercase tracking-wider">

@@ -121,7 +121,7 @@ export default async function VenueDashboardPage() {
                 <h2 className="text-lg font-bold mb-4">Venue Profile</h2>
                 {venue.image && (
                   <div className="relative w-full h-44 rounded-lg overflow-hidden mb-4 border border-zinc-800">
-                    <img src={venue.image} alt={venue.name}className="object-cover" />
+                    <img src={venue.image} alt={venue.name} className="object-cover" />
                   </div>
                 )}
                 {venue.description && (

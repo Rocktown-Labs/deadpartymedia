@@ -27,7 +27,6 @@ export default function ErrorBoundary({
             width={88}
             height={88}
             className="mx-auto mb-6"
-           
           />
           <p className="mb-2 text-xs font-black tracking-[0.35em] text-[#7CFC00]">
             APPLICATION ERROR

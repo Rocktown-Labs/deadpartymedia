@@ -121,7 +121,7 @@ export default function SavedPage() {
                           <img
                             src={article.cover_image}
                             alt={article.title}
-                                                       className="object-cover"
+                            className="object-cover"
                           />
                         </div>
                       )}

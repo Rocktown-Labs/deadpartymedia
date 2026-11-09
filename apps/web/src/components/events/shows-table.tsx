@@ -216,13 +216,13 @@ export function ShowsTable({
           return (
             <div className="flex items-center gap-3 py-1 min-w-[170px] sm:min-w-[220px]">
               <Link
-          to={`/events/${item.slug}`}
+                to="/events/$slug"
+                params={{ slug: item.slug }}
                 className="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-md overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-[#7CFC00]/60 transition-colors"
               >
                 <img
                   src={item.image || "/placeholder.svg"}
                   alt={item.title}
-                 
                   sizes="48px"
                   className={cn(
                     "object-cover transition-transform group-hover:scale-105",
@@ -232,7 +232,8 @@ export function ShowsTable({
               </Link>
               <div className="flex flex-col min-w-0">
                 <Link
-          to={`/events/${item.slug}`}
+                  to="/events/$slug"
+                  params={{ slug: item.slug }}
                   className={cn(
                     "inline-block py-1 font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
                     isPast
@@ -255,8 +256,11 @@ export function ShowsTable({
                           <span key={artist.id ?? idx}>
                             {artist.slug ? (
                               <Link
-          to={`/artists/${artist.slug}`}
-                                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
+                                to="/artists/$slug"
+                                params={{ slug: artist.slug }}
+                                onClick={(e: React.MouseEvent<HTMLAnchorElement>) =>
+                                  e.stopPropagation()
+                                }
                                 className={cn(
                                   "hover:underline",
                                   isPast ? "text-zinc-400" : "text-zinc-300 hover:text-[#7CFC00]",
@@ -285,8 +289,11 @@ export function ShowsTable({
                         <span key={artist.id ?? idx} className="text-[11px]">
                           {artist.slug ? (
                             <Link
-          to={`/artists/${artist.slug}`}
-                              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.stopPropagation()}
+                              to="/artists/$slug"
+                              params={{ slug: artist.slug }}
+                              onClick={(e: React.MouseEvent<HTMLAnchorElement>) =>
+                                e.stopPropagation()
+                              }
                               className={cn(
                                 "inline-block py-1 hover:underline font-medium",
                                 isPast
@@ -362,7 +369,8 @@ export function ShowsTable({
             return (
               <div className="py-1 text-right">
                 <Link
-          to={`/events/${item.slug}`}
+                  to="/events/$slug"
+                  params={{ slug: item.slug }}
                   aria-label={`Details for ${item.title}`}
                   className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-600 transition-colors"
                 >
@@ -393,7 +401,8 @@ export function ShowsTable({
           return (
             <div className="py-1 text-right">
               <Link
-          to={`/events/${item.slug}`}
+                to="/events/$slug"
+                params={{ slug: item.slug }}
                 aria-label={`View ${item.title}`}
                 className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider border border-[#7CFC00]/50 text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black px-2.5 sm:px-3 py-1 rounded transition-colors"
               >

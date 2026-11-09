@@ -176,7 +176,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                 {/* Cover art */}
                 <div className="relative w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800 flex items-center justify-center">
                   {sub.coverArt ? (
-                    <img src={sub.coverArt} alt={sub.title}className="object-cover" />
+                    <img src={sub.coverArt} alt={sub.title} className="object-cover" />
                   ) : (
                     <Disc className="w-10 h-10 text-zinc-600" />
                   )}

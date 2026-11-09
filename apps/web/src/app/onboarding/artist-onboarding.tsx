@@ -603,7 +603,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                                 <img
                                   src={field.state.value}
                                   alt="Profile preview"
-                                                                   className="object-cover"
+                                  className="object-cover"
                                 />
                               </div>
                             )}

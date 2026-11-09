@@ -115,11 +115,7 @@ export default function ArtistArticlesPage() {
                 <div className="flex gap-4">
                   {article.cover_image && (
                     <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                      <img
-                        src={article.cover_image}
-                        alt={article.title}
-                                               className="object-cover"
-                      />
+                      <img src={article.cover_image} alt={article.title} className="object-cover" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

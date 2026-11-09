@@ -415,7 +415,7 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
                           <img
                             src={field.state.value}
                             alt="Venue preview"
-                                                       className="object-cover"
+                            className="object-cover"
                           />
                           <button
                             type="button"

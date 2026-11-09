@@ -85,7 +85,7 @@ export default async function ArtistReleasesPage() {
                           <img
                             src={release.coverArt}
                             alt={release.title}
-                                                       className="object-cover"
+                            className="object-cover"
                           />
                         </div>
                       ) : (

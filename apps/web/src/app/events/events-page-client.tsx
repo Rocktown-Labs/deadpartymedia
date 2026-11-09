@@ -143,7 +143,7 @@ export default function EventsPage() {
                           <img
                             src={event.image || "/placeholder.svg"}
                             alt={event.title}
-                                                       className="object-contain transition-transform duration-300 group-hover:scale-105"
+                            className="object-contain transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
                         <div className="p-6 flex-1 flex flex-col">

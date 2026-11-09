@@ -128,7 +128,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                   <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
                     {artist.image && (
                       <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden shrink-0 border border-gray-800 bg-[#0E0E0E]">
-                        <img src={artist.image} alt={artist.name}className="object-cover" />
+                        <img src={artist.image} alt={artist.name} className="object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 w-full">
@@ -259,7 +259,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                           <img
                             src={article.cover_image || "/placeholder.svg"}
                             alt={article.title}
-                                                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <div className="p-4">
@@ -294,7 +294,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                           <img
                             src={event.image || "/placeholder.svg"}
                             alt={event.title}
-                                                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         <div className="p-4">

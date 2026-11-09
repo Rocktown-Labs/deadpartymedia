@@ -363,7 +363,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                             <img
                               src={artist.image || "/placeholder.svg"}
                               alt={artist.name}
-                                                           className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
+                              className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
                             />
                           </div>
                           <div className="p-5 flex-1 flex flex-col justify-center min-w-0">

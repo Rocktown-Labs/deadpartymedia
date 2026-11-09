@@ -21,10 +21,7 @@ const config = defineConfig({
       ).pathname,
     },
   },
-  plugins: lazyPlugins(() => [
-    tanstackStart(),
-    viteReact(),
-  ]),
+  plugins: lazyPlugins(() => [tanstackStart(), viteReact()]),
 });
 
 export default config;

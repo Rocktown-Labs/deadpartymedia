@@ -1,9 +1,4 @@
-import {
-  createRootRouteWithContext,
-  HeadContent,
-  Outlet,
-  Scripts,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";

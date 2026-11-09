@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import HomepageClient, {
-  type HomepageArticle,
-} from "@/components/homepage-client";
+import HomepageClient, { type HomepageArticle } from "@/components/homepage-client";
 import { getProducts } from "@/lib/fourthwall";
 import type { ArticleList } from "@/lib/api/articles";
 import type { EventList } from "@/lib/api/events";

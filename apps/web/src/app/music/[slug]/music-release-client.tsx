@@ -159,7 +159,6 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                   <img
                     src={release.coverArt || "/placeholder.svg"}
                     alt={release.title}
-                                      
                     className="object-cover"
                   />
                 </div>
@@ -269,7 +268,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                       <img
                         src={release.artistImage}
                         alt={release.artistName}
-                                               className="object-cover"
+                        className="object-cover"
                       />
                     </div>
                   )}

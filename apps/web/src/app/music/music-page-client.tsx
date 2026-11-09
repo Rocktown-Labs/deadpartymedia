@@ -134,7 +134,7 @@ export default function MusicPage() {
                     <img
                       src={release.coverArt || "/placeholder.svg"}
                       alt={release.title}
-                                           className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3 flex items-center gap-1.5">
                       <span className="bg-black/85 backdrop-blur-xs text-[11px] font-mono font-bold text-[#7CFC00] px-2.5 py-0.5 rounded border border-[#7CFC00]/30 uppercase">
