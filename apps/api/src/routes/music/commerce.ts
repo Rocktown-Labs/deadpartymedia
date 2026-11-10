@@ -55,7 +55,7 @@ export const musicCommerceRoutes = new Hono<AppEnv>()
               { merchandiseId: data.merchandiseId, quantity: data.quantity },
             ])
           : (data.operation === "delete" || data.quantity === 0) && line?.id
-            ? await api.removeFromCart(cart.id, [line.id])
+            ? await api.removeFromCart(cart.id, [line.merchandise.id])
             : line?.id
               ? await api.updateCart(cart.id, [
                   { id: line.id, merchandiseId: data.merchandiseId, quantity: data.quantity },

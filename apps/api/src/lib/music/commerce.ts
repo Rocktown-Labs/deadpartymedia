@@ -1,5 +1,4 @@
 import type { Bindings } from "../../bindings";
-import { TAGS } from "./constants";
 import { sanitizeError } from "./logger/sanitize";
 import type { Cart, Product, ProductOption } from "./types";
 export function commerce(env: Bindings) {
@@ -7,7 +6,6 @@ export function commerce(env: Bindings) {
   const STOREFRONT_TOKEN = env.FW_STOREFRONT_TOKEN;
   const MAX_PRODUCT_LIMIT = 100;
   const DEFAULT_PRODUCT_LIMIT = 100;
-  const PRODUCT_REVALIDATE_SECONDS = 60 * 60 * 24;
 
   if (!STOREFRONT_TOKEN) {
     console.warn(
@@ -69,12 +67,10 @@ export function commerce(env: Bindings) {
 
   async function fourthwallFetch<T>({
     path,
-    cache = "force-cache",
+    cache,
   }: {
     path: string;
-    tags?: string[];
-    cache?: RequestCache;
-    revalidate?: number;
+    cache?: "no-store" | "no-cache";
   }): Promise<T> {
     try {
       // Ensure clean URL construction
@@ -128,7 +124,10 @@ export function commerce(env: Bindings) {
       const cleanPath = path.startsWith("/") ? path.slice(1) : path;
       const url = `${baseUrl}${cleanPath}`;
 
-      console.debug({ method, operation: "fourthwall_mutate", url }, "Mutating Fourthwall");
+      console.debug(
+        { method, operation: "fourthwall_mutate", path: cleanPath.split("?")[0] },
+        "Mutating Fourthwall",
+      );
 
       const result = await fetch(url, {
         body: body ? JSON.stringify(body) : undefined,
@@ -338,10 +337,7 @@ export function commerce(env: Bindings) {
 
   async function fetchProductsFromSource(currency: string, limit: number): Promise<Product[]> {
     const data = await fourthwallFetch<{ results: FourthwallProduct[] }>({
-      cache: "force-cache",
       path: `collections/all/products?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}&size=${limit}`,
-      revalidate: PRODUCT_REVALIDATE_SECONDS,
-      tags: [TAGS.products],
     });
 
     console.info(
@@ -354,10 +350,7 @@ export function commerce(env: Bindings) {
 
   async function fetchProductFromSource(slug: string, currency: string): Promise<Product> {
     const data = await fourthwallFetch<FourthwallProduct>({
-      cache: "force-cache",
       path: `products/${slug}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
-      revalidate: PRODUCT_REVALIDATE_SECONDS,
-      tags: [TAGS.products, `${TAGS.products}-${slug}`],
     });
 
     return transformProduct(data);
@@ -417,7 +410,6 @@ export function commerce(env: Bindings) {
       const data = await fourthwallFetch<FourthwallCart>({
         cache: "no-store",
         path: `carts/${cartId}?storefront_token=${STOREFRONT_TOKEN}&currency=${currency}`,
-        tags: [TAGS.cart],
       });
 
       return transformCart(data, currency);
@@ -460,12 +452,9 @@ export function commerce(env: Bindings) {
     return transformCart(data, "USD");
   }
 
-  async function removeFromCart(cartId: string, lineIds: string[]): Promise<Cart> {
-    // Extract variant IDs from line IDs (format: variantId-cartId)
-    const items = lineIds.map((lineId) => {
-      const variantId = lineId.split("-")[0];
-      return { variantId };
-    });
+  async function removeFromCart(cartId: string, variantIds: string[]): Promise<Cart> {
+    // Provider IDs can contain hyphens; never derive them from presentation IDs.
+    const items = variantIds.map((variantId) => ({ variantId }));
 
     const data = await fourthwallMutate<FourthwallCart>({
       body: { items },
