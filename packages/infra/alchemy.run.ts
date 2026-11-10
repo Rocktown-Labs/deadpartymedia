@@ -170,7 +170,10 @@ export const arts = Cloudflare.Website.Vite("arts", {
   domain: Output.fromEffect(domain("arts").pipe(Effect.orDie)),
   rootDir: "../../apps/arts",
   compatibility: { date: "2026-03-17", flags: ["nodejs_compat"] },
-  env: { API: api },
+  env: {
+    API: api,
+    VITE_SENTRY_DSN: Config.String("VITE_SENTRY_DSN").pipe(Config.withDefault("")),
+  },
   dev: { port: 3002 },
 });
 export type ArtsEnv = Cloudflare.InferEnv<typeof arts>;
@@ -180,7 +183,14 @@ export const web = Cloudflare.Website.Vite("web", {
   domain: Output.fromEffect(domain("music").pipe(Effect.orDie)),
   rootDir: "../../apps/web",
   compatibility: { date: "2026-03-17", flags: ["nodejs_compat"] },
-  env: { API: api },
+  env: {
+    API: api,
+    VITE_POSTHOG_KEY: Config.String("VITE_POSTHOG_KEY").pipe(Config.withDefault("")),
+    VITE_POSTHOG_HOST: Config.String("VITE_POSTHOG_HOST").pipe(
+      Config.withDefault("https://us.posthog.com"),
+    ),
+    VITE_SENTRY_DSN: Config.String("VITE_SENTRY_DSN").pipe(Config.withDefault("")),
+  },
   dev: { port: 3001 },
 });
 export type WebEnv = Cloudflare.InferEnv<typeof web>;

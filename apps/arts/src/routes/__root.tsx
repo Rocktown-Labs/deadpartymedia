@@ -107,6 +107,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.traks=window.traks||function(){(window.traks.q=window.traks.q||[]).push(arguments)}",
+          }}
+        />
+        <script
+          defer
+          data-site="pb_live_r1660h2qvgx7sdyuryp9d9yh"
+          src="https://traks-collect.rocktown-labs.workers.dev/t.js"
+        />
       </head>
       <body>
         <IdentityProvider authProviders={data?.authProviders}>
