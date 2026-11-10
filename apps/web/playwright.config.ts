@@ -98,10 +98,12 @@ export default defineConfig({
   })(),
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "pnpm --filter @dpmedia/infra dev --stage e2e",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    url: "http://localhost:3001",
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: "pnpm --filter @dpmedia/infra dev --stage e2e",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+        url: "http://localhost:3001",
+      },
 });

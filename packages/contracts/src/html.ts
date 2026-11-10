@@ -1,19 +1,19 @@
 import { decodeHTML } from "entities";
-import { FilterXSS } from "xss";
+import filterXSS from "xss";
 
-const rich = new FilterXSS({ stripIgnoreTag: true, stripIgnoreTagBody: ["script", "style"] });
-const text = new FilterXSS({
-  whiteList: {},
-  stripIgnoreTag: true,
-  stripIgnoreTagBody: ["script", "style"],
-});
 /** Sanitize provider/editor HTML before inserting it into a document. */
 export function sanitizeRichHtml(value: string | null | undefined) {
-  return rich.process(value || "");
+  return filterXSS(value || "", { stripIgnoreTag: true, stripIgnoreTagBody: ["script", "style"] });
 }
 /** Return plain text. React must render this result as text, never as HTML. */
 export function htmlText(value: string | null | undefined) {
-  return decodeHTML(text.process(value || "")).trim();
+  return decodeHTML(
+    filterXSS(value || "", {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ["script", "style"],
+    }),
+  ).trim();
 }
 /** Decode once, including numeric entities, without recursively decoding the result. */
 export function decodeHtmlEntities(value: string) {
@@ -25,7 +25,9 @@ export function safeImageUrl(value: string | null | undefined): string {
   try {
     const url = new URL(value, "https://relative.invalid");
     if (url.protocol !== "https:" && url.protocol !== "http:") return "";
-    return value;
+    return url.origin === "https://relative.invalid"
+      ? `${url.pathname}${url.search}${url.hash}`
+      : url.href;
   } catch {
     return "";
   }
