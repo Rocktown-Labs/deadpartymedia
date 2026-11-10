@@ -1,18 +1,16 @@
-"use client";
-
-import { useUserComments } from "@/lib/api/user-activity";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DashboardBackButton } from "../dashboard-back-button";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
-import { MessageSquare, Calendar, Reply } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useUserComments } from "@/lib/api/user-activity";
+import { Link } from "@tanstack/react-router";
+import { Calendar, MessageSquare, Reply } from "lucide-react";
+import { DashboardBackButton } from "../dashboard-back-button";
+
 import { formatDistanceToNow } from "date-fns";
 
 export default function CommentsPage() {
@@ -83,17 +81,18 @@ export default function CommentsPage() {
                 <div className="flex gap-4 mb-4">
                   {comment.article.cover_image && (
                     <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden">
-                      <Image
+                      <img
                         src={comment.article.cover_image}
                         alt={comment.article.title}
-                        fill
                         className="object-cover"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/article/${comment.article.slug}`}
+                      to="/article/$slug"
+                      params={{ slug: String(comment.article.slug) }}
                       className="text-lg font-semibold text-white hover:text-[#7CFC00] transition-colors line-clamp-2"
                     >
                       {comment.article.title}

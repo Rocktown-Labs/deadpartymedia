@@ -11,7 +11,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
-  /* Global setup file for Clerk authentication */
+  /* Native Better Auth browser sessions for opt-in authenticated suites. */
   globalSetup: "./playwright/global.setup.ts",
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -26,7 +26,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3001",
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:3001",
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
   },
@@ -73,7 +73,7 @@ export default defineConfig({
         testMatch: /.*(onboarding|authenticated)\.spec\.ts/,
         use: {
           ...devices["Desktop Chrome"],
-          storageState: "playwright/.clerk/user.json",
+          storageState: "playwright/.auth/user.json",
         },
       },
       // Authenticated artist tests
@@ -82,7 +82,7 @@ export default defineConfig({
         testMatch: /.*artist-dashboard\.spec\.ts/,
         use: {
           ...devices["Desktop Chrome"],
-          storageState: "playwright/.clerk/artist.json",
+          storageState: "playwright/.auth/artist.json",
         },
       },
       // Authenticated admin tests
@@ -91,17 +91,19 @@ export default defineConfig({
         testMatch: /.*admin\.spec\.ts/,
         use: {
           ...devices["Desktop Chrome"],
-          storageState: "playwright/.clerk/admin.json",
+          storageState: "playwright/.auth/admin.json",
         },
       },
     ];
   })(),
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "npm run build && npm run start",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-    url: "http://localhost:3001",
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: "pnpm --filter @dpmedia/infra dev --stage e2e",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120 * 1000,
+        url: "http://localhost:3001",
+      },
 });

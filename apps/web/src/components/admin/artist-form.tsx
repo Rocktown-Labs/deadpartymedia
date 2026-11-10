@@ -1,7 +1,5 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,13 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { Route } from "next";
-import { toast } from "sonner";
-import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { useMemo, useState } from "react";
+
 import { SpotifySearch } from "@/components/spotify-search";
 import type { SpotifyArtist } from "@/lib/api/artists";
+import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface ArtistFormProps {
@@ -39,7 +37,7 @@ interface ArtistFormProps {
     phoneNumber?: string;
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
-  cancelHref: Route;
+  cancelHref: string;
   isSubmitting?: boolean;
 }
 

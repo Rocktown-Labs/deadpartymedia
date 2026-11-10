@@ -1,22 +1,6 @@
-"use client";
-
-import Image from "next/image";
-import { useLayoutEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import type { Route } from "next";
-import { usePathname, useRouter } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
-import {
-  Building2,
-  CalendarDays,
-  Disc,
-  LayoutDashboard,
-  Mic2,
-  Music,
-  Newspaper,
-  User,
-  Users,
-} from "lucide-react";
+import { useLayoutEffect, useMemo, useState } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -31,6 +15,19 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  Disc,
+  LayoutDashboard,
+  Mic2,
+  Music,
+  Newspaper,
+  User,
+  Users,
+} from "lucide-react";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -39,7 +36,7 @@ interface AdminShellProps {
 }
 
 interface NavItem {
-  href: Route;
+  href: string;
   label: string;
   icon: LucideIcon;
   superAdminOnly?: boolean;
@@ -48,23 +45,23 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/posts", icon: Newspaper, label: "Articles" },
-  { href: "/admin/music" as Route, icon: Disc, label: "Music Releases" },
+  { href: "/admin/music", icon: Disc, label: "Music Releases" },
   { href: "/admin/events", icon: CalendarDays, label: "Events" },
-  { href: "/admin/venues" as Route, icon: Building2, label: "Venues" },
+  { href: "/admin/venues", icon: Building2, label: "Venues" },
   { href: "/admin/artists", icon: Mic2, label: "Artists" },
   { href: "/admin/users", icon: Users, label: "Users", superAdminOnly: true },
 ];
 
 interface RoleDashboardItem {
-  href: Route;
+  href: string;
   label: string;
   icon: LucideIcon;
 }
 
 const ROLE_DASHBOARD_ITEMS: RoleDashboardItem[] = [
-  { href: "/artist-dashboard" as Route, icon: Music, label: "Artist Dashboard" },
-  { href: "/venue-dashboard" as Route, icon: Building2, label: "Venue Dashboard" },
-  { href: "/dashboard" as Route, icon: User, label: "Fan Dashboard" },
+  { href: "/artist-dashboard", icon: Music, label: "Artist Dashboard" },
+  { href: "/venue-dashboard", icon: Building2, label: "Venue Dashboard" },
+  { href: "/dashboard", icon: User, label: "Fan Dashboard" },
 ];
 
 function getNavbarHeight() {
@@ -75,7 +72,7 @@ function getNavbarHeight() {
   return Math.ceil(header.getBoundingClientRect().height);
 }
 
-function isActiveRoute(pathname: string, href: Route) {
+function isActiveRoute(pathname: string, href: string) {
   if (href === "/admin") {
     return pathname === href;
   }
@@ -83,8 +80,8 @@ function isActiveRoute(pathname: string, href: Route) {
 }
 
 export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const navigate = useNavigate();
   const [navbarHeight, setNavbarHeight] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -161,7 +158,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
               </div>
             ) : (
               <div className="flex items-center justify-center py-1">
-                <Image
+                <img
                   src="/images/dead-party-logo.png"
                   alt="Dead Party Media"
                   width={26}
@@ -180,7 +177,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => router.push(item.href)}
+                      onClick={() => navigate({ to: item.href })}
                       className="rounded-md border border-transparent text-sm text-gray-300 data-[active=true]:border-[#7CFC00]/40 data-[active=true]:bg-[#7CFC00]/15 data-[active=true]:text-[#7CFC00] hover:bg-[#1A1A1A] hover:text-white"
                     >
                       <Icon className="size-4" />
@@ -201,7 +198,7 @@ export function AdminShell({ children, isSuperAdmin, userRole }: AdminShellProps
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
-                          onClick={() => router.push(item.href)}
+                          onClick={() => navigate({ to: item.href })}
                           className="rounded-md border border-transparent text-sm text-gray-400 hover:bg-[#1A1A1A] hover:text-[#7CFC00]"
                         >
                           <Icon className="size-4" />

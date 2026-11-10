@@ -1,10 +1,7 @@
-import { db } from "@dpmedia/db";
-import { venues } from "@dpmedia/db/schema";
+import { readResponse } from "@dpmedia/api-client";
 import { createServerFn } from "@tanstack/react-start";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { createSlug } from "#/lib/slug.ts";
+import { getArtsApi, withCreatedAt } from "./api.server";
 
 export interface VenueListItem {
   id: number;
@@ -20,49 +17,8 @@ export interface VenueListItem {
 }
 
 export const listArtsVenues = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const rows = await db
-      .select({
-        address: venues.address,
-        city: venues.city,
-        createdAt: venues.createdAt,
-        id: venues.id,
-        name: venues.name,
-        phone: venues.phone,
-        slug: venues.slug,
-        state: venues.state,
-        website: venues.website,
-        zip: venues.zip,
-      })
-      .from(venues)
-      .orderBy(venues.name);
-
-    return rows satisfies VenueListItem[];
-  } catch {
-    return [] satisfies VenueListItem[];
-  }
+  return (await readResponse(await getArtsApi().venues.$get())).map((row) => withCreatedAt(row));
 });
-
-async function makeUniqueVenueSlug(name: string) {
-  const baseSlug = createSlug(name);
-  let candidate = baseSlug;
-  let suffix = 2;
-
-  while (true) {
-    const existing = await db
-      .select({ id: venues.id })
-      .from(venues)
-      .where(eq(venues.slug, candidate))
-      .limit(1);
-
-    if (existing.length === 0) {
-      return candidate;
-    }
-
-    candidate = `${baseSlug}-${suffix}`;
-    suffix += 1;
-  }
-}
 
 export const createArtsVenue = createServerFn({ method: "POST" })
   .validator(
@@ -77,24 +33,7 @@ export const createArtsVenue = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireArtsStaff();
-    const slug = await makeUniqueVenueSlug(data.name);
-
-    const [created] = await db
-      .insert(venues)
-      .values({
-        address: data.address || null,
-        city: data.city,
-        name: data.name,
-        phone: data.phone || null,
-        slug,
-        state: data.state,
-        website: data.website || null,
-        zip: data.zip || null,
-      })
-      .returning();
-
-    return { success: true, venue: created };
+    return readResponse(await getArtsApi().admin.venues.$post({ json: data }));
   });
 
 export const updateArtsVenue = createServerFn({ method: "POST" })
@@ -111,29 +50,15 @@ export const updateArtsVenue = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await requireArtsStaff();
-    const [updated] = await db
-      .update(venues)
-      .set({
-        address: data.address || null,
-        city: data.city,
-        name: data.name,
-        phone: data.phone || null,
-        state: data.state,
-        updatedAt: new Date(),
-        website: data.website || null,
-        zip: data.zip || null,
-      })
-      .where(eq(venues.id, data.id))
-      .returning();
-
-    return { success: true, venue: updated };
+    return readResponse(
+      await getArtsApi().admin.venues[":id"].$patch({ param: { id: String(data.id) }, json: data }),
+    );
   });
 
 export const deleteArtsVenue = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireArtsStaff();
-    await db.delete(venues).where(eq(venues.id, data.id));
-    return { success: true };
+    return readResponse(
+      await getArtsApi().admin.venues[":id"].$delete({ param: { id: String(data.id) } }),
+    );
   });

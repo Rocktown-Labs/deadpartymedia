@@ -1,4 +1,4 @@
-import { formOptions } from "@tanstack/react-form-nextjs";
+import { formOptions } from "@tanstack/react-form";
 
 // Fan form options - minimal fields (name only)
 export const fanFormOptions = formOptions({

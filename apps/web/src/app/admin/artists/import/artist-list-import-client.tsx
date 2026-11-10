@@ -1,9 +1,3 @@
-"use client";
-
-import Link from "next/link";
-import { useMemo, useRef, useState, useTransition } from "react";
-import { ArrowLeft, Check, FileUp, Search, Upload, X } from "lucide-react";
-import { toast } from "sonner";
 import { SpotifySearch } from "@/components/spotify-search";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +10,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { SpotifyArtist } from "@/lib/api/artists";
-import { ARTIST_IMPORT_GENRES, buildArtistImportRows } from "@/lib/admin/artist-list-import";
 import type { ArtistImportGenre, ArtistImportRow } from "@/lib/admin/artist-list-import";
+import { ARTIST_IMPORT_GENRES, buildArtistImportRows } from "@/lib/admin/artist-list-import";
+import type { SpotifyArtist } from "@/lib/api/artists";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Check, FileUp, Search, Upload, X } from "lucide-react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 interface ExistingArtist {
   genre: ArtistImportGenre;
@@ -164,7 +162,7 @@ export function ArtistListImportClient({
   return (
     <div className="space-y-6">
       <Link
-        href="/admin/artists"
+        to="/admin/artists"
         className="inline-flex items-center gap-2 text-sm font-bold text-[#7CFC00]"
       >
         <ArrowLeft className="h-4 w-4" />

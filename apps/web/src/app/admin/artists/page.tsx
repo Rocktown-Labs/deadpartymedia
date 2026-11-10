@@ -1,9 +1,13 @@
-import Link from "next/link";
-import Image from "next/image";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { auth } from "@clerk/nextjs/server";
-import { asc, count, desc } from "drizzle-orm";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["admin"]["artists"].$get({ query: input.search })),
+  );
+
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -16,131 +20,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ADMIN_PAGE_SIZE,
-  buildSearchParams,
-  getOffsetFromPage,
-  parsePageParam,
-  parseSortOrderParam,
-  parseSortParam,
-} from "@/lib/admin/table-state";
-import { checkRole } from "@/lib/auth/roles";
-import { db } from "@/lib/db";
-import { artists } from "@/lib/db/schema";
 import { deleteArtist, mergeArtistRecords, setArtistHidden } from "./actions";
 import { InviteArtistForm } from "./invite-artist-form";
 
-const ARTIST_SORT_FIELDS = ["name", "genre", "location", "claimed", "email", "createdAt"] as const;
-
-type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
-
-function normalizeDuplicateKey(name: string) {
-  return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
-}
-
-interface ArtistsSearchParams {
-  order?: string;
-  page?: string;
-  sort?: string;
-}
-
-export default async function ArtistsPage({
-  searchParams,
-}: {
-  searchParams: Promise<ArtistsSearchParams>;
-}) {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const isSuperAdmin = await checkRole("super_admin");
-  const isWriter = await checkRole("writer");
-
-  if (!isSuperAdmin && !isWriter) {
-    redirect("/");
-  }
-
-  const params = await searchParams;
-  const page = parsePageParam(params.page);
-  const sort = parseSortParam<ArtistSortField>(params.sort, ARTIST_SORT_FIELDS, "createdAt");
-  const order = parseSortOrderParam(params.order, "desc");
-  const offset = getOffsetFromPage(page, ADMIN_PAGE_SIZE);
-
-  const [totalRows, allArtists] = await Promise.all([
-    db.select({ total: count() }).from(artists),
-    db
-      .select()
-      .from(artists)
-      .orderBy(
-        sort === "name"
-          ? order === "asc"
-            ? asc(artists.name)
-            : desc(artists.name)
-          : sort === "genre"
-            ? order === "asc"
-              ? asc(artists.genre)
-              : desc(artists.genre)
-            : sort === "location"
-              ? order === "asc"
-                ? asc(artists.location)
-                : desc(artists.location)
-              : sort === "claimed"
-                ? order === "asc"
-                  ? asc(artists.claimed)
-                  : desc(artists.claimed)
-                : sort === "email"
-                  ? order === "asc"
-                    ? asc(artists.email)
-                    : desc(artists.email)
-                  : order === "asc"
-                    ? asc(artists.createdAt)
-                    : desc(artists.createdAt),
-        desc(artists.createdAt),
-      )
-      .limit(ADMIN_PAGE_SIZE)
-      .offset(offset),
-  ]);
-  const duplicateCandidates = await db
-    .select({
-      claimed: artists.claimed,
-      createdAt: artists.createdAt,
-      id: artists.id,
-      name: artists.name,
-    })
-    .from(artists)
-    .orderBy(asc(artists.name), asc(artists.createdAt));
-
-  const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(
-    params as Record<string, string | string[] | undefined>,
-  );
-  const duplicateGroups = duplicateCandidates.reduce<Record<string, typeof duplicateCandidates>>(
-    (groups, artist) => {
-      const key = normalizeDuplicateKey(artist.name);
-      groups[key] = [...(groups[key] ?? []), artist];
-      return groups;
-    },
-    {},
-  );
-  const duplicateOptionsByArtistId = new Map(
-    duplicateCandidates.map((artist) => {
-      const group = duplicateGroups[normalizeDuplicateKey(artist.name)] ?? [];
-      return [artist.id, group.filter((candidate) => candidate.id !== artist.id)];
-    }),
-  );
-
+export default function ArtistsPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const {
+    isSuperAdmin,
+    params,
+    page,
+    order,
+    allArtists,
+    totalCount,
+    currentSearchParamsString,
+    duplicateOptionsByArtistId,
+  } = data;
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-black">Artists</h1>
         <div className="flex flex-wrap gap-2">
           {isSuperAdmin && (
-            <Link href="/admin/artists/import">
+            <Link to="/admin/artists/import">
               <Button variant="outline">Import Artist List</Button>
             </Link>
           )}
-          <Link href="/admin/artists/new">
+          <Link to="/admin/artists/new">
             <Button>Create New Artist</Button>
           </Link>
         </div>
@@ -164,7 +68,7 @@ export default async function ArtistsPage({
                     field="name"
                     label="Name"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -175,7 +79,7 @@ export default async function ArtistsPage({
                     field="genre"
                     label="Genre"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -186,7 +90,7 @@ export default async function ArtistsPage({
                     field="location"
                     label="Location"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -197,7 +101,7 @@ export default async function ArtistsPage({
                     field="claimed"
                     label="Claimed"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -208,7 +112,7 @@ export default async function ArtistsPage({
                     field="email"
                     label="Email"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -219,7 +123,7 @@ export default async function ArtistsPage({
                     field="createdAt"
                     label="Created"
                     pathname="/admin/artists"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead className="text-xs font-bold uppercase tracking-wider text-gray-300">
@@ -239,11 +143,12 @@ export default async function ArtistsPage({
                   <TableRow key={artist.id} className="border-gray-800 hover:bg-gray-900">
                     <TableCell className="px-6 py-3">
                       <Link
-                        href={`/admin/artists/${artist.id}`}
+                        to="/admin/artists/$id"
+                        params={{ id: String(artist.id) }}
                         className="block h-11 w-11 overflow-hidden rounded-md border border-gray-800 bg-[#0A0A0A]"
                         aria-label={`Edit ${artist.name}`}
                       >
-                        <Image
+                        <img
                           src={artist.image || "/placeholder.svg"}
                           alt=""
                           width={44}
@@ -254,7 +159,8 @@ export default async function ArtistsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <Link
-                        href={`/admin/artists/${artist.id}`}
+                        to="/admin/artists/$id"
+                        params={{ id: String(artist.id) }}
                         className="font-bold transition-colors hover:text-[#7CFC00]"
                       >
                         {artist.name}
@@ -288,7 +194,7 @@ export default async function ArtistsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/admin/artists/${artist.id}`}>
+                        <Link to="/admin/artists/$id" params={{ id: String(artist.id) }}>
                           <Button variant="outline" size="sm">
                             Edit
                           </Button>
@@ -320,9 +226,11 @@ export default async function ArtistsPage({
                           />
                         )}
                         {isSuperAdmin &&
-                          (duplicateOptionsByArtistId.get(artist.id)?.length ?? 0) > 0 && (
+                          (duplicateOptionsByArtistId[artist.id]?.length ?? 0) > 0 && (
                             <form
-                              action={mergeArtistRecords.bind(null, artist.id)}
+                              action={async (form) => {
+                                await mergeArtistRecords(artist.id, form);
+                              }}
                               className="flex flex-wrap items-center gap-2"
                             >
                               <select
@@ -330,7 +238,7 @@ export default async function ArtistsPage({
                                 className="h-9 border border-yellow-500/40 bg-black px-2 text-xs text-yellow-100"
                                 aria-label={`Merge ${artist.name} into duplicate artist`}
                               >
-                                {duplicateOptionsByArtistId.get(artist.id)?.map((candidate) => (
+                                {duplicateOptionsByArtistId[artist.id]?.map((candidate) => (
                                   <option key={candidate.id} value={candidate.id}>
                                     Merge into #{candidate.id}
                                     {candidate.claimed ? " claimed" : ""}
@@ -358,7 +266,7 @@ export default async function ArtistsPage({
 
         <AdminPagination
           pathname="/admin/artists"
-          searchParams={currentSearchParams}
+          searchParams={new URLSearchParams(currentSearchParamsString)}
           page={page}
           totalItems={totalCount}
         />

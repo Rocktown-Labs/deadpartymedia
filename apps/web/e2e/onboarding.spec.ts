@@ -1,17 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 test.describe("Onboarding Flow", () => {
-  const fanIdentifier = process.env.E2E_CLERK_USER_USERNAME || process.env.E2E_CLERK_FAN_EMAIL;
-  const fanPassword = process.env.E2E_CLERK_USER_PASSWORD || process.env.E2E_CLERK_FAN_PASSWORD;
-  test.skip(!fanIdentifier || !fanPassword, "Missing fan creds (E2E_CLERK_FAN_EMAIL/PASSWORD)");
+  const fanIdentifier = process.env.E2E_USER_USERNAME || process.env.E2E_FAN_EMAIL;
+  const fanPassword = process.env.E2E_USER_PASSWORD || process.env.E2E_FAN_PASSWORD;
+  test.skip(!fanIdentifier || !fanPassword, "Missing fan creds (E2E_FAN_EMAIL/PASSWORD)");
 
   test("should redirect to onboarding if not completed", async ({ page }) => {
     // This test uses the authenticated fan user state from global setup
 
     // The user should be authenticated but onboarding may not be complete
 
-    await setupClerkTestingToken({ page });
     await page.goto("/onboarding");
 
     // Check that onboarding page loads
@@ -20,7 +18,6 @@ test.describe("Onboarding Flow", () => {
   });
 
   test("should show role selection for new users", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/onboarding");
 
     // Check for role selection (fan vs artist)
@@ -32,7 +29,6 @@ test.describe("Onboarding Flow", () => {
   });
 
   test("should validate required fields in fan onboarding", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/onboarding");
 
     // Select fan role if role selection is shown
@@ -61,7 +57,6 @@ test.describe("Onboarding Flow", () => {
   });
 
   test("should complete fan onboarding with valid data", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/onboarding");
 
     // Select fan role if needed

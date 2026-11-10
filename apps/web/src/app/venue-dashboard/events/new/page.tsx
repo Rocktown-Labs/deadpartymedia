@@ -1,26 +1,23 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { db } from "@/lib/db";
-import { venues } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["venue-dashboard"]["events"]["new"].$get({ query: input.search }),
+    ),
+  );
+
 import { EventForm } from "@/components/admin/event-form";
 import { createVenueEvent } from "../actions";
 
-export default async function VenueNewEventPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const [userVenue] = await db.select().from(venues).where(eq(venues.claimedById, userId)).limit(1);
-
-  const initialLocation = userVenue
-    ? [userVenue.address, userVenue.city, `${userVenue.state} ${userVenue.zip || ""}`.trim()]
-        .filter(Boolean)
-        .join(", ")
-    : "";
-
+export default function VenueNewEventPage({
+  data,
+}: {
+  data: Awaited<ReturnType<typeof loadPage>>;
+}) {
+  const { userVenue, initialLocation } = data;
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-40 pb-20">
@@ -39,7 +36,7 @@ export default async function VenueNewEventPage() {
               venueId: userVenue?.id,
             }}
             onSubmit={createVenueEvent}
-            cancelHref={"/venue-dashboard" as Route}
+            cancelHref={"/venue-dashboard"}
           />
         </div>
       </main>

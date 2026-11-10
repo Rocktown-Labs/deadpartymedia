@@ -1,7 +1,6 @@
-"use client";
-
+import { useQueryClient } from "@tanstack/react-query";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { resendInvitation, revokeInvitation } from "./actions";
 import { toast } from "sonner";
@@ -16,9 +15,12 @@ interface RevokeInvitationButtonProps {
 }
 
 export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvitationButtonProps) {
+  const queryClient = useQueryClient();
   const [isRevoking, startRevokeTransition] = useTransition();
   const [isResending, startResendTransition] = useTransition();
-  const [activeUrl, setActiveUrl] = useState<string | null | undefined>(url);
+  const [activeUrl, setActiveUrl] = useState<string | null | undefined>(
+    url || queryClient.getQueryData<string>(["music", "invitation-link", invitationId]),
+  );
   const [hasCopied, setHasCopied] = useState(false);
   const router = useRouter();
 
@@ -43,14 +45,18 @@ export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvit
     startResendTransition(async () => {
       try {
         const result = await resendInvitation(invitationId, email);
-        if (result.success) {
+        if (result?.success) {
           if (result.url) {
             setActiveUrl(result.url);
+            queryClient.setQueryData(["music", "invitation-link", result.id], result.url);
           }
           toast.success(`Invitation resent to ${email}`);
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to resend invitation.");
+          toast.error(
+            (result && "error" in result ? String(result.error) : "") ||
+              "Failed to resend invitation.",
+          );
         }
       } catch (error) {
         toast.error(getErrorMessage(error, "Failed to resend invitation."));
@@ -62,11 +68,14 @@ export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvit
     startRevokeTransition(async () => {
       try {
         const result = await revokeInvitation(invitationId);
-        if (result.success) {
+        if (result?.success) {
           toast.success(`Invitation for ${email} has been revoked.`);
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to revoke invitation.");
+          toast.error(
+            (result && "error" in result ? String(result.error) : "") ||
+              "Failed to revoke invitation.",
+          );
         }
       } catch (error) {
         toast.error(getErrorMessage(error, "Failed to revoke invitation."));

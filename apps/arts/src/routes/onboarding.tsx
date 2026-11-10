@@ -1,7 +1,26 @@
-import { uploadFiles } from "@better-upload/client";
-import { useUser } from "@clerk/tanstack-react-start";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { safeImageUrl } from "@dpmedia/contracts";
+import { Button } from "#/components/ui/button.tsx";
+import { Input } from "#/components/ui/input.tsx";
+import { Label } from "#/components/ui/label.tsx";
+import { Textarea } from "#/components/ui/textarea.tsx";
+import {
+  getCurrentArtmaker,
+  requireUser,
+  saveArtmakerOnboarding,
+  saveFanOnboarding,
+} from "#/lib/artmakers.functions.ts";
+import { artmakerOnboardingSchema, fanOnboardingSchema, MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import {
+  type ArtworkDraft,
+  createArtworkDrafts,
+  getUploadedObjectKey,
+} from "#/lib/artwork-drafts.ts";
+import { saveArtwork } from "#/lib/artworks.functions.ts";
+import { useArtsSession } from "#/lib/auth-client";
+import { uploadMedia } from "#/lib/media-upload";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
@@ -18,25 +37,6 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import { Button } from "#/components/ui/button.tsx";
-import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
-import { Textarea } from "#/components/ui/textarea.tsx";
-import { MEDIUM_OPTIONS, artmakerOnboardingSchema, fanOnboardingSchema } from "#/lib/artmakers.ts";
-import {
-  getCurrentArtmaker,
-  requireUser,
-  saveArtmakerOnboarding,
-  saveFanOnboarding,
-} from "#/lib/artmakers.functions.ts";
-import {
-  type ArtworkDraft,
-  createArtworkDrafts,
-  getUploadedObjectKey,
-} from "#/lib/artwork-drafts.ts";
-import { saveArtwork } from "#/lib/artworks.functions.ts";
-import { getRolesFromMetadata } from "#/lib/roles.ts";
-import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 
 const STEPS = [
   { label: "Identity", value: 0 },
@@ -64,12 +64,12 @@ export const Route = createFileRoute("/onboarding")({
 
 function Onboarding() {
   const currentArtmaker = Route.useLoaderData();
-  const { user } = useUser();
+  const { session } = useArtsSession();
   const saveArtmaker = useServerFn(saveArtmakerOnboarding);
   const saveFan = useServerFn(saveFanOnboarding);
   const saveArt = useServerFn(saveArtwork);
   const navigate = useNavigate();
-  const existingRoles = getRolesFromMetadata(user?.publicMetadata);
+  const existingRoles = session?.roles ?? [];
   const [selectedRole, setSelectedRole] = useState<"fan" | "artmaker" | null>(
     currentArtmaker || existingRoles.includes("artmaker")
       ? "artmaker"
@@ -78,8 +78,8 @@ function Onboarding() {
         : null,
   );
   const [step, setStep] = useState(0);
-  const [fanName, setFanName] = useState(user?.fullName ?? user?.firstName ?? "");
-  const [name, setName] = useState(currentArtmaker?.name ?? user?.fullName ?? "");
+  const [fanName, setFanName] = useState(session?.name ?? "");
+  const [name, setName] = useState(currentArtmaker?.name ?? session?.name ?? "");
   const [city, setCity] = useState(currentArtmaker?.city ?? "");
   const [state, setState] = useState(currentArtmaker?.state ?? "AR");
   const [pronouns, setPronouns] = useState(currentArtmaker?.pronouns ?? "");
@@ -91,7 +91,7 @@ function Onboarding() {
   const [medium, setMedium] = useState<string[]>(currentArtmaker?.medium ?? []);
   const [customMedium, setCustomMedium] = useState("");
   const [bio, setBio] = useState(currentArtmaker?.bio ?? "");
-  const [profileImage, setProfileImage] = useState(currentArtmaker?.image ?? user?.imageUrl ?? "");
+  const [profileImage, setProfileImage] = useState(currentArtmaker?.image ?? session?.image ?? "");
   const [profileImageKey, setProfileImageKey] = useState("");
   const [artworkDrafts, setArtworkDrafts] = useState<ArtworkDraft[]>([]);
   const [artworkUploadProgress, setArtworkUploadProgress] = useState(0);
@@ -106,12 +106,8 @@ function Onboarding() {
   // single averaged bar for multi-file transfers.
   const uploadProgressRef = useRef(new Map<string, number>());
 
-  const trackUploadProgress = (file: {
-    objectInfo?: { key?: string };
-    progress?: number;
-    status?: string;
-  }) => {
-    const key = file.objectInfo?.key;
+  const trackUploadProgress = (file: { id: string; progress?: number; status?: string }) => {
+    const key = file.id;
 
     if (!key) {
       return;
@@ -128,7 +124,7 @@ function Onboarding() {
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       uploadProgressRef.current.clear();
-      const result = await uploadFiles({
+      const result = await uploadMedia({
         files,
         route: "artwork",
         onFileStateChange: ({ file }) => {
@@ -158,7 +154,7 @@ function Onboarding() {
   const profileImageUploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       uploadProgressRef.current.clear();
-      const result = await uploadFiles({
+      const result = await uploadMedia({
         files,
         route: "profileImages",
         onFileStateChange: ({ file }) => {
@@ -518,7 +514,7 @@ function Onboarding() {
                     <div className="mt-3 flex flex-wrap items-center gap-4">
                       {profileImage ? (
                         <img
-                          src={profileImage}
+                          src={safeImageUrl(profileImage)}
                           alt=""
                           className="size-24 border border-neutral-800 object-cover"
                         />

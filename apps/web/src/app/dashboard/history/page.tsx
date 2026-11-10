@@ -1,18 +1,16 @@
-"use client";
-
-import { useReadArticles } from "@/lib/api/user-activity";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DashboardBackButton } from "../dashboard-back-button";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useReadArticles } from "@/lib/api/user-activity";
+import { Link } from "@tanstack/react-router";
 import { BookOpen, Calendar } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { DashboardBackButton } from "../dashboard-back-button";
+
 import { formatDistanceToNow } from "date-fns";
 
 export default function HistoryPage() {
@@ -83,17 +81,18 @@ export default function HistoryPage() {
               return (
                 <Link
                   key={item.id}
-                  href={`/article/${article.slug}`}
+                  to="/article/$slug"
+                  params={{ slug: String(article.slug) }}
                   className="block bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
                 >
                   <div className="flex gap-4">
                     {article.cover_image && (
                       <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                        <Image
+                        <img
                           src={article.cover_image}
                           alt={article.title}
-                          fill
                           className="object-cover"
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                         />
                       </div>
                     )}

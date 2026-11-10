@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { readApiError } from "@/lib/api/errors";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface Article {
   id: number;
@@ -164,7 +165,7 @@ export function useCreateComment() {
       });
 
       if (!response.ok) {
-        const errorPayload = await response.json().catch(() => null);
+        const errorPayload = await readApiError(response);
         const baseErrorMessage =
           typeof errorPayload?.error === "string" ? errorPayload.error : "Failed to create comment";
         const detailsMessage = Array.isArray(errorPayload?.details)

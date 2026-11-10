@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
-import { Instagram, MapPin, Search } from "lucide-react";
-import { useMemo, useState } from "react";
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
+import { Instagram, MapPin, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/artmakers/")({
   component: Artmakers,

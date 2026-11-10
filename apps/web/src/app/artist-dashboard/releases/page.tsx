@@ -1,37 +1,32 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { db } from "@/lib/db";
-import { musicReleases, artists } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { Button } from "@/components/ui/button";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["artist-dashboard"]["releases"].$get({ query: input.search }),
+    ),
+  );
+
+import { Link } from "@tanstack/react-router";
+
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Disc, Plus, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, CheckCircle2, Clock, Disc, Plus, XCircle } from "lucide-react";
 
-export default async function ArtistReleasesPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  // Find the artist profile claimed by this user
-  const [artist] = await db.select().from(artists).where(eq(artists.claimedById, userId)).limit(1);
-
-  // Fetch all releases for this artist
-  const artistReleases = await db
-    .select()
-    .from(musicReleases)
-    .where(artist ? eq(musicReleases.artistId, artist.id) : eq(musicReleases.authorId, userId))
-    .orderBy(desc(musicReleases.createdAt));
-
+export default function ArtistReleasesPage({
+  data,
+}: {
+  data: Awaited<ReturnType<typeof loadPage>>;
+}) {
+  const { artistReleases } = data;
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-36 pb-20">
         <div className="container mx-auto px-6 max-w-5xl">
           <Link
-            href={"/artist-dashboard" as Route}
+            to={"/artist-dashboard"}
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-6 text-sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -45,7 +40,7 @@ export default async function ArtistReleasesPage() {
                 Track your music submissions, review statuses, and published features.
               </p>
             </div>
-            <Link href={"/artist-dashboard/releases/new" as Route}>
+            <Link to={"/artist-dashboard/releases/new"}>
               <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold gap-2">
                 <Plus className="w-4 h-4" /> Submit New Release
               </Button>
@@ -60,7 +55,7 @@ export default async function ArtistReleasesPage() {
                 Have a new single, album, or music video? Submit it to the Dead Party editorial team
                 to get featured.
               </p>
-              <Link href={"/artist-dashboard/releases/new" as Route}>
+              <Link to={"/artist-dashboard/releases/new"}>
                 <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
                   Submit Your First Release
                 </Button>
@@ -82,11 +77,16 @@ export default async function ArtistReleasesPage() {
                     <div className="flex items-center gap-4">
                       {release.coverArt ? (
                         <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-zinc-800 bg-black shrink-0">
-                          <Image
+                          <img
                             src={release.coverArt}
                             alt={release.title}
-                            fill
                             className="object-cover"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                            }}
                           />
                         </div>
                       ) : (
@@ -140,7 +140,7 @@ export default async function ArtistReleasesPage() {
                       )}
 
                       {isApproved && (
-                        <Link href={`/music/${release.slug}` as Route}>
+                        <Link to="/music/$slug" params={{ slug: String(release.slug) }}>
                           <Button
                             variant="ghost"
                             size="sm"

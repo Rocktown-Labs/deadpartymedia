@@ -1,12 +1,10 @@
-"use client";
-
-import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, MapPin, Users } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useArtistsPage } from "@/lib/api/artists";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import { PageTitleHeader } from "@/components/page-title-header";
 import { Spotify } from "@/components/ui/svgs/spotify";
+import { useArtistsPage } from "@/lib/api/artists";
+import { Link } from "@tanstack/react-router";
 
 const INITIAL_PAGE_SIZE = 24;
 const PAGE_SIZE = 12;
@@ -72,7 +70,7 @@ export default function ArtistsPageClient() {
         <div className="container mx-auto px-6">
           {/* Back Button */}
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -137,14 +135,14 @@ export default function ArtistsPageClient() {
               ))
             ) : completeArtists.length > 0 ? (
               completeArtists.map((artist) => (
-                <Link key={artist.id} href={`/artists/${artist.slug}`}>
+                <Link key={artist.id} to="/artists/$slug" params={{ slug: String(artist.slug) }}>
                   <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full flex flex-row md:flex-col group">
                     <div className="relative w-24 md:w-full md:aspect-square overflow-hidden shrink-0 border-r border-gray-800 md:border-r-0 md:border-b">
-                      <Image
+                      <img
                         src={artist.image || "/placeholder.svg"}
                         alt={artist.name}
-                        fill
                         className="object-cover object-top md:object-center group-hover:scale-110 transition-transform duration-300"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                     </div>
                     <div className="p-4 md:p-6 flex-1 flex flex-col justify-center md:justify-start min-w-0">
@@ -197,7 +195,8 @@ export default function ArtistsPageClient() {
                 </div>
                 <div>
                   <Link
-                    href="/onboarding?role=artist"
+                    to="/onboarding"
+                    search={{ role: "artist" }}
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold text-xs uppercase tracking-wider transition-colors shadow-lg"
                   >
                     Claim Your Band Profile

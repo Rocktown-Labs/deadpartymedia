@@ -1,15 +1,16 @@
-import { Show, SignUpButton } from "@clerk/tanstack-react-start";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
-import { ArrowRight, Instagram, MapPin } from "lucide-react";
+import { AuthDialog } from "#/components/auth";
 import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
 import { ArtsMerchCarousel } from "#/components/home/arts-merch-carousel.tsx";
 import { RecentArtworksCarousel } from "#/components/home/recent-artworks-carousel.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
-import { type ArtworkListItem, listPublishedArtworksPaginated } from "#/lib/artworks.functions.ts";
+import { listPublishedArtworksPaginated, type ArtworkListItem } from "#/lib/artworks.functions.ts";
+import { useArtsSession } from "#/lib/auth-client";
 import { getArtsProducts, type ArtsProduct } from "#/lib/fourthwall.functions.ts";
 import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
 import { createSeoMeta, siteName, siteUrl } from "#/lib/seo.ts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
+import { ArrowRight, Instagram, MapPin } from "lucide-react";
 
 export interface HomeSearch {
   artwork?: string;
@@ -56,6 +57,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { session } = useArtsSession();
   const { artmakers, recentArtworks, products } = Route.useLoaderData();
   const { artwork } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -108,24 +110,28 @@ function Home() {
               >
                 Browse Artists
               </Link>
-              <Show when="signed-in">
-                <Link
-                  to="/onboarding"
-                  className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
-                >
-                  Build Profile
-                </Link>
-              </Show>
-              <Show when="signed-out">
-                <SignUpButton mode="modal">
-                  <button
-                    type="button"
-                    className="inline-flex h-12 cursor-pointer items-center rounded-lg border border-gray-800 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] transition-colors hover:border-[#7CFC00]"
+              {session ? (
+                <>
+                  <Link
+                    to="/onboarding"
+                    className="inline-flex h-12 items-center rounded-lg border border-gray-800 px-5 font-black text-white text-xs uppercase tracking-[0.18em] no-underline transition-colors hover:border-[#7CFC00]"
                   >
-                    Create Artist Profile
-                  </button>
-                </SignUpButton>
-              </Show>
+                    Build Profile
+                  </Link>
+                </>
+              ) : null}
+              {!session ? (
+                <>
+                  <AuthDialog mode="sign-up">
+                    <button
+                      type="button"
+                      className="inline-flex h-12 cursor-pointer items-center rounded-lg border border-gray-800 bg-transparent px-5 font-black text-white text-xs uppercase tracking-[0.18em] transition-colors hover:border-[#7CFC00]"
+                    >
+                      Create Artist Profile
+                    </button>
+                  </AuthDialog>
+                </>
+              ) : null}
             </div>
           </div>
 

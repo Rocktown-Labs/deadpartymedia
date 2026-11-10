@@ -1,20 +1,25 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { db } from "@/lib/db";
-import { artists } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { ArtistReleaseForm } from "./artist-release-form";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["artist-dashboard"]["releases"]["new"].$get({
+        query: input.search,
+      }),
+    ),
+  );
+
 import { submitArtistRelease } from "../actions";
+import { ArtistReleaseForm } from "./artist-release-form";
 
-export default async function NewArtistReleasePage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const [artist] = await db.select().from(artists).where(eq(artists.claimedById, userId)).limit(1);
-
+export default function NewArtistReleasePage({
+  data,
+}: {
+  data: Awaited<ReturnType<typeof loadPage>>;
+}) {
+  const { artist } = data;
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-36 pb-20">
@@ -31,7 +36,7 @@ export default async function NewArtistReleasePage() {
             artistName={artist?.name || "Independent Artist"}
             artistGenre={artist?.genre || "HARDCORE & ROCK"}
             onSubmit={submitArtistRelease}
-            cancelHref={"/artist-dashboard/releases" as Route}
+            cancelHref={"/artist-dashboard/releases"}
           />
         </div>
       </main>

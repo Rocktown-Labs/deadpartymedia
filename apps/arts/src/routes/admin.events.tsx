@@ -1,8 +1,3 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
 import { MultiSelect } from "#/components/multi-select.tsx";
@@ -20,6 +15,11 @@ import {
   type ArtsEventListItem,
 } from "#/lib/content.functions.ts";
 import { createArtsVenue, listArtsVenues, type VenueListItem } from "#/lib/venues.functions.ts";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Eye, EyeOff, Plus, Trash2, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/events")({
   beforeLoad: () => requireArtsStaff(),

@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 
 const { siteName, siteUrl } = getSiteDefaults();
 const ogImage = `${siteUrl}/images/dead-party-logo-og.jpg`;
@@ -58,7 +58,7 @@ export default function WritersPage() {
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

@@ -1,11 +1,12 @@
-"use client";
+import { AuthDialog } from "@/components/auth";
+import { useMusicSession } from "@/lib/auth-client";
 
 import { useState } from "react";
-import { SignedIn, SignedOut, SignInButton, useUser } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
-import posthog from "posthog-js";
+
 import { Button } from "@/components/ui/button";
 import { useArticleComments, useCreateComment } from "@/lib/api/articles";
+import { useLocation } from "@tanstack/react-router";
+import posthog from "posthog-js";
 
 interface ArticleCommentsProps {
   slug: string;
@@ -30,9 +31,10 @@ export function ArticleComments({
   articleId,
   articleTitle,
 }: ArticleCommentsProps) {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const commentsHref = buildCommentsHref(pathname);
-  const { isSignedIn, user: currentUser } = useUser();
+  const { session: currentUser } = useMusicSession();
+  const isSignedIn = !!currentUser;
   const { data: comments } = useArticleComments(slug);
   const createComment = useCreateComment();
   const [commentText, setCommentText] = useState("");
@@ -76,56 +78,60 @@ export function ArticleComments({
     <section id="comments" className="mt-16 border-t border-gray-800 pt-8 scroll-mt-28">
       <h2 className="text-2xl font-black mb-6">{headingText}</h2>
 
-      <SignedIn>
-        <form onSubmit={handleCommentSubmit} className="mb-8">
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Add a comment..."
-            className="w-full px-4 py-3 bg-[#111111] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00] resize-none mb-4"
-            rows={4}
-          />
-          <Button
-            type="submit"
-            disabled={!commentText.trim() || createComment.isPending}
-            className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-medium"
-          >
-            {createComment.isPending ? "Posting..." : "Post Comment"}
-          </Button>
-          {submitError ? (
-            <p className="mt-3 text-sm text-red-400" role="alert" aria-live="assertive">
-              {submitError}
-            </p>
-          ) : null}
-        </form>
-      </SignedIn>
-
-      <SignedOut>
-        <div className="mb-8 p-4 bg-[#111111] border border-gray-800 rounded-lg">
-          <p className="text-gray-400 mb-3">Sign in to leave a comment</p>
-          <SignInButton mode="modal">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-lg bg-[#7CFC00] px-4 py-2 text-sm font-bold text-black hover:bg-[#7CFC00]/90"
-              onClick={() => {
-                // Ensure the URL points back to this section even if the user refreshes later.
-                if (typeof window !== "undefined") {
-                  window.location.hash = "comments";
-                }
-                posthog.capture("comment_signin_clicked", { article_slug: slug });
-              }}
+      {currentUser ? (
+        <>
+          <form onSubmit={handleCommentSubmit} className="mb-8">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment..."
+              className="w-full px-4 py-3 bg-[#111111] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#7CFC00] resize-none mb-4"
+              rows={4}
+            />
+            <Button
+              type="submit"
+              disabled={!commentText.trim() || createComment.isPending}
+              className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-medium"
             >
-              Sign in to comment
-            </button>
-          </SignInButton>
-          <p className="mt-2 text-xs text-gray-500">
-            You’ll return right here:{" "}
-            <a href={commentsHref} className="text-[#7CFC00] hover:text-[#7CFC00]/80">
-              {commentsHref}
-            </a>
-          </p>
-        </div>
-      </SignedOut>
+              {createComment.isPending ? "Posting..." : "Post Comment"}
+            </Button>
+            {submitError ? (
+              <p className="mt-3 text-sm text-red-400" role="alert" aria-live="assertive">
+                {submitError}
+              </p>
+            ) : null}
+          </form>
+        </>
+      ) : null}
+
+      {!currentUser ? (
+        <>
+          <div className="mb-8 p-4 bg-[#111111] border border-gray-800 rounded-lg">
+            <p className="text-gray-400 mb-3">Sign in to leave a comment</p>
+            <AuthDialog mode="sign-in">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg bg-[#7CFC00] px-4 py-2 text-sm font-bold text-black hover:bg-[#7CFC00]/90"
+                onClick={() => {
+                  // Ensure the URL points back to this section even if the user refreshes later.
+                  if (typeof window !== "undefined") {
+                    window.location.hash = "comments";
+                  }
+                  posthog.capture("comment_signin_clicked", { article_slug: slug });
+                }}
+              >
+                Sign in to comment
+              </button>
+            </AuthDialog>
+            <p className="mt-2 text-xs text-gray-500">
+              You’ll return right here:{" "}
+              <a href={commentsHref} className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+                {commentsHref}
+              </a>
+            </p>
+          </div>
+        </>
+      ) : null}
 
       <div className="space-y-6">
         {comments && Array.isArray(comments) && comments.length > 0 ? (

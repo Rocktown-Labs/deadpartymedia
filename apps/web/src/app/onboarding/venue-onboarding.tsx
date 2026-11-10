@@ -1,23 +1,16 @@
-"use client";
+import { authClient, useMusicSession } from "@/lib/auth-client";
+import { uploadMusicImage } from "@/lib/upload";
 
-import { useActionState, useEffect, useRef, useState, startTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/nextjs";
-import type { Route } from "next";
-import Image from "next/image";
-import { MapPin, Globe, Phone, Users, Building2, DollarSign, Mail, Upload, X } from "lucide-react";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+
 import { validateImageFile } from "@/lib/upload";
-import {
-  initialFormState,
-  mergeForm,
-  useForm,
-  useStore,
-  useTransform,
-} from "@tanstack/react-form-nextjs";
-import { venueOnboardingAction } from "./actions";
-import { venueFormOptions } from "./form-options";
-import type { VenueFormData } from "./form-options";
+import { useForm, useStore } from "@tanstack/react-form";
+import { Building2, DollarSign, Globe, Mail, MapPin, Phone, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
+import { venueOnboardingAction } from "./actions";
+import type { VenueFormData } from "./form-options";
+import { venueFormOptions } from "./form-options";
 
 interface VenueOnboardingProps {
   initialValues?: Partial<VenueFormData> | null;
@@ -33,17 +26,23 @@ function hasSuccessfulSubmission(state: unknown): state is { success: true } {
 
 export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user } = useUser();
-  const { session } = useSession();
-  const [state, action] = useActionState(venueOnboardingAction, initialFormState);
+  const navigate = useNavigate();
+  const searchParams = useLocation({
+    select: (location) => new URLSearchParams(location.searchStr),
+  });
+  const { session: user } = useMusicSession();
+
+  const [state, action] = useActionState(venueOnboardingAction, {
+    success: false,
+    errors: [] as string[],
+  });
 
   const form = useForm({
     ...venueFormOptions,
-    transform: useTransform((baseForm) => mergeForm(baseForm, state ?? initialFormState), [state]),
   });
 
-  const formErrors = useStore(form.store, (formState) => formState.errors);
+  const clientErrors = useStore(form.store, (formState) => formState.errors);
+  const formErrors = [...clientErrors, ...state.errors];
   const [imageUploading, setImageUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,20 +59,9 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
     const loadingId = toast.loading("Uploading venue image...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "venue");
 
-      const response = await fetch("/api/upload/image?type=venue", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload image");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       form.setFieldValue("image", url);
       toast.success("Venue image uploaded");
     } catch (error) {
@@ -113,7 +101,10 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
   useEffect(() => {
     if (hasSuccessfulSubmission(state) && user) {
       toast.success("Venue profile created successfully!");
-      Promise.all([user.reload(), session?.reload()]).then(() => {
+      Promise.all([
+        authClient.getSession({ query: { disableCookieCache: true } }),
+        router.invalidate(),
+      ]).then(() => {
         const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
         const destination =
           rawRedirect &&
@@ -122,10 +113,10 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
           !rawRedirect.startsWith("/sign-up")
             ? rawRedirect
             : "/venue-dashboard";
-        router.push(destination as Route);
+        navigate({ to: destination });
       });
     }
-  }, [state, user, session, router, searchParams]);
+  }, [state, user, router, searchParams]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -133,7 +124,7 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-10">
-            <Image
+            <img
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}
@@ -412,11 +403,16 @@ export function VenueOnboarding({ initialValues }: VenueOnboardingProps) {
                     <div className="flex items-center gap-4">
                       {field.state.value ? (
                         <div className="relative w-28 h-20 rounded border border-zinc-700 overflow-hidden bg-zinc-900">
-                          <Image
+                          <img
                             src={field.state.value}
                             alt="Venue preview"
-                            fill
                             className="object-cover"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                            }}
                           />
                           <button
                             type="button"

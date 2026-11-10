@@ -1,17 +1,15 @@
-"use client";
-
-import { useCurrentUserArtist, useArtistArticles } from "@/lib/api/artists";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
-import { FileText, Calendar, User } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useArtistArticles, useCurrentUserArtist } from "@/lib/api/artists";
+import { Link } from "@tanstack/react-router";
+import { Calendar, FileText, User } from "lucide-react";
+
 import { format } from "date-fns";
 
 export default function ArtistArticlesPage() {
@@ -109,17 +107,18 @@ export default function ArtistArticlesPage() {
             {articlesArray.map((article) => (
               <Link
                 key={article.id}
-                href={`/article/${article.slug}`}
+                to="/article/$slug"
+                params={{ slug: String(article.slug) }}
                 className="block bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
               >
                 <div className="flex gap-4">
                   {article.cover_image && (
                     <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                      <Image
+                      <img
                         src={article.cover_image}
                         alt={article.title}
-                        fill
                         className="object-cover"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                     </div>
                   )}

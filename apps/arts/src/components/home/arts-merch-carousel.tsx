@@ -1,7 +1,7 @@
+import type { ArtsProduct } from "#/lib/fourthwall.functions.ts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { ArrowRight, ShoppingBag } from "lucide-react";
-import type { ArtsProduct } from "#/lib/fourthwall.functions.ts";
 
 interface ArtsMerchCarouselProps {
   products: ArtsProduct[];

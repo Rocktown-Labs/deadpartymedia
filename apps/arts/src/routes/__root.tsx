@@ -1,11 +1,12 @@
-import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 
-import ClerkProvider from "../integrations/clerk/provider";
+import { IdentityProvider } from "../components/identity-provider";
 import { SiteShell } from "../components/site-shell";
+import { loadArtsSession, loadAuthProviders } from "../lib/session.functions";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
@@ -18,6 +19,8 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async () => ({ session: await loadArtsSession() }),
+  loader: async () => ({ renderedAt: Date.now(), authProviders: await loadAuthProviders() }),
   head: () => ({
     meta: [
       {
@@ -45,11 +48,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         href: appCss,
       },
       {
-        rel: "preconnect",
-        href: "https://clerk.deadpartymedia.com",
-        crossOrigin: "anonymous",
-      },
-      {
         rel: "icon",
         type: "image/png",
         href: "/deadpartyarts-trans.png",
@@ -68,6 +66,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const data = Route.useLoaderData();
   useEffect(() => {
     const reloadOnStaleChunk = () => {
       try {
@@ -108,24 +107,37 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.traks=window.traks||function(){(window.traks.q=window.traks.q||[]).push(arguments)}",
+          }}
+        />
+        <script
+          defer
+          data-site="pb_live_r1660h2qvgx7sdyuryp9d9yh"
+          src="https://traks-collect.rocktown-labs.workers.dev/t.js"
+        />
       </head>
       <body>
-        <ClerkProvider>
-          <SiteShell>{children}</SiteShell>
+        <IdentityProvider authProviders={data?.authProviders}>
+          <SiteShell issuedAt={data?.renderedAt}>{children}</SiteShell>
           <Toaster position="bottom-right" theme="dark" />
-          <TanStackDevtools
-            config={{
-              position: "bottom-right",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        </ClerkProvider>
+          {import.meta.env.DEV ? (
+            <TanStackDevtools
+              config={{
+                position: "bottom-right",
+              }}
+              plugins={[
+                {
+                  name: "Tanstack Router",
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+                TanStackQueryDevtools,
+              ]}
+            />
+          ) : null}
+        </IdentityProvider>
         <Scripts />
       </body>
     </html>

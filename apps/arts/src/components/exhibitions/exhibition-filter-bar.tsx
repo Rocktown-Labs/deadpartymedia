@@ -1,5 +1,5 @@
-import { ArrowDownUp, Check, Filter, X } from "lucide-react";
 import { MEDIUM_GROUPS } from "#/lib/mediums.ts";
+import { ArrowDownUp, Check, Filter, X } from "lucide-react";
 
 export type ExhibitionSortOption = "recent" | "available" | "title";
 

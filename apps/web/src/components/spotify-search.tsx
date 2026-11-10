@@ -1,11 +1,9 @@
-"use client";
-
-import { useState, useRef, useEffect } from "react";
-import { Music, Search, Loader2 } from "lucide-react";
-import { useSearchSpotifyArtists, useSpotifyArtistById } from "@/lib/api/artists";
-import type { SpotifyArtist } from "@/lib/api/artists";
 import { useDebounce } from "@/hooks/use-debounce";
+import type { SpotifyArtist } from "@/lib/api/artists";
+import { useSearchSpotifyArtists, useSpotifyArtistById } from "@/lib/api/artists";
 import { cn } from "@/lib/utils";
+import { Loader2, Music, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SpotifySearchProps {
   value?: string;

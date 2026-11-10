@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +8,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,13 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { inviteUser } from "./actions";
-import type { Roles } from "@/types/globals";
-import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/utils/error";
+import type { Roles } from "@/types/globals";
+import { useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
+import { inviteUser } from "./actions";
 
 export function InviteUserDialog() {
   const [open, setOpen] = useState(false);
@@ -53,9 +51,11 @@ export function InviteUserDialog() {
               if (result.success) {
                 toast.success("Invitation sent successfully!");
                 setOpen(false);
-                router.refresh();
+                router.invalidate();
               } else {
-                toast.error(result.error || "Failed to send invitation");
+                toast.error(
+                  ("error" in result ? String(result.error) : "") || "Failed to send invitation",
+                );
               }
             } catch (error) {
               toast.error(getErrorMessage(error, "Failed to send invitation"));

@@ -1,14 +1,13 @@
-"use client";
+import { safeImageUrl } from "@dpmedia/contracts";
+import { uploadMusicImage } from "@/lib/upload";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import FileHandler from "@tiptap/extension-file-handler";
-import Link from "@tiptap/extension-link";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,35 +16,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useArtists } from "@/lib/api/artists";
 import type { Artist } from "@/lib/api/artists";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useArtists } from "@/lib/api/artists";
+import FileHandler from "@tiptap/extension-file-handler";
+import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import {
-  X,
-  Upload,
   ArrowLeft,
   Bold,
-  Italic,
-  Strikethrough,
+  ChevronRight,
   Code,
   Heading2,
   Heading3,
+  Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
   Quote,
-  Link as LinkIcon,
-  Unlink,
-  Undo2,
   Redo2,
-  ChevronRight,
+  Strikethrough,
+  Undo2,
+  Unlink,
+  Upload,
+  X,
 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import NextImage from "next/image";
+
 import { validateImageFile } from "@/lib/upload";
-import type { Route } from "next";
+
 import { normalizeStoredPostContent } from "@/lib/content/post-content";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
@@ -98,7 +99,7 @@ interface PostEditorProps {
   onCreateAuthorStub?: (formData: FormData) => Promise<CreateAuthorStubResult>;
   onCreateArtistStub?: (formData: FormData) => Promise<CreateArtistStubResult>;
   onSubmit: (formData: FormData) => void | Promise<unknown>;
-  cancelHref: Route;
+  cancelHref: string;
   allowCoverImageUrl?: boolean;
   isSubmitting?: boolean;
 }
@@ -490,20 +491,9 @@ export function PostEditor({
         // Show loading indicator
         const loadingId = toast.loading("Uploading image...");
 
-        const formData = new FormData();
-        formData.append("file", file);
+        const response = await uploadMusicImage(file, "content");
 
-        const response = await fetch("/api/upload/image?type=content", {
-          body: formData,
-          method: "POST",
-        });
-
-        if (!response.ok) {
-          const error = await response.json().catch(() => ({ error: "Upload failed" }));
-          throw new Error(error.error || "Failed to upload image");
-        }
-
-        const { url } = await response.json();
+        const { url } = response;
 
         // Insert image into editor
         if (position !== undefined) {
@@ -535,20 +525,9 @@ export function PostEditor({
     const loadingId = toast.loading("Uploading cover image...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "cover");
 
-      const response = await fetch("/api/upload/image?type=cover", {
-        body: formData,
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload image");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       setCoverImage(url);
       setUseCoverImageUrl(false);
       toast.success("Cover image uploaded successfully");
@@ -983,7 +962,12 @@ export function PostEditor({
                   </div>
                 ) : (
                   <div className="relative aspect-video border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
-                    <NextImage src={coverImage} alt="Cover preview" fill className="object-cover" />
+                    <img
+                      src={safeImageUrl(coverImage)}
+                      alt="Cover preview"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                      className="object-cover"
+                    />
                     <button
                       type="button"
                       onClick={() => setCoverImage("")}

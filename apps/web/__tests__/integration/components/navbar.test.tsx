@@ -1,11 +1,8 @@
 import { screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 type MockUser = {
-  publicMetadata?: {
-    role?: string;
-  };
+  roles?: string[];
 } | null;
 
 let mockUser: MockUser = null;
@@ -17,13 +14,24 @@ vi.mock<typeof import("@/components/cart/cart-modal")>(
   }),
 );
 
-vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
-  SignInButton: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SignUpButton: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SignedIn: ({ children }: { children: ReactNode }) => (mockUser ? <>{children}</> : null),
-  SignedOut: ({ children }: { children: ReactNode }) => (!mockUser ? <>{children}</> : null),
-  UserButton: () => <div data-testid="user-button" />,
-  useUser: () => ({ isLoaded: true, user: mockUser }),
+vi.mock("@/lib/auth-client", () => ({
+  useMusicSession: () => ({
+    session: mockUser
+      ? {
+          userId: "user_1",
+          name: "Test User",
+          email: "test@example.test",
+          roles: mockUser.roles || [],
+          image: null,
+        }
+      : null,
+    isPending: false,
+  }),
+  authClient: {
+    getSession: vi.fn(async () => ({ data: null })),
+    signOut: vi.fn(async () => ({ error: null })),
+  },
+  musicSessionKey: ["music", "session"],
 }));
 
 import Navbar from "@/components/navbar";
@@ -34,7 +42,7 @@ describe("navbar dashboard CTA", () => {
   });
 
   it("routes signed-in writer users to /admin", () => {
-    mockUser = { publicMetadata: { role: "writer" } };
+    mockUser = { roles: ["writer"] };
 
     renderWithProviders(<Navbar />);
 
@@ -46,7 +54,7 @@ describe("navbar dashboard CTA", () => {
   });
 
   it("routes signed-in artist users to /artist-dashboard", () => {
-    mockUser = { publicMetadata: { role: "artist" } };
+    mockUser = { roles: ["artist"] };
 
     renderWithProviders(<Navbar />);
 

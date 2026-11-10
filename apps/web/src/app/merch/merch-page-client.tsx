@@ -1,11 +1,10 @@
-"use client";
-
-import { useState } from "react";
+import { htmlText } from "@dpmedia/contracts";
 import { ArrowLeft, Filter } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { useState } from "react";
+
 import { PageTitleHeader } from "@/components/page-title-header";
 import { useProducts } from "@/lib/api/products";
+import { Link } from "@tanstack/react-router";
 
 export default function MerchPageClient() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -35,7 +34,7 @@ export default function MerchPageClient() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -69,14 +68,18 @@ export default function MerchPageClient() {
             {filteredItems
               .filter((product) => product.handle)
               .map((product) => (
-                <Link key={product.id} href={`/merch/${product.handle}`}>
+                <Link
+                  key={product.id}
+                  to="/merch/$handle"
+                  params={{ handle: String(product.handle) }}
+                >
                   <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group cursor-pointer">
                     <div className="relative h-96 overflow-hidden bg-black">
-                      <Image
+                      <img
                         src={product.featuredImage.url || "/placeholder.svg"}
                         alt={product.title}
-                        fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
                       <div className="absolute top-4 left-4">
@@ -90,16 +93,9 @@ export default function MerchPageClient() {
                         {product.title}
                       </h3>
                       {product.descriptionHtml || product.description ? (
-                        <div
-                          className="text-sm text-gray-400 mb-4 line-clamp-2"
-                          dangerouslySetInnerHTML={{
-                            __html: (
-                              product.descriptionHtml ||
-                              product.description ||
-                              ""
-                            ).replaceAll(/<[^>]*>/g, ""),
-                          }}
-                        />
+                        <div className="text-sm text-gray-400 mb-4 line-clamp-2">
+                          {htmlText(product.descriptionHtml || product.description)}
+                        </div>
                       ) : null}
                       {product.variants.length > 1 && (
                         <div className="mb-4">

@@ -1,22 +1,26 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
+import { musicApi } from "@/lib/music-client";
+import { readResponse } from "@dpmedia/api-client";
 
-import { useUser } from "@clerk/nextjs";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
-import type { Route } from "next";
+
 import { parseRole } from "@/lib/auth/role";
 
 export default function ArtistDashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { session: user, isPending: sessionPending } = useMusicSession();
+  const isLoaded = !sessionPending;
+  const isSignedIn = !!user;
   const router = useRouter();
+  const navigate = useNavigate();
 
-  const role = parseRole(user?.publicMetadata?.role);
-  const isAuthorized = role === "artist" || role === "super_admin";
+  const role = parseRole(user?.roles[0]);
+  const isAuthorized =
+    user?.roles.some((value) => value === "artist" || value === "super_admin") ?? false;
 
   useEffect(() => {
     if (isLoaded && (!isSignedIn || !isAuthorized)) {
-      router.push("/sign-in" as Route);
+      navigate({ to: "/sign-in" });
     }
   }, [isLoaded, isSignedIn, isAuthorized, router]);
 
@@ -31,23 +35,23 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
         const response = await fetch("/api/artists/me", { cache: "no-store" });
         if (!response.ok) {
           if (!cancelled) {
-            router.push("/onboarding");
+            navigate({ to: "/onboarding" });
           }
           return;
         }
 
-        const artist = await response.json();
+        const artist = await readResponse(await musicApi.artists.me.$get({ query: {} }));
         const hasSpotify = Boolean(artist?.spotify_artist_id) && Boolean(artist?.spotify_url);
         const hasInstagram = Boolean(artist?.instagram);
 
         if (!hasSpotify || !hasInstagram) {
           if (!cancelled) {
-            router.push("/onboarding");
+            navigate({ to: "/onboarding" });
           }
         }
       } catch {
         if (!cancelled) {
-          router.push("/onboarding");
+          navigate({ to: "/onboarding" });
         }
       }
     })();
@@ -79,7 +83,7 @@ export default function ArtistDashboardLayout({ children }: { children: React.Re
           <span className="font-bold text-[#7CFC00] flex items-center gap-2">
             <span>👁️</span> Super Admin Preview: Viewing Music Artist Dashboard
           </span>
-          <Link href="/admin" className="text-white hover:underline font-mono">
+          <Link to="/admin" className="text-white hover:underline font-mono">
             Return to Admin Desk →
           </Link>
         </div>

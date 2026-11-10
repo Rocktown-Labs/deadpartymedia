@@ -1,33 +1,34 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { db } from "@/lib/db";
-import { venues, events } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { Button } from "@/components/ui/button";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["venue-dashboard"].$get({ query: input.search })),
+  );
+
+import { Link } from "@tanstack/react-router";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Building2,
   Calendar,
+  DollarSign,
+  ExternalLink,
+  Globe,
+  Mail,
   MapPin,
   Phone,
-  Globe,
   Plus,
-  DollarSign,
-  Mail,
-  ExternalLink,
 } from "lucide-react";
 
-export default async function VenueDashboardPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const [venue] = await db.select().from(venues).where(eq(venues.claimedById, userId)).limit(1);
-
+export default function VenueDashboardPage({
+  data,
+}: {
+  data: Awaited<ReturnType<typeof loadPage>>;
+}) {
+  const { venue, venueEvents } = data;
   if (!venue) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-6">
@@ -38,7 +39,7 @@ export default async function VenueDashboardPage() {
             You don&apos;t have a venue associated with your account yet. Complete venue setup to
             manage shows and booking info.
           </p>
-          <Link href={"/onboarding" as Route}>
+          <Link to={"/onboarding"}>
             <Button className="w-full bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold">
               Complete Venue Setup
             </Button>
@@ -49,13 +50,6 @@ export default async function VenueDashboardPage() {
   }
 
   // Fetch events for this venue (by venueId or matching venue name)
-  const venueEvents = await db
-    .select()
-    .from(events)
-    .where(eq(events.venueId, venue.id))
-    .orderBy(desc(events.date))
-    .limit(20);
-
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <main className="pt-40 pb-20">
@@ -74,7 +68,7 @@ export default async function VenueDashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Link href={"/venue-dashboard/events/new" as Route}>
+              <Link to={"/venue-dashboard/events/new"}>
                 <Button className="bg-[#7CFC00] text-black hover:bg-[#7CFC00]/90 font-bold gap-2">
                   <Plus className="w-4 h-4" /> Submit New Show
                 </Button>
@@ -121,7 +115,12 @@ export default async function VenueDashboardPage() {
                 <h2 className="text-lg font-bold mb-4">Venue Profile</h2>
                 {venue.image && (
                   <div className="relative w-full h-44 rounded-lg overflow-hidden mb-4 border border-zinc-800">
-                    <Image src={venue.image} alt={venue.name} fill className="object-cover" />
+                    <img
+                      src={venue.image}
+                      alt={venue.name}
+                      className="object-cover"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                    />
                   </div>
                 )}
                 {venue.description && (
@@ -163,7 +162,7 @@ export default async function VenueDashboardPage() {
               <div className="bg-[#111111] border border-zinc-800 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold">Upcoming &amp; Past Shows</h2>
-                  <Link href={"/venue-dashboard/events/new" as Route}>
+                  <Link to={"/venue-dashboard/events/new"}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -217,7 +216,7 @@ export default async function VenueDashboardPage() {
                             <span>• {evt.genre}</span>
                           </div>
                         </div>
-                        <Link href={`/events/${evt.slug}` as Route}>
+                        <Link to="/events/$slug" params={{ slug: String(evt.slug) }}>
                           <Button
                             variant="ghost"
                             size="sm"

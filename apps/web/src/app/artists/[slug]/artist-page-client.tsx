@@ -1,15 +1,13 @@
-"use client";
-
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Instagram, MapPin, Twitter } from "lucide-react";
 import { useRef } from "react";
-import { Instagram, Twitter, ArrowLeft, MapPin } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { Spotify } from "@/components/ui/svgs/spotify";
-import { useRouter } from "next/navigation";
-import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
-import { ArtistStructuredData } from "@/components/seo/structured-data";
-import posthogClient from "posthog-js";
+
 import { MerchCarousel } from "@/components/merch/merch-carousel";
+import { ArtistStructuredData } from "@/components/seo/structured-data";
+import { Spotify } from "@/components/ui/svgs/spotify";
+import { useArtist, useArtistArticles, useArtistEvents } from "@/lib/api/artists";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import posthogClient from "posthog-js";
 
 interface ArtistPageClientProps {
   slug: string;
@@ -35,6 +33,7 @@ const getInternalReferrerPath = (): string | null => {
 
 export function ArtistPageClient({ slug }: ArtistPageClientProps) {
   const router = useRouter();
+  const navigate = useNavigate();
   const { data: artist, isLoading: artistLoading } = useArtist(slug);
   const { data: articles } = useArtistArticles(slug);
   const { data: events } = useArtistEvents(slug);
@@ -76,11 +75,11 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
   const handleBackClick = () => {
     const internalReferrerPath = getInternalReferrerPath();
     if (internalReferrerPath) {
-      router.back();
+      router.history.back();
       return;
     }
 
-    router.push("/artists");
+    navigate({ to: "/artists" });
   };
 
   if (artistLoading) {
@@ -96,7 +95,7 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Artist Not Found</h1>
-          <Link href="/artists" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/artists" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Back to Artists
           </Link>
         </div>
@@ -128,7 +127,12 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                   <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
                     {artist.image && (
                       <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-lg overflow-hidden shrink-0 border border-gray-800 bg-[#0E0E0E]">
-                        <Image src={artist.image} alt={artist.name} fill className="object-cover" />
+                        <img
+                          src={artist.image}
+                          alt={artist.name}
+                          className="object-cover"
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                        />
                       </div>
                     )}
                     <div className="flex-1 min-w-0 w-full">
@@ -252,15 +256,21 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                     {articlesArray.map((article) => (
                       <Link
                         key={article.id}
-                        href={`/article/${article.slug}`}
+                        to="/article/$slug"
+                        params={{ slug: String(article.slug) }}
                         className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
                       >
                         <div className="aspect-video relative overflow-hidden">
-                          <Image
+                          <img
                             src={article.cover_image || "/placeholder.svg"}
                             alt={article.title}
-                            fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                            }}
                           />
                         </div>
                         <div className="p-4">
@@ -288,15 +298,21 @@ export function ArtistPageClient({ slug }: ArtistPageClientProps) {
                     {eventsArray.map((event) => (
                       <Link
                         key={event.id}
-                        href={`/events/${event.slug}`}
+                        to="/events/$slug"
+                        params={{ slug: String(event.slug) }}
                         className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00]/50 transition-colors group"
                       >
                         <div className="aspect-video relative overflow-hidden">
-                          <Image
+                          <img
                             src={event.image || "/placeholder.svg"}
                             alt={event.title}
-                            fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                            }}
                           />
                         </div>
                         <div className="p-4">

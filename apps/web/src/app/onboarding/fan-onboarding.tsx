@@ -1,20 +1,12 @@
-"use client";
+import { authClient, useMusicSession } from "@/lib/auth-client";
 
-import { useActionState, useEffect, startTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/nextjs";
-import type { Route } from "next";
-import Image from "next/image";
-import {
-  initialFormState,
-  mergeForm,
-  useForm,
-  useStore,
-  useTransform,
-} from "@tanstack/react-form-nextjs";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { startTransition, useActionState, useEffect } from "react";
+
+import { useForm, useStore } from "@tanstack/react-form";
+import { toast } from "sonner";
 import { fanOnboardingAction } from "./actions";
 import { fanFormOptions } from "./form-options";
-import { toast } from "sonner";
 
 interface FanOnboardingProps {
   initialName?: string;
@@ -30,17 +22,23 @@ function hasSuccessfulSubmission(state: unknown): state is { success: true } {
 
 export function FanOnboarding({ initialName }: FanOnboardingProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user } = useUser();
-  const { session } = useSession();
-  const [state, action] = useActionState(fanOnboardingAction, initialFormState);
+  const navigate = useNavigate();
+  const searchParams = useLocation({
+    select: (location) => new URLSearchParams(location.searchStr),
+  });
+  const { session: user } = useMusicSession();
+
+  const [state, action] = useActionState(fanOnboardingAction, {
+    success: false,
+    errors: [] as string[],
+  });
 
   const form = useForm({
     ...fanFormOptions,
-    transform: useTransform((baseForm) => mergeForm(baseForm, state ?? initialFormState), [state]),
   });
 
-  const formErrors = useStore(form.store, (formState) => formState.errors);
+  const clientErrors = useStore(form.store, (formState) => formState.errors);
+  const formErrors = [...clientErrors, ...state.errors];
 
   useEffect(() => {
     if (!initialName || initialName.trim().length === 0) {
@@ -57,7 +55,10 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
   useEffect(() => {
     if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
-      Promise.all([user.reload(), session?.reload()]).then(() => {
+      Promise.all([
+        authClient.getSession({ query: { disableCookieCache: true } }),
+        router.invalidate(),
+      ]).then(() => {
         const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
         const destination =
           rawRedirect &&
@@ -66,10 +67,10 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
           !rawRedirect.startsWith("/sign-up")
             ? rawRedirect
             : "/";
-        router.push(destination as Route);
+        navigate({ to: destination });
       });
     }
-  }, [state, user, session, router, searchParams]);
+  }, [state, user, router, searchParams]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -77,7 +78,7 @@ export function FanOnboarding({ initialName }: FanOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Image
+            <img
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}

@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, Images, Newspaper, UsersRound } from "lucide-react";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { getArtsAdminOverview } from "#/lib/admin.functions.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarDays, Images, Newspaper, UsersRound } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   component: ArtsAdmin,
@@ -66,7 +66,7 @@ function ArtsAdmin() {
           title="Recent Artmakers"
           items={overview.recentArtmakers.map((item) => ({
             href: "/admin/artmakers" as const,
-            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString()}`,
+            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString("en-US", { timeZone: "America/Chicago" })}`,
             title: item.name,
           }))}
         />
@@ -82,7 +82,7 @@ function ArtsAdmin() {
           title="Recent Articles"
           items={overview.recentArticles.map((item) => ({
             href: "/admin/articles" as const,
-            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString()}`,
+            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString("en-US", { timeZone: "America/Chicago" })}`,
             title: item.title,
           }))}
         />
@@ -90,7 +90,7 @@ function ArtsAdmin() {
           title="Recent Events"
           items={overview.recentEvents.map((item) => ({
             href: "/admin/events" as const,
-            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString()}`,
+            meta: `${item.status} - ${new Date(item.createdAt).toLocaleDateString("en-US", { timeZone: "America/Chicago" })}`,
             title: item.title,
           }))}
         />

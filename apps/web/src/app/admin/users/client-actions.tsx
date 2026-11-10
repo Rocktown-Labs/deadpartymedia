@@ -1,18 +1,16 @@
-"use client";
-
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import {
-  updateLocalUserRole,
-  updateLocalUserEmail,
-  inviteUserProfile,
-  deleteLocalUserProfile,
-} from "./actions";
 import type { Roles } from "@/types/globals";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import {
+  deleteLocalUserProfile,
+  inviteUserProfile,
+  updateLocalUserEmail,
+  updateLocalUserRole,
+} from "./actions";
 
 // 1. Role Select Dropdown
 export function UserRoleSelect({
@@ -42,9 +40,9 @@ export function UserRoleSelect({
         const result = await updateLocalUserRole(formData);
         if (result.success) {
           toast.success(`Role updated to ${selectedRole} successfully.`);
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to update role");
+          toast.error(("error" in result ? String(result.error) : "") || "Failed to update role");
           setRole(previousRole);
         }
       } catch {
@@ -118,9 +116,9 @@ export function UserEmailForm({
         const result = await updateLocalUserEmail(formData);
         if (result.success) {
           toast.success("Email address updated successfully.");
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to update email");
+          toast.error(("error" in result ? String(result.error) : "") || "Failed to update email");
         }
       } catch {
         toast.error("An unexpected error occurred while saving email.");
@@ -206,9 +204,11 @@ export function InviteUserButton({
         const result = await inviteUserProfile(formData);
         if (result.success) {
           toast.success("Invitation sent successfully!");
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to send invitation");
+          toast.error(
+            ("error" in result ? String(result.error) : "") || "Failed to send invitation",
+          );
         }
       } catch {
         toast.error("An unexpected error occurred while sending invitation.");
@@ -250,6 +250,7 @@ export function DeleteUserButton({
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const navigate = useNavigate();
 
   const handleDelete = () => {
     // eslint-disable-next-line no-alert
@@ -266,12 +267,14 @@ export function DeleteUserButton({
         if (result.success) {
           toast.success("User profile deleted successfully.");
           if (redirectToUsers) {
-            router.push("/admin/users");
+            navigate({ to: "/admin/users" });
           } else {
-            router.refresh();
+            router.invalidate();
           }
         } else {
-          toast.error(result.error || "Failed to delete profile");
+          toast.error(
+            ("error" in result ? String(result.error) : "") || "Failed to delete profile",
+          );
         }
       } catch {
         toast.error("An unexpected error occurred while deleting profile.");

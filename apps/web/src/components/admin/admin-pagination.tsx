@@ -1,5 +1,3 @@
-import { createUrl } from "@/lib/utils";
-import { getPageRange, getTotalPages, mergeSearchParams } from "@/lib/admin/table-state";
 import {
   Pagination,
   PaginationContent,
@@ -7,6 +5,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { getPageRange, getTotalPages, mergeSearchParams } from "@/lib/admin/table-state";
+import { createUrl } from "@/lib/utils";
 
 interface AdminPaginationProps {
   className?: string;

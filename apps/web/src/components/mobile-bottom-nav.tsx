@@ -1,24 +1,22 @@
-"use client";
+import { Link } from "@tanstack/react-router";
+import { Calendar, Home, Mic2, Music, ShoppingBag } from "lucide-react";
 
-import { Home, Music, Calendar, ShoppingBag, Mic2 } from "lucide-react";
-import Link from "next/link";
-import type { Route } from "next";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLocation } from "@tanstack/react-router";
 
 export default function MobileBottomNav() {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
 
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
     return null;
   }
 
   const navItems = [
-    { href: "/" as Route, icon: Home, label: "Home" },
-    { href: "/music" as Route, icon: Music, label: "Music" },
-    { href: "/events" as Route, icon: Calendar, label: "Events" },
-    { href: "/merch" as Route, icon: ShoppingBag, label: "Merch" },
-    { href: "/artists" as Route, icon: Mic2, label: "Artists" },
+    { href: "/", icon: Home, label: "Home" },
+    { href: "/music", icon: Music, label: "Music" },
+    { href: "/events", icon: Calendar, label: "Events" },
+    { href: "/merch", icon: ShoppingBag, label: "Merch" },
+    { href: "/artists", icon: Mic2, label: "Artists" },
   ];
 
   return (
@@ -29,7 +27,7 @@ export default function MobileBottomNav() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors",
                 isActive ? "text-[#7CFC00]" : "text-gray-400",

@@ -1,8 +1,8 @@
+import * as Sentry from "@sentry/tanstackstart-react";
 import posthog from "posthog-js";
-import * as Sentry from "@sentry/nextjs";
 
-const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.posthog.com";
-const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || "https://us.posthog.com";
+const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
 
 if (POSTHOG_KEY) {
   posthog.init(POSTHOG_KEY, {
@@ -11,13 +11,12 @@ if (POSTHOG_KEY) {
     // Enables capturing unhandled exceptions via Error Tracking
     capture_exceptions: true,
     // Turn on debug in development mode
-    debug: process.env.NODE_ENV === "development",
+    debug: import.meta.env.DEV,
   });
 }
 
-//IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches, especially components like a PostHogProvider. instrumentation-client.ts is the correct solution for initializating client-side PostHog in Next.js 15.3+ apps.
 Sentry.init({
-  dsn: "https://98df3fb2ffbb5ff975ba90d4f21053e1@o4510278858309632.ingest.us.sentry.io/4510700130271232",
+  dsn: import.meta.env.VITE_SENTRY_DSN,
 
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
@@ -36,8 +35,6 @@ Sentry.init({
   replaysOnErrorSampleRate: 1,
 
   // Enable sending user PII (Personally Identifiable Information)
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
+  // https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/
   sendDefaultPii: true,
 });
-
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

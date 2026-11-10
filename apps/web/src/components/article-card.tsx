@@ -1,7 +1,4 @@
-"use client";
-
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 
 interface Article {
   id: number;
@@ -21,15 +18,15 @@ interface ArticleCardProps {
 
 export default function ArticleCard({ article, categoryColor = "#7CFC00" }: ArticleCardProps) {
   return (
-    <Link key={article.id} href={`/article/${article.slug}`}>
+    <Link key={article.id} to="/article/$slug" params={{ slug: String(article.slug) }}>
       <article className="group cursor-pointer">
         {/* Image */}
         <div className="relative h-80 mb-6 overflow-hidden bg-black">
-          <Image
+          <img
             src={article.image || "/placeholder.svg"}
             alt={article.title}
-            fill
             className="object-cover transition-all duration-700 group-hover:scale-105 grayscale group-hover:grayscale-0"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           />
           <div className="absolute top-4 left-4">
             <span

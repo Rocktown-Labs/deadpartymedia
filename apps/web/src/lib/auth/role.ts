@@ -5,9 +5,6 @@ const VALID_ROLES: ReadonlySet<Roles> = new Set([
   "writer",
   "artist",
   "venue",
-  "artmaker",
-  "arts_admin",
-  "arts_writer",
   "fan",
 ]);
 
@@ -60,7 +57,7 @@ export const WEB_ROLES: readonly Roles[] = [
   "fan",
 ] as const;
 
-export const ARTS_ROLES: readonly Roles[] = ["arts_admin", "arts_writer", "artmaker"] as const;
+export const ARTS_ROLES: readonly string[] = ["arts_admin", "arts_writer", "artmaker"] as const;
 
 export function isWebRole(role: unknown): role is (typeof WEB_ROLES)[number] {
   const parsed = parseRole(role);
@@ -68,6 +65,5 @@ export function isWebRole(role: unknown): role is (typeof WEB_ROLES)[number] {
 }
 
 export function isArtsRole(role: unknown): role is (typeof ARTS_ROLES)[number] {
-  const parsed = parseRole(role);
-  return parsed !== null && (ARTS_ROLES as readonly string[]).includes(parsed);
+  return typeof role === "string" && ARTS_ROLES.includes(role);
 }

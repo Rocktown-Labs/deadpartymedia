@@ -1,13 +1,12 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { BarChart3, Users, Eye, TrendingUp, Edit, FileText, Calendar, Disc } from "lucide-react";
-import Link from "next/link";
-import type { Route } from "next";
+import { Link } from "@tanstack/react-router";
+import { BarChart3, Calendar, Disc, Edit, Eye, FileText, TrendingUp, Users } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs";
 
 export default function ArtistDashboardPage() {
-  const { user } = useUser();
+  const { session: user } = useMusicSession();
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -16,7 +15,7 @@ export default function ArtistDashboardPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Artist Dashboard</h1>
             <p className="text-gray-400">
-              Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
+              Welcome back{user?.name.split(" ")[0] ? `, ${user.name.split(" ")[0]}` : ""}!
             </p>
           </div>
 
@@ -57,7 +56,7 @@ export default function ArtistDashboardPage() {
 
           {/* Action Buttons */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-            <Link href={"/artist-dashboard/releases" as Route}>
+            <Link to={"/artist-dashboard/releases"}>
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <Disc className="w-6 h-6 text-[#7CFC00]" />
                 <div className="text-left">
@@ -67,7 +66,7 @@ export default function ArtistDashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/artist-dashboard/profile">
+            <Link to="/artist-dashboard/profile">
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <Edit className="w-6 h-6 text-[#7CFC00]" />
                 <div className="text-left">
@@ -77,7 +76,7 @@ export default function ArtistDashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/artist-dashboard/articles">
+            <Link to="/artist-dashboard/articles">
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <FileText className="w-6 h-6 text-[#7CFC00]" />
                 <div className="text-left">
@@ -87,7 +86,7 @@ export default function ArtistDashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/artist-dashboard/events">
+            <Link to="/artist-dashboard/events">
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <Calendar className="w-6 h-6 text-[#7CFC00]" />
                 <div className="text-left">
@@ -97,7 +96,7 @@ export default function ArtistDashboardPage() {
               </Button>
             </Link>
 
-            <Link href="/artists/1">
+            <Link to="/artists/$slug" params={{ slug: user?.artistSlug || "" }}>
               <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                 <Eye className="w-6 h-6 text-[#7CFC00]" />
                 <div className="text-left">

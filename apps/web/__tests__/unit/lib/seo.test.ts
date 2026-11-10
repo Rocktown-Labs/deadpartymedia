@@ -52,15 +52,15 @@ describe("sEO helpers", () => {
       expect(getImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
     });
 
-    it("should handle media URLs with NEXT_PUBLIC_MEDIA_URL", () => {
-      process.env.NEXT_PUBLIC_MEDIA_URL = "https://media.example.com";
+    it("should handle media URLs with VITE_MEDIA_URL", () => {
+      vi.stubEnv("VITE_MEDIA_URL", "https://media.example.com");
       expect(getImageUrl("/media/articles/image.jpg")).toBe(
         "https://media.example.com/media/articles/image.jpg",
       );
     });
 
-    it("should handle media URLs without NEXT_PUBLIC_MEDIA_URL", () => {
-      delete process.env.NEXT_PUBLIC_MEDIA_URL;
+    it("should handle media URLs without VITE_MEDIA_URL", () => {
+      vi.stubEnv("VITE_MEDIA_URL", undefined);
       expect(getImageUrl("/media/articles/image.jpg")).toBe(
         "https://www.deadpartymedia.com/media/articles/image.jpg",
       );

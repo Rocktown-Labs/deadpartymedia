@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import { htmlText } from "@dpmedia/contracts";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import type { Article } from "./api/articles";
-import type { Event } from "./api/events";
 import type { Artist } from "./api/artists";
+import type { Event } from "./api/events";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.deadpartymedia.com";
+const SITE_URL = import.meta.env.VITE_SITE_URL || "https://www.deadpartymedia.com";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/dead-party-logo-og.jpg`;
 const SITE_NAME = "Dead Party Media";
 const DEFAULT_DESCRIPTION =
@@ -27,21 +28,7 @@ export function getAbsoluteUrl(path: string): string {
  * Strip HTML tags and decode HTML entities from a string
  */
 export function stripHtml(html: string | null | undefined): string {
-  if (!html) {
-    return "";
-  }
-  // Remove HTML tags
-  const text = html.replaceAll(/<[^>]*>/g, "");
-  // Decode common HTML entities
-  return text
-    .replaceAll("&nbsp;", " ")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&apos;", "'")
-    .trim();
+  return htmlText(html);
 }
 
 /**
@@ -108,7 +95,7 @@ export function getImageUrl(imagePath: string | null | undefined): string {
   // Handle media URLs (e.g., /media/articles/image.jpg)
   if (imagePath.startsWith("/media/")) {
     // Check if we have a media base URL configured
-    const mediaBaseUrl = process.env.NEXT_PUBLIC_MEDIA_URL;
+    const mediaBaseUrl = import.meta.env.VITE_MEDIA_URL;
     if (mediaBaseUrl) {
       // Remove trailing slash from base URL and leading slash from path
       const base = mediaBaseUrl.replace(/\/$/, "");
@@ -132,7 +119,13 @@ export function getImageUrl(imagePath: string | null | undefined): string {
 /**
  * Generate metadata for an article
  */
-export function generateArticleMetadata(article: Article): Metadata {
+export function generateArticleMetadata(
+  article: Pick<Article, "title" | "slug" | "excerpt" | "category" | "tags" | "published_at"> & {
+    cover_image: string | null;
+    author?: { name: string };
+    artists?: { name: string }[];
+  },
+): Metadata {
   const fullTitle = `${article.title} | ${SITE_NAME}`;
   const description = sanitizeDescription(
     article.excerpt,
@@ -195,7 +188,12 @@ export function generateArticleMetadata(article: Article): Metadata {
 /**
  * Generate metadata for an event
  */
-export function generateEventMetadata(event: Event): Metadata {
+export function generateEventMetadata(
+  event: Pick<Event, "title" | "slug" | "date" | "venue" | "location" | "description" | "genre"> & {
+    image: string | null;
+    artists?: { name: string }[];
+  },
+): Metadata {
   const fullTitle = `${event.title} | ${SITE_NAME}`;
   const eventDate = event.date ? new Date(event.date).toLocaleDateString() : "";
   const fallbackDescription = `${event.title} - ${event.venue}, ${event.location}${eventDate ? ` on ${eventDate}` : ""}`;

@@ -1,8 +1,6 @@
-"use client";
-
-import { useRouter, useSearchParams } from "next/navigation";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { createContext, useContext, useMemo, useOptimistic, startTransition } from "react";
+import { createContext, startTransition, useContext, useMemo, useOptimistic } from "react";
 
 export type ProductState = Record<string, string> & {
   image?: string;
@@ -23,7 +21,9 @@ export function ProductProvider({
   children: React.ReactNode;
   initialState?: ProductState;
 }) {
-  const searchParams = useSearchParams();
+  const searchParams = useLocation({
+    select: (location) => new URLSearchParams(location.searchStr),
+  });
 
   const getInitialState = () => {
     const params: ProductState = { ...initialState };
@@ -78,13 +78,13 @@ export function useProduct() {
 }
 
 export function useUpdateURL() {
-  const router = useRouter();
+  const navigate = useNavigate({ from: "/merch/$handle" });
 
   return (state: ProductState) => {
     const newParams = new URLSearchParams(window.location.search);
     Object.entries(state).forEach(([key, value]) => {
       newParams.set(key, value);
     });
-    router.push(`?${newParams.toString()}`, { scroll: false });
+    navigate({ to: ".", search: () => Object.fromEntries(newParams), resetScroll: false });
   };
 }

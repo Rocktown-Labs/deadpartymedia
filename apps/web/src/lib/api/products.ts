@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import type { Product } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 
 interface UseProductsOptions {
   enabled?: boolean;

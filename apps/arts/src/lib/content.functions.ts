@@ -1,13 +1,7 @@
-import { db } from "@dpmedia/db";
-import { artmakers, eventArtmakers, events, postArtmakers, posts } from "@dpmedia/db/schema";
-import { auth } from "@clerk/tanstack-react-start/server";
+import { readResponse } from "@dpmedia/api-client";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { isArtsAdminRole } from "#/lib/roles.ts";
-import { createSlug } from "#/lib/slug.ts";
-import { normalizeStoredImageUrl } from "#/lib/upload.ts";
+import { getArtsApi, withArticleDates, withCreatedAt } from "./api.server";
 
 export interface ArtsEventListItem {
   id: number;
@@ -46,176 +40,25 @@ export interface ArtsArticleListItem {
 }
 
 export const listArtsEvents = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const rows = await db
-      .select({
-        createdAt: events.createdAt,
-        date: events.date,
-        description: events.description,
-        id: events.id,
-        image: events.image,
-        location: events.location,
-        price: events.price,
-        slug: events.slug,
-        status: events.status,
-        ticketLink: events.ticketLink,
-        time: events.time,
-        title: events.title,
-        venue: events.venue,
-      })
-      .from(events)
-      .where(and(eq(events.vertical, "arts"), eq(events.status, "published")))
-      .orderBy(events.date);
-
-    return rows.map((row) => ({
-      ...row,
-      image: normalizeStoredImageUrl(row.image),
-    })) satisfies ArtsEventListItem[];
-  } catch {
-    return [] satisfies ArtsEventListItem[];
-  }
+  return (await readResponse(await getArtsApi().events.$get())).map((row) => withCreatedAt(row));
 });
 
 export const listArtsAdminEvents = createServerFn({ method: "GET" }).handler(async () => {
-  await requireArtsStaff();
-  const rows = await db
-    .select({
-      createdAt: events.createdAt,
-      date: events.date,
-      description: events.description,
-      id: events.id,
-      image: events.image,
-      location: events.location,
-      price: events.price,
-      slug: events.slug,
-      status: events.status,
-      ticketLink: events.ticketLink,
-      time: events.time,
-      title: events.title,
-      venue: events.venue,
-    })
-    .from(events)
-    .where(eq(events.vertical, "arts"))
-    .orderBy(desc(events.createdAt));
-
-  return rows.map((row) => ({
-    ...row,
-    image: normalizeStoredImageUrl(row.image),
-  })) satisfies ArtsEventListItem[];
+  return (await readResponse(await getArtsApi().admin.events.$get())).map((row) =>
+    withCreatedAt(row),
+  );
 });
 
 export const listArtsArticles = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const rows = await db
-      .select({
-        authorId: posts.authorId,
-        content: posts.content,
-        coverImage: posts.coverImage,
-        createdAt: posts.createdAt,
-        excerpt: posts.excerpt,
-        id: posts.id,
-        publishedAt: posts.publishedAt,
-        slug: posts.slug,
-        status: posts.status,
-        tags: posts.tags,
-        title: posts.title,
-      })
-      .from(posts)
-      .where(and(eq(posts.vertical, "arts"), eq(posts.status, "published")))
-      .orderBy(desc(posts.publishedAt));
-
-    const links = rows.length
-      ? await db
-          .select({
-            artmakerId: postArtmakers.artmakerId,
-            name: artmakers.name,
-            postId: postArtmakers.postId,
-            slug: artmakers.slug,
-          })
-          .from(postArtmakers)
-          .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
-          .where(
-            inArray(
-              postArtmakers.postId,
-              rows.map((row) => row.id),
-            ),
-          )
-      : [];
-
-    return rows.map((row) => {
-      const rowLinks = links.filter((link) => link.postId === row.id);
-      return {
-        ...row,
-        coverImage: normalizeStoredImageUrl(row.coverImage),
-        artmakerIds: rowLinks.map((link) => link.artmakerId),
-        artmakers: rowLinks.map((link) => ({
-          id: link.artmakerId,
-          name: link.name,
-          slug: link.slug,
-        })),
-      };
-    }) satisfies ArtsArticleListItem[];
-  } catch {
-    return [] satisfies ArtsArticleListItem[];
-  }
+  return (await readResponse(await getArtsApi().articles.$get())).map((row) =>
+    withArticleDates(row),
+  );
 });
 
 export const listArtsAdminArticles = createServerFn({ method: "GET" }).handler(async () => {
-  const staff = await requireArtsStaff();
-  const isSuperOrAdmin = staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
-  const whereClause = isSuperOrAdmin
-    ? eq(posts.vertical, "arts")
-    : and(eq(posts.vertical, "arts"), eq(posts.authorId, staff.userId));
-
-  const rows = await db
-    .select({
-      authorId: posts.authorId,
-      content: posts.content,
-      coverImage: posts.coverImage,
-      createdAt: posts.createdAt,
-      excerpt: posts.excerpt,
-      id: posts.id,
-      publishedAt: posts.publishedAt,
-      slug: posts.slug,
-      status: posts.status,
-      tags: posts.tags,
-      title: posts.title,
-    })
-    .from(posts)
-    .where(whereClause)
-    .orderBy(desc(posts.createdAt));
-
-  const links = rows.length
-    ? await db
-        .select({
-          artmakerId: postArtmakers.artmakerId,
-          name: artmakers.name,
-          postId: postArtmakers.postId,
-          slug: artmakers.slug,
-        })
-        .from(postArtmakers)
-        .innerJoin(artmakers, eq(postArtmakers.artmakerId, artmakers.id))
-        .where(
-          inArray(
-            postArtmakers.postId,
-            rows.map((row) => row.id),
-          ),
-        )
-    : [];
-
-  return rows.map((row) => {
-    const rowLinks = links.filter((link) => link.postId === row.id);
-    return {
-      ...row,
-      coverImage: normalizeStoredImageUrl(row.coverImage),
-      artmakerIds: rowLinks.map((link) => link.artmakerId),
-      artmakers: rowLinks.map((link) => ({
-        id: link.artmakerId,
-        name: link.name,
-        slug: link.slug,
-      })),
-    };
-  }) satisfies ArtsArticleListItem[];
+  return (await readResponse(await getArtsApi().admin.articles.$get())).map((row) =>
+    withArticleDates(row),
+  );
 });
 
 export const createArtsArticle = createServerFn({ method: "POST" })
@@ -230,46 +73,7 @@ export const createArtsArticle = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const staff = await requireArtsStaff();
-    const baseSlug = createSlug(data.title);
-
-    let slug = baseSlug;
-    let counter = 1;
-    while (true) {
-      const existing = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, slug));
-      if (existing.length === 0) {
-        break;
-      }
-      counter += 1;
-      slug = `${baseSlug}-${counter}`;
-    }
-
-    const [created] = await db
-      .insert(posts)
-      .values({
-        authorId: staff.userId,
-        category: "OTHER",
-        content: data.content,
-        coverImage: data.coverImage || null,
-        excerpt: data.excerpt,
-        publishedAt: data.status === "published" ? new Date() : null,
-        slug,
-        status: data.status,
-        title: data.title,
-        vertical: "arts",
-      })
-      .returning();
-
-    if (data.artmakerIds?.length) {
-      await db.insert(postArtmakers).values(
-        data.artmakerIds.map((artmakerId) => ({
-          artmakerId,
-          postId: created.id,
-        })),
-      );
-    }
-
-    return { article: created, success: true };
+    return readResponse(await getArtsApi().admin.articles.$post({ json: data }));
   });
 
 export const updateArtsArticle = createServerFn({ method: "POST" })
@@ -285,107 +89,28 @@ export const updateArtsArticle = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const staff = await requireArtsStaff();
-    const [existing] = await db
-      .select()
-      .from(posts)
-      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
-    if (!existing) {
-      throw new Error("Article not found");
-    }
-
-    const isSuperOrAdmin =
-      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
-    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
-      throw new Error("Unauthorized: You don't have permission to edit this article");
-    }
-
-    const publishedAt =
-      data.status === "published" && !existing.publishedAt ? new Date() : existing.publishedAt;
-
-    const [updated] = await db
-      .update(posts)
-      .set({
-        content: data.content,
-        coverImage: data.coverImage || null,
-        excerpt: data.excerpt,
-        publishedAt,
-        status: data.status,
-        title: data.title,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
-      .returning();
-
-    await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
-
-    if (data.artmakerIds?.length) {
-      await db.insert(postArtmakers).values(
-        data.artmakerIds.map((artmakerId) => ({
-          artmakerId,
-          postId: data.id,
-        })),
-      );
-    }
-
-    return { article: updated, success: true };
+    return readResponse(
+      await getArtsApi().admin.articles[":id"].$patch({
+        param: { id: String(data.id) },
+        json: data,
+      }),
+    );
   });
 
 export const toggleArtsArticleStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    const staff = await requireArtsStaff();
-    const [existing] = await db
-      .select()
-      .from(posts)
-      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
-    if (!existing) {
-      throw new Error("Article not found");
-    }
-
-    const isSuperOrAdmin =
-      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
-    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
-      throw new Error("Unauthorized: You don't have permission to edit this article");
-    }
-
-    const nextStatus = existing.status === "published" ? "draft" : "published";
-    const publishedAt = nextStatus === "published" ? new Date() : existing.publishedAt;
-
-    const [updated] = await db
-      .update(posts)
-      .set({
-        publishedAt,
-        status: nextStatus,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")))
-      .returning();
-
-    return { article: updated, success: true };
+    return readResponse(
+      await getArtsApi().admin.articles[":id"].toggle.$post({ param: { id: String(data.id) } }),
+    );
   });
 
 export const deleteArtsArticle = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    const staff = await requireArtsStaff();
-    const [existing] = await db
-      .select({ authorId: posts.authorId, id: posts.id })
-      .from(posts)
-      .where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
-    if (!existing) {
-      throw new Error("Article not found");
-    }
-
-    const isSuperOrAdmin =
-      staff.roles.some((r) => isArtsAdminRole(r)) || isArtsAdminRole(staff.role);
-    if (!isSuperOrAdmin && existing.authorId !== staff.userId) {
-      throw new Error("Unauthorized: You don't have permission to delete this article");
-    }
-
-    await db.delete(postArtmakers).where(eq(postArtmakers.postId, data.id));
-    await db.delete(posts).where(and(eq(posts.id, data.id), eq(posts.vertical, "arts")));
-    return { success: true };
+    return readResponse(
+      await getArtsApi().admin.articles[":id"].$delete({ param: { id: String(data.id) } }),
+    );
   });
 
 export const createArtsEvent = createServerFn({ method: "POST" })
@@ -408,147 +133,28 @@ export const createArtsEvent = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const staff = await requireArtsStaff();
-    const baseSlug = createSlug(data.title);
-
-    let slug = baseSlug;
-    let counter = 1;
-    while (true) {
-      const existing = await db.select({ id: events.id }).from(events).where(eq(events.slug, slug));
-      if (existing.length === 0) {
-        break;
-      }
-      counter += 1;
-      slug = `${baseSlug}-${counter}`;
-    }
-
-    const [created] = await db
-      .insert(events)
-      .values({
-        createdById: staff.userId,
-        date: data.date,
-        description: data.description,
-        genre: data.genre,
-        image: data.image || null,
-        location: data.location,
-        price: data.price || null,
-        slug,
-        status: data.status,
-        ticketLink: data.ticketLink || null,
-        time: data.time || null,
-        title: data.title,
-        venue: data.venue,
-        vertical: "arts",
-      })
-      .returning();
-
-    if (data.artmakerIds?.length) {
-      await db.insert(eventArtmakers).values(
-        data.artmakerIds.map((artmakerId) => ({
-          artmakerId,
-          eventId: created.id,
-        })),
-      );
-    }
-
-    return { event: created, success: true };
+    return readResponse(await getArtsApi().admin.events.$post({ json: data }));
   });
 
 export const toggleArtsEventStatus = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireArtsStaff();
-    const [existing] = await db
-      .select()
-      .from(events)
-      .where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
-    if (!existing) {
-      throw new Error("Event not found");
-    }
-
-    const nextStatus = existing.status === "published" ? "draft" : "published";
-
-    const [updated] = await db
-      .update(events)
-      .set({
-        status: nextStatus,
-        updatedAt: new Date(),
-      })
-      .where(and(eq(events.id, data.id), eq(events.vertical, "arts")))
-      .returning();
-
-    return { event: updated, success: true };
+    return readResponse(
+      await getArtsApi().admin.events[":id"].toggle.$post({ param: { id: String(data.id) } }),
+    );
   });
 
 export const deleteArtsEvent = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.number() }))
   .handler(async ({ data }) => {
-    await requireArtsStaff();
-    await db.delete(events).where(and(eq(events.id, data.id), eq(events.vertical, "arts")));
-    return { success: true };
+    return readResponse(
+      await getArtsApi().admin.events[":id"].$delete({ param: { id: String(data.id) } }),
+    );
   });
 
-// Events the signed-in artmaker is tagged on. Published only, deduped, with
-// an `upcoming` flag the Studio events page splits into "Upcoming" and "Past"
-// sections (issue #133).
 export const listTaggedEventsForCurrentArtmaker = createServerFn({ method: "GET" }).handler(
   async () => {
-    try {
-      const { isAuthenticated, userId } = await auth();
-
-      if (!isAuthenticated || !userId) {
-        return [];
-      }
-
-      const [artmaker] = await db
-        .select({ id: artmakers.id })
-        .from(artmakers)
-        .where(eq(artmakers.clerkUserId, userId))
-        .limit(1);
-
-      if (!artmaker) {
-        return [];
-      }
-
-      const rows = await db
-        .select({
-          date: events.date,
-          description: events.description,
-          id: events.id,
-          image: events.image,
-          location: events.location,
-          price: events.price,
-          slug: events.slug,
-          time: events.time,
-          title: events.title,
-          ticketLink: events.ticketLink,
-          venue: events.venue,
-        })
-        .from(eventArtmakers)
-        .innerJoin(events, eq(eventArtmakers.eventId, events.id))
-        .where(and(eq(eventArtmakers.artmakerId, artmaker.id), eq(events.status, "published")))
-        .orderBy(asc(events.date));
-
-      const today = new Date().toISOString().slice(0, 10);
-      const seen = new Set<number>();
-      const tagged: TaggedEventListItem[] = [];
-
-      for (const row of rows) {
-        if (seen.has(row.id)) {
-          continue;
-        }
-        seen.add(row.id);
-        tagged.push({
-          ...row,
-          image: normalizeStoredImageUrl(row.image),
-          upcoming: row.date >= today,
-        });
-      }
-
-      return tagged;
-    } catch {
-      return [];
-    }
+    return await readResponse(await getArtsApi().events.tagged.$get());
   },
 );
 

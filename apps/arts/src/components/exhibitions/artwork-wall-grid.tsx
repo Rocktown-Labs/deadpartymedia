@@ -1,12 +1,12 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { Image } from "@unpic/react";
-import { BadgeDollarSign, Sparkles } from "lucide-react";
-import { useEffect, useRef } from "react";
 import {
   type ArtworkListItem,
   type PaginatedArtworksResult,
   listPublishedArtworksPaginated,
 } from "#/lib/artworks.functions.ts";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Image } from "@unpic/react";
+import { BadgeDollarSign, Sparkles } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { ExhibitionSortOption } from "./exhibition-filter-bar.tsx";
 
 interface ArtworkWallGridProps {

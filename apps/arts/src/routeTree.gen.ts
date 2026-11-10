@@ -15,7 +15,11 @@ import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ExhibitionsRouteImport } from './routes/exhibitions'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminArticlesRouteImport } from './routes/admin.articles'
 import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
@@ -23,13 +27,15 @@ import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminExhibitionsRouteImport } from './routes/admin.exhibitions'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
-import { Route as ApiUploadRouteImport } from './routes/api.upload'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ArtmakersIndexRouteImport } from './routes/artmakers.index'
 import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
+import { Route as AuthPathRouteImport } from './routes/auth.$path'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
+import { Route as InvitationTokenRouteImport } from './routes/invitation.$token'
 import { Route as MerchIndexRouteImport } from './routes/merch.index'
 import { Route as MerchHandleRouteImport } from './routes/merch.$handle'
 import { Route as ArtmakersSlugGalleryRouteImport } from './routes/artmakers.$slug.gallery'
@@ -64,9 +70,29 @@ const ExhibitionsRoute = ExhibitionsRouteImport.update({
   path: '/exhibitions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -104,9 +130,9 @@ const AdminVenuesRoute = AdminVenuesRouteImport.update({
   path: '/venues',
   getParentRoute: () => AdminRoute,
 } as any)
-const ApiUploadRoute = ApiUploadRouteImport.update({
-  id: '/api/upload',
-  path: '/api/upload',
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtmakersIndexRoute = ArtmakersIndexRouteImport.update({
@@ -117,6 +143,11 @@ const ArtmakersIndexRoute = ArtmakersIndexRouteImport.update({
 const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
   id: '/artmakers/$slug',
   path: '/artmakers/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthPathRoute = AuthPathRouteImport.update({
+  id: '/auth/$path',
+  path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -138,6 +169,11 @@ const DashboardProfileRoute = DashboardProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => DashboardRoute,
+} as any)
+const InvitationTokenRoute = InvitationTokenRouteImport.update({
+  id: '/invitation/$token',
+  path: '/invitation/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MerchIndexRoute = MerchIndexRouteImport.update({
   id: '/merch/',
@@ -162,18 +198,24 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
-  '/api/upload': typeof ApiUploadRoute
+  '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/invitation/$token': typeof InvitationTokenRoute
   '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
@@ -186,18 +228,24 @@ export interface FileRoutesByTo {
   '/articles': typeof ArticlesRoute
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
-  '/api/upload': typeof ApiUploadRoute
+  '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/invitation/$token': typeof InvitationTokenRoute
   '/merch/$handle': typeof MerchHandleRoute
   '/admin': typeof AdminIndexRoute
   '/artmakers': typeof ArtmakersIndexRoute
@@ -213,18 +261,24 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/events': typeof EventsRoute
   '/exhibitions': typeof ExhibitionsRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/exhibitions': typeof AdminExhibitionsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/venues': typeof AdminVenuesRoute
-  '/api/upload': typeof ApiUploadRoute
+  '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
+  '/invitation/$token': typeof InvitationTokenRoute
   '/merch/$handle': typeof MerchHandleRoute
   '/admin/': typeof AdminIndexRoute
   '/artmakers/': typeof ArtmakersIndexRoute
@@ -241,18 +295,24 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/exhibitions'
+    | '/forgot-password'
     | '/onboarding'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
     | '/admin/venues'
-    | '/api/upload'
+    | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/invitation/$token'
     | '/merch/$handle'
     | '/admin/'
     | '/artmakers/'
@@ -265,18 +325,24 @@ export interface FileRouteTypes {
     | '/articles'
     | '/events'
     | '/exhibitions'
+    | '/forgot-password'
     | '/onboarding'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
     | '/admin/venues'
-    | '/api/upload'
+    | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/invitation/$token'
     | '/merch/$handle'
     | '/admin'
     | '/artmakers'
@@ -291,18 +357,24 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/exhibitions'
+    | '/forgot-password'
     | '/onboarding'
+    | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
     | '/admin/exhibitions'
     | '/admin/users'
     | '/admin/venues'
-    | '/api/upload'
+    | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
+    | '/invitation/$token'
     | '/merch/$handle'
     | '/admin/'
     | '/artmakers/'
@@ -318,9 +390,15 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   EventsRoute: typeof EventsRoute
   ExhibitionsRoute: typeof ExhibitionsRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   OnboardingRoute: typeof OnboardingRoute
-  ApiUploadRoute: typeof ApiUploadRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  ApiSplatRoute: typeof ApiSplatRoute
   ArtmakersSlugRoute: typeof ArtmakersSlugRouteWithChildren
+  AuthPathRoute: typeof AuthPathRoute
+  InvitationTokenRoute: typeof InvitationTokenRoute
   MerchHandleRoute: typeof MerchHandleRoute
   ArtmakersIndexRoute: typeof ArtmakersIndexRoute
   MerchIndexRoute: typeof MerchIndexRoute
@@ -370,11 +448,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExhibitionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -426,11 +532,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminVenuesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/upload': {
-      id: '/api/upload'
-      path: '/api/upload'
-      fullPath: '/api/upload'
-      preLoaderRoute: typeof ApiUploadRouteImport
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/artmakers/': {
@@ -445,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/artmakers/$slug'
       fullPath: '/artmakers/$slug'
       preLoaderRoute: typeof ArtmakersSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/$path': {
+      id: '/auth/$path'
+      path: '/auth/$path'
+      fullPath: '/auth/$path'
+      preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -474,6 +587,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/profile'
       preLoaderRoute: typeof DashboardProfileRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/invitation/$token': {
+      id: '/invitation/$token'
+      path: '/invitation/$token'
+      fullPath: '/invitation/$token'
+      preLoaderRoute: typeof InvitationTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/merch/': {
       id: '/merch/'
@@ -558,9 +678,15 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   EventsRoute: EventsRoute,
   ExhibitionsRoute: ExhibitionsRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   OnboardingRoute: OnboardingRoute,
-  ApiUploadRoute: ApiUploadRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
+  ApiSplatRoute: ApiSplatRoute,
   ArtmakersSlugRoute: ArtmakersSlugRouteWithChildren,
+  AuthPathRoute: AuthPathRoute,
+  InvitationTokenRoute: InvitationTokenRoute,
   MerchHandleRoute: MerchHandleRoute,
   ArtmakersIndexRoute: ArtmakersIndexRoute,
   MerchIndexRoute: MerchIndexRoute,

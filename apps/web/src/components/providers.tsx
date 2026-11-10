@@ -1,49 +1,18 @@
-"use client";
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ClerkProvider, useUser } from "@clerk/nextjs";
+import { usePostHogIdentify } from "@/hooks/use-posthog-identify";
+import { IdentityProvider } from "./identity-provider";
 import { Toaster } from "./ui/sonner";
-import posthog from "posthog-js";
-import { useRef } from "react";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // 1 minute
-      refetchOnWindowFocus: false,
-      staleTime: 60 * 1000,
-    },
-  },
-});
-
-// Component to handle PostHog identification with Clerk
-function PostHogIdentify() {
-  const { user, isSignedIn } = useUser();
-  const identifiedRef = useRef<string | null>(null);
-
-  // Only identify if user is signed in and we haven't already identified this user
-
-  if (isSignedIn && user && identifiedRef.current !== user.id) {
-    posthog.identify(user.id, {
-      email: user.primaryEmailAddress?.emailAddress,
-      name: user.fullName || user.firstName || undefined,
-      role: user.publicMetadata?.role || "fan",
-      username: user.username || undefined,
-    });
-    identifiedRef.current = user.id;
-  }
-
-  return null;
-}
-
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  authProviders,
+}: {
+  children: React.ReactNode;
+  authProviders?: { google: boolean };
+}) {
+  usePostHogIdentify();
   return (
-    <ClerkProvider>
-      <QueryClientProvider client={queryClient}>
-        <PostHogIdentify />
-        {children}
-        <Toaster richColors />
-      </QueryClientProvider>
-    </ClerkProvider>
+    <IdentityProvider authProviders={authProviders}>
+      {children}
+      <Toaster richColors />
+    </IdentityProvider>
   );
 }

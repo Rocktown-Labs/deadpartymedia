@@ -1,7 +1,20 @@
-import type { Metadata } from "next";
+import { getMusicApi } from "@/lib/api.server";
 import { getArticle } from "@/lib/api/server";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { generateArticleMetadata } from "@/lib/seo";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { ArticlePageClient } from "./article-page-client";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["article"][":slug"].$get({
+        param: { slug: input.params.slug },
+        query: input.search,
+      }),
+    ),
+  );
 
 interface ArticlePageProps {
   params: Promise<{
@@ -23,7 +36,11 @@ export const generateMetadata = async ({ params }: ArticlePageProps): Promise<Me
   return generateArticleMetadata(article);
 };
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
-  const { slug } = await params;
+export default function ArticlePage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { slug } = data;
   return <ArticlePageClient slug={slug} />;
 }
+
+export const loadPageMetadata = createServerFn({ method: "GET" })
+  .validator((params: { slug: string }) => params)
+  .handler(({ data }) => generateMetadata({ params: Promise.resolve(data) }));

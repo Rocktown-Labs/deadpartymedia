@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
-import { isArtsAdminRole } from "#/lib/admin.functions.ts";
+import { isArtsAdminRole } from "#/lib/roles.ts";
 import {
   getRolesFromMetadata,
   hasArtsStaffRole,
   isArtsStaffRole,
   mergeArtsRole,
   shouldRedirectStaffFromArtmakerDashboard,
-} from "#/lib/artmakers.functions.ts";
+} from "#/lib/roles.ts";
 import { isArtsInvitation, isArtsPlatformRole } from "#/lib/roles.ts";
 
 describe("Arts Role & Access Control Rules", () => {

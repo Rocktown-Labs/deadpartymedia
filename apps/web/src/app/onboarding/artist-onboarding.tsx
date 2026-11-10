@@ -1,26 +1,19 @@
-"use client";
+import { authClient, useMusicSession } from "@/lib/auth-client";
+import { uploadMusicImage } from "@/lib/upload";
 
-import { useState, useActionState, useEffect, useRef, startTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, useSession } from "@clerk/nextjs";
-import type { Route } from "next";
-import Image from "next/image";
-import { MapPin, Instagram, Twitter, Phone, Upload, X } from "lucide-react";
-import {
-  initialFormState,
-  mergeForm,
-  useForm,
-  useStore,
-  useTransform,
-} from "@tanstack/react-form-nextjs";
-import { artistOnboardingAction } from "./actions";
-import { artistFormOptions } from "./form-options";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+
 import { SpotifySearch } from "@/components/spotify-search";
 import type { SpotifyArtist } from "@/lib/api/artists";
-import { toast } from "sonner";
 import { validateImageFile } from "@/lib/upload";
-import { normalizeInstagramInput } from "./validation";
+import { useForm, useStore } from "@tanstack/react-form";
+import { Instagram, MapPin, Phone, Twitter, Upload, X } from "lucide-react";
+import { toast } from "sonner";
+import { artistOnboardingAction } from "./actions";
 import type { ArtistFormData } from "./form-options";
+import { artistFormOptions } from "./form-options";
+import { normalizeInstagramInput } from "./validation";
 
 type OnboardingStep = 1 | 2 | 3;
 interface ArtistOnboardingProps {
@@ -37,12 +30,18 @@ function hasSuccessfulSubmission(state: unknown): state is { success: true } {
 
 export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user } = useUser();
-  const { session } = useSession();
+  const navigate = useNavigate();
+  const searchParams = useLocation({
+    select: (location) => new URLSearchParams(location.searchStr),
+  });
+  const { session: user } = useMusicSession();
+
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
   const [selectedSpotifyArtist, setSelectedSpotifyArtist] = useState<SpotifyArtist | null>(null);
-  const [state, action] = useActionState(artistOnboardingAction, initialFormState);
+  const [state, action] = useActionState(artistOnboardingAction, {
+    success: false,
+    errors: [] as string[],
+  });
   const [profileImageUploading, setProfileImageUploading] = useState(false);
   const [useSpotifyProfileImage, setUseSpotifyProfileImage] = useState(false);
   const profileImageInputRef = useRef<HTMLInputElement>(null);
@@ -50,10 +49,10 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
 
   const form = useForm({
     ...artistFormOptions,
-    transform: useTransform((baseForm) => mergeForm(baseForm, state ?? initialFormState), [state]),
   });
 
-  const formErrors = useStore(form.store, (formState) => formState.errors);
+  const clientErrors = useStore(form.store, (formState) => formState.errors);
+  const formErrors = [...clientErrors, ...state.errors];
 
   const genres: ArtistFormData["genre"][] = [
     "COUNTRY",
@@ -98,7 +97,10 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
   useEffect(() => {
     if (hasSuccessfulSubmission(state) && user) {
       toast.success("Onboarding completed successfully!");
-      Promise.all([user.reload(), session?.reload()]).then(() => {
+      Promise.all([
+        authClient.getSession({ query: { disableCookieCache: true } }),
+        router.invalidate(),
+      ]).then(() => {
         const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
         const destination =
           rawRedirect &&
@@ -107,10 +109,10 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
           !rawRedirect.startsWith("/sign-up")
             ? rawRedirect
             : "/artist-dashboard";
-        router.push(destination as Route);
+        navigate({ to: destination });
       });
     }
-  }, [state, user, session, router, searchParams]);
+  }, [state, user, router, searchParams]);
 
   const handleProfileImageUpload = async (file: File | null) => {
     if (!file) {
@@ -128,20 +130,9 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
     try {
       const loadingId = toast.loading("Uploading profile image...");
 
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "profile");
 
-      const response = await fetch("/api/upload/image?type=profile", {
-        body: formData,
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload image");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       form.setFieldValue("image", url);
       setUseSpotifyProfileImage(false);
       toast.dismiss(loadingId);
@@ -227,7 +218,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Image
+            <img
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}
@@ -425,7 +416,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                                   : "border-gray-800 hover:border-gray-700"
                               }`}
                             >
-                              {genre.replace(" & ", " & ")}
+                              {genre}
                             </button>
                           ))}
                         </div>
@@ -600,11 +591,16 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                             </div>
                             {field.state.value && (
                               <div className="relative w-32 h-32 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                                <Image
+                                <img
                                   src={field.state.value}
                                   alt="Profile preview"
-                                  fill
                                   className="object-cover"
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    width: "100%",
+                                    height: "100%",
+                                  }}
                                 />
                               </div>
                             )}

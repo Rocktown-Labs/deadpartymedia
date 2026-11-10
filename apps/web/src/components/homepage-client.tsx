@@ -1,19 +1,17 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { ArrowRight, PlusCircle, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
-import Link from "next/link";
-import type { Product } from "@/lib/types";
-import { MerchCarousel } from "@/components/merch/merch-carousel";
-import type { ArticleList } from "@/lib/api/articles";
-import type { EventList } from "@/lib/api/events";
+import { ArrowRight, Calendar, PlusCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { ArticlesTable } from "@/components/articles/articles-table";
 import { ShowsTable } from "@/components/events/shows-table";
 import { SubmitShowModal } from "@/components/events/submit-show-modal";
-import { ArticlesTable } from "@/components/articles/articles-table";
-import { RecentMusicReleases, type MusicRelease } from "@/components/music/recent-music-releases";
 import { AboutMissionSection } from "@/components/home/about-mission-section";
+import { MerchCarousel } from "@/components/merch/merch-carousel";
+import { RecentMusicReleases, type MusicRelease } from "@/components/music/recent-music-releases";
+import type { ArticleList } from "@/lib/api/articles";
+import type { EventList } from "@/lib/api/events";
+import type { Product } from "@/lib/types";
+import { Link } from "@tanstack/react-router";
 
 export type HomepageArticle = Omit<ArticleList, "author"> & {
   author: string;
@@ -121,15 +119,15 @@ export default function HomepageClient({
               </div>
             </div>
           ) : heroArticle ? (
-            <Link href={`/article/${heroArticle.slug}`} prefetch={false}>
+            <Link to="/article/$slug" params={{ slug: String(heroArticle.slug) }}>
               <article className="relative group cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 hover:border-[#7CFC00] transition-all duration-300 shadow-2xl h-[400px] sm:h-[500px] lg:h-[560px] bg-zinc-950">
-                <Image
+                <img
                   src={heroArticle.image || heroArticle.cover_image || "/placeholder.svg"}
                   alt={heroArticle.title || "Featured Spotlight"}
-                  fill
-                  priority
+                  loading="eager"
                   fetchPriority="high"
                   className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-85"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/65 to-black/20" />
 
@@ -188,15 +186,16 @@ export default function HomepageClient({
                 return (
                   <Link
                     key={article.slug}
-                    href={`/article/${article.slug}`}
+                    to="/article/$slug"
+                    params={{ slug: String(article.slug) }}
                     className="group flex flex-col rounded-xl border border-zinc-800 bg-zinc-950/80 hover:border-[#7CFC00] hover:bg-zinc-900/40 transition-all overflow-hidden shadow-lg"
                   >
                     <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
-                      <Image
+                      <img
                         src={img}
                         alt={article.title}
-                        fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                       {article.category && (
                         <span className="absolute top-3 left-3 bg-black/80 backdrop-blur-xs text-[10px] font-mono font-bold text-[#7CFC00] px-2 py-0.5 rounded border border-[#7CFC00]/30 uppercase tracking-wider">
@@ -261,7 +260,7 @@ export default function HomepageClient({
                 <PlusCircle className="w-4 h-4" /> Submit a Show
               </button>
               <Link
-                href="/events"
+                to="/events"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 font-mono font-bold text-xs uppercase tracking-wider transition-colors"
               >
                 <Calendar className="w-4 h-4" /> All Shows
@@ -301,7 +300,7 @@ export default function HomepageClient({
                 + Submit Your Show Flyer
               </button>
               <Link
-                href="/events"
+                to="/events"
                 className="text-zinc-400 hover:text-white uppercase tracking-wider"
               >
                 Full Calendar Archive →
@@ -337,19 +336,19 @@ export default function HomepageClient({
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-              <Link href="/hardcore" className="hover:text-[#7CFC00] transition-colors">
+              <Link to="/hardcore" className="hover:text-[#7CFC00] transition-colors">
                 Hardcore
               </Link>
               <span>•</span>
-              <Link href="/hip-hop-r-b" className="hover:text-[#7CFC00] transition-colors">
+              <Link to="/hip-hop-r-b" className="hover:text-[#7CFC00] transition-colors">
                 Hip-Hop
               </Link>
               <span>•</span>
-              <Link href="/edm" className="hover:text-[#7CFC00] transition-colors">
+              <Link to="/edm" className="hover:text-[#7CFC00] transition-colors">
                 EDM
               </Link>
               <span>•</span>
-              <Link href="/country" className="hover:text-[#7CFC00] transition-colors">
+              <Link to="/country" className="hover:text-[#7CFC00] transition-colors">
                 Country
               </Link>
             </div>

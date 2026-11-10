@@ -1,22 +1,24 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { useUser } from "@clerk/nextjs";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
-import type { Route } from "next";
+
 import { parseRole } from "@/lib/auth/role";
 
 export default function VenueDashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { session: user, isPending: sessionPending } = useMusicSession();
+  const isLoaded = !sessionPending;
+  const isSignedIn = !!user;
   const router = useRouter();
+  const navigate = useNavigate();
 
-  const role = parseRole(user?.publicMetadata?.role);
-  const isVenueAuthorized = role === "venue" || role === "super_admin";
+  const role = parseRole(user?.roles[0]);
+  const isVenueAuthorized =
+    user?.roles.some((value) => value === "venue" || value === "super_admin") ?? false;
 
   useEffect(() => {
     if (isLoaded && (!isSignedIn || !isVenueAuthorized)) {
-      router.push("/sign-in" as Route);
+      navigate({ to: "/sign-in" });
     }
   }, [isLoaded, isSignedIn, isVenueAuthorized, router]);
 
@@ -42,7 +44,7 @@ export default function VenueDashboardLayout({ children }: { children: React.Rea
           <span className="font-bold text-[#7CFC00] flex items-center gap-2">
             <span>👁️</span> Super Admin Preview: Viewing Venue Dashboard
           </span>
-          <Link href="/admin" className="text-white hover:underline font-mono">
+          <Link to="/admin" className="text-white hover:underline font-mono">
             Return to Admin Desk →
           </Link>
         </div>

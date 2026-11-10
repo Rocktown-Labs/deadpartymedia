@@ -1,4 +1,3 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArtistSpotlightStrip } from "#/components/exhibitions/artist-spotlight-strip.tsx";
 import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
 import { ArtworkWallGrid } from "#/components/exhibitions/artwork-wall-grid.tsx";
@@ -10,6 +9,7 @@ import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listArtmakers } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksPaginated } from "#/lib/artworks.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export interface ExhibitionsSearch {
   artmaker?: string;

@@ -70,10 +70,9 @@ describe("postEditor Image Upload", () => {
       url: "https://example.com/blob/image.jpg",
     };
 
-    mockFetch.mockResolvedValueOnce({
-      json: async () => mockBlob,
-      ok: true,
-    });
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify(mockBlob), { headers: { "content-type": "application/json" } }),
+    );
 
     renderWithProviders(<PostEditor onSubmit={mockOnSubmit} onCancel={mockOnCancel} />);
 
@@ -85,7 +84,7 @@ describe("postEditor Image Upload", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("/api/upload/image?type=cover"),
+        expect.stringContaining("/api/rpc/music/upload?type=cover"),
         expect.objectContaining({
           method: "POST",
         }),

@@ -100,3 +100,12 @@ export function validateImageFile(file: File): {
 
   return { valid: true };
 }
+
+export async function uploadMusicImage(
+  file: File,
+  type: "cover" | "content" | "profile" | "event" | "venue" | "release",
+) {
+  const { musicApi } = await import("./music-client");
+  const { readResponse } = await import("@dpmedia/api-client");
+  return readResponse(await musicApi.upload.$post({ query: { type }, form: { file } }));
+}

@@ -1,9 +1,7 @@
-"use client";
-
+import type { Product } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useProduct, useUpdateURL } from "./product-context";
-import type { Product } from "@/lib/types";
-import Image from "next/image";
+
 import clsx from "clsx";
 
 export function Gallery({ product }: { product: Product }) {
@@ -32,13 +30,14 @@ export function Gallery({ product }: { product: Product }) {
     <>
       <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-lg bg-black">
         {images[imageIndex] && (
-          <Image
+          <img
             className="h-full w-full object-contain"
-            fill
             sizes="(min-width: 1024px) 66vw, 100vw"
             alt={images[imageIndex]?.altText as string}
             src={(images[imageIndex]?.url as string) || "/placeholder.svg"}
-            priority={true}
+            loading="eager"
+            fetchPriority="high"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           />
         )}
 
@@ -92,7 +91,7 @@ export function Gallery({ product }: { product: Product }) {
                     isActive ? "border-[#7CFC00]" : "border-gray-800 hover:border-gray-600",
                   )}
                 >
-                  <Image
+                  <img
                     alt={image.altText}
                     src={image.url || "/placeholder.svg"}
                     width={80}

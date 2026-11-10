@@ -1,9 +1,6 @@
-"use client";
+import { Link } from "@tanstack/react-router";
 
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
-import { ExternalLink, Disc3 } from "lucide-react";
+import { Disc3, ExternalLink } from "lucide-react";
 
 export interface MusicRelease {
   id: string;
@@ -49,7 +46,7 @@ export function RecentMusicReleases({
             </p>
           </div>
           <Link
-            href="/music"
+            to="/music"
             className="text-xs font-mono font-bold text-zinc-400 hover:text-white uppercase tracking-wider flex items-center gap-1.5"
           >
             Explore All Music →
@@ -58,21 +55,21 @@ export function RecentMusicReleases({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
           {releases.map((release) => {
-            const releaseHref = (release.slug ? `/music/${release.slug}` : "/music") as Route;
+            const releaseHref = release.slug ? `/music/${release.slug}` : "/music";
             return (
               <div
                 key={release.id}
                 className="group relative flex flex-col rounded-xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00]/60 transition-all p-3 overflow-hidden shadow-lg"
               >
                 <Link
-                  href={releaseHref}
+                  to={releaseHref}
                   className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-950 mb-3 block"
                 >
-                  <Image
+                  <img
                     src={release.coverArt || "/placeholder.svg"}
                     alt={release.title}
-                    fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                   />
                   {release.type && (
                     <span className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs text-[10px] font-mono font-bold text-[#7CFC00] px-2 py-0.5 rounded border border-[#7CFC00]/30 uppercase">
@@ -82,7 +79,7 @@ export function RecentMusicReleases({
                 </Link>
 
                 <div className="flex flex-col flex-1 min-w-0">
-                  <Link href={releaseHref}>
+                  <Link to={releaseHref}>
                     <h3
                       className="font-bold text-sm text-white group-hover:text-[#7CFC00] transition-colors truncate"
                       title={release.title}
@@ -93,7 +90,8 @@ export function RecentMusicReleases({
 
                   {release.artistSlug ? (
                     <Link
-                      href={`/artists/${release.artistSlug}`}
+                      to="/artists/$slug"
+                      params={{ slug: String(release.artistSlug) }}
                       className="text-xs text-zinc-400 hover:text-white truncate transition-colors mt-0.5"
                     >
                       {release.artistName}

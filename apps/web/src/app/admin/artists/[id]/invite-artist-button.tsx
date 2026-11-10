@@ -1,10 +1,8 @@
-"use client";
-
-import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { inviteArtistToClaim } from "../actions";
-import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/error";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { inviteArtistToClaim } from "../actions";
 
 interface InviteArtistButtonProps {
   artistId: number;
@@ -21,7 +19,9 @@ export function InviteArtistButton({ artistId, email }: InviteArtistButtonProps)
         if (result.success) {
           toast.success(`Invitation sent to ${email} to claim profile!`);
         } else {
-          toast.error(result.error || "Failed to send invitation.");
+          toast.error(
+            ("error" in result ? String(result.error) : "") || "Failed to send invitation.",
+          );
         }
       } catch (error) {
         toast.error(getErrorMessage(error, "Failed to send invitation."));

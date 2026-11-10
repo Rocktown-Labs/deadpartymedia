@@ -1,9 +1,10 @@
-"use client";
+import { uploadMusicImage } from "@/lib/upload";
 
-import { useState, useRef, useMemo } from "react";
-import NextImage from "next/image";
-import type { Route } from "next";
+import { useMemo, useRef, useState } from "react";
+
+import { useUnsavedChangesGuard } from "@/components/admin/use-unsaved-changes-guard";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -14,18 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Upload, X, Disc, Music, Link2 } from "lucide-react";
-import { toast } from "sonner";
 import { validateImageFile } from "@/lib/upload";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
-import { useUnsavedChangesGuard } from "@/components/admin/use-unsaved-changes-guard";
+import { ArrowLeft, Disc, Link2, Music, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface ArtistReleaseFormProps {
   artistName: string;
   artistGenre?: string;
   onSubmit: (formData: FormData) => void | Promise<unknown>;
-  cancelHref: Route;
+  cancelHref: string;
 }
 
 const genres = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"] as const;
@@ -102,19 +101,9 @@ export function ArtistReleaseForm({
     const loadingId = toast.loading("Uploading cover art...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "release");
 
-      const response = await fetch("/api/upload/image?type=release", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload cover art");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       setCoverArt(url);
       toast.success("Cover art uploaded");
     } catch (error) {
@@ -140,19 +129,9 @@ export function ArtistReleaseForm({
     const loadingId = toast.loading("Uploading audio track...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "content");
 
-      const response = await fetch("/api/upload/image?type=content", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Audio upload failed");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       setAudioUrl(url);
       toast.success("Audio file uploaded");
     } catch (error) {
@@ -403,7 +382,12 @@ export function ArtistReleaseForm({
 
               {coverArt ? (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
-                  <NextImage src={coverArt} alt="Artwork Preview" fill className="object-cover" />
+                  <img
+                    src={coverArt}
+                    alt="Artwork Preview"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                    className="object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => setCoverArt("")}

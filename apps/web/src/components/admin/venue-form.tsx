@@ -1,16 +1,16 @@
-"use client";
+import { uploadMusicImage } from "@/lib/upload";
 
 import { useMemo, useRef, useState } from "react";
-import NextImage from "next/image";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import type { Route } from "next";
-import { toast } from "sonner";
+
 import { validateImageFile } from "@/lib/upload";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { toast } from "sonner";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface VenueFormProps {
@@ -32,7 +32,7 @@ interface VenueFormProps {
     image?: string | null;
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
-  cancelHref: Route;
+  cancelHref: string;
   isSubmitting?: boolean;
 }
 
@@ -111,20 +111,9 @@ export function VenueForm({
     const loadingId = toast.loading("Uploading venue image...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "venue");
 
-      const response = await fetch("/api/upload/image?type=venue", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload image");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       setImage(url);
       toast.success("Venue image uploaded");
     } catch (error) {
@@ -341,7 +330,12 @@ export function VenueForm({
             <div className="mt-1 flex items-center gap-4">
               {image ? (
                 <div className="relative w-32 h-24 rounded border border-zinc-700 overflow-hidden bg-zinc-900">
-                  <NextImage src={image} alt="Venue" fill className="object-cover" />
+                  <img
+                    src={image}
+                    alt="Venue"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                    className="object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => setImage("")}

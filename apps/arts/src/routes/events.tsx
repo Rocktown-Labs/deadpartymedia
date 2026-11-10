@@ -1,7 +1,3 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
-import { ArrowLeft, CalendarDays, Clock, MapPin, Sparkles, Ticket } from "lucide-react";
-import { useMemo } from "react";
 import {
   EventFilterBar,
   type EventSortOption,
@@ -10,6 +6,10 @@ import {
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listArtsEvents } from "#/lib/content.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
+import { ArrowLeft, CalendarDays, Clock, MapPin, Sparkles, Ticket } from "lucide-react";
+import { useMemo } from "react";
 
 export interface EventsSearch {
   q?: string;

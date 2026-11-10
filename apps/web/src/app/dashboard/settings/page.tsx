@@ -1,19 +1,20 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
+import { useRouter } from "@tanstack/react-router";
 
-import { useState, useEffect, useTransition } from "react";
-import { useUser } from "@clerk/nextjs";
-import { updateUserProfile } from "./actions";
-import { userUpdateSchema } from "@/lib/validations/user";
-import type { UserUpdateInput } from "@/lib/validations/user";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState, useTransition } from "react";
+
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { User, Lock, Save } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getErrorMessage } from "@/lib/utils/error";
+import type { UserUpdateInput } from "@/lib/validations/user";
+import { userUpdateSchema } from "@/lib/validations/user";
+import { Lock, Save, User } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardBackButton } from "../dashboard-back-button";
-import { getErrorMessage } from "@/lib/utils/error";
+import { changeUserPassword, updateUserProfile } from "./actions";
 
 interface ValidationIssue {
   message: string;
@@ -28,7 +29,10 @@ function hasValidationIssues(error: unknown): error is { errors: ValidationIssue
 }
 
 export default function SettingsPage() {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const router = useRouter();
+  const { session: user, isPending: sessionPending } = useMusicSession();
+  const isLoaded = !sessionPending;
+  const isSignedIn = !!user;
   const [isPending, startTransition] = useTransition();
 
   const [firstName, setFirstName] = useState("");
@@ -39,9 +43,9 @@ export default function SettingsPage() {
   // Initialize form with user data
   useEffect(() => {
     if (user) {
-      setFirstName(user.firstName || "");
-      setLastName(user.lastName || "");
-      setEmail(user.primaryEmailAddress?.emailAddress || "");
+      setFirstName(user.name.split(" ")[0] || "");
+      setLastName(user.name.split(" ").slice(1).join(" ") || "");
+      setEmail(user.email || "");
     }
   }, [user]);
 
@@ -61,9 +65,9 @@ export default function SettingsPage() {
         const result = await updateUserProfile(validated);
 
         if (result.success) {
-          toast.success("Profile updated successfully!");
+          toast.success(result.message || "Profile updated successfully!");
           // Reload user data to reflect changes
-          await user?.reload();
+          await router.invalidate();
         } else {
           const errorMessage = result.error ?? "Failed to update profile";
           toast.error(errorMessage);
@@ -201,13 +205,11 @@ export default function SettingsPage() {
                       id="email"
                       type="email"
                       value={email}
-                      disabled
-                      className="mt-1 bg-[#0A0A0A] border-gray-700 text-white opacity-50 cursor-not-allowed"
+                      className="mt-1 bg-[#0A0A0A] border-gray-700 text-white"
                       placeholder="your@email.com"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Email changes require verification. Please use your account settings menu to
-                      update your email.
+                      Email changes require confirmation. Check your inbox after saving.
                     </p>
                   </div>
                 </div>
@@ -231,15 +233,64 @@ export default function SettingsPage() {
                     <Lock className="w-5 h-5 text-[#7CFC00]" />
                     <h2 className="text-xl font-bold">Change Password</h2>
                   </div>
-                  <div className="bg-[#0A0A0A] border border-gray-800 rounded-lg p-4">
-                    <p className="text-gray-400 text-sm mb-2">
-                      To change your password, please use the account management menu (click your
-                      avatar in the top right).
-                    </p>
-                    <p className="text-gray-500 text-xs">
-                      Password changes are handled securely through Clerk's account portal.
-                    </p>
-                  </div>
+                  <form
+                    className="space-y-4"
+                    onSubmit={async (event) => {
+                      event.preventDefault();
+                      const formElement = event.currentTarget;
+                      const form = new FormData(formElement);
+                      const password = String(form.get("password") || ""),
+                        confirmation = String(form.get("confirmation") || "");
+                      if (password !== confirmation) {
+                        toast.error("Passwords do not match");
+                        return;
+                      }
+                      const result = await changeUserPassword({
+                        current_password: String(form.get("current") || ""),
+                        new_password: password,
+                      });
+                      if (result.success) {
+                        toast.success("Password updated");
+                        formElement.reset();
+                      } else toast.error(result.error || "Unable to update password");
+                    }}
+                  >
+                    <label className="block text-sm text-gray-300">
+                      Current password
+                      <Input
+                        name="current"
+                        type="password"
+                        autoComplete="current-password"
+                        required
+                        className="mt-1 bg-[#0A0A0A] border-gray-700"
+                      />
+                    </label>
+                    <label className="block text-sm text-gray-300">
+                      New password
+                      <Input
+                        name="password"
+                        type="password"
+                        minLength={8}
+                        autoComplete="new-password"
+                        required
+                        className="mt-1 bg-[#0A0A0A] border-gray-700"
+                      />
+                    </label>
+                    <label className="block text-sm text-gray-300">
+                      Confirm password
+                      <Input
+                        name="confirmation"
+                        type="password"
+                        minLength={8}
+                        autoComplete="new-password"
+                        required
+                        className="mt-1 bg-[#0A0A0A] border-gray-700"
+                      />
+                    </label>
+                    <Button type="submit" className="bg-[#7CFC00] text-black font-bold">
+                      Update Password
+                    </Button>
+                  </form>
                 </div>
               </div>
             </Card>

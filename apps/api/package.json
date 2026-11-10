@@ -1,0 +1,38 @@
+{
+  "name": "api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@dpmedia/auth": "workspace:*",
+    "@dpmedia/contracts": "workspace:*",
+    "@dpmedia/db": "workspace:*",
+    "@hono/zod-validator": "^0.7.6",
+    "@tiptap/extension-image": "^2.9.2",
+    "@tiptap/extension-link": "^2.27.2",
+    "@tiptap/html": "^2.9.2",
+    "@tiptap/starter-kit": "^2.9.2",
+    "ai": "^7.0.127",
+    "drizzle-orm": "1.0.0-rc.5",
+    "hono": "4.13.17",
+    "workers-ai-provider": "^4.0.0",
+    "workers-og": "^0.0.27",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.13.0",
+    "@cloudflare/workers-types": "^5.20260906.1",
+    "@dpmedia/config": "workspace:*",
+    "@dpmedia/infra": "workspace:*",
+    "typescript": "^6.0.2",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

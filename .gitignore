@@ -85,3 +85,23 @@ docker-compose.override.yml
 apps/mobile/
 
 # Terraform (removed - using Vercel now)
+
+# Cloudflare / Alchemy local state and migration exports
+.alchemy/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!**/.dev.vars.example
+*.export.json
+exported_users.csv
+*.auth-import.sql
+*.clerk-snapshot.json
+
+*.data-import.sql
+.playwright-mcp/
+
+*.export.json.tmp
+
+apps/web/playwright/.auth/
+apps/web/playwright-report/
+apps/web/test-results/

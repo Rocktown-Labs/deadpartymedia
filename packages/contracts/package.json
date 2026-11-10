@@ -1,0 +1,23 @@
+{
+  "name": "@dpmedia/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "entities": "8.0.0",
+    "xss": "1.0.15",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dpmedia/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

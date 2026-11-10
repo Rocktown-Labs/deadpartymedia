@@ -1,32 +1,19 @@
-"use client";
-
-import { useUser } from "@clerk/nextjs";
+import { useMusicSession } from "@/lib/auth-client";
 import posthog from "posthog-js";
-import { useRef } from "react";
-
-/**
- * Hook to identify users with PostHog when they sign in via Clerk.
- * Call this in components where you need to ensure the user is identified.
- */
+import { useEffect } from "react";
 export function usePostHogIdentify() {
-  const { user, isSignedIn } = useUser();
-  const identifiedRef = useRef<string | null>(null);
-
-  // Only identify if user is signed in and we haven't already identified this user
-  if (isSignedIn && user && identifiedRef.current !== user.id) {
-    posthog.identify(user.id, {
-      email: user.primaryEmailAddress?.emailAddress,
-      name: user.fullName || user.firstName || undefined,
-      role: user.publicMetadata?.role || "fan",
-      username: user.username || undefined,
-    });
-    identifiedRef.current = user.id;
-  }
+  const { session } = useMusicSession();
+  useEffect(() => {
+    if (!import.meta.env.VITE_POSTHOG_KEY) return;
+    if (session)
+      posthog.identify(session.userId, {
+        email: session.email,
+        name: session.name,
+        role: session.roles[0],
+      });
+    else posthog.reset();
+  }, [session]);
 }
-
-/**
- * Call this function to reset PostHog identification on logout.
- */
 export function resetPostHogIdentification() {
   posthog.reset();
 }

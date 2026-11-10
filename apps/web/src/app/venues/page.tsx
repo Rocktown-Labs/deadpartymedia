@@ -1,9 +1,14 @@
-import type { Metadata } from "next";
+import { getMusicApi } from "@/lib/api.server";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
-import { db } from "@/lib/db";
-import { venues } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { VenuesClient } from "./venues-client";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["venues"].$get({ query: input.search })),
+  );
 
 const { siteUrl, siteName } = getSiteDefaults();
 const ogImage = `${siteUrl}/images/dead-party-logo-og.jpg`;
@@ -26,24 +31,7 @@ export const metadata: Metadata = {
   title: "Venues Directory",
 };
 
-export default async function VenuesPage() {
-  let dbVenues: (typeof venues.$inferSelect)[] = [];
-  try {
-    dbVenues = await db.select().from(venues).orderBy(asc(venues.name));
-  } catch {
-    dbVenues = [];
-  }
-
-  const initialVenues = dbVenues.map((v) => ({
-    address: v.address || undefined,
-    capacity: v.capacity || undefined,
-    city: v.city,
-    genres: v.genres || undefined,
-    id: String(v.id),
-    name: v.name,
-    phone: v.phone || undefined,
-    website: v.website || undefined,
-  }));
-
+export default function VenuesPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { initialVenues } = data;
   return <VenuesClient initialVenues={initialVenues} />;
 }

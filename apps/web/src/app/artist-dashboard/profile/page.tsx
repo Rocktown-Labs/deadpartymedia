@@ -1,25 +1,23 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists";
-import { artistUpdateSchema } from "@/lib/validations/artist";
-import type { ArtistUpdateInput } from "@/lib/validations/artist";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
-import { Edit, User, MapPin, Music, Link as LinkIcon, Save } from "lucide-react";
-import { toast } from "sonner";
-import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrentUserArtist, useUpdateArtist } from "@/lib/api/artists";
 import { getErrorMessage } from "@/lib/utils/error";
+import type { ArtistUpdateInput } from "@/lib/validations/artist";
+import { artistUpdateSchema } from "@/lib/validations/artist";
+import { Link } from "@tanstack/react-router";
+import { Edit, Link as LinkIcon, MapPin, Music, Save, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface ValidationIssue {
   message: string;
@@ -565,7 +563,7 @@ export default function ArtistProfilePage() {
                   )}
 
                   <div className="pt-6 border-t border-gray-800">
-                    <Link href={`/artists/${artist.slug}`}>
+                    <Link to="/artists/$slug" params={{ slug: String(artist.slug) }}>
                       <Button variant="outline" className="border-gray-700 text-white">
                         View Public Profile
                       </Button>

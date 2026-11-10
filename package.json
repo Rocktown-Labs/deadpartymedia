@@ -1,28 +1,13 @@
 {
   "name": "dpmedia",
   "private": true,
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ],
-    "catalog": {
-      "@better-auth/expo": "1.4.9",
-      "@convex-dev/better-auth": "^0.10.9",
-      "better-auth": "1.4.9",
-      "convex": "^1.31.2",
-      "dotenv": "17.2.3",
-      "typescript": "^5",
-      "zod": "^4.1.13"
-    }
-  },
   "type": "module",
   "scripts": {
-    "dev": "turbo run dev --filter=web --filter=native",
-    "dev:web": "turbo run dev --filter=web",
-    "dev:arts": "turbo run dev --filter=arts",
+    "dev": "pnpm --filter @dpmedia/infra dev",
+    "dev:web": "pnpm --filter @dpmedia/infra dev",
+    "dev:arts": "pnpm --filter @dpmedia/infra dev",
     "dev:native": "turbo run dev --filter=native",
-    "dev:all": "turbo run dev",
+    "dev:all": "pnpm --filter @dpmedia/infra dev",
     "build": "turbo run build",
     "check-types": "turbo run check-types",
     "check": "vp check",
@@ -36,20 +21,19 @@
     "web:test:e2e": "pnpm --filter web test:e2e",
     "web:test:e2e:ui": "pnpm --filter web test:e2e:ui",
     "web:test:e2e:debug": "pnpm --filter web test:e2e:debug",
-    "web:db:generate": "pnpm --filter web db:generate",
-    "web:db:migrate": "pnpm --filter web db:migrate",
-    "web:db:push": "pnpm --filter web db:push",
-    "web:db:studio": "pnpm --filter web db:studio",
-    "web:content:posts:decode-titles": "pnpm --filter web content:posts:decode-titles",
     "arts:dev": "pnpm --filter arts dev",
     "arts:build": "pnpm --filter arts build",
     "arts:start": "pnpm --filter arts start",
     "arts:test": "pnpm --filter arts test",
-    "arts:db:generate": "pnpm --filter arts db:generate",
-    "arts:db:migrate": "pnpm --filter arts db:migrate",
-    "arts:db:push": "pnpm --filter arts db:push",
-    "arts:db:studio": "pnpm --filter arts db:studio",
-    "fix": "vp check --fix"
+    "fix": "vp check --fix",
+    "typecheck": "turbo run check-types",
+    "test": "turbo run test",
+    "infra:plan": "pnpm --filter @dpmedia/infra plan",
+    "deploy": "pnpm --filter @dpmedia/infra run deploy",
+    "db:generate:arts": "pnpm --filter @dpmedia/db db:generate:arts",
+    "db:generate:music": "pnpm --filter @dpmedia/db db:generate:music",
+    "migration:export": "pnpm --filter @dpmedia/db migration:export",
+    "migration:clerk": "pnpm --filter @dpmedia/auth import:clerk"
   },
   "dependencies": {
     "@dpmedia/env": "workspace:*",
@@ -72,14 +56,5 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3"
   },
-  "packageManager": "pnpm@10.19.0",
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "msw"
-    ],
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
-  }
+  "packageManager": "pnpm@10.19.0"
 }

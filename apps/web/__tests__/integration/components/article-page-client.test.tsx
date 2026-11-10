@@ -38,19 +38,23 @@ vi.mock<typeof import("@/lib/api/user-activity")>(import("@/lib/api/user-activit
   })),
 }));
 
-vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), async () => {
-  const actual = await vi.importActual<typeof import("@clerk/nextjs")>("@clerk/nextjs");
-
-  return {
-    ...actual,
-    useUser: vi.fn(() => ({
-      isSignedIn: true,
-      user: {
-        id: "user_1",
-      },
-    })),
-  };
-});
+vi.mock("@/lib/auth-client", () => ({
+  useMusicSession: () => ({
+    session: {
+      userId: "user_1",
+      name: "Test User",
+      email: "test@example.test",
+      roles: ["fan"],
+      image: null,
+    },
+    isPending: false,
+  }),
+  authClient: {
+    getSession: vi.fn(async () => ({ data: null })),
+    signOut: vi.fn(async () => ({ error: null })),
+  },
+  musicSessionKey: ["music", "session"],
+}));
 
 vi.mock<typeof import("@/components/seo/structured-data")>(
   import("@/components/seo/structured-data"),

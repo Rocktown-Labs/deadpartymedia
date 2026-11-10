@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft, HeartHandshake, DollarSign, ExternalLink, Sparkles } from "lucide-react";
 import { PageTitleHeader } from "@/components/page-title-header";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, DollarSign, ExternalLink, HeartHandshake, Sparkles } from "lucide-react";
 
 const { siteUrl, siteName } = getSiteDefaults();
 const ogImage = `${siteUrl}/images/dead-party-logo-og.jpg`;
@@ -31,7 +31,7 @@ export default function DonatePage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6 max-w-4xl">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

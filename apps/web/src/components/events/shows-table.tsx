@@ -1,23 +1,21 @@
-"use client";
+import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
-import React, { useMemo, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import type { EventList } from "@/lib/api/events";
+import { getLocalDateKey, isPastEventDateKey } from "@/lib/events/date-state";
+import { isSafeHttpUrl } from "@/lib/security";
+import { cn } from "@/lib/utils";
 import {
-  useReactTable,
+  flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
   type ColumnDef,
-  flexRender,
   type SortingState,
 } from "@tanstack/react-table";
-import { isPastEventDateKey, getLocalDateKey } from "@/lib/events/date-state";
-import type { EventList } from "@/lib/api/events";
-import { isSafeHttpUrl } from "@/lib/security";
-import { MapPin, Ticket, Search, History } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { History, MapPin, Search, Ticket } from "lucide-react";
 
 interface ShowsTableProps {
   events: EventList[];
@@ -216,23 +214,25 @@ export function ShowsTable({
           return (
             <div className="flex items-center gap-3 py-1 min-w-[170px] sm:min-w-[220px]">
               <Link
-                href={`/events/${item.slug}`}
+                to="/events/$slug"
+                params={{ slug: String(item.slug) }}
                 className="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-md overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-[#7CFC00]/60 transition-colors"
               >
-                <Image
+                <img
                   src={item.image || "/placeholder.svg"}
                   alt={item.title}
-                  fill
                   sizes="48px"
                   className={cn(
                     "object-cover transition-transform group-hover:scale-105",
                     isPast && "grayscale opacity-50",
                   )}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                 />
               </Link>
               <div className="flex flex-col min-w-0">
                 <Link
-                  href={`/events/${item.slug}`}
+                  to="/events/$slug"
+                  params={{ slug: String(item.slug) }}
                   className={cn(
                     "inline-block py-1 font-bold text-sm sm:text-base leading-snug transition-colors line-clamp-1 group-hover:underline",
                     isPast
@@ -255,7 +255,8 @@ export function ShowsTable({
                           <span key={artist.id ?? idx}>
                             {artist.slug ? (
                               <Link
-                                href={`/artists/${artist.slug}`}
+                                to="/artists/$slug"
+                                params={{ slug: String(artist.slug) }}
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
                                   "hover:underline",
@@ -285,7 +286,8 @@ export function ShowsTable({
                         <span key={artist.id ?? idx} className="text-[11px]">
                           {artist.slug ? (
                             <Link
-                              href={`/artists/${artist.slug}`}
+                              to="/artists/$slug"
+                              params={{ slug: String(artist.slug) }}
                               onClick={(e) => e.stopPropagation()}
                               className={cn(
                                 "inline-block py-1 hover:underline font-medium",
@@ -362,7 +364,8 @@ export function ShowsTable({
             return (
               <div className="py-1 text-right">
                 <Link
-                  href={`/events/${item.slug}`}
+                  to="/events/$slug"
+                  params={{ slug: String(item.slug) }}
                   aria-label={`Details for ${item.title}`}
                   className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-zinc-800 hover:border-zinc-600 transition-colors"
                 >
@@ -393,7 +396,8 @@ export function ShowsTable({
           return (
             <div className="py-1 text-right">
               <Link
-                href={`/events/${item.slug}`}
+                to="/events/$slug"
+                params={{ slug: String(item.slug) }}
                 aria-label={`View ${item.title}`}
                 className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider border border-[#7CFC00]/50 text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black px-2.5 sm:px-3 py-1 rounded transition-colors"
               >
