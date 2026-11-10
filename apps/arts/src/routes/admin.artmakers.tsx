@@ -1,8 +1,26 @@
+import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
+import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
+import { MultiSelect } from "#/components/multi-select.tsx";
+import { Button } from "#/components/ui/button.tsx";
+import { Input } from "#/components/ui/input.tsx";
+import { Label } from "#/components/ui/label.tsx";
+import { Textarea } from "#/components/ui/textarea.tsx";
+import { listAdminArtmakers } from "#/lib/admin.functions.ts";
 import {
+  createArtsArtmakerStub,
+  deleteArtsArtmaker,
+  requireArtsStaff,
+  toggleArtsArtmakerVisibility,
+  updateArtsArtmaker,
+} from "#/lib/artmakers.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  columnFilteringFeature,
   createColumnHelper,
   createFilteredRowModel,
   createSortedRowModel,
-  columnFilteringFeature,
   filterFn_equalsString,
   filterFn_includesString,
   rowSortingFeature,
@@ -10,8 +28,6 @@ import {
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDown,
   ArrowUp,
@@ -25,22 +41,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
-import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
-import { MultiSelect } from "#/components/multi-select.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
-import { Textarea } from "#/components/ui/textarea.tsx";
-import { listAdminArtmakers } from "#/lib/admin.functions.ts";
-import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
-import {
-  createArtsArtmakerStub,
-  deleteArtsArtmaker,
-  requireArtsStaff,
-  toggleArtsArtmakerVisibility,
-  updateArtsArtmaker,
-} from "#/lib/artmakers.functions.ts";
 
 export const Route = createFileRoute("/admin/artmakers")({
   beforeLoad: () => requireArtsStaff(),

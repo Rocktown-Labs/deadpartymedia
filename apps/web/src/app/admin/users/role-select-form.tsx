@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useTransition } from "react";
 import {
   Select,
   SelectContent,
@@ -8,8 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { updateRoleAction } from "./update-role-action";
 import type { Roles } from "@/types/globals";
+import { useState, useTransition } from "react";
+import { updateRoleAction } from "./update-role-action";
 
 export function RoleSelectForm({ userId, currentRole }: { userId: string; currentRole: string }) {
   const [role, setRole] = useState<Roles>(currentRole as Roles);

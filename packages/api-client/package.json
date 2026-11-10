@@ -1,0 +1,21 @@
+{
+  "name": "@dpmedia/api-client",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./arts": "./src/arts.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "api": "workspace:*",
+    "hono": "4.13.17"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260906.1",
+    "@dpmedia/config": "workspace:*",
+    "typescript": "^6.0.2"
+  }
+}

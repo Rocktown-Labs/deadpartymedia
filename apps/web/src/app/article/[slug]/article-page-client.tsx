@@ -1,28 +1,27 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
-  Calendar,
-  User,
-  Share2,
   Bookmark,
+  Calendar,
   Edit,
-  MapPin,
   ExternalLink,
+  MapPin,
+  Share2,
+  User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
-import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useMarkArticleRead, useSaveArticle, useSavedArticles } from "@/lib/api/user-activity";
-import { ArticleStructuredData } from "@/components/seo/structured-data";
-import posthogClient from "posthog-js";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { Link } from "@tanstack/react-router";
+
 import { ArticleComments } from "@/components/comments/article-comments";
 import { MerchCarousel } from "@/components/merch/merch-carousel";
+import { ArticleStructuredData } from "@/components/seo/structured-data";
 import { useArticle } from "@/lib/api/articles";
+import { useMarkArticleRead, useSaveArticle, useSavedArticles } from "@/lib/api/user-activity";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import posthogClient from "posthog-js";
 import { toast } from "sonner";
 
 interface ArticlePageClientProps {
@@ -49,8 +48,10 @@ const getInternalReferrerPath = (): string | null => {
 
 export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   const router = useRouter();
+  const navigate = useNavigate();
   const { data: article, isLoading } = useArticle(slug);
-  const { isSignedIn, user: currentUser } = useUser();
+  const { session: currentUser } = useMusicSession();
+  const isSignedIn = !!currentUser;
   const { mutate: markArticleRead } = useMarkArticleRead();
   const { mutateAsync: saveArticle, isPending: isSavingArticle } = useSaveArticle();
   const { data: savedArticles } = useSavedArticles({ enabled: isSignedIn });
@@ -66,7 +67,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   // Track article read when article loads and user is logged in
   useEffect(() => {
     const articleId = article?.id;
-    const userId = currentUser?.id;
+    const userId = currentUser?.userId;
 
     if (!articleId || !isSignedIn || !userId) {
       return;
@@ -85,7 +86,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
         console.error("Error tracking article read:", error);
       },
     });
-  }, [article?.id, currentUser?.id, isSignedIn]);
+  }, [article?.id, currentUser?.userId, isSignedIn]);
 
   // Track article viewed event (top of content funnel) - using ref to prevent duplicate tracking
   if (article && articleViewedRef.current !== article.slug) {
@@ -118,7 +119,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
     }
 
     if (!isSignedIn) {
-      router.push("/sign-in" as Route);
+      navigate({ to: "/sign-in" });
       return;
     }
 
@@ -147,10 +148,10 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
     if (!isSignedIn || !currentUser || !article) {
       return false;
     }
-    const role = (currentUser.publicMetadata?.role as string | undefined)?.toLowerCase();
+    const role = (currentUser.roles[0] as string | undefined)?.toLowerCase();
     const isSuperAdmin = role === "super_admin";
     const isWriter = role === "writer";
-    const isAuthor = currentUser.id === article.author?.id;
+    const isAuthor = currentUser.userId === article.author?.id;
     return isSuperAdmin || (isWriter && isAuthor);
   }, [isSignedIn, currentUser, article]);
 
@@ -213,11 +214,11 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
   const handleBackClick = () => {
     const internalReferrerPath = getInternalReferrerPath();
     if (internalReferrerPath) {
-      router.back();
+      router.history.back();
       return;
     }
 
-    router.push("/");
+    navigate({ to: "/" });
   };
 
   if (isLoading) {
@@ -233,7 +234,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-black mb-4">Article Not Found</h1>
-          <Link href="/" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Return to Home
           </Link>
         </div>
@@ -304,7 +305,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                     Share
                   </Button>
                   {canEdit && (
-                    <Link href={`/admin/posts/${article.id}`} passHref>
+                    <Link to="/admin/posts/$id" params={{ id: String(article.id) }}>
                       <Button
                         variant="outline"
                         size="sm"
@@ -320,7 +321,7 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
 
               {/* Featured Image */}
               <div className="mb-12">
-                <Image
+                <img
                   src={article.cover_image || "/placeholder.svg"}
                   alt={article.title}
                   width={800}
@@ -340,7 +341,8 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   {article.tags.map((tag) => (
                     <Link
                       key={tag}
-                      href={`/music?tag=${encodeURIComponent(tag)}`}
+                      to="/music"
+                      search={{ tag }}
                       className="border border-gray-800 bg-[#111111] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
                     >
                       #{tag}
@@ -357,14 +359,23 @@ export function ArticlePageClient({ slug }: ArticlePageClientProps) {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {article.artists.map((artist) => (
-                      <Link key={artist.id} href={`/artists/${artist.slug}`}>
+                      <Link
+                        key={artist.id}
+                        to="/artists/$slug"
+                        params={{ slug: String(artist.slug) }}
+                      >
                         <div className="bg-[#111111] border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer flex flex-row group min-h-36">
                           <div className="relative w-28 h-full overflow-hidden shrink-0 border-r border-gray-800">
-                            <Image
+                            <img
                               src={artist.image || "/placeholder.svg"}
                               alt={artist.name}
-                              fill
                               className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                width: "100%",
+                                height: "100%",
+                              }}
                             />
                           </div>
                           <div className="p-5 flex-1 flex flex-col justify-center min-w-0">

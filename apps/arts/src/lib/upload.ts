@@ -1,20 +1,5 @@
 export function getPublicUploadUrl(objectKey: string) {
-  const viteEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
-  const nodeEnv =
-    typeof process === "undefined"
-      ? undefined
-      : (process.env as Record<string, string | undefined>);
-  const publicBaseUrl = (
-    viteEnv?.VITE_CLOUDFLARE_R2_PUBLIC_URL ??
-    viteEnv?.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_URL ??
-    nodeEnv?.CLOUDFLARE_R2_PUBLIC_URL
-  )?.replace(/\/$/, "");
-
-  if (!publicBaseUrl) {
-    return objectKey;
-  }
-
-  return `${publicBaseUrl}/${objectKey.replace(/^\//, "")}`;
+  return `/api/arts/media/${objectKey.replace(/^\//, "")}`;
 }
 
 /**
@@ -22,8 +7,7 @@ export function getPublicUploadUrl(objectKey: string) {
  * returns in its response metadata (sourced from the server runtime env).
  *
  * The server-provided base is the reliable path in production: client bundles
- * cannot read process.env, and build-time VITE_ inlining only works when the
- * variable is set during the Vercel build (issue #90).
+ * uses the same-origin API proxy when no explicit media base is configured.
  */
 export function buildPublicUploadUrl(objectKey: string, metadata: unknown) {
   const publicBaseUrl = (metadata as { publicBaseUrl?: unknown } | undefined)?.publicBaseUrl;

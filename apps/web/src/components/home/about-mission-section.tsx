@@ -1,9 +1,5 @@
-"use client";
-
-import Image from "next/image";
-import Link from "next/link";
-import { Users, MapPin, Calendar, HeartHandshake, ArrowRight, PlusCircle } from "lucide-react";
-import type { Route } from "next";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Calendar, HeartHandshake, MapPin, PlusCircle, Users } from "lucide-react";
 
 interface AboutMissionSectionProps {
   onOpenSubmitModal?: () => void;
@@ -21,7 +17,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 lg:gap-10">
             {/* Prominent Dead Party Logo */}
             <div className="shrink-0 flex items-center justify-center p-4 sm:p-5 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-xl group">
-              <Image
+              <img
                 src="/images/dead-party-logo.png"
                 alt="Dead Party Media Logo"
                 width={140}
@@ -55,7 +51,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1">
                 <Link
-                  href="/about"
+                  to="/about"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-black font-black text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
                 >
                   Read Full Story &amp; Mission <ArrowRight className="w-4 h-4" />
@@ -76,7 +72,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
         {/* 4 Core Scene Pillars / Quick Navigation Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Pillar 1: Artists */}
-          <Link href="/artists" className="group block">
+          <Link to="/artists" className="group block">
             <div className="h-full p-5 rounded-xl border border-zinc-800/90 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00] transition-all flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-purple-400 group-hover:text-[#7CFC00] transition-colors mb-3">
@@ -98,7 +94,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
           </Link>
 
           {/* Pillar 2: Venues */}
-          <Link href={"/venues" as Route} className="group block">
+          <Link to={"/venues"} className="group block">
             <div className="h-full p-5 rounded-xl border border-zinc-800/90 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00] transition-all flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#7CFC00] group-hover:scale-110 transition-transform mb-3">
@@ -120,7 +116,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
           </Link>
 
           {/* Pillar 3: Shows Schedule & Submissions */}
-          <Link href="/events" className="group block">
+          <Link to="/events" className="group block">
             <div className="h-full p-5 rounded-xl border border-zinc-800/90 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-[#7CFC00] transition-all flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-cyan-400 group-hover:text-[#7CFC00] transition-colors mb-3">
@@ -141,7 +137,7 @@ export function AboutMissionSection({ onOpenSubmitModal }: AboutMissionSectionPr
           </Link>
 
           {/* Pillar 4: Scene Journalism & Writers */}
-          <Link href={"/donate" as Route} className="group block">
+          <Link to={"/donate"} className="group block">
             <div className="h-full p-5 rounded-xl border border-zinc-800/90 bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-purple-500 transition-all flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform mb-3">

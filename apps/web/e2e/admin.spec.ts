@@ -1,21 +1,16 @@
 import { test, expect } from "@playwright/test";
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 /**
  * These tests use the authenticated admin user state
- * from the global setup (playwright/.clerk/admin.json)
+ * from the global setup (playwright/.auth/admin.json)
  */
 test.describe("Admin User Flows", () => {
-  const adminIdentifier = process.env.E2E_CLERK_ADMIN_EMAIL || process.env.E2E_CLERK_USER_USERNAME;
-  const adminPassword = process.env.E2E_CLERK_ADMIN_PASSWORD || process.env.E2E_CLERK_USER_PASSWORD;
-  test.skip(
-    !adminIdentifier || !adminPassword,
-    "Missing admin creds (E2E_CLERK_ADMIN_EMAIL/PASSWORD)",
-  );
+  const adminIdentifier = process.env.E2E_ADMIN_EMAIL || process.env.E2E_USER_USERNAME;
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD || process.env.E2E_USER_PASSWORD;
+  test.skip(!adminIdentifier || !adminPassword, "Missing admin creds (E2E_ADMIN_EMAIL/PASSWORD)");
 
   test("should access admin dashboard", async ({ page }) => {
     // This test automatically uses the authenticated admin state from global setup
-    await setupClerkTestingToken({ page });
     await page.goto("/admin");
 
     // Should not be redirected
@@ -26,7 +21,6 @@ test.describe("Admin User Flows", () => {
   });
 
   test("should access admin artists page", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/admin/artists");
 
     // Should see artists management page
@@ -35,7 +29,6 @@ test.describe("Admin User Flows", () => {
   });
 
   test("should access admin posts page", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/admin/posts");
 
     // Should see posts management page
@@ -44,7 +37,6 @@ test.describe("Admin User Flows", () => {
   });
 
   test("should access admin events page", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/admin/events");
 
     // Should see events management page
@@ -53,7 +45,6 @@ test.describe("Admin User Flows", () => {
   });
 
   test("should create post with artist selection", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/admin/posts/new");
 
     // Smoke check: editor form renders
@@ -64,7 +55,6 @@ test.describe("Admin User Flows", () => {
   });
 
   test("should create event with artist selection", async ({ page }) => {
-    await setupClerkTestingToken({ page });
     await page.goto("/admin/events/new");
 
     // Smoke check: event form renders

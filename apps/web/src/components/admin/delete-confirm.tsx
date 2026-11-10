@@ -1,5 +1,6 @@
-"use client";
+import { useRouter } from "@tanstack/react-router";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -37,8 +37,10 @@ export function DeleteConfirm({
   trigger,
 }: DeleteConfirmProps) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const handleSubmit = async (formData: FormData) => {
     await action(formData);
+    await router.invalidate();
     setOpen(false);
   };
 

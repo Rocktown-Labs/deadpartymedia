@@ -1,11 +1,11 @@
-import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 
-import ClerkProvider from "../integrations/clerk/provider";
 import { SiteShell } from "../components/site-shell";
+import { loadArtsSession } from "../lib/session.functions";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
@@ -18,6 +18,8 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async () => ({ session: await loadArtsSession() }),
+  loader: () => ({ renderedAt: Date.now() }),
   head: () => ({
     meta: [
       {
@@ -45,11 +47,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         href: appCss,
       },
       {
-        rel: "preconnect",
-        href: "https://clerk.deadpartymedia.com",
-        crossOrigin: "anonymous",
-      },
-      {
         rel: "icon",
         type: "image/png",
         href: "/deadpartyarts-trans.png",
@@ -68,6 +65,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const data = Route.useLoaderData();
   useEffect(() => {
     const reloadOnStaleChunk = () => {
       try {
@@ -110,22 +108,24 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ClerkProvider>
-          <SiteShell>{children}</SiteShell>
+        <>
+          <SiteShell issuedAt={data?.renderedAt}>{children}</SiteShell>
           <Toaster position="bottom-right" theme="dark" />
-          <TanStackDevtools
-            config={{
-              position: "bottom-right",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        </ClerkProvider>
+          {import.meta.env.DEV ? (
+            <TanStackDevtools
+              config={{
+                position: "bottom-right",
+              }}
+              plugins={[
+                {
+                  name: "Tanstack Router",
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+                TanStackQueryDevtools,
+              ]}
+            />
+          ) : null}
+        </>
         <Scripts />
       </body>
     </html>

@@ -1,9 +1,9 @@
-import { uploadFiles } from "@better-upload/client";
+import { Input } from "#/components/ui/input.tsx";
+import { uploadMedia } from "#/lib/media-upload";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { Loader2, UploadCloud, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Input } from "#/components/ui/input.tsx";
-import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 
 interface ArtsImageUploaderProps {
   label?: string;
@@ -41,11 +41,11 @@ export function ArtsImageUploader({
     uploadProgressRef.current.clear();
 
     try {
-      const result = await uploadFiles({
+      const result = await uploadMedia({
         files: [file],
         route: "artwork",
         onFileStateChange: ({ file: state }) => {
-          const key = state.objectInfo?.key;
+          const key = state.id;
 
           if (key) {
             uploadProgressRef.current.set(

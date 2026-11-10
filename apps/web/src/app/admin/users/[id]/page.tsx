@@ -1,18 +1,19 @@
-import Link from "next/link";
-import type { Route } from "next";
-import { notFound, redirect } from "next/navigation";
-import { canManageUsers } from "@/lib/auth/access";
-import { isArtsRole } from "@/lib/auth/role";
-import { db } from "@/lib/db";
-import { posts, users } from "@/lib/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
-import { ArrowLeft, ExternalLink } from "lucide-react";
-import {
-  UserRoleSelect,
-  UserEmailForm,
-  InviteUserButton,
-  DeleteUserButton,
-} from "../client-actions";
+import { getMusicApi } from "@/lib/api.server";
+import { parseRole } from "@/lib/auth/role";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["admin"]["users"][":id"].$get({
+        param: { id: input.params.id },
+        query: input.search,
+      }),
+    ),
+  );
+
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,12 +26,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
-
-function isPlaceholderEmail(email: string) {
-  return email.toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
-}
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import {
+  DeleteUserButton,
+  InviteUserButton,
+  UserEmailForm,
+  UserRoleSelect,
+} from "../client-actions";
 
 function formatUserName(user: {
   firstName: string | null;
@@ -41,71 +43,14 @@ function formatUserName(user: {
   return fullName || user.email;
 }
 
-function isInvitableRole(role: string) {
-  return role === "writer" || role === "super_admin" || role === "artist";
-}
-
-export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  if (!(await canManageUsers())) {
-    redirect("/admin");
-  }
-
-  const { id } = await params;
-  const userId = Number.parseInt(id, 10);
-
-  if (!Number.isInteger(userId) || userId <= 0) {
-    notFound();
-  }
-
-  const [profile] = await db
-    .select({
-      clerkId: users.clerkId,
-      createdAt: users.createdAt,
-      email: users.email,
-      firstName: users.firstName,
-      id: users.id,
-      lastName: users.lastName,
-      onboardingComplete: users.onboardingComplete,
-      role: users.role,
-      updatedAt: users.updatedAt,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (!profile || isArtsRole(profile.role)) {
-    notFound();
-  }
-
-  const [postCountRows, latestPosts] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)::int`.as("count") })
-      .from(posts)
-      .where(eq(posts.authorId, profile.clerkId)),
-    db
-      .select({
-        id: posts.id,
-        slug: posts.slug,
-        status: posts.status,
-        title: posts.title,
-        updatedAt: posts.updatedAt,
-      })
-      .from(posts)
-      .where(eq(posts.authorId, profile.clerkId))
-      .orderBy(desc(posts.updatedAt))
-      .limit(5),
-  ]);
-
-  const postCount = postCountRows[0]?.count ?? 0;
-  const placeholderIdentity = profile.clerkId.startsWith("local_placeholder:");
-  const placeholderEmail = isPlaceholderEmail(profile.email);
-  const canInvite = isInvitableRole(profile.role) && !placeholderEmail;
-
+export default function UserDetailPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { profile, latestPosts, postCount, placeholderIdentity, placeholderEmail, canInvite } =
+    data;
   return (
     <div className="space-y-6">
       <div className="space-y-3">
         <Link
-          href={"/admin/users" as Route}
+          to={"/admin/users"}
           className={cn(buttonVariants({ variant: "outline" }), "border-gray-700")}
         >
           <ArrowLeft className="mr-2 size-4" />
@@ -176,7 +121,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-4">
-            <UserRoleSelect userId={profile.id} currentRole={profile.role} layout="detail" />
+            <UserRoleSelect
+              userId={profile.id}
+              currentRole={parseRole(profile.role) || "fan"}
+              layout="detail"
+            />
 
             <UserEmailForm
               userId={profile.id}
@@ -240,7 +189,8 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                       <TableCell>{post.updatedAt.toLocaleString()}</TableCell>
                       <TableCell>
                         <Link
-                          href={`/posts/${post.slug}` as Route}
+                          to="/article/$slug"
+                          params={{ slug: post.slug }}
                           target="_blank"
                           rel="noreferrer"
                           className={buttonVariants({ size: "sm", variant: "outline" })}

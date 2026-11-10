@@ -1,50 +1,15 @@
-import { redirect } from "next/navigation";
-import { checkRole } from "@/lib/auth/roles";
-import { db } from "@/lib/db";
-import { posts, events, musicReleases } from "@/lib/db/schema";
-import { and, count, desc, eq } from "drizzle-orm";
-import Link from "next/link";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["admin"].$get({ query: input.search })),
+  );
 
-export default async function AdminDashboard() {
-  const isSuperAdmin = await checkRole("super_admin");
-  const isWriter = await checkRole("writer");
-
-  if (!isSuperAdmin && !isWriter) {
-    redirect("/");
-  }
-
-  // Get stats
-  const [postsCount] = await db
-    .select({ count: count() })
-    .from(posts)
-    .where(and(eq(posts.vertical, "music"), eq(posts.status, "published")));
-
-  const [musicCount] = await db
-    .select({ count: count() })
-    .from(musicReleases)
-    .where(eq(musicReleases.status, "published"));
-
-  const [eventsCount] = await db
-    .select({ count: count() })
-    .from(events)
-    .where(and(eq(events.vertical, "music"), eq(events.status, "published")));
-
-  // Get recent posts
-  const recentPosts = await db
-    .select()
-    .from(posts)
-    .where(eq(posts.vertical, "music"))
-    .orderBy(desc(posts.createdAt))
-    .limit(5);
-
-  // Get recent events
-  const recentEvents = await db
-    .select()
-    .from(events)
-    .where(eq(events.vertical, "music"))
-    .orderBy(desc(events.createdAt))
-    .limit(5);
-
+export default function AdminDashboard({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { postsCount, musicCount, eventsCount, recentPosts, recentEvents } = data;
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Dashboard</h1>
@@ -76,11 +41,9 @@ export default async function AdminDashboard() {
               recentPosts.map((post) => (
                 <div key={post.id} className="border-b border-gray-800 pb-2">
                   <Link
-                    href={
-                      post.status === "published"
-                        ? `/article/${post.slug}`
-                        : `/admin/posts/${post.id}`
-                    }
+                    {...(post.status === "published"
+                      ? { to: "/article/$slug" as const, params: { slug: post.slug } }
+                      : { to: "/admin/posts/$id" as const, params: { id: String(post.id) } })}
                     className="group inline-block"
                   >
                     <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">
@@ -105,11 +68,9 @@ export default async function AdminDashboard() {
               recentEvents.map((event) => (
                 <div key={event.id} className="border-b border-gray-800 pb-2">
                   <Link
-                    href={
-                      event.status === "published"
-                        ? `/events/${event.slug}`
-                        : `/admin/events/${event.id}`
-                    }
+                    {...(event.status === "published"
+                      ? { to: "/events/$slug" as const, params: { slug: event.slug } }
+                      : { to: "/admin/events/$id" as const, params: { id: String(event.id) } })}
                     className="group inline-block"
                   >
                     <h3 className="font-bold group-hover:text-[#7CFC00] transition-colors">

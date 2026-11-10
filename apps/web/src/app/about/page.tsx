@@ -1,8 +1,16 @@
-import type { Metadata } from "next";
+import { getMusicApi } from "@/lib/api.server";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { connection } from "next/server";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["about"].$get({ query: input.search })),
+  );
+
+import { Link } from "@tanstack/react-router";
+
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
 
 const { siteName, siteUrl } = getSiteDefaults();
@@ -35,9 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AboutPage() {
-  await connection();
-
+export default function AboutPage(_props: { data: Awaited<ReturnType<typeof loadPage>> }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Main Content */}
@@ -45,7 +51,7 @@ export default async function AboutPage() {
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -54,7 +60,7 @@ export default async function AboutPage() {
 
           <div className="text-center mb-16">
             <div className="mb-8">
-              <Image
+              <img
                 src="/images/dead-party-logo.png"
                 alt="Dead Party Media Logo"
                 width={150}

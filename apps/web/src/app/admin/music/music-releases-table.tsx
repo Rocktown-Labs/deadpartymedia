@@ -1,11 +1,5 @@
-"use client";
+import { Link } from "@tanstack/react-router";
 
-import Link from "next/link";
-import type { Route } from "next";
-import { useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
-import { Archive, CheckCircle2, FilePenLine, Disc, ExternalLink } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -20,6 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRouter } from "@tanstack/react-router";
+import { Archive, CheckCircle2, Disc, ExternalLink, FilePenLine } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { bulkUpdateMusicReleaseStatus, deleteMusicRelease } from "./actions";
 
 export interface AdminMusicReleaseRow {
@@ -82,7 +80,7 @@ export function MusicReleasesTable({
         await bulkUpdateMusicReleaseStatus(selectedIds, status);
         toast.success(`Updated ${selectedIds.length} release(s) to ${status}`);
         setSelectedIds([]);
-        router.refresh();
+        router.invalidate();
       } catch {
         toast.error("Failed to update status");
       }
@@ -232,7 +230,8 @@ export function MusicReleasesTable({
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/admin/music/${release.id}` as Route}
+                        to="/admin/music/$id"
+                        params={{ id: String(release.id) }}
                         className="font-bold text-white hover:text-[#7CFC00] transition-colors"
                       >
                         {release.title}
@@ -270,7 +269,8 @@ export function MusicReleasesTable({
                     <div className="flex items-center justify-end gap-2">
                       {release.status === "published" && (
                         <Link
-                          href={`/music/${release.slug}` as Route}
+                          to="/music/$slug"
+                          params={{ slug: String(release.slug) }}
                           target="_blank"
                           className="p-1.5 text-zinc-400 hover:text-white transition-colors"
                           title="View on site"
@@ -278,7 +278,7 @@ export function MusicReleasesTable({
                           <ExternalLink className="w-4 h-4" />
                         </Link>
                       )}
-                      <Link href={`/admin/music/${release.id}` as Route}>
+                      <Link to="/admin/music/$id" params={{ id: String(release.id) }}>
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>

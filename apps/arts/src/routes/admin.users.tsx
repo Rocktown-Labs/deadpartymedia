@@ -1,8 +1,3 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { Mail, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -15,6 +10,11 @@ import {
 } from "#/lib/admin.functions.ts";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
 import { isArtsAdminRole } from "#/lib/roles.ts";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Mail, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: async () => {
@@ -73,14 +73,7 @@ function AdminUsers() {
     try {
       await updateRoleFn({
         data: {
-          role: newRole as
-            | "artist"
-            | "artmaker"
-            | "arts_admin"
-            | "arts_writer"
-            | "fan"
-            | "super_admin"
-            | "writer",
+          role: newRole as "artmaker" | "arts_admin" | "arts_writer" | "fan" | "super_admin",
           userId,
         },
       });

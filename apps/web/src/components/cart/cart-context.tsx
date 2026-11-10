@@ -1,8 +1,6 @@
-"use client";
-
 import type { Cart, CartItem, Product, ProductVariant } from "@/lib/types";
 import type React from "react";
-import { createContext, use, useContext, useMemo, useOptimistic } from "react";
+import { createContext, useContext, useMemo, useOptimistic } from "react";
 
 type UpdateType = "plus" | "minus" | "delete";
 
@@ -151,12 +149,11 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
 
 export function CartProvider({
   children,
-  cartPromise,
+  initialCart,
 }: {
   children: React.ReactNode;
-  cartPromise: Promise<Cart | undefined>;
+  initialCart: Cart | undefined;
 }) {
-  const initialCart = use(cartPromise);
   const [optimisticCart, updateOptimisticCart] = useOptimistic(initialCart, cartReducer);
 
   const updateCartItem = (merchandiseId: string, updateType: UpdateType) => {

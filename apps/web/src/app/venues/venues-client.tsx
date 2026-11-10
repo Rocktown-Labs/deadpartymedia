@@ -1,19 +1,17 @@
-"use client";
-
-import React, { useMemo, useState } from "react";
-import Link from "next/link";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  type ColumnDef,
-  flexRender,
-} from "@tanstack/react-table";
 import { PageTitleHeader } from "@/components/page-title-header";
-import { ArrowLeft, Search, MapPin, Phone, Globe, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { isSafeHttpUrl } from "@/lib/security";
+import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { ArrowLeft, ExternalLink, Globe, MapPin, Phone, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export interface VenueItem {
   id: string;
@@ -183,7 +181,7 @@ export function VenuesClient({ initialVenues }: VenuesClientProps) {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

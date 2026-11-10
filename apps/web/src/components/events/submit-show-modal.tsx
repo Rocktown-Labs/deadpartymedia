@@ -1,17 +1,19 @@
-"use client";
+import { AuthDialog } from "@/components/auth";
+import { readApiError } from "@/lib/api/errors";
+import { useMusicSession } from "@/lib/auth-client";
 
-import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useUser, SignInButton } from "@clerk/nextjs";
+import React, { useState } from "react";
+
+import { AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Sparkles, AlertCircle } from "lucide-react";
 
 interface SubmitShowModalProps {
   isOpen: boolean;
@@ -19,7 +21,8 @@ interface SubmitShowModalProps {
 }
 
 export function SubmitShowModal({ isOpen, onClose }: SubmitShowModalProps) {
-  const { isSignedIn } = useUser();
+  const { session: user } = useMusicSession();
+  const isSignedIn = !!user;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -55,7 +58,7 @@ export function SubmitShowModal({ isOpen, onClose }: SubmitShowModalProps) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
+        const errorData = await readApiError(res);
         toast.error(errorData?.error || "Submission failed - please try again or contact us.");
         return;
       }
@@ -98,11 +101,11 @@ export function SubmitShowModal({ isOpen, onClose }: SubmitShowModalProps) {
                 You must have a registered account to submit upcoming shows to prevent spam.
               </p>
             </div>
-            <SignInButton mode="modal">
+            <AuthDialog mode="sign-in">
               <Button className="bg-[#7CFC00] hover:bg-[#7CFC00]/90 text-black font-bold uppercase tracking-wider text-xs">
                 Sign In to Submit Show
               </Button>
-            </SignInButton>
+            </AuthDialog>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">

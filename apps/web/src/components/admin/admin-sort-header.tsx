@@ -1,10 +1,9 @@
-import Link from "next/link";
-import type { Route } from "next";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { createUrl } from "@/lib/utils";
-import { getNextSortState, mergeSearchParams, parseSortOrderParam } from "@/lib/admin/table-state";
+import { Link } from "@tanstack/react-router";
+
 import type { SortOrder } from "@/lib/admin/table-state";
-import { cn } from "@/lib/utils";
+import { getNextSortState, mergeSearchParams, parseSortOrderParam } from "@/lib/admin/table-state";
+import { cn, createUrl } from "@/lib/utils";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 interface AdminSortHeaderProps {
   currentOrder: SortOrder;
@@ -59,7 +58,7 @@ export function AdminSortHeader({
 
   return (
     <Link
-      href={createUrl(pathname, nextParams) as Route}
+      to={createUrl(pathname, nextParams)}
       className={cn(
         "inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors hover:text-white",
         isFieldActive ? "text-[#7CFC00] hover:text-[#7CFC00]" : undefined,

@@ -1,11 +1,9 @@
-"use client";
-import Link from "next/link";
-import type { Route } from "next";
+import { Link } from "@tanstack/react-router";
 
 export default function Header() {
   const links = [
-    { label: "Home", to: "/" as Route },
-    { label: "Dashboard", to: "/dashboard" as Route },
+    { label: "Home", to: "/" },
+    { label: "Dashboard", to: "/dashboard" },
   ] as const;
 
   return (
@@ -13,7 +11,7 @@ export default function Header() {
       <div className="flex flex-row items-center justify-between px-2 py-1">
         <nav className="flex gap-4 text-lg">
           {links.map(({ to, label }) => (
-            <Link key={to} href={to}>
+            <Link key={to} to={to}>
               {label}
             </Link>
           ))}

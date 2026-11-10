@@ -1,27 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { checkRole } from "@/lib/auth/roles";
+import { useRouteContext } from "@tanstack/react-router";
 import { AdminShell } from "./admin-shell";
-
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const isSuperAdmin = await checkRole("super_admin");
-  const isWriter = await checkRole("writer");
-
-  if (!isSuperAdmin && !isWriter) {
-    redirect("/");
-  }
-
-  const userRole = isSuperAdmin ? "super_admin" : "writer";
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { session } = useRouteContext({ from: "__root__" });
+  const isSuperAdmin = session?.roles.includes("super_admin") ?? false;
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin} userRole={userRole}>
+    <AdminShell isSuperAdmin={isSuperAdmin} userRole={isSuperAdmin ? "super_admin" : "writer"}>
       {children}
     </AdminShell>
   );

@@ -1,9 +1,9 @@
+import { type ArtworkListItem, getArtworkByIdOrSlug } from "#/lib/artworks.functions.ts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { ArrowRight, BadgeDollarSign, Calendar, Layers, MapPin, Share2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { type ArtworkListItem, getArtworkByIdOrSlug } from "#/lib/artworks.functions.ts";
 
 interface ArtworkDetailDrawerProps {
   artworkIdentifier?: string;

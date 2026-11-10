@@ -1,5 +1,5 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: () => requireArtsStaff(),

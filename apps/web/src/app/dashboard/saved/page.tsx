@@ -1,22 +1,20 @@
-"use client";
-
-import { useSavedArticles, useUnsaveArticle } from "@/lib/api/user-activity";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DashboardBackButton } from "../dashboard-back-button";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSavedArticles, useUnsaveArticle } from "@/lib/api/user-activity";
+import { Link } from "@tanstack/react-router";
 import { Bookmark, Calendar, X } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { formatDistanceToNow } from "date-fns";
+import { DashboardBackButton } from "../dashboard-back-button";
+
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 export default function SavedPage() {
   const { data: savedArticles, isLoading } = useSavedArticles();
@@ -114,15 +112,24 @@ export default function SavedPage() {
                   key={item.id}
                   className="bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-[#7CFC00] transition-colors"
                 >
-                  <Link href={`/article/${article.slug}`} className="block">
+                  <Link
+                    to="/article/$slug"
+                    params={{ slug: String(article.slug) }}
+                    className="block"
+                  >
                     <div className="flex gap-4">
                       {article.cover_image && (
                         <div className="relative w-32 h-32 shrink-0 rounded-lg overflow-hidden">
-                          <Image
+                          <img
                             src={article.cover_image}
                             alt={article.title}
-                            fill
                             className="object-cover"
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              width: "100%",
+                              height: "100%",
+                            }}
                           />
                         </div>
                       )}

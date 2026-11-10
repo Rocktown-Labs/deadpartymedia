@@ -1,22 +1,21 @@
-"use client";
+import { uploadMusicImage } from "@/lib/upload";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Upload, X, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
+import { SpotifySearch } from "@/components/spotify-search";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { SpotifySearch } from "@/components/spotify-search";
+import type { SpotifyArtist } from "@/lib/api/artists";
 import { useArtists } from "@/lib/api/artists";
 import { validateImageFile } from "@/lib/upload";
-import type { SpotifyArtist } from "@/lib/api/artists";
-import { analyzeEventFlyerAction, createEventFromFlyerImportAction } from "./actions";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Upload, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { EventFlyerAnalysis } from "./actions";
+import { analyzeEventFlyerAction, createEventFromFlyerImportAction } from "./actions";
 
 type QueueStatus = "queued" | "uploading" | "analyzing" | "needs_review" | "approved" | "failed";
 
@@ -181,17 +180,9 @@ export default function EventFlyerImportClient({
   };
 
   const uploadImage = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch("/api/upload/image?type=event", {
-      body: formData,
-      method: "POST",
-    });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      throw new Error(payload?.error || "Image upload failed");
-    }
-    const payload = await response.json();
+    const response = await uploadMusicImage(file, "event");
+
+    const payload = response;
     return String(payload.url);
   };
 
@@ -366,10 +357,7 @@ export default function EventFlyerImportClient({
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <Link
-            href="/admin/events"
-            className="mb-3 inline-flex items-center text-sm text-[#7CFC00]"
-          >
+          <Link to="/admin/events" className="mb-3 inline-flex items-center text-sm text-[#7CFC00]">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Events
           </Link>
@@ -443,7 +431,12 @@ export default function EventFlyerImportClient({
                 }`}
               >
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-gray-800">
-                  <Image src={item.previewUrl} alt={item.fileName} fill className="object-cover" />
+                  <img
+                    src={item.previewUrl}
+                    alt={item.fileName}
+                    className="object-cover"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">Flyer {index + 1}</p>
@@ -476,11 +469,11 @@ export default function EventFlyerImportClient({
               <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
                 <div className="space-y-4">
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-800 bg-black">
-                    <Image
+                    <img
                       src={activeItem.previewUrl}
                       alt={activeItem.fileName}
-                      fill
                       className="object-contain"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                     />
                   </div>
                   {activeItem.error && (

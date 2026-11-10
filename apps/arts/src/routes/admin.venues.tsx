@@ -1,8 +1,3 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { Edit, MapPin, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
@@ -15,6 +10,11 @@ import {
   updateArtsVenue,
   type VenueListItem,
 } from "#/lib/venues.functions.ts";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Edit, MapPin, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/venues")({
   beforeLoad: () => requireArtsStaff(),

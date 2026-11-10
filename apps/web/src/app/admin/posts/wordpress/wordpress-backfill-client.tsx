@@ -1,23 +1,28 @@
-"use client";
+import { musicApi } from "@/lib/music-client";
+import { readResponse } from "@dpmedia/api-client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import {
-  Sparkles,
-  ArrowLeft,
-  ExternalLink,
-  Loader2,
-  CheckCircle,
-  BookOpen,
-  AlertTriangle,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SpotifySearch } from "@/components/spotify-search";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -26,40 +31,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card } from "@/components/ui/card";
-import { SpotifySearch } from "@/components/spotify-search";
+  findDefaultBackfillAuthorId,
+  findMatchingAuthorId,
+  sanitizeAndTruncateExcerpt,
+} from "@/lib/admin/wordpress-backfill";
+import type { SpotifyArtist } from "@/lib/api/artists";
+import { Link, useRouter } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BookOpen,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { BackfillAnalysis } from "./actions";
 import {
   analyzeWordPressPostAction,
   importWordPressPostAction,
   syncExistingArtistsSpotifyAction,
   syncPublishedWordPressTagsAction,
 } from "./actions";
-import {
-  findDefaultBackfillAuthorId,
-  findMatchingAuthorId,
-  sanitizeAndTruncateExcerpt,
-} from "@/lib/admin/wordpress-backfill";
-import type { BackfillAnalysis } from "./actions";
-import type { SpotifyArtist } from "@/lib/api/artists";
 
 interface WordPressPostFeedItem {
   id: number;
@@ -150,9 +150,9 @@ export default function WordpressBackfillClient({
 
   const fetchRuns = async () => {
     try {
-      const response = await fetch("/api/workflow/backfill/runs");
+      const response = await musicApi.workflow.backfill.runs.$get();
       if (response.ok) {
-        const data = await response.json();
+        const data = await readResponse(response);
         if (data.success) {
           setRuns(data.runs || []);
         }
@@ -188,21 +188,19 @@ export default function WordpressBackfillClient({
         : "Starting WordPress backfill background workflow...",
     );
     try {
-      const response = await fetch("/api/workflow/backfill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await musicApi.workflow.backfill.$post({
+        json: {
           limit: bulkLimit,
           offset: bulkOffset,
           authorId: bulkAuthorId,
           status: source === "local_drafts" ? "published" : bulkStatus,
           source,
-        }),
+        },
       });
 
-      const data = await response.json();
+      const data = await readResponse(response);
       if (!response.ok) {
-        throw new Error(data.error || "Failed to start workflow");
+        throw new Error("Failed to start workflow");
       }
 
       toast.success(
@@ -229,7 +227,7 @@ export default function WordpressBackfillClient({
           `Sync completed! Checked ${result.total} artists. Matched and updated ${result.updatedCount} profiles.`,
           { id: toastId, duration: 8000 },
         );
-        router.refresh();
+        router.invalidate();
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sync artists Spotify", {
@@ -250,7 +248,7 @@ export default function WordpressBackfillClient({
           `Tag sync completed! Checked ${result.total} WordPress posts, matched ${result.matchedCount}, updated ${result.updatedCount}.`,
           { id: toastId, duration: 8000 },
         );
-        router.refresh();
+        router.invalidate();
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to sync WordPress tags", {
@@ -265,14 +263,11 @@ export default function WordpressBackfillClient({
     setIsDedupeStarting(true);
     const toastId = toast.loading("Starting post deduplication & title decoding workflow...");
     try {
-      const response = await fetch("/api/workflow/dedupe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await musicApi.workflow.dedupe.$post();
 
-      const data = await response.json();
+      const data = await readResponse(response);
       if (!response.ok) {
-        throw new Error(data.error || "Failed to start workflow");
+        throw new Error("Failed to start workflow");
       }
 
       toast.success(
@@ -444,7 +439,7 @@ export default function WordpressBackfillClient({
               : p,
           ),
         );
-        router.refresh();
+        router.invalidate();
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to import article", {
@@ -459,7 +454,7 @@ export default function WordpressBackfillClient({
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/posts">
+          <Link to="/admin/posts">
             <Button variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -993,7 +988,7 @@ export default function WordpressBackfillClient({
                       </TableCell>
                       <TableCell className="px-6 py-4 text-right">
                         {isPublished ? (
-                          <Link href={`/admin/posts/${post.importedPostId}`}>
+                          <Link to="/admin/posts/$id" params={{ id: String(post.importedPostId) }}>
                             <Button variant="outline" size="sm" className="gap-2">
                               <BookOpen className="h-3.5 w-3.5" />
                               Edit Post
@@ -1009,7 +1004,10 @@ export default function WordpressBackfillClient({
                               <Sparkles className="h-3.5 w-3.5" />
                               Backfill with AI
                             </Button>
-                            <Link href={`/admin/posts/${post.importedPostId}`}>
+                            <Link
+                              to="/admin/posts/$id"
+                              params={{ id: String(post.importedPostId) }}
+                            >
                               <Button variant="outline" size="sm" className="gap-2">
                                 <BookOpen className="h-3.5 w-3.5" />
                                 Edit Post

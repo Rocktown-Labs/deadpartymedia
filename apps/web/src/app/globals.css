@@ -216,3 +216,8 @@ html {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+:root {
+  --font-geist-sans: "Inter Variable", sans-serif;
+  --font-geist-mono: "JetBrains Mono Variable", monospace;
+}

@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, Images, Newspaper, UsersRound } from "lucide-react";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { getArtsAdminOverview } from "#/lib/admin.functions.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarDays, Images, Newspaper, UsersRound } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   component: ArtsAdmin,

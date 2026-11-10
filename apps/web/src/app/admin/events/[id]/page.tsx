@@ -1,38 +1,21 @@
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { events, eventArtists } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { canEdit } from "@/lib/auth/access";
 import { EventForm } from "@/components/admin/event-form";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { updateEvent } from "../actions";
-import type { Route } from "next";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["admin"]["events"][":id"].$get({
+        param: { id: input.params.id },
+        query: input.search,
+      }),
+    ),
+  );
 
-export default async function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const eventId = Number.parseInt(id, 10);
-
-  if (Number.isNaN(eventId)) {
-    redirect("/admin/events");
-  }
-
-  const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
-
-  if (!event) {
-    redirect("/admin/events");
-  }
-
-  if (!(await canEdit(event.createdById))) {
-    redirect("/admin/events");
-  }
-
-  // Load artist relations for this event
-  const eventArtistRelations = await db
-    .select({ artistId: eventArtists.artistId })
-    .from(eventArtists)
-    .where(eq(eventArtists.eventId, eventId));
-
-  const artistIds = eventArtistRelations.map((rel) => rel.artistId);
-
+export default function EditEventPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { eventId, event, artistIds } = data;
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Edit Event</h1>
@@ -54,7 +37,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           venueId: event.venueId || undefined,
         }}
         onSubmit={updateEvent.bind(null, eventId)}
-        cancelHref={"/admin/events" as Route}
+        cancelHref={"/admin/events"}
       />
     </div>
   );

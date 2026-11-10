@@ -1,14 +1,26 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getProduct } from "@/lib/fourthwall";
-import { getAbsoluteUrl, getImageUrl, getSiteDefaults, sanitizeDescription } from "@/lib/seo";
 import { Gallery } from "@/components/product/gallery";
 import { ProductProvider } from "@/components/product/product-context";
 import { ProductDescription } from "@/components/product/product-description";
+import { getMusicApi } from "@/lib/api.server";
+import { getProduct } from "@/lib/fourthwall";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
+import { getAbsoluteUrl, getImageUrl, getSiteDefaults, sanitizeDescription } from "@/lib/seo";
 import type { Product } from "@/lib/types";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { cache } from "react";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["merch"][":handle"].$get({
+        param: { handle: input.params.handle },
+        query: input.search,
+      }),
+    ),
+  );
 
 interface ProductPageProps {
   params: Promise<{ handle: string }>;
@@ -53,18 +65,6 @@ const buildProductMetadata = (product: Product): Metadata => {
   };
 };
 
-const buildInitialVariantState = (product: Product): Record<string, string> => {
-  const initialVariant =
-    product.variants.find((variant) => variant.availableForSale) || product.variants[0];
-  const state: Record<string, string> = {};
-
-  for (const option of initialVariant?.selectedOptions ?? []) {
-    state[option.name.toLowerCase()] = option.value;
-  }
-
-  return state;
-};
-
 const getMerchProduct = cache(
   async (handle: string): Promise<Product | undefined> => getProduct(handle, "USD"),
 );
@@ -80,21 +80,8 @@ export const generateMetadata = async ({ params }: ProductPageProps): Promise<Me
   return product ? buildProductMetadata(product) : NOT_FOUND_METADATA;
 };
 
-export default async function ProductPage({ params }: ProductPageProps) {
-  const { handle } = await params;
-
-  if (!handle) {
-    return notFound();
-  }
-
-  const product = await getMerchProduct(handle);
-
-  if (!product) {
-    return notFound();
-  }
-
-  const initialState = buildInitialVariantState(product);
-
+export default function ProductPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { product, initialState } = data;
   return (
     <ProductProvider initialState={initialState}>
       <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -102,7 +89,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="container mx-auto px-6">
             <div className="max-w-7xl">
               <Link
-                href="/merch"
+                to="/merch"
                 className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -125,3 +112,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     </ProductProvider>
   );
 }
+
+export const loadPageMetadata = createServerFn({ method: "GET" })
+  .validator((params: { handle: string }) => params)
+  .handler(({ data }) => generateMetadata({ params: Promise.resolve(data) }));

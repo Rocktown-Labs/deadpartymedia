@@ -1,11 +1,5 @@
-"use client";
+import { Link } from "@tanstack/react-router";
 
-import Link from "next/link";
-import type { Route } from "next";
-import { useMemo } from "react";
-import { toast } from "sonner";
-import { FilePenLine, ExternalLink, MapPin, Building2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -19,6 +13,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRouter } from "@tanstack/react-router";
+import { Building2, ExternalLink, FilePenLine, MapPin } from "lucide-react";
+import { useMemo } from "react";
+import { toast } from "sonner";
 import { deleteVenue } from "./actions";
 
 export interface AdminVenueRow {
@@ -68,7 +66,7 @@ export function VenuesTable({
     try {
       await deleteVenue(id);
       toast.success("Venue deleted successfully");
-      router.refresh();
+      router.invalidate();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to delete venue");
     }
@@ -133,7 +131,8 @@ export function VenuesTable({
                       )}
                       <div>
                         <Link
-                          href={`/admin/venues/${venue.id}` as Route}
+                          to="/admin/venues/$id"
+                          params={{ id: String(venue.id) }}
                           className="font-medium text-zinc-100 hover:text-[#7CFC00] transition-colors"
                         >
                           {venue.name}
@@ -190,7 +189,7 @@ export function VenuesTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/admin/venues/${venue.id}` as Route}>
+                      <Link to="/admin/venues/$id" params={{ id: String(venue.id) }}>
                         <Button
                           variant="ghost"
                           size="sm"

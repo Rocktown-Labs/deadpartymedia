@@ -1,28 +1,27 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { useEffect } from "react";
-import { useDashboardStats } from "@/lib/api/user-activity";
-import type { DashboardStats } from "@/lib/api/user-activity";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
-  EmptyHeader,
-  EmptyTitle,
   EmptyDescription,
+  EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
-import { BookOpen, Bookmark, MessageSquare, History } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/nextjs";
-import type { Route } from "next";
-import * as Sentry from "@sentry/nextjs";
-import posthog from "posthog-js";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { DashboardStats } from "@/lib/api/user-activity";
+import { useDashboardStats } from "@/lib/api/user-activity";
+import { Link } from "@tanstack/react-router";
+import { Bookmark, BookOpen, History, MessageSquare } from "lucide-react";
+import { useEffect } from "react";
+
+import * as Sentry from "@sentry/tanstackstart-react";
 import { useQueryClient } from "@tanstack/react-query";
+import posthog from "posthog-js";
 
 export default function DashboardPage() {
   const { data: stats, isLoading, error } = useDashboardStats();
-  const { user } = useUser();
+  const { session: user } = useMusicSession();
   const queryClient = useQueryClient();
 
   // Default stats for new users
@@ -47,8 +46,8 @@ export default function DashboardPage() {
         extra: {
           errorMessage: error.message,
           errorStack: error.stack,
-          userId: user?.id,
-          userRole: user?.publicMetadata?.role,
+          userId: user?.userId,
+          userRole: user?.roles[0],
         },
         tags: {
           component: "dashboard",
@@ -61,16 +60,16 @@ export default function DashboardPage() {
       posthog.capture("dashboard_stats_error", {
         error_message: error.message,
         error_type: error.name || "Unknown",
-        user_id: user?.id,
-        user_role: user?.publicMetadata?.role || "unknown",
+        user_id: user?.userId,
+        user_role: user?.roles[0] || "unknown",
       });
     } else if (!stats && !isLoading) {
       // Track new user scenario (not an error, but useful for analytics)
 
       posthog.capture("dashboard_stats_empty", {
         is_new_user: true,
-        user_id: user?.id,
-        user_role: user?.publicMetadata?.role || "unknown",
+        user_id: user?.userId,
+        user_role: user?.roles[0] || "unknown",
       });
     } else if (stats) {
       // Track successful dashboard load
@@ -79,7 +78,7 @@ export default function DashboardPage() {
         articles_read: stats.articles_read_count,
         articles_saved: stats.articles_saved_count,
         comments_count: stats.comments_count,
-        user_role: user?.publicMetadata?.role || "unknown",
+        user_role: user?.roles[0] || "unknown",
       });
     }
   }, [error, stats, isLoading, user]);
@@ -151,26 +150,26 @@ export default function DashboardPage() {
     title: string;
     value: number;
     icon: typeof BookOpen;
-    href: Route;
+    href: string;
     color: string;
   }[] = [
     {
       color: "text-[#7CFC00]",
-      href: "/dashboard/history" as Route,
+      href: "/dashboard/history",
       icon: BookOpen,
       title: "Articles Read",
       value: displayStats.articles_read_count,
     },
     {
       color: "text-[#9400D3]",
-      href: "/dashboard/saved" as Route,
+      href: "/dashboard/saved",
       icon: Bookmark,
       title: "Articles Saved",
       value: displayStats.articles_saved_count,
     },
     {
       color: "text-[#7CFC00]",
-      href: "/dashboard/comments" as Route,
+      href: "/dashboard/comments",
       icon: MessageSquare,
       title: "Comments Made",
       value: displayStats.comments_count,
@@ -181,23 +180,23 @@ export default function DashboardPage() {
     title: string;
     description: string;
     icon: typeof History;
-    href: Route;
+    href: string;
   }[] = [
     {
       description: "View articles you've read",
-      href: "/dashboard/history" as Route,
+      href: "/dashboard/history",
       icon: History,
       title: "Reading History",
     },
     {
       description: "Access your saved articles",
-      href: "/dashboard/saved" as Route,
+      href: "/dashboard/saved",
       icon: Bookmark,
       title: "Saved Articles",
     },
     {
       description: "View your comments and replies",
-      href: "/dashboard/comments" as Route,
+      href: "/dashboard/comments",
       icon: MessageSquare,
       title: "My Comments",
     },
@@ -210,7 +209,7 @@ export default function DashboardPage() {
           <div className="mb-8">
             <h1 className="text-4xl font-black mb-2">Dashboard</h1>
             <p className="text-gray-400">
-              Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
+              Welcome back{user?.name.split(" ")[0] ? `, ${user.name.split(" ")[0]}` : ""}!
             </p>
           </div>
 
@@ -219,7 +218,7 @@ export default function DashboardPage() {
             {statsCards.map((card) => {
               const Icon = card.icon;
               return (
-                <Link key={card.title} href={card.href}>
+                <Link key={card.title} to={card.href}>
                   <div className="cursor-pointer rounded-lg border border-gray-800 bg-[#111111] p-3 transition-colors hover:border-[#7CFC00] sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Icon className={`h-5 w-5 sm:h-8 sm:w-8 ${card.color}`} />
@@ -239,7 +238,7 @@ export default function DashboardPage() {
             {actionButtons.map((button) => {
               const Icon = button.icon;
               return (
-                <Link key={button.title} href={button.href}>
+                <Link key={button.title} to={button.href}>
                   <Button className="w-full h-auto p-6 flex flex-col items-start gap-3 bg-[#111111] border border-gray-800 hover:border-[#7CFC00] text-white">
                     <Icon className="w-6 h-6 text-[#7CFC00]" />
                     <div className="text-left">

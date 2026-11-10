@@ -1,12 +1,9 @@
-"use client";
-
 import { useState, useTransition } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
-import { Check, X, Disc, ExternalLink, Pencil, Music, Calendar, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+import { Link } from "@tanstack/react-router";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle, Calendar, Check, Disc, ExternalLink, Music, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { approveMusicSubmission, declineMusicSubmission } from "../actions";
 
@@ -176,7 +174,12 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                 {/* Cover art */}
                 <div className="relative w-28 h-28 shrink-0 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-800 flex items-center justify-center">
                   {sub.coverArt ? (
-                    <Image src={sub.coverArt} alt={sub.title} fill className="object-cover" />
+                    <img
+                      src={sub.coverArt}
+                      alt={sub.title}
+                      className="object-cover"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                    />
                   ) : (
                     <Disc className="w-10 h-10 text-zinc-600" />
                   )}
@@ -319,7 +322,7 @@ export function SubmissionsClient({ initialSubmissions }: SubmissionsClientProps
                     </>
                   )}
 
-                  <Link href={`/admin/music/${sub.id}` as Route}>
+                  <Link to="/admin/music/$id" params={{ id: String(sub.id) }}>
                     <Button
                       size="sm"
                       variant="outline"

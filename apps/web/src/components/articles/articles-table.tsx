@@ -1,19 +1,17 @@
-"use client";
-
+import { Link } from "@tanstack/react-router";
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  type ColumnDef,
-  flexRender,
-} from "@tanstack/react-table";
+
 import type { HomepageArticle } from "@/components/homepage-client";
-import { Search, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { ArrowRight, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 interface ArticlesTableProps {
   articles: HomepageArticle[];
@@ -45,14 +43,15 @@ export function ArticlesTable({
             <div className="flex items-center gap-4 sm:gap-6 py-4">
               {/* Cover Art Thumbnail */}
               <Link
-                href={`/article/${article.slug}`}
+                to="/article/$slug"
+                params={{ slug: String(article.slug) }}
                 className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-[#7CFC00]/60 transition-colors group"
               >
-                <Image
+                <img
                   src={imageSrc}
                   alt={article.title}
-                  fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                 />
               </Link>
 
@@ -66,7 +65,8 @@ export function ArticlesTable({
                 </div>
 
                 <Link
-                  href={`/article/${article.slug}`}
+                  to="/article/$slug"
+                  params={{ slug: String(article.slug) }}
                   className="font-black text-base sm:text-lg text-white hover:text-[#7CFC00] transition-colors line-clamp-1 sm:line-clamp-2 leading-snug group"
                   title={article.title}
                 >
@@ -85,7 +85,8 @@ export function ArticlesTable({
                     </span>
                   </span>
                   <Link
-                    href={`/article/${article.slug}`}
+                    to="/article/$slug"
+                    params={{ slug: String(article.slug) }}
                     className="text-xs font-bold text-[#7CFC00] hover:underline uppercase tracking-wider shrink-0 flex items-center gap-1 ml-2"
                   >
                     Read Story <ArrowRight className="w-3.5 h-3.5" />

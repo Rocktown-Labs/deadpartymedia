@@ -1,0 +1,33 @@
+import { z } from "zod";
+
+export const inviteUserSchema = z.object({
+  email: z.string().email("Must be a valid email address"),
+  role: z.enum(
+    ["super_admin", "writer", "artist", "artmaker", "arts_admin", "arts_writer", "fan"],
+    {
+      message: "Please select a valid role",
+    },
+  ),
+});
+
+export type InviteUserFormData = z.infer<typeof inviteUserSchema>;
+
+export const userUpdateSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  first_name: z.string().min(1, "First name is required").max(150, "First name is too long"),
+  last_name: z.string().min(1, "Last name is required").max(150, "Last name is too long"),
+});
+
+export const passwordChangeSchema = z
+  .object({
+    confirm_password: z.string().min(1, "Please confirm your password"),
+    current_password: z.string().min(1, "Current password is required"),
+    new_password: z.string().min(8, "Password must be at least 8 characters"),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;

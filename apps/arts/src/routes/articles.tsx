@@ -1,7 +1,3 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Sparkles } from "lucide-react";
-import { useMemo } from "react";
 import {
   ArticleFilterBar,
   type ArticleSortOption,
@@ -9,6 +5,10 @@ import {
 import { PageTitleHeader } from "#/components/page-title-header.tsx";
 import { listArtsArticles } from "#/lib/content.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, Sparkles } from "lucide-react";
+import { useMemo } from "react";
 
 export interface ArticlesSearch {
   category?: string;

@@ -1,3 +1,9 @@
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+  RouterContextProvider,
+} from "@tanstack/react-router";
 import { render } from "@testing-library/react";
 import type { RenderOptions } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -25,8 +31,16 @@ export function renderWithProviders(
   ui: ReactElement,
   { queryClient = createTestQueryClient(), ...renderOptions }: CustomRenderOptions = {},
 ) {
+  const router = createRouter({
+    routeTree: createRootRoute(),
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <RouterContextProvider router={router}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </RouterContextProvider>
+    );
   }
 
   return { ...render(ui, { wrapper: Wrapper, ...renderOptions }), queryClient };

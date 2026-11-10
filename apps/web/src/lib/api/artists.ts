@@ -1,3 +1,4 @@
+import { readApiError } from "@/lib/api/errors";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ArticleList } from "./articles";
 import type { EventList } from "./events";
@@ -214,7 +215,7 @@ export function useUpdateArtist() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Update failed" }));
+        const errorData = await readApiError(response);
         throw new Error(errorData.error || "Failed to update artist");
       }
 
@@ -235,7 +236,7 @@ export function useSearchSpotifyArtists(query: string) {
       }
       const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        const errorData = await readApiError(response);
         throw new Error(errorData.error || `Failed to search Spotify (${response.status})`);
       }
       return response.json();

@@ -1,3 +1,10 @@
+import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
+import { getArtmakerBySlug, recordArtmakerProfileView } from "#/lib/artmakers.functions.ts";
+import {
+  type PaginatedArtworksResult,
+  listPublishedArtworksPaginated,
+} from "#/lib/artworks.functions.ts";
+import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,13 +20,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { useEffect } from "react";
-import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-drawer.tsx";
-import { getArtmakerBySlug, recordArtmakerProfileView } from "#/lib/artmakers.functions.ts";
-import {
-  type PaginatedArtworksResult,
-  listPublishedArtworksPaginated,
-} from "#/lib/artworks.functions.ts";
-import { createSeoMeta, getAbsoluteUrl } from "#/lib/seo.ts";
 
 export interface ArtmakerProfileSearch {
   artwork?: string;

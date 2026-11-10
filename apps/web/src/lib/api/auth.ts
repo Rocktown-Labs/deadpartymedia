@@ -1,6 +1,8 @@
+import { authClient } from "@/lib/auth-client";
+import { musicApi } from "@/lib/music-client";
+import { readResponse } from "@dpmedia/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useClerk } from "@clerk/nextjs";
-
+import { useRouter } from "@tanstack/react-router";
 export interface User {
   id: string;
   email: string;
@@ -8,112 +10,98 @@ export interface User {
   role: string;
   avatar?: string | null;
 }
-
 export interface RegisterData {
   email: string;
   password: string;
   name: string;
   userType: "fan" | "artist";
 }
-
 export interface LoginData {
   email: string;
   password: string;
 }
-
-function useUnsupportedLegacyMutation<TPayload>(message: string) {
-  return useMutation<never, Error, TPayload>({
-    mutationFn: async () => {
-      throw new Error(message);
-    },
-  });
-}
-
-export function useLegacyRegisterDisabled() {
-  return useUnsupportedLegacyMutation<RegisterData>(
-    "Register with Clerk UI. Legacy register payload is not supported.",
-  );
-}
-
-export function useRegister() {
-  return useLegacyRegisterDisabled();
-}
-
-export function useLegacyLoginDisabled() {
-  return useUnsupportedLegacyMutation<LoginData>(
-    "Login with Clerk UI. Legacy login payload is not supported.",
-  );
-}
-
-export function useLogin() {
-  return useLegacyLoginDisabled();
-}
-
-export function useLogout() {
-  const { signOut } = useClerk();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      await signOut();
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(["current-user"], null);
-      queryClient.invalidateQueries();
-    },
-  });
-}
-
-export function useCurrentUser() {
-  return useQuery<User | null>({
-    queryFn: async () => {
-      const response = await fetch("/api/auth/me");
-      if (response.status === 401) {
-        return null;
-      }
-      if (!response.ok) {
-        throw new Error("Failed to fetch current user");
-      }
-      try {
-        return await response.json();
-      } catch {
-        return null;
-      }
-    },
-    queryKey: ["current-user"],
-    refetchOnWindowFocus: true,
-    retry: false,
-  });
-}
-
 export interface UserUpdateData {
   first_name: string;
   last_name: string;
   email: string;
 }
-
 export interface PasswordChangeData {
   current_password: string;
   new_password: string;
   confirm_password: string;
 }
-
-export function useLegacyUpdateUserDisabled() {
-  return useUnsupportedLegacyMutation<UserUpdateData>(
-    "Profile updates are handled by Clerk profile. Legacy update payload is not supported.",
-  );
+export function useRegister() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: async (data: RegisterData) => {
+      const result = await authClient.signUp.email({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+      });
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: () => router.invalidate(),
+  });
 }
-
+export function useLogin() {
+  const router = useRouter();
+  return useMutation({
+    mutationFn: async (data: LoginData) => {
+      const result = await authClient.signIn.email(data);
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: () => router.invalidate(),
+  });
+}
+export function useLogout() {
+  const query = useQueryClient(),
+    router = useRouter();
+  return useMutation({
+    mutationFn: async () => {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error(result.error.message);
+    },
+    onSuccess: async () => {
+      query.setQueryData(["current-user"], null);
+      await query.invalidateQueries();
+      await router.invalidate();
+    },
+  });
+}
+export function useCurrentUser() {
+  return useQuery<User | null>({
+    queryKey: ["current-user"],
+    queryFn: async () => readResponse(await musicApi.auth.me.$get({ query: {} })).catch(() => null),
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+}
 export function useUpdateUser() {
-  return useLegacyUpdateUserDisabled();
+  const router = useRouter();
+  return useMutation({
+    mutationFn: async (data: UserUpdateData) => {
+      const result = await authClient.updateUser({
+        name: `${data.first_name} ${data.last_name}`.trim(),
+      });
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+    onSuccess: () => router.invalidate(),
+  });
 }
-
-export function useLegacyChangePasswordDisabled() {
-  return useUnsupportedLegacyMutation<Omit<PasswordChangeData, "confirm_password">>(
-    "Password changes are handled by Clerk profile. Legacy password mutation is not supported.",
-  );
-}
-
 export function useChangePassword() {
-  return useLegacyChangePasswordDisabled();
+  return useMutation({
+    mutationFn: async (data: Omit<PasswordChangeData, "confirm_password">) => {
+      const result = await authClient.changePassword({
+        currentPassword: data.current_password,
+        newPassword: data.new_password,
+        revokeOtherSessions: true,
+      });
+      if (result.error) throw new Error(result.error.message);
+      return result.data;
+    },
+  });
 }

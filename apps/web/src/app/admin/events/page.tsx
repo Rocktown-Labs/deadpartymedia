@@ -1,8 +1,13 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { auth } from "@clerk/nextjs/server";
-import { and, asc, count, desc, eq } from "drizzle-orm";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["admin"]["events"].$get({ query: input.search })),
+  );
+
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { DeleteConfirm } from "@/components/admin/delete-confirm";
@@ -15,108 +20,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ADMIN_PAGE_SIZE,
-  buildSearchParams,
-  getOffsetFromPage,
-  parsePageParam,
-  parseSortOrderParam,
-  parseSortParam,
-} from "@/lib/admin/table-state";
-import { checkRole } from "@/lib/auth/roles";
-import { db } from "@/lib/db";
-import { events } from "@/lib/db/schema";
 import { deleteEvent } from "./actions";
 
-const EVENT_SORT_FIELDS = ["title", "venue", "date", "genre", "status", "createdAt"] as const;
-
-type EventSortField = (typeof EVENT_SORT_FIELDS)[number];
-
-interface EventsSearchParams {
-  order?: string;
-  page?: string;
-  sort?: string;
-}
-
-export default async function EventsPage({
-  searchParams,
-}: {
-  searchParams: Promise<EventsSearchParams>;
-}) {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in" as Route);
-  }
-
-  const isSuperAdmin = await checkRole("super_admin");
-  const isWriter = await checkRole("writer");
-
-  if (!isSuperAdmin && !isWriter) {
-    redirect("/");
-  }
-
-  const params = await searchParams;
-  const page = parsePageParam(params.page);
-  const sort = parseSortParam<EventSortField>(params.sort, EVENT_SORT_FIELDS, "createdAt");
-  const order = parseSortOrderParam(params.order, "desc");
-  const offset = getOffsetFromPage(page, ADMIN_PAGE_SIZE);
-
-  const whereClause = isSuperAdmin
-    ? eq(events.vertical, "music")
-    : and(eq(events.vertical, "music"), eq(events.createdById, userId));
-
-  const totalQuery = db.select({ total: count() }).from(events).where(whereClause);
-  const rowsQuery = db.select().from(events).where(whereClause);
-
-  const [totalRows, filteredEvents] = await Promise.all([
-    totalQuery,
-    rowsQuery
-      .orderBy(
-        sort === "title"
-          ? order === "asc"
-            ? asc(events.title)
-            : desc(events.title)
-          : sort === "venue"
-            ? order === "asc"
-              ? asc(events.venue)
-              : desc(events.venue)
-            : sort === "date"
-              ? order === "asc"
-                ? asc(events.date)
-                : desc(events.date)
-              : sort === "genre"
-                ? order === "asc"
-                  ? asc(events.genre)
-                  : desc(events.genre)
-                : sort === "status"
-                  ? order === "asc"
-                    ? asc(events.status)
-                    : desc(events.status)
-                  : order === "asc"
-                    ? asc(events.createdAt)
-                    : desc(events.createdAt),
-        desc(events.createdAt),
-      )
-      .limit(ADMIN_PAGE_SIZE)
-      .offset(offset),
-  ]);
-
-  const totalCount = Number(totalRows[0]?.total ?? 0);
-  const currentSearchParams = buildSearchParams(
-    params as Record<string, string | string[] | undefined>,
-  );
-
+export default function EventsPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const {
+    isSuperAdmin,
+    isWriter,
+    params,
+    page,
+    order,
+    filteredEvents,
+    totalCount,
+    currentSearchParamsString,
+  } = data;
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-black">Events</h1>
         <div className="flex flex-wrap gap-3">
           {(isSuperAdmin || isWriter) && (
-            <Link href="/admin/events/import">
+            <Link to="/admin/events/import">
               <Button variant="outline">AI Flyer Import</Button>
             </Link>
           )}
-          <Link href="/admin/events/new">
+          <Link to="/admin/events/new">
             <Button>Create New Event</Button>
           </Link>
         </div>
@@ -135,7 +62,7 @@ export default async function EventsPage({
                     field="title"
                     label="Title"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -146,7 +73,7 @@ export default async function EventsPage({
                     field="venue"
                     label="Venue"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -157,7 +84,7 @@ export default async function EventsPage({
                     field="date"
                     label="Date"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -168,7 +95,7 @@ export default async function EventsPage({
                     field="genre"
                     label="Genre"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -179,7 +106,7 @@ export default async function EventsPage({
                     field="status"
                     label="Status"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead>
@@ -190,7 +117,7 @@ export default async function EventsPage({
                     field="createdAt"
                     label="Created"
                     pathname="/admin/events"
-                    searchParams={currentSearchParams}
+                    searchParams={new URLSearchParams(currentSearchParamsString)}
                   />
                 </TableHead>
                 <TableHead className="text-xs font-bold uppercase tracking-wider text-gray-300">
@@ -210,7 +137,8 @@ export default async function EventsPage({
                   <TableRow key={event.id} className="border-gray-800 hover:bg-gray-900">
                     <TableCell className="px-6 py-4">
                       <Link
-                        href={`/admin/events/${event.id}`}
+                        to="/admin/events/$id"
+                        params={{ id: String(event.id) }}
                         className="font-bold transition-colors hover:text-[#7CFC00]"
                       >
                         {event.title}
@@ -239,7 +167,7 @@ export default async function EventsPage({
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-wrap gap-2">
-                        <Link href={`/admin/events/${event.id}`}>
+                        <Link to="/admin/events/$id" params={{ id: String(event.id) }}>
                           <Button variant="outline" size="sm">
                             Edit
                           </Button>
@@ -262,7 +190,7 @@ export default async function EventsPage({
 
         <AdminPagination
           pathname="/admin/events"
-          searchParams={currentSearchParams}
+          searchParams={new URLSearchParams(currentSearchParamsString)}
           page={page}
           totalItems={totalCount}
         />

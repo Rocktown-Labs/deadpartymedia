@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BadgeCheck, CalendarDays, Eye, Images } from "lucide-react";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
-import { listTaggedEventsForCurrentArtmaker } from "#/lib/content.functions.ts";
 import { getCurrentArtmaker } from "#/lib/artmakers.functions.ts";
 import { listCurrentArtworks } from "#/lib/artworks.functions.ts";
+import { listTaggedEventsForCurrentArtmaker } from "#/lib/content.functions.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, BadgeCheck, CalendarDays, Eye, Images } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/")({
   component: Dashboard,

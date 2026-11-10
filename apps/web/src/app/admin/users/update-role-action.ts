@@ -1,7 +1,5 @@
-"use server";
-
-import { updateUserRole } from "./actions";
 import type { Roles } from "@/types/globals";
+import { updateUserRole } from "./actions";
 
 export async function updateRoleAction(formData: FormData) {
   const userId = formData.get("userId") as string;

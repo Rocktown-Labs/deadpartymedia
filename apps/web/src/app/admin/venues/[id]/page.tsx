@@ -1,38 +1,21 @@
-import { notFound, redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { venues } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
-import { checkRole } from "@/lib/auth/roles";
 import { VenueForm } from "@/components/admin/venue-form";
+import { getMusicApi } from "@/lib/api.server";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { updateVenue } from "../actions";
-import type { Route } from "next";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["admin"]["venues"][":id"].$get({
+        param: { id: input.params.id },
+        query: input.search,
+      }),
+    ),
+  );
 
-interface EditVenuePageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-export default async function EditVenuePage({ params }: EditVenuePageProps) {
-  const { id } = await params;
-  const venueId = Number.parseInt(id, 10);
-
-  if (Number.isNaN(venueId)) {
-    notFound();
-  }
-
-  const isSuperAdmin = await checkRole("super_admin");
-  const isWriter = await checkRole("writer");
-  if (!isSuperAdmin && !isWriter) {
-    redirect("/admin");
-  }
-
-  const [venue] = await db.select().from(venues).where(eq(venues.id, venueId)).limit(1);
-
-  if (!venue) {
-    notFound();
-  }
-
+export default function EditVenuePage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { venueId, venue } = data;
   return (
     <div>
       <h1 className="text-3xl font-black mb-8">Edit Venue</h1>
@@ -55,7 +38,7 @@ export default async function EditVenuePage({ params }: EditVenuePageProps) {
           zip: venue.zip,
         }}
         onSubmit={updateVenue.bind(null, venueId)}
-        cancelHref={"/admin/venues" as Route}
+        cancelHref={"/admin/venues"}
       />
     </div>
   );

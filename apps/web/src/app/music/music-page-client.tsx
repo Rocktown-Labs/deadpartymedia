@@ -1,13 +1,10 @@
-"use client";
-
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import Link from "next/link";
-import type { Route } from "next";
-import Image from "next/image";
-import { ArrowLeft, ArrowRight, Disc, Disc3, ExternalLink, Filter, Music } from "lucide-react";
+
 import { PageTitleHeader } from "@/components/page-title-header";
-import { useMusicReleases } from "@/lib/api/music";
 import { Button } from "@/components/ui/button";
+import { useMusicReleases } from "@/lib/api/music";
+import { ArrowLeft, ArrowRight, Disc, Disc3, ExternalLink, Filter, Music } from "lucide-react";
 
 const RELEASE_TYPES = ["All", "Album", "Single", "EP"] as const;
 const GENRES = [
@@ -34,7 +31,7 @@ export default function MusicPage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -128,14 +125,15 @@ export default function MusicPage() {
                   className="group flex flex-col rounded-xl border border-zinc-800/80 bg-zinc-950/60 hover:border-[#7CFC00] transition-all duration-300 overflow-hidden shadow-lg"
                 >
                   <Link
-                    href={`/music/${release.slug}` as Route}
+                    to="/music/$slug"
+                    params={{ slug: String(release.slug) }}
                     className="block relative aspect-square w-full bg-zinc-900 overflow-hidden"
                   >
-                    <Image
+                    <img
                       src={release.coverArt || "/placeholder.svg"}
                       alt={release.title}
-                      fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                     />
                     <div className="absolute top-3 left-3 flex items-center gap-1.5">
                       <span className="bg-black/85 backdrop-blur-xs text-[11px] font-mono font-bold text-[#7CFC00] px-2.5 py-0.5 rounded border border-[#7CFC00]/30 uppercase">
@@ -156,14 +154,15 @@ export default function MusicPage() {
 
                   <div className="p-5 flex flex-col flex-1">
                     <div className="mb-2">
-                      <Link href={`/music/${release.slug}` as Route}>
+                      <Link to="/music/$slug" params={{ slug: String(release.slug) }}>
                         <h3 className="text-xl font-bold text-white group-hover:text-[#7CFC00] transition-colors line-clamp-1">
                           {release.title}
                         </h3>
                       </Link>
                       {release.artistSlug ? (
                         <Link
-                          href={`/artists/${release.artistSlug}`}
+                          to="/artists/$slug"
+                          params={{ slug: String(release.artistSlug) }}
                           className="text-sm text-zinc-400 hover:text-white font-medium transition-colors"
                         >
                           {release.artistName}
@@ -216,7 +215,8 @@ export default function MusicPage() {
                       </div>
 
                       <Link
-                        href={`/music/${release.slug}` as Route}
+                        to="/music/$slug"
+                        params={{ slug: String(release.slug) }}
                         className="text-xs font-mono font-bold text-[#7CFC00] group-hover:translate-x-1 transition-transform flex items-center gap-1"
                       >
                         Read Review

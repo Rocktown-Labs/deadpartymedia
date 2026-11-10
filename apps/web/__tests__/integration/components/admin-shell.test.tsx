@@ -5,16 +5,20 @@ import { renderWithProviders } from "../../../tests/helpers/render";
 let mockPathname = "/admin";
 const mockPush = vi.fn();
 
-vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
-  usePathname: () => mockPathname,
-  useRouter: () => ({
-    back: vi.fn(),
-    prefetch: vi.fn(),
-    push: mockPush,
-    replace: vi.fn(),
-  }),
-  useSearchParams: () => new URLSearchParams(),
-}));
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    useNavigate: () => mockPush,
+    useRouter: () => ({ invalidate: vi.fn(async () => {}), history: { back: vi.fn() } }),
+    useLocation: (options?: {
+      select?: (location: { pathname: string; searchStr: string }) => unknown;
+    }) => {
+      const location = { pathname: mockPathname, searchStr: "" };
+      return options?.select ? options.select(location) : location;
+    },
+  };
+});
 
 import { AdminShell } from "@/app/admin/admin-shell";
 
@@ -108,13 +112,13 @@ describe(AdminShell, () => {
 
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Artist Dashboard" }));
-    expect(mockPush).toHaveBeenCalledWith("/artist-dashboard");
+    expect(mockPush).toHaveBeenCalledWith({ to: "/artist-dashboard" });
 
     await user.click(screen.getByRole("button", { name: "Venue Dashboard" }));
-    expect(mockPush).toHaveBeenCalledWith("/venue-dashboard");
+    expect(mockPush).toHaveBeenCalledWith({ to: "/venue-dashboard" });
 
     await user.click(screen.getByRole("button", { name: "Fan Dashboard" }));
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
+    expect(mockPush).toHaveBeenCalledWith({ to: "/dashboard" });
   });
 
   it("opens the mobile sidebar drawer from the trigger", async () => {

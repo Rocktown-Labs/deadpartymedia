@@ -1,11 +1,9 @@
-"use client";
-
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { revokeInvitation } from "./actions";
-import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/error";
+import { useRouter } from "@tanstack/react-router";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { revokeInvitation } from "./actions";
 
 interface RevokeInvitationButtonProps {
   invitationId: string;
@@ -23,9 +21,11 @@ export function RevokeInvitationButton({ invitationId, email }: RevokeInvitation
         if (result.success) {
           toast.success(`Invitation for ${email} has been revoked.`);
           // Refresh the page to show updated invitation list
-          router.refresh();
+          router.invalidate();
         } else {
-          toast.error(result.error || "Failed to revoke invitation.");
+          toast.error(
+            ("error" in result ? String(result.error) : "") || "Failed to revoke invitation.",
+          );
         }
       } catch (error) {
         toast.error(getErrorMessage(error, "Failed to revoke invitation."));

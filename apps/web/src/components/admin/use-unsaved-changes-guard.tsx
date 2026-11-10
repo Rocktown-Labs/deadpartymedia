@@ -1,8 +1,6 @@
-"use client";
-
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { Route } from "next";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,9 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
+export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: string) {
   const router = useRouter();
-  const [pendingHref, setPendingHref] = useState<Route | null>(null);
+  const navigate = useNavigate();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isDirty) {
@@ -66,7 +65,7 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
       }
 
       event.preventDefault();
-      setPendingHref(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}` as Route);
+      setPendingHref(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
     };
 
     window.history.pushState({ adminUnsavedGuard: true }, "", guardedUrl);
@@ -80,13 +79,13 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
   }, [fallbackHref, isDirty]);
 
   const navigateAway = useCallback(
-    (href: Route = fallbackHref) => {
+    (href: string = fallbackHref) => {
       if (isDirty) {
         setPendingHref(href);
         return;
       }
 
-      router.push(href);
+      navigate({ to: href });
     },
     [fallbackHref, isDirty, router],
   );
@@ -94,7 +93,7 @@ export function useUnsavedChangesGuard(isDirty: boolean, fallbackHref: Route) {
   const discardChanges = useCallback(() => {
     const href = pendingHref ?? fallbackHref;
     setPendingHref(null);
-    router.push(href);
+    navigate({ to: href });
   }, [fallbackHref, pendingHref, router]);
 
   const UnsavedChangesDialog = (

@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, MapPin, Ticket } from "lucide-react";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
 import { requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
 import {
   listTaggedEventsForCurrentArtmaker,
   type TaggedEventListItem,
 } from "#/lib/content.functions.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarDays, MapPin, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/events")({
   beforeLoad: () => requireArtmakerDashboardUser(),

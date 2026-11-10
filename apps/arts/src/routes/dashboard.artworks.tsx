@@ -1,7 +1,23 @@
-import { uploadFiles } from "@better-upload/client";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
+import { Button } from "#/components/ui/button.tsx";
+import { Input } from "#/components/ui/input.tsx";
+import { Label } from "#/components/ui/label.tsx";
+import { Textarea } from "#/components/ui/textarea.tsx";
+import { getCurrentArtmaker, requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
+import {
+  type ArtworkListItem,
+  deleteCurrentArtwork,
+  listCurrentArtworks,
+  saveArtwork,
+  updateCurrentArtwork,
+} from "#/lib/artworks.functions.ts";
+import { uploadMedia } from "#/lib/media-upload";
+import { describeUploadFailures } from "#/lib/upload.ts";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
 import {
@@ -18,22 +34,6 @@ import {
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { Input } from "#/components/ui/input.tsx";
-import { Label } from "#/components/ui/label.tsx";
-import { Textarea } from "#/components/ui/textarea.tsx";
-import { requireArtmakerDashboardUser, getCurrentArtmaker } from "#/lib/artmakers.functions.ts";
-import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
-import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
-import {
-  type ArtworkListItem,
-  deleteCurrentArtwork,
-  listCurrentArtworks,
-  saveArtwork,
-  updateCurrentArtwork,
-} from "#/lib/artworks.functions.ts";
-import { describeUploadFailures } from "#/lib/upload.ts";
 
 const batchArtworkSchema = z.object({
   items: z
@@ -200,11 +200,11 @@ function DashboardArtworks() {
   const uploadMutation = useMutation({
     mutationFn: async (files: File[]) => {
       uploadProgressRef.current.clear();
-      const result = await uploadFiles({
+      const result = await uploadMedia({
         files,
         route: "artwork",
         onFileStateChange: ({ file }) => {
-          const key = file.objectInfo?.key;
+          const key = file.id;
 
           if (key) {
             uploadProgressRef.current.set(

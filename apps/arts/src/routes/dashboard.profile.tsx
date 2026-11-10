@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Settings } from "lucide-react";
 import { ArtmakerDashboardShell } from "#/components/artmaker-dashboard-shell.tsx";
 import { getCurrentArtmaker, requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/profile")({
   beforeLoad: () => requireArtmakerDashboardUser(),

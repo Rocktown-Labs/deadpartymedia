@@ -3,26 +3,39 @@ import { ArtistOnboarding } from "@/app/onboarding/artist-onboarding";
 import { renderWithProviders } from "../../../tests/helpers/render";
 
 // Mock Clerk
-vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
-  useUser: () => ({
-    user: { id: "test-user-id", reload: vi.fn().mockResolvedValue(null) },
-  }),
-  useSession: () => ({
+vi.mock("@/lib/auth-client", () => ({
+  useMusicSession: () => ({
     session: {
-      reload: vi.fn().mockResolvedValue(null),
+      userId: "user_1",
+      name: "Test User",
+      email: "test@example.test",
+      roles: ["fan"],
+      image: null,
     },
+    isPending: false,
   }),
+  authClient: {
+    getSession: vi.fn(async () => ({ data: null })),
+    signOut: vi.fn(async () => ({ error: null })),
+  },
+  musicSessionKey: ["music", "session"],
 }));
 
 // Mock router
-vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
-  useSearchParams: () => ({
-    get: vi.fn().mockReturnValue(null),
-  }),
-}));
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useRouter: () => ({ invalidate: vi.fn(async () => {}), history: { back: vi.fn() } }),
+    useLocation: (options?: {
+      select?: (location: { pathname: string; searchStr: string }) => unknown;
+    }) => {
+      const location = { pathname: "/", searchStr: "" };
+      return options?.select ? options.select(location) : location;
+    },
+  };
+});
 
 // Mock database
 vi.mock<typeof import("@/lib/db")>(import("@/lib/db"), () => ({

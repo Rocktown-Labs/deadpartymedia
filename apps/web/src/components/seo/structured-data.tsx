@@ -1,8 +1,8 @@
 import type { Article } from "@/lib/api/articles";
-import type { Event } from "@/lib/api/events";
 import type { Artist } from "@/lib/api/artists";
-import { getAbsoluteUrl, getImageUrl } from "@/lib/seo";
+import type { Event } from "@/lib/api/events";
 import { escapeJsonLd } from "@/lib/security";
+import { getAbsoluteUrl, getImageUrl } from "@/lib/seo";
 
 interface ArticleStructuredDataProps {
   article: Article;

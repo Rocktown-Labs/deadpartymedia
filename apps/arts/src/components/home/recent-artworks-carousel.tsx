@@ -1,7 +1,7 @@
+import type { ArtworkListItem } from "#/lib/artworks.functions.ts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
 import { ArrowRight, BadgeDollarSign } from "lucide-react";
-import type { ArtworkListItem } from "#/lib/artworks.functions.ts";
 
 interface RecentArtworksCarouselProps {
   artworks: ArtworkListItem[];

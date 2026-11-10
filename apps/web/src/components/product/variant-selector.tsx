@@ -1,9 +1,7 @@
-"use client";
-
-import clsx from "clsx";
-import { useProduct, useUpdateURL } from "./product-context";
 import type { ProductOption, ProductVariant } from "@/lib/types";
+import clsx from "clsx";
 import posthog from "posthog-js";
+import { useProduct, useUpdateURL } from "./product-context";
 
 interface Combination {
   id: string;

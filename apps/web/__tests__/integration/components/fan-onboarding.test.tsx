@@ -4,35 +4,42 @@ import { fanOnboardingAction } from "@/app/onboarding/actions";
 import userEvent from "@testing-library/user-event";
 
 // Mock dependencies
-vi.mock<typeof import("@/app/onboarding/actions")>(import("@/app/onboarding/actions"), () => ({
-  fanOnboardingAction: vi.fn(),
-}));
+vi.mock("@/app/onboarding/actions", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/app/onboarding/actions")>();
+  return { ...actual, fanOnboardingAction: vi.fn(actual.fanOnboardingAction) };
+});
 
-vi.mock<typeof import("next/navigation")>(import("next/navigation"), () => ({
-  useRouter: () => ({
-    prefetch: vi.fn(),
-    push: vi.fn(),
-    replace: vi.fn(),
-  }),
-  useSearchParams: () => ({
-    get: vi.fn().mockReturnValue(null),
-  }),
-}));
-
-vi.mock<typeof import("@clerk/nextjs")>(import("@clerk/nextjs"), () => ({
-  useUser: () => ({
-    isLoaded: true,
-    user: {
-      id: "user_test123",
-      publicMetadata: {},
-      reload: vi.fn().mockResolvedValue(null),
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useRouter: () => ({ invalidate: vi.fn(async () => {}), history: { back: vi.fn() } }),
+    useLocation: (options?: {
+      select?: (location: { pathname: string; searchStr: string }) => unknown;
+    }) => {
+      const location = { pathname: "/", searchStr: "" };
+      return options?.select ? options.select(location) : location;
     },
-  }),
-  useSession: () => ({
+  };
+});
+
+vi.mock("@/lib/auth-client", () => ({
+  useMusicSession: () => ({
     session: {
-      reload: vi.fn().mockResolvedValue(null),
+      userId: "user_1",
+      name: "Test User",
+      email: "test@example.test",
+      roles: ["fan"],
+      image: null,
     },
+    isPending: false,
   }),
+  authClient: {
+    getSession: vi.fn(async () => ({ data: null })),
+    signOut: vi.fn(async () => ({ error: null })),
+  },
+  musicSessionKey: ["music", "session"],
 }));
 
 vi.mock<typeof import("sonner")>(import("sonner"), () => ({
@@ -85,6 +92,7 @@ describe(FanOnboarding, () => {
     mockAction.mockResolvedValue({
       ...({} as any),
       success: true,
+      errors: [],
     });
 
     renderWithProviders(<FanOnboarding />);

@@ -1,6 +1,6 @@
-import * as React from "react";
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -102,4 +102,4 @@ const EmptyContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"
 );
 EmptyContent.displayName = "EmptyContent";
 
-export { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent, EmptyMedia };
+export { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle };

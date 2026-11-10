@@ -1,7 +1,3 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { Image } from "@unpic/react";
-import { ArrowLeft, BadgeDollarSign, Sparkles } from "lucide-react";
-import { useMemo } from "react";
 import {
   ArtistGalleryFilterBar,
   type ArtistGallerySortOption,
@@ -10,6 +6,10 @@ import { ArtworkDetailDrawer } from "#/components/exhibitions/artwork-detail-dra
 import { getArtmakerBySlug } from "#/lib/artmakers.functions.ts";
 import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts";
 import { createSeoMeta } from "#/lib/seo.ts";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { Image } from "@unpic/react";
+import { ArrowLeft, BadgeDollarSign, Sparkles } from "lucide-react";
+import { useMemo } from "react";
 
 export interface ArtmakerGallerySearch {
   artwork?: string;

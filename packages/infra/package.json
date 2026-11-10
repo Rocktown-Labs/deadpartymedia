@@ -1,0 +1,28 @@
+{
+  "name": "@dpmedia/infra",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "dev": "alchemy dev",
+    "plan": "alchemy plan",
+    "deploy": "alchemy deploy",
+    "migration:media": "node scripts/migrate-media.mjs",
+    "migration:import": "node scripts/import-d1.mjs"
+  },
+  "devDependencies": {
+    "@alchemy.run/cloudflare": "2.0.0-beta.84",
+    "@alchemy.run/sql": "2.0.0-beta.84",
+    "@cloudflare/workers-types": "^5.20260906.1",
+    "@dpmedia/config": "workspace:*",
+    "@dpmedia/contracts": "workspace:*",
+    "@effect/platform-bun": "4.0.6",
+    "@effect/platform-node": "4.0.6",
+    "alchemy": "2.0.0-beta.84",
+    "effect": "4.0.6",
+    "typescript": "^6.0.2"
+  }
+}

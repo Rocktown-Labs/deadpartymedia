@@ -1,13 +1,12 @@
-"use client";
-import Link from "next/link";
-import type { Route } from "next";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useArticles } from "@/lib/api/articles";
-import type { ArticleList } from "@/lib/api/articles";
+import { Link } from "@tanstack/react-router";
+
 import { PageTitleHeader } from "@/components/page-title-header";
+import type { ArticleList } from "@/lib/api/articles";
+import { useArticles } from "@/lib/api/articles";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 const categoryOrder = ["COUNTRY", "EDM", "HARDCORE & ROCK", "HIP-HOP & R&B", "OTHER"];
-const categoryRouteMap: Record<string, Route> = {
+const categoryRouteMap: Record<string, string> = {
   COUNTRY: "/country",
   EDM: "/edm",
   "HARDCORE & ROCK": "/hardcore",
@@ -35,7 +34,7 @@ export default function ArticlesPage() {
   };
 
   const ArticleCard = ({ article }: { article: ArticleList }) => (
-    <Link href={`/article/${article.slug}`}>
+    <Link to="/article/$slug" params={{ slug: String(article.slug) }}>
       <div className="border border-gray-800 rounded-lg overflow-hidden hover:border-[#7CFC00] transition-all duration-300 cursor-pointer h-full">
         <div className="relative h-52 overflow-hidden bg-[#111111]">
           <img
@@ -63,7 +62,7 @@ export default function ArticlesPage() {
       <main className="pt-40 pb-20">
         <div className="container mx-auto px-6">
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-all duration-300 transform hover:scale-110"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -92,7 +91,7 @@ export default function ArticlesPage() {
                       <div className="ml-6 h-1 bg-[#7CFC00] grow" style={{ maxWidth: "200px" }} />
                     </div>
                     <Link
-                      href={categoryHref}
+                      to={categoryHref}
                       className="text-[#7CFC00] hover:text-[#7CFC00]/80 flex items-center gap-2 transition-all"
                     >
                       View all

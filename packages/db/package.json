@@ -5,18 +5,27 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    "./schema": "./src/schema.ts",
+    "./d1": "./src/d1/index.ts",
+    "./d1/schema": "./src/d1/schema.ts"
   },
   "scripts": {
-    "check-types": "tsc -p tsconfig.json --noEmit"
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "db:generate:arts": "drizzle-kit generate --config drizzle.arts.config.ts",
+    "db:generate:music": "drizzle-kit generate --config drizzle.music.config.ts",
+    "migration:export": "tsx scripts/export-postgres.ts"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.1",
-    "pg": "^8.16.3"
+    "drizzle-orm": "1.0.0-rc.5",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260906.1",
     "@dpmedia/config": "workspace:*",
     "@types/pg": "^8.15.6",
+    "drizzle-kit": "1.0.0-rc.5",
+    "pg": "^8.16.3",
+    "tsx": "^4.21.0",
     "typescript": "catalog:"
   }
 }

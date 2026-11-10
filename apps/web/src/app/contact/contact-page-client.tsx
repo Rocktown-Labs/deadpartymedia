@@ -1,9 +1,7 @@
-"use client";
-
-import { ArrowLeft, Instagram, ExternalLink } from "lucide-react";
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, ExternalLink, Instagram } from "lucide-react";
 import posthogClient from "posthog-js";
 
 const INSTAGRAM_URL = "https://www.instagram.com/deadpartyy?igsh=MWJxZDdyMXF2MWd5MA==";
@@ -23,7 +21,7 @@ export default function ContactPageClient() {
         <div className="container mx-auto px-6 max-w-4xl">
           {/* Back Button */}
           <Link
-            href="/"
+            to="/"
             className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

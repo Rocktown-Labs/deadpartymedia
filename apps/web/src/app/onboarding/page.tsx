@@ -1,14 +1,13 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import Image from "next/image";
-import { FanOnboarding } from "./fan-onboarding";
-import { ArtistOnboarding } from "./artist-onboarding";
-import { VenueOnboarding } from "./venue-onboarding";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+
 import posthog from "posthog-js";
-import type { Route } from "next";
+import { ArtistOnboarding } from "./artist-onboarding";
+import { FanOnboarding } from "./fan-onboarding";
+import { VenueOnboarding } from "./venue-onboarding";
+
 import { parseRole } from "@/lib/auth/role";
 
 interface OnboardingProfilePayload {
@@ -44,13 +43,17 @@ interface OnboardingProfilePayload {
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, isLoaded } = useUser();
+  const navigate = useNavigate();
+  const searchParams = useLocation({
+    select: (location) => new URLSearchParams(location.searchStr),
+  });
+  const { session: user, isPending: sessionPending } = useMusicSession();
+  const isLoaded = !sessionPending;
   const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | "venue" | undefined>();
   const [profileData, setProfileData] = useState<OnboardingProfilePayload | null>(null);
 
   // Get role information
-  const existingRole = parseRole(user?.publicMetadata?.role);
+  const existingRole = parseRole(user?.roles[0]);
   const roleFromUrlRaw = searchParams.get("role");
   const roleFromUrl =
     roleFromUrlRaw === "fan" || roleFromUrlRaw === "artist" || roleFromUrlRaw === "venue"
@@ -60,7 +63,7 @@ export default function OnboardingPage() {
   // Check if user is loaded and authenticated
   useEffect(() => {
     if (isLoaded && !user) {
-      router.push("/sign-in" as Route);
+      navigate({ to: "/sign-in" });
     }
   }, [isLoaded, user, router]);
 
@@ -78,7 +81,7 @@ export default function OnboardingPage() {
       posthog.capture("onboarding_role_selected", {
         role: roleFromUrl,
         source: "url_param",
-        user_id: user?.id,
+        user_id: user?.userId,
       });
     }
   }, [isLoaded, user, existingRole, roleFromUrl]);
@@ -86,12 +89,12 @@ export default function OnboardingPage() {
   // Check if onboarding is already complete or user has admin role
   useEffect(() => {
     if (isLoaded && user) {
-      const onboardingComplete = user.publicMetadata?.onboardingComplete;
-      const userRole = parseRole(user.publicMetadata?.role);
+      const onboardingComplete = user.onboardingComplete;
+      const userRole = parseRole(user.roles[0]);
 
       // Handle admin roles - redirect them immediately
       if (userRole === "super_admin" || userRole === "writer") {
-        router.push("/admin");
+        navigate({ to: "/admin" });
         return;
       }
 
@@ -109,7 +112,7 @@ export default function OnboardingPage() {
               : userRole === "venue"
                 ? "/venues"
                 : "/dashboard";
-        router.push(destination as Route);
+        navigate({ to: destination });
       }
     }
   }, [isLoaded, user, router, searchParams]);
@@ -198,7 +201,7 @@ export default function OnboardingPage() {
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <Image
+            <img
               src="/images/dead-party-logo.png"
               alt="Dead Party Media"
               width={80}
@@ -226,7 +229,7 @@ export default function OnboardingPage() {
                     // Track onboarding role selection
                     posthog.capture("onboarding_role_selected", {
                       role: "fan",
-                      user_id: user?.id,
+                      user_id: user?.userId,
                     });
                   }}
                   className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${
@@ -249,7 +252,7 @@ export default function OnboardingPage() {
                     // Track onboarding role selection
                     posthog.capture("onboarding_role_selected", {
                       role: "artist",
-                      user_id: user?.id,
+                      user_id: user?.userId,
                     });
                   }}
                   className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${
@@ -272,7 +275,7 @@ export default function OnboardingPage() {
                     // Track onboarding role selection
                     posthog.capture("onboarding_role_selected", {
                       role: "venue",
-                      user_id: user?.id,
+                      user_id: user?.userId,
                     });
                   }}
                   className={`p-5 rounded-lg border-2 transition-all text-left flex flex-col justify-between ${

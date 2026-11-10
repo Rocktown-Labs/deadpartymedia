@@ -47,6 +47,7 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "e2e"],
     // Use threads pool with isolation to prevent stack overflow
     pool: "threads",
+    maxWorkers: 2,
     poolOptions: {
       threads: {
         isolate: true,

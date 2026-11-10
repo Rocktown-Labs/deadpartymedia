@@ -1,24 +1,21 @@
-"use client";
-
 import {
   ArrowLeft,
-  MapPin,
-  Clock,
-  Calendar,
-  ExternalLink,
   Building2,
-  Phone,
+  Calendar,
+  Clock,
+  ExternalLink,
   Globe,
+  MapPin,
+  Phone,
 } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+import { MerchCarousel } from "@/components/merch/merch-carousel";
+import { EventStructuredData } from "@/components/seo/structured-data";
 import { useEvent } from "@/lib/api/events";
 import { useVenues } from "@/lib/api/venues";
 import { isSafeHttpUrl } from "@/lib/security";
-import { EventStructuredData } from "@/components/seo/structured-data";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import posthogClient from "posthog-js";
-import { MerchCarousel } from "@/components/merch/merch-carousel";
 
 interface EventPageClientProps {
   slug: string;
@@ -44,6 +41,7 @@ const getInternalReferrerPath = (): string | null => {
 
 export function EventPageClient({ slug }: EventPageClientProps) {
   const router = useRouter();
+  const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(slug);
   const { data: venuesList = [] } = useVenues();
 
@@ -58,11 +56,11 @@ export function EventPageClient({ slug }: EventPageClientProps) {
   const handleBackClick = () => {
     const internalReferrerPath = getInternalReferrerPath();
     if (internalReferrerPath) {
-      router.back();
+      router.history.back();
       return;
     }
 
-    router.push("/events");
+    navigate({ to: "/events" });
   };
 
   if (isLoading) {
@@ -78,7 +76,7 @@ export function EventPageClient({ slug }: EventPageClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Event Not Found</h1>
-          <Link href="/events" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/events" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Back to Events
           </Link>
         </div>
@@ -124,7 +122,12 @@ export function EventPageClient({ slug }: EventPageClientProps) {
               {/* Event Image */}
               {event.image && (
                 <div className="relative mb-8 flex max-h-[80vh] min-h-[320px] items-center justify-center overflow-hidden rounded-lg border border-gray-800 bg-black md:min-h-[560px]">
-                  <Image src={event.image} alt={event.title} fill className="object-contain" />
+                  <img
+                    src={event.image}
+                    alt={event.title}
+                    className="object-contain"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                  />
                 </div>
               )}
 
@@ -147,16 +150,22 @@ export function EventPageClient({ slug }: EventPageClientProps) {
                         {event.artists.map((artist) => (
                           <Link
                             key={artist.id}
-                            href={`/artists/${artist.slug}`}
+                            to="/artists/$slug"
+                            params={{ slug: String(artist.slug) }}
                             className="flex items-center gap-4 p-4 bg-[#0A0A0A] border border-gray-800 rounded-lg hover:border-[#7CFC00] transition-colors"
                           >
                             {artist.image && (
                               <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0">
-                                <Image
+                                <img
                                   src={artist.image}
                                   alt={artist.name}
-                                  fill
                                   className="object-cover"
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    width: "100%",
+                                    height: "100%",
+                                  }}
                                 />
                               </div>
                             )}

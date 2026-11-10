@@ -1,9 +1,14 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import type { Route } from "next";
-import { and, asc, count, desc, ilike, notInArray, or } from "drizzle-orm";
-import { clerkClient } from "@clerk/nextjs/server";
-import { ARTS_ROLES, isArtsRole } from "@/lib/auth/role";
+import { getMusicApi } from "@/lib/api.server";
+import { parseRole } from "@/lib/auth/role";
+import { readResponse } from "@dpmedia/api-client";
+import { Link } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(await getMusicApi().pages["admin"]["users"].$get({ query: input.search })),
+  );
+
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSortHeader } from "@/components/admin/admin-sort-header";
 import { Badge } from "@/components/ui/badge";
@@ -18,50 +23,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ADMIN_PAGE_SIZE,
-  buildSearchParams,
-  getOffsetFromPage,
-  parsePageParam,
-  parseSortOrderParam,
-  parseSortParam,
-} from "@/lib/admin/table-state";
-import { canManageUsers } from "@/lib/auth/access";
-import { db } from "@/lib/db";
-import { artists, users } from "@/lib/db/schema";
-import { CreateProfilePanel } from "./create-profile-panel";
 import { createProfile, inviteArtistProfile, updateArtistEmail } from "./actions";
+import {
+  DeleteUserButton,
+  InviteUserButton,
+  UserEmailForm,
+  UserRoleSelect,
+} from "./client-actions";
+import { CreateProfilePanel } from "./create-profile-panel";
 import { RevokeInvitationButton } from "./revoke-invitation-button";
 import { SearchUsers } from "./search-users";
-import {
-  UserRoleSelect,
-  UserEmailForm,
-  InviteUserButton,
-  DeleteUserButton,
-} from "./client-actions";
 
 const PLACEHOLDER_EMAIL_DOMAIN = "placeholder.deadpartymedia.local";
-
-const INVITATION_SORT_FIELDS = ["createdAt", "emailAddress", "role"] as const;
-const USER_SORT_FIELDS = ["createdAt", "name", "email", "role"] as const;
-const ARTIST_SORT_FIELDS = ["createdAt", "name", "genre", "email", "claimed"] as const;
-
-type InvitationSortField = (typeof INVITATION_SORT_FIELDS)[number];
-type UserSortField = (typeof USER_SORT_FIELDS)[number];
-type ArtistSortField = (typeof ARTIST_SORT_FIELDS)[number];
-
-interface UsersSearchParams {
-  art_order?: string;
-  art_page?: string;
-  art_sort?: string;
-  inv_order?: string;
-  inv_page?: string;
-  inv_sort?: string;
-  search?: string;
-  usr_order?: string;
-  usr_page?: string;
-  usr_sort?: string;
-}
 
 function isPlaceholderEmail(email: string) {
   return email.toLowerCase().endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
@@ -97,179 +70,35 @@ function getInvitationCreatedAt(invitation: { createdAt?: Date | number | string
 }
 
 async function createProfileAction(formData: FormData) {
-  "use server";
   await createProfile(formData);
 }
 
 async function updateArtistEmailAction(formData: FormData) {
-  "use server";
   await updateArtistEmail(formData);
 }
 
 async function inviteArtistProfileAction(formData: FormData) {
-  "use server";
   await inviteArtistProfile(formData);
 }
 
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<UsersSearchParams>;
-}) {
-  if (!(await canManageUsers())) {
-    redirect("/admin");
-  }
-
-  const params = await searchParams;
-  const query = params.search?.trim() || "";
-
-  const invPage = parsePageParam(params.inv_page);
-  const usrPage = parsePageParam(params.usr_page);
-  const artPage = parsePageParam(params.art_page);
-
-  const invSort = parseSortParam<InvitationSortField>(
-    params.inv_sort,
-    INVITATION_SORT_FIELDS,
-    "createdAt",
-  );
-  const usrSort = parseSortParam<UserSortField>(params.usr_sort, USER_SORT_FIELDS, "createdAt");
-  const artSort = parseSortParam<ArtistSortField>(params.art_sort, ARTIST_SORT_FIELDS, "createdAt");
-
-  const invOrder = parseSortOrderParam(params.inv_order, "desc");
-  const usrOrder = parseSortOrderParam(params.usr_order, "desc");
-  const artOrder = parseSortOrderParam(params.art_order, "desc");
-
-  const userRoleCondition = notInArray(users.role, [...ARTS_ROLES]);
-  const userSearchCondition = query
-    ? or(
-        ilike(users.email, `%${query}%`),
-        ilike(users.firstName, `%${query}%`),
-        ilike(users.lastName, `%${query}%`),
-      )
-    : undefined;
-  const userConditions = userSearchCondition
-    ? and(userRoleCondition, userSearchCondition)
-    : userRoleCondition;
-  const artistConditions = query
-    ? or(ilike(artists.name, `%${query}%`), ilike(artists.email, `%${query}%`))
-    : undefined;
-
-  const userCountQuery = db.select({ total: count() }).from(users);
-  const userRowsQuery = db
-    .select({
-      clerkId: users.clerkId,
-      createdAt: users.createdAt,
-      email: users.email,
-      firstName: users.firstName,
-      id: users.id,
-      lastName: users.lastName,
-      onboardingComplete: users.onboardingComplete,
-      role: users.role,
-    })
-    .from(users);
-
-  const artistCountQuery = db.select({ total: count() }).from(artists);
-  const artistRowsQuery = db
-    .select({
-      claimed: artists.claimed,
-      claimedById: artists.claimedById,
-      createdAt: artists.createdAt,
-      email: artists.email,
-      genre: artists.genre,
-      id: artists.id,
-      location: artists.location,
-      name: artists.name,
-      slug: artists.slug,
-    })
-    .from(artists);
-
-  const [localUsersTotalRows, localUsers, localArtistsTotalRows, localArtists, invitationsResult] =
-    await Promise.all([
-      userCountQuery.where(userConditions),
-      userRowsQuery
-        .where(userConditions)
-        .orderBy(
-          usrSort === "name"
-            ? usrOrder === "asc"
-              ? asc(users.firstName)
-              : desc(users.firstName)
-            : usrSort === "email"
-              ? usrOrder === "asc"
-                ? asc(users.email)
-                : desc(users.email)
-              : usrSort === "role"
-                ? usrOrder === "asc"
-                  ? asc(users.role)
-                  : desc(users.role)
-                : usrOrder === "asc"
-                  ? asc(users.createdAt)
-                  : desc(users.createdAt),
-          usrSort === "name"
-            ? usrOrder === "asc"
-              ? asc(users.lastName)
-              : desc(users.lastName)
-            : desc(users.createdAt),
-        )
-        .limit(ADMIN_PAGE_SIZE)
-        .offset(getOffsetFromPage(usrPage, ADMIN_PAGE_SIZE)),
-      artistConditions ? artistCountQuery.where(artistConditions) : artistCountQuery,
-      (artistConditions ? artistRowsQuery.where(artistConditions) : artistRowsQuery)
-        .orderBy(
-          artSort === "name"
-            ? artOrder === "asc"
-              ? asc(artists.name)
-              : desc(artists.name)
-            : artSort === "genre"
-              ? artOrder === "asc"
-                ? asc(artists.genre)
-                : desc(artists.genre)
-              : artSort === "email"
-                ? artOrder === "asc"
-                  ? asc(artists.email)
-                  : desc(artists.email)
-                : artSort === "claimed"
-                  ? artOrder === "asc"
-                    ? asc(artists.claimed)
-                    : desc(artists.claimed)
-                  : artOrder === "asc"
-                    ? asc(artists.createdAt)
-                    : desc(artists.createdAt),
-          desc(artists.createdAt),
-        )
-        .limit(ADMIN_PAGE_SIZE)
-        .offset(getOffsetFromPage(artPage, ADMIN_PAGE_SIZE)),
-      (await clerkClient()).invitations.getInvitationList(),
-    ]);
-
-  const allInvitations = [...invitationsResult.data]
-    .filter((inv) => !isArtsRole(getInvitationRole(inv)))
-    .toSorted((left, right) => {
-      let comparison = 0;
-
-      if (invSort === "emailAddress") {
-        comparison = left.emailAddress.localeCompare(right.emailAddress);
-      } else if (invSort === "role") {
-        comparison = getInvitationRole(left).localeCompare(getInvitationRole(right));
-      } else {
-        comparison = getInvitationCreatedAt(left) - getInvitationCreatedAt(right);
-      }
-
-      return invOrder === "asc" ? comparison : comparison * -1;
-    });
-
-  const invitationTotal = allInvitations.length;
-  const pagedInvitations = allInvitations.slice(
-    getOffsetFromPage(invPage, ADMIN_PAGE_SIZE),
-    getOffsetFromPage(invPage, ADMIN_PAGE_SIZE) + ADMIN_PAGE_SIZE,
-  );
-
-  const localUsersTotal = Number(localUsersTotalRows[0]?.total ?? 0);
-  const localArtistsTotal = Number(localArtistsTotalRows[0]?.total ?? 0);
-
-  const currentSearchParams = buildSearchParams(
-    params as Record<string, string | string[] | undefined>,
-  );
-
+export default function UsersPage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const {
+    params,
+    query,
+    invPage,
+    usrPage,
+    artPage,
+    invOrder,
+    usrOrder,
+    artOrder,
+    localUsers,
+    localArtists,
+    invitationTotal,
+    pagedInvitations,
+    localUsersTotal,
+    localArtistsTotal,
+    currentSearchParamsString,
+  } = data;
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -316,7 +145,7 @@ export default async function UsersPage({
                         orderParam="inv_order"
                         pageParam="inv_page"
                         pathname="/admin/users"
-                        searchParams={currentSearchParams}
+                        searchParams={new URLSearchParams(currentSearchParamsString)}
                         sortParam="inv_sort"
                       />
                     </TableHead>
@@ -330,7 +159,7 @@ export default async function UsersPage({
                         orderParam="inv_order"
                         pageParam="inv_page"
                         pathname="/admin/users"
-                        searchParams={currentSearchParams}
+                        searchParams={new URLSearchParams(currentSearchParamsString)}
                         sortParam="inv_sort"
                       />
                     </TableHead>
@@ -344,7 +173,7 @@ export default async function UsersPage({
                         orderParam="inv_order"
                         pageParam="inv_page"
                         pathname="/admin/users"
-                        searchParams={currentSearchParams}
+                        searchParams={new URLSearchParams(currentSearchParamsString)}
                         sortParam="inv_sort"
                       />
                     </TableHead>
@@ -383,7 +212,7 @@ export default async function UsersPage({
               pathname="/admin/users"
               page={invPage}
               pageParam="inv_page"
-              searchParams={currentSearchParams}
+              searchParams={new URLSearchParams(currentSearchParamsString)}
               totalItems={invitationTotal}
             />
           </CardContent>
@@ -409,7 +238,7 @@ export default async function UsersPage({
                       orderParam="usr_order"
                       pageParam="usr_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="usr_sort"
                     />
                   </TableHead>
@@ -423,7 +252,7 @@ export default async function UsersPage({
                       orderParam="usr_order"
                       pageParam="usr_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="usr_sort"
                     />
                   </TableHead>
@@ -437,7 +266,7 @@ export default async function UsersPage({
                       orderParam="usr_order"
                       pageParam="usr_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="usr_sort"
                     />
                   </TableHead>
@@ -452,7 +281,7 @@ export default async function UsersPage({
                       orderParam="usr_order"
                       pageParam="usr_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="usr_sort"
                     />
                   </TableHead>
@@ -478,7 +307,8 @@ export default async function UsersPage({
                       <TableRow key={profile.id} className="border-gray-800 hover:bg-[#0F0F0F]">
                         <TableCell>
                           <Link
-                            href={`/admin/users/${profile.id}` as Route}
+                            to="/admin/users/$id"
+                            params={{ id: String(profile.id) }}
                             className="font-medium text-white underline-offset-4 hover:text-[#7CFC00] hover:underline"
                           >
                             {formatUserName(profile)}
@@ -486,16 +316,19 @@ export default async function UsersPage({
                         </TableCell>
                         <TableCell className="text-sm text-gray-300">{profile.email}</TableCell>
                         <TableCell>
-                          <UserRoleSelect userId={profile.id} currentRole={profile.role} />
+                          <UserRoleSelect
+                            userId={profile.id}
+                            currentRole={parseRole(profile.role) || "fan"}
+                          />
                         </TableCell>
                         <TableCell className="text-xs text-gray-400">
-                          <div>{placeholder ? "Local Placeholder" : "Clerk Linked"}</div>
+                          <div>{placeholder ? "Local Placeholder" : "Account Linked"}</div>
                           <div className="mt-1 truncate text-[11px] text-gray-500">
                             {profile.clerkId}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-gray-300">
-                          {profile.createdAt.toLocaleDateString()}
+                          {new Date(profile.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
@@ -520,7 +353,7 @@ export default async function UsersPage({
             pathname="/admin/users"
             page={usrPage}
             pageParam="usr_page"
-            searchParams={currentSearchParams}
+            searchParams={new URLSearchParams(currentSearchParamsString)}
             totalItems={localUsersTotal}
           />
         </CardContent>
@@ -545,7 +378,7 @@ export default async function UsersPage({
                       orderParam="art_order"
                       pageParam="art_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="art_sort"
                     />
                   </TableHead>
@@ -559,7 +392,7 @@ export default async function UsersPage({
                       orderParam="art_order"
                       pageParam="art_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="art_sort"
                     />
                   </TableHead>
@@ -573,7 +406,7 @@ export default async function UsersPage({
                       orderParam="art_order"
                       pageParam="art_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="art_sort"
                     />
                   </TableHead>
@@ -587,7 +420,7 @@ export default async function UsersPage({
                       orderParam="art_order"
                       pageParam="art_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="art_sort"
                     />
                   </TableHead>
@@ -601,7 +434,7 @@ export default async function UsersPage({
                       orderParam="art_order"
                       pageParam="art_page"
                       pathname="/admin/users"
-                      searchParams={currentSearchParams}
+                      searchParams={new URLSearchParams(currentSearchParamsString)}
                       sortParam="art_sort"
                     />
                   </TableHead>
@@ -650,7 +483,7 @@ export default async function UsersPage({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-gray-300">
-                          {artistProfile.createdAt.toLocaleDateString()}
+                          {new Date(artistProfile.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <div className="space-y-2">
@@ -692,7 +525,7 @@ export default async function UsersPage({
             pathname="/admin/users"
             page={artPage}
             pageParam="art_page"
-            searchParams={currentSearchParams}
+            searchParams={new URLSearchParams(currentSearchParamsString)}
             totalItems={localArtistsTotal}
           />
         </CardContent>

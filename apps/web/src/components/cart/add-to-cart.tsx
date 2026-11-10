@@ -1,12 +1,10 @@
-"use client";
-
-import { useFormStatus } from "react-dom";
 import { addItem } from "@/app/cart/actions";
-import { useCart } from "./cart-context";
 import type { Product, ProductVariant } from "@/lib/types";
 import { ShoppingCart } from "lucide-react";
-import { useProduct } from "../product/product-context";
 import posthog from "posthog-js";
+import { useFormStatus } from "react-dom";
+import { useProduct } from "../product/product-context";
+import { useCart } from "./cart-context";
 
 function SubmitButton({ availableForSale }: { availableForSale: boolean }) {
   const { pending } = useFormStatus();

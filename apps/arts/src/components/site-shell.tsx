@@ -1,4 +1,5 @@
-import { Show, SignInButton, SignUpButton, UserButton, useUser } from "@clerk/tanstack-react-start";
+import { useArtsSession } from "#/lib/auth-client";
+import { type ArtsCart, getArtsCart, updateArtsCartItem } from "#/lib/fourthwall.functions.ts";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
@@ -15,7 +16,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { type ArtsCart, getArtsCart, updateArtsCartItem } from "#/lib/fourthwall.functions.ts";
+import { AccountMenu, AuthDialog } from "./auth";
 
 const navItems = [
   { label: "Artmakers", to: "/artmakers" },
@@ -42,8 +43,6 @@ const socialLinks = [
   { href: "https://linktr.ee/deadpartyy", icon: ExternalLink, label: "All Links" },
 ] as const;
 
-const currentDate = new Date();
-const issueDate = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 const CART_STORAGE_KEY = "dead-party-arts-cart-id";
 
 function isArtsStaffRole(role: unknown) {
@@ -52,11 +51,23 @@ function isArtsStaffRole(role: unknown) {
   );
 }
 
-export function SiteShell({ children }: { children: React.ReactNode }) {
+export function SiteShell({
+  children,
+  issuedAt = 0,
+}: {
+  children: React.ReactNode;
+  issuedAt?: number;
+}) {
+  const currentDate = new Date(issuedAt);
+  const issueDate = currentDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const pathname = useLocation({ select: (location) => location.pathname });
   const shouldShowFooter = !(pathname.startsWith("/admin") || pathname.startsWith("/dashboard"));
-  const { user } = useUser();
-  const role = user?.publicMetadata.role;
+  const { session } = useArtsSession();
+  const role = session?.roles.find(isArtsStaffRole);
   const dashboardRoute = isArtsStaffRole(role) ? "/admin" : "/dashboard";
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cart, setCart] = useState<ArtsCart | null>(null);
@@ -128,47 +139,42 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       >
         <ShoppingBag className="size-4" />
       </Link>
-      <Show when="signed-in">
-        <Link
-          to={dashboardRoute}
-          className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
-        >
-          <LayoutDashboard className="size-4" />
-          <span className="ml-2 hidden font-bold text-xs uppercase tracking-wider md:inline">
-            Dashboard
-          </span>
-        </Link>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: "h-11 w-11 border border-gray-800 hover:border-[#7CFC00] rounded-lg",
-              userButtonPopoverActionButton: "text-white hover:bg-gray-900",
-              userButtonPopoverActionButtonText: "text-white",
-              userButtonPopoverCard: "bg-[#0A0A0A] border-gray-800",
-            },
-          }}
-        />
-      </Show>
-      <Show when="signed-out">
-        <SignInButton mode="modal">
-          <button
-            type="button"
-            className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
-            aria-label="Sign in"
+      {session ? (
+        <>
+          <Link
+            to={dashboardRoute}
+            className="flex h-11 items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white no-underline transition-colors hover:border-[#7CFC00]"
           >
-            <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
-          </button>
-        </SignInButton>
-        <SignUpButton mode="modal">
-          <button
-            type="button"
-            className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
-            aria-label="Get started"
-          >
-            <span className="font-bold text-xs uppercase tracking-wider">Get Started</span>
-          </button>
-        </SignUpButton>
-      </Show>
+            <LayoutDashboard className="size-4" />
+            <span className="ml-2 hidden font-bold text-xs uppercase tracking-wider md:inline">
+              Dashboard
+            </span>
+          </Link>
+          <AccountMenu />
+        </>
+      ) : null}
+      {!session ? (
+        <>
+          <AuthDialog mode="sign-in">
+            <button
+              type="button"
+              className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-gray-800 bg-transparent px-3 text-white transition-colors hover:border-[#7CFC00]"
+              aria-label="Sign in"
+            >
+              <span className="font-bold text-xs uppercase tracking-wider">Sign In</span>
+            </button>
+          </AuthDialog>
+          <AuthDialog mode="sign-up">
+            <button
+              type="button"
+              className="flex h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7CFC00] bg-[#7CFC00] px-3 text-black transition-colors hover:bg-[#a5ff43]"
+              aria-label="Get started"
+            >
+              <span className="font-bold text-xs uppercase tracking-wider">Get Started</span>
+            </button>
+          </AuthDialog>
+        </>
+      ) : null}
     </>
   );
 
@@ -178,7 +184,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between border-gray-800/50 border-b py-2 text-gray-500 text-xs tracking-widest">
             <span>
-              ISSUE {currentDate.getMonth() + 1}.{currentDate.getFullYear()}
+              ISSUE {currentDate.getUTCMonth() + 1}.{currentDate.getUTCFullYear()}
             </span>
             <span className="hidden md:block">{issueDate.toUpperCase()}</span>
             <span className="hidden md:block">ARKANSAS ARTS</span>

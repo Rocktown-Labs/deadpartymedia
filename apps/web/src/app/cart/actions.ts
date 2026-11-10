@@ -1,138 +1,41 @@
-"use server";
-
-import { addToCart, createCart, getCart, removeFromCart, updateCart } from "@/lib/fourthwall";
-import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { logger } from "@/lib/logger";
-import { sanitizeError } from "@/lib/logger/sanitize";
-
-const CART_COOKIE_KEY = "dead-party-cart-id";
-const redirectToExternalUrl = redirect as unknown as (url: string) => never;
-
-export async function getCartId(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  return cookieStore.get(CART_COOKIE_KEY)?.value;
-}
-
-async function setCartId(cartId: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(CART_COOKIE_KEY, cartId);
-}
-
-export async function createCartAndSetCookie() {
-  const cart = await createCart();
-  if (!cart.id) {
-    throw new Error("Cart ID missing from Fourthwall createCart response");
-  }
-  await setCartId(cart.id);
-  return cart;
-}
-
-export async function addItem(_prevState: unknown, selectedVariantId: string | undefined) {
+import { musicApi } from "@/lib/music-client";
+import { readResponse } from "@dpmedia/api-client";
+export async function addItem(_state: unknown, merchandiseId?: string) {
+  if (!merchandiseId) return "Select a variant";
   try {
-    const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id;
-
-    if (!cart || !cartId || !selectedVariantId) {
-      return "Error adding item to cart";
-    }
-
-    await addToCart(cartId, [{ merchandiseId: selectedVariantId, quantity: 1 }]);
-    revalidatePath("/");
+    await readResponse(
+      await musicApi.commerce.cart.items.$post({
+        json: { merchandiseId, quantity: 1, operation: "add" },
+      }),
+    );
   } catch {
     return "Error adding item to cart";
   }
 }
-
-export async function removeItem(_prevState: unknown, merchandiseId: string) {
+export async function removeItem(_state: unknown, merchandiseId: string) {
   try {
-    const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id;
-
-    if (!cart || !cartId) {
-      return "Error fetching cart";
-    }
-
-    const lineItem = cart.lines.find((line) => line.merchandise.id === merchandiseId);
-
-    if (lineItem && lineItem.id) {
-      await removeFromCart(cartId, [lineItem.id]);
-      revalidatePath("/");
-    } else {
-      return "Item not found in cart";
-    }
+    await readResponse(
+      await musicApi.commerce.cart.items.$post({
+        json: { merchandiseId, quantity: 0, operation: "delete" },
+      }),
+    );
   } catch {
     return "Error removing item from cart";
   }
 }
-
 export async function updateItemQuantity(
-  _prevState: unknown,
-  payload: {
-    merchandiseId: string;
-    quantity: number;
-  },
+  _state: unknown,
+  data: { merchandiseId: string; quantity: number },
 ) {
-  const { merchandiseId, quantity } = payload;
-
   try {
-    const cart = (await getCart(await getCartId(), "USD")) || (await createCartAndSetCookie());
-    const cartId = cart.id;
-
-    if (!cart || !cartId) {
-      return "Error fetching cart";
-    }
-
-    const lineItem = cart.lines.find((line) => line.merchandise.id === merchandiseId);
-
-    if (lineItem && lineItem.id) {
-      if (quantity === 0) {
-        await removeFromCart(cartId, [lineItem.id]);
-      } else {
-        await updateCart(cartId, [
-          {
-            id: lineItem.id,
-            merchandiseId,
-            quantity,
-          },
-        ]);
-      }
-    } else if (quantity > 0) {
-      await addToCart(cartId, [{ merchandiseId, quantity }]);
-    }
-
-    revalidatePath("/");
-  } catch (error) {
-    logger.error(
-      { error: sanitizeError(error), operation: "update_cart_item_quantity" },
-      "Error updating item quantity",
+    await readResponse(
+      await musicApi.commerce.cart.items.$post({ json: { ...data, operation: "update" } }),
     );
+  } catch {
     return "Error updating item quantity";
   }
 }
-
-export async function redirectToCheckout(_currency: string): Promise<void> {
-  const CHECKOUT_URL = process.env.NEXT_PUBLIC_FW_CHECKOUT;
-  const cartId = await getCartId();
-
-  if (!cartId) {
-    logger.error({ operation: "redirect_to_checkout" }, "Missing cart ID");
-    return;
-  }
-
-  if (!CHECKOUT_URL) {
-    logger.error({ operation: "redirect_to_checkout" }, "Missing checkout URL configuration");
-    return;
-  }
-
-  const cart = await getCart(cartId, "USD");
-
-  if (!cart) {
-    logger.error({ cartId, operation: "redirect_to_checkout" }, "Error fetching cart");
-    return;
-  }
-
-  const checkoutUrl = `${CHECKOUT_URL}/checkout/?cartId=${cartId}&cartCurrency=USD`;
-  redirectToExternalUrl(checkoutUrl);
+export async function redirectToCheckout(_currency: string) {
+  const { url } = await readResponse(await musicApi.commerce.checkout.$get());
+  window.location.assign(url);
 }

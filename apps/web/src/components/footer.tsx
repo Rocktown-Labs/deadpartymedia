@@ -1,9 +1,5 @@
-"use client";
+import { Link } from "@tanstack/react-router";
 
-import Link from "next/link";
-import type { Route } from "next";
-import type { ComponentType, SVGProps } from "react";
-import { ExternalLink } from "lucide-react";
 import { AppleMusicIcon } from "@/components/ui/svgs/appleMusicIcon";
 import { FacebookIcon } from "@/components/ui/svgs/facebookIcon";
 import { InstagramIcon } from "@/components/ui/svgs/instagramIcon";
@@ -11,7 +7,9 @@ import { Reddit } from "@/components/ui/svgs/reddit";
 import { Spotify } from "@/components/ui/svgs/spotify";
 import { Threads } from "@/components/ui/svgs/threads";
 import { Youtube } from "@/components/ui/svgs/youtube";
-import { usePathname } from "next/navigation";
+import { useLocation } from "@tanstack/react-router";
+import { ExternalLink } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 
 interface SocialLink {
   name: string;
@@ -38,7 +36,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   { Icon: ExternalLink, href: "https://linktr.ee/deadpartyy", name: "All Links" },
 ];
 
-const FOOTER_NAV_LINKS: { label: string; href: Route }[] = [
+const FOOTER_NAV_LINKS: { label: string; href: string }[] = [
   { href: "/about", label: "About" },
   { href: "/writers", label: "Meet Our Writers" },
   { href: "/contact", label: "Contact" },
@@ -50,7 +48,7 @@ const EXTERNAL_LINK_PROPS = {
 } as const;
 
 export default function Footer() {
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/artist-dashboard")) {
     return null;
   }
@@ -112,7 +110,7 @@ export default function Footer() {
                 {FOOTER_NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}
-                    href={link.href}
+                    to={link.href}
                     className="block text-sm text-gray-400 hover:text-[#7CFC00] transition-colors"
                   >
                     {link.label}

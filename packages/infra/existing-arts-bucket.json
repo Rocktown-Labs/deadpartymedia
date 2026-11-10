@@ -1,0 +1,27 @@
+{
+  "corsRules": [
+    {
+      "allowed": {
+        "origins": ["https://arts.deadpartymedia.com", "http://localhost:3000"],
+        "methods": ["GET", "PUT", "POST"],
+        "headers": ["Content-Type", "x-amz-*"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ],
+  "lifecycleRules": [
+    {
+      "id": "Default Multipart Abort Rule",
+      "enabled": true,
+      "conditions": {},
+      "abortMultipartUploadsTransition": {
+        "condition": {
+          "type": "Age",
+          "maxAge": 604800
+        }
+      }
+    }
+  ],
+  "publicAccess": true,
+  "domains": []
+}

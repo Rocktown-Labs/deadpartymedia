@@ -1,8 +1,8 @@
-import { useUser } from "@clerk/tanstack-react-start";
+import { useArtsSession } from "#/lib/auth-client";
+import { hasArtsStaffRole } from "#/lib/roles.ts";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { BadgeCheck, CalendarDays, Images, LayoutDashboard, Settings, Shield } from "lucide-react";
-import { getRolesFromMetadata, hasArtsStaffRole } from "#/lib/roles.ts";
 
 interface ArtmakerDashboardShellProps {
   children: React.ReactNode;
@@ -30,8 +30,8 @@ function isActiveRoute(pathname: string, href: NavItem["href"]) {
 
 export function ArtmakerDashboardShell({ children }: ArtmakerDashboardShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const { user } = useUser();
-  const roles = getRolesFromMetadata(user?.publicMetadata);
+  const { session } = useArtsSession();
+  const roles = session?.roles ?? [];
   const isStaff = hasArtsStaffRole(roles);
   const isSuperAdmin = roles.includes("super_admin");
 

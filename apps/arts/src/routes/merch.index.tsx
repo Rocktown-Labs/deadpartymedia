@@ -1,14 +1,14 @@
+import { PageTitleHeader } from "#/components/page-title-header.tsx";
+import { Button } from "#/components/ui/button.tsx";
+import { addArtsCartItem, getArtsProducts, type ArtsProduct } from "#/lib/fourthwall.functions.ts";
+import { createSeoMeta } from "#/lib/seo.ts";
+import { stripHtml } from "#/lib/utils.ts";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image } from "@unpic/react";
 import { ArrowRight, Filter, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PageTitleHeader } from "#/components/page-title-header.tsx";
-import { Button } from "#/components/ui/button.tsx";
-import { addArtsCartItem, getArtsProducts, type ArtsProduct } from "#/lib/fourthwall.functions.ts";
-import { createSeoMeta } from "#/lib/seo.ts";
-import { stripHtml } from "#/lib/utils.ts";
 
 const CART_STORAGE_KEY = "dead-party-arts-cart-id";
 

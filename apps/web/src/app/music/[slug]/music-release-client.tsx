@@ -1,12 +1,11 @@
-"use client";
+import { useMusicSession } from "@/lib/auth-client";
 
-import { useMemo } from "react";
-import { ArrowLeft, Calendar, Share2, Edit, Disc3, ExternalLink, Music, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
-import { useUser } from "@clerk/nextjs";
+import { ArrowLeft, Calendar, Disc3, Edit, ExternalLink, Music, Share2, Video } from "lucide-react";
+import { useMemo } from "react";
+
+import { Link } from "@tanstack/react-router";
+
 import { MerchCarousel } from "@/components/merch/merch-carousel";
 import { useMusicRelease } from "@/lib/api/music";
 import { toast } from "sonner";
@@ -17,16 +16,17 @@ interface MusicReleaseClientProps {
 
 export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
   const { data: release, isLoading } = useMusicRelease(slug);
-  const { isSignedIn, user: currentUser } = useUser();
+  const { session: currentUser } = useMusicSession();
+  const isSignedIn = !!currentUser;
 
   const canEdit = useMemo(() => {
     if (!isSignedIn || !currentUser || !release) {
       return false;
     }
-    const role = (currentUser.publicMetadata?.role as string | undefined)?.toLowerCase();
+    const role = (currentUser.roles[0] as string | undefined)?.toLowerCase();
     const isSuperAdmin = role === "super_admin";
     const isWriter = role === "writer";
-    const isAuthor = currentUser.id === release.author?.id;
+    const isAuthor = currentUser.userId === release.author?.id;
     return isSuperAdmin || (isWriter && isAuthor);
   }, [isSignedIn, currentUser, release]);
 
@@ -70,7 +70,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
       <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-black mb-4">Release Not Found</h1>
-          <Link href="/music" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
+          <Link to="/music" className="text-[#7CFC00] hover:text-[#7CFC00]/80">
             Return to Music
           </Link>
         </div>
@@ -85,7 +85,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
           <div className="max-w-4xl mx-auto">
             {/* Back Button */}
             <Link
-              href="/music"
+              to="/music"
               className="inline-flex items-center text-[#7CFC00] hover:text-[#7CFC00]/80 mb-8 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -116,7 +116,8 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
               <div className="text-xl md:text-2xl font-bold text-zinc-300 mb-6">
                 {release.artistSlug ? (
                   <Link
-                    href={`/artists/${release.artistSlug}`}
+                    to="/artists/$slug"
+                    params={{ slug: String(release.artistSlug) }}
                     className="hover:text-[#7CFC00] transition-colors"
                   >
                     by {release.artistName}
@@ -138,7 +139,7 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                   Share Release
                 </Button>
                 {canEdit && (
-                  <Link href={`/admin/music/${release.id}` as Route}>
+                  <Link to="/admin/music/$id" params={{ id: String(release.id) }}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -156,12 +157,13 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12 items-start">
               <div className="md:col-span-6">
                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl">
-                  <Image
+                  <img
                     src={release.coverArt || "/placeholder.svg"}
                     alt={release.title}
-                    fill
-                    priority
+                    loading="eager"
+                    fetchPriority="high"
                     className="object-cover"
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                   />
                 </div>
               </div>
@@ -267,11 +269,11 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                 <div className="flex items-start gap-4">
                   {release.artistImage && (
                     <div className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 border border-zinc-700">
-                      <Image
+                      <img
                         src={release.artistImage}
                         alt={release.artistName}
-                        fill
                         className="object-cover"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       />
                     </div>
                   )}
@@ -281,7 +283,8 @@ export function MusicReleaseClient({ slug }: MusicReleaseClientProps) {
                     <p className="text-sm text-zinc-300 leading-relaxed">{release.artistBio}</p>
                     {release.artistSlug && (
                       <Link
-                        href={`/artists/${release.artistSlug}`}
+                        to="/artists/$slug"
+                        params={{ slug: String(release.artistSlug) }}
                         className="inline-block mt-3 text-xs font-mono font-bold text-[#7CFC00] hover:underline"
                       >
                         View Artist Profile →

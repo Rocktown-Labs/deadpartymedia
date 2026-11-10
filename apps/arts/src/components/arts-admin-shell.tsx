@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/tanstack-react-start";
+import { useArtsSession } from "#/lib/auth-client";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -11,7 +11,6 @@ import {
   Users,
   UsersRound,
 } from "lucide-react";
-import { getRolesFromMetadata } from "#/lib/roles.ts";
 
 interface ArtsAdminShellProps {
   children: React.ReactNode;
@@ -64,8 +63,8 @@ function formatRole(role: unknown) {
 
 export function ArtsAdminShell({ children, role }: ArtsAdminShellProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
-  const { user } = useUser();
-  const roles = getRolesFromMetadata(user?.publicMetadata);
+  const { session } = useArtsSession();
+  const roles = session?.roles ?? [];
   const isSuperAdmin = roles.includes("super_admin") || role === "super_admin";
   const isArtmaker = roles.includes("artmaker");
   const canManageStaff = role === "super_admin" || role === "admin" || role === "arts_admin";

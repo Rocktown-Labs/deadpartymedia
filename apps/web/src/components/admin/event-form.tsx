@@ -1,10 +1,13 @@
-"use client";
+import { uploadMusicImage } from "@/lib/upload";
 
 import { useMemo, useRef, useState } from "react";
-import NextImage from "next/image";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -13,16 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useArtists } from "@/lib/api/artists";
 import { useVenues } from "@/lib/api/venues";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import type { Route } from "next";
-import { toast } from "sonner";
+
 import { validateImageFile } from "@/lib/upload";
 import { getErrorMessage, isNextRedirectError } from "@/lib/utils/error";
+import { toast } from "sonner";
 import { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";
 
 interface EventFormProps {
@@ -43,7 +43,7 @@ interface EventFormProps {
     artistIds?: number[];
   };
   onSubmit: (formData: FormData) => void | Promise<unknown>;
-  cancelHref: Route;
+  cancelHref: string;
   allowImageUrl?: boolean;
   isSubmitting?: boolean;
 }
@@ -149,20 +149,9 @@ export function EventForm({
     const loadingId = toast.loading("Uploading event image...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const response = await uploadMusicImage(file, "event");
 
-      const response = await fetch("/api/upload/image?type=event", {
-        body: formData,
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Upload failed" }));
-        throw new Error(error.error || "Failed to upload image");
-      }
-
-      const { url } = await response.json();
+      const { url } = response;
       setImage(url);
       setUseImageUrl(false);
       toast.success("Event image uploaded successfully");
@@ -320,7 +309,12 @@ export function EventForm({
             </div>
             {image && (
               <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
-                <NextImage src={image} alt="Event image preview" fill className="object-cover" />
+                <img
+                  src={image}
+                  alt="Event image preview"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+                  className="object-cover"
+                />
               </div>
             )}
           </div>

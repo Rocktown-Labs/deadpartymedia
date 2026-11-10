@@ -1,7 +1,20 @@
-import type { Metadata } from "next";
+import { getMusicApi } from "@/lib/api.server";
 import { getMusicRelease } from "@/lib/api/server";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
+import { readResponse } from "@dpmedia/api-client";
+import { createServerFn } from "@tanstack/react-start";
 import { MusicReleaseClient } from "./music-release-client";
+export const loadPage = createServerFn({ method: "GET" })
+  .validator((input: { params: Record<string, string>; search: Record<string, string> }) => input)
+  .handler(async ({ data: input }) =>
+    readResponse(
+      await getMusicApi().pages["music"][":slug"].$get({
+        param: { slug: input.params.slug },
+        query: input.search,
+      }),
+    ),
+  );
 
 interface MusicReleasePageProps {
   params: Promise<{
@@ -46,7 +59,11 @@ export const generateMetadata = async ({ params }: MusicReleasePageProps): Promi
   };
 };
 
-export default async function MusicReleasePage({ params }: MusicReleasePageProps) {
-  const { slug } = await params;
+export default function MusicReleasePage({ data }: { data: Awaited<ReturnType<typeof loadPage>> }) {
+  const { slug } = data;
   return <MusicReleaseClient slug={slug} />;
 }
+
+export const loadPageMetadata = createServerFn({ method: "GET" })
+  .validator((params: { slug: string }) => params)
+  .handler(({ data }) => generateMetadata({ params: Promise.resolve(data) }));

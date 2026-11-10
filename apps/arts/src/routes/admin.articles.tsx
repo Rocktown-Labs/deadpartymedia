@@ -1,23 +1,15 @@
-import { uploadFiles } from "@better-upload/client";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { Check, Edit, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { ArtsAdminShell } from "#/components/arts-admin-shell.tsx";
 import { ArtsImageUploader } from "#/components/arts-image-uploader.tsx";
-import { MultiSelect } from "#/components/multi-select.tsx";
 import { ArtsRichTextEditor } from "#/components/arts-rich-text-editor.tsx";
+import { MultiSelect } from "#/components/multi-select.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
-import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
-import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
-import { isArtsAdminRole } from "#/lib/roles.ts";
-import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { listAdminArtmakers } from "#/lib/admin.functions.ts";
+import { createArtsArtmakerStub, requireArtsStaff } from "#/lib/artmakers.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import { getUploadedObjectKey } from "#/lib/artwork-drafts.ts";
 import {
   createArtsArticle,
   deleteArtsArticle,
@@ -26,6 +18,14 @@ import {
   updateArtsArticle,
   type ArtsArticleListItem,
 } from "#/lib/content.functions.ts";
+import { uploadMedia } from "#/lib/media-upload";
+import { isArtsAdminRole } from "#/lib/roles.ts";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Check, Edit, Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/articles")({
   beforeLoad: () => requireArtsStaff(),
@@ -102,7 +102,7 @@ function AdminArticles() {
   };
 
   const uploadArticleImage = async (file: File) => {
-    const result = await uploadFiles({
+    const result = await uploadMedia({
       files: [file],
       route: "articleImages",
     });

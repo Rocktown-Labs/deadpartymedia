@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { PageMetadata as Metadata } from "@/lib/page-head";
 import { getAbsoluteUrl, getSiteDefaults } from "@/lib/seo";
 import HardcorePage from "./hardcore-page-client";
 
