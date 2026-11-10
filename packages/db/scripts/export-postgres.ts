@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { Client } from "pg";
+import { Client, types } from "pg";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import * as schema from "../src/d1/schema";
@@ -47,6 +47,9 @@ if (!connectionString || !values.out)
   );
 const out = path.resolve(values.out);
 await mkdir(out, { recursive: true, mode: 0o700 });
+// PostgreSQL DATE is a calendar day, not an instant. Keep its wire-format
+// YYYY-MM-DD value instead of pg converting it to a local-midnight Date.
+types.setTypeParser(1082, (value) => value);
 const client = new Client({ connectionString });
 const snapshot: Record<string, Record<string, unknown>[]> = {};
 const identifier = (name: string) => `"${name.replaceAll('"', '""')}"`;
