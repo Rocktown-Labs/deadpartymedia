@@ -25,4 +25,12 @@ describe("HTML and image boundaries", () => {
       "https://media.example.test/image.png",
     );
   });
+  it("encodes image URL delimiters without changing escapes or query separators", () => {
+    expect(safeImageUrl("https://media.example.test/image%20name.jpg?x=a&y=b")).toBe(
+      "https://media.example.test/image%20name.jpg?x=a&y=b",
+    );
+    expect(safeImageUrl('https://media.example.test/image.jpg#<svg onload="x">')).not.toMatch(
+      /[<>"'`]/,
+    );
+  });
 });

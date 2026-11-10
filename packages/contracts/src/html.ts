@@ -25,9 +25,13 @@ export function safeImageUrl(value: string | null | undefined): string {
   try {
     const url = new URL(value, "https://relative.invalid");
     if (url.protocol !== "https:" && url.protocol !== "http:") return "";
-    return url.origin === "https://relative.invalid"
-      ? `${url.pathname}${url.search}${url.hash}`
-      : url.href;
+    const normalized =
+      url.origin === "https://relative.invalid"
+        ? `${url.pathname}${url.search}${url.hash}`
+        : url.href;
+    // Percent-encode HTML delimiters without double-encoding existing URL escapes
+    // or changing query separators. React receives a URL, not HTML entities.
+    return normalized.replace(/[<>"'`]/g, (character) => encodeURIComponent(character));
   } catch {
     return "";
   }
