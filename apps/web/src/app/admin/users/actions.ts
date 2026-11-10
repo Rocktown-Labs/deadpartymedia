@@ -128,6 +128,22 @@ export async function inviteUser(
       publicMetadata.onboardingComplete = true;
     }
 
+    // Revoke any existing pending invitations for this email to prevent accumulating duplicates
+    try {
+      const existingList = await client.invitations.getInvitationList({
+        limit: 500,
+        status: "pending",
+      });
+      const pendingForEmail = existingList.data.filter(
+        (inv) => inv.emailAddress.toLowerCase() === validatedData.email.toLowerCase(),
+      );
+      for (const inv of pendingForEmail) {
+        await client.invitations.revokeInvitation(inv.id);
+      }
+    } catch {
+      // Continue even if revoking prior invites fails
+    }
+
     await client.invitations.createInvitation({
       emailAddress: validatedData.email,
       expiresInDays: 7,
@@ -397,8 +413,25 @@ export async function inviteArtistProfile(formData: FormData) {
     return { error: "Set a real email before sending invite", success: false };
   }
 
+  const artistEmail = artist.email.trim().toLowerCase();
   const client = await clerkClient();
   try {
+    // Revoke any existing pending invitations for this email to prevent accumulating duplicates
+    try {
+      const existingList = await client.invitations.getInvitationList({
+        limit: 500,
+        status: "pending",
+      });
+      const pendingForEmail = existingList.data.filter(
+        (inv) => inv.emailAddress.toLowerCase() === artistEmail,
+      );
+      for (const inv of pendingForEmail) {
+        await client.invitations.revokeInvitation(inv.id);
+      }
+    } catch {
+      // Continue even if revoking prior invites fails
+    }
+
     await client.invitations.createInvitation({
       emailAddress: artist.email,
       expiresInDays: 7,

@@ -66,6 +66,7 @@ describe("user invitation actions", () => {
         url = "https://clerk.accounts.dev/sign-up?ticket=xyz";
       }
 
+      mockGetInvitationList.mockResolvedValue({ data: [], totalCount: 0 });
       mockCreateInvitation.mockResolvedValue(new ClerkInvitation());
 
       const result = await inviteUser("writer@example.com", "writer");
@@ -81,6 +82,32 @@ describe("user invitation actions", () => {
             onboardingComplete: true,
             role: "writer",
           }),
+        }),
+      );
+    });
+
+    it("auto-revokes any existing pending invitation for the same email before creating a new one", async () => {
+      mockGetInvitationList.mockResolvedValue({
+        data: [
+          {
+            emailAddress: "writer@example.com",
+            id: "inv_old",
+            status: "pending",
+          },
+        ],
+        totalCount: 1,
+      });
+      mockRevokeInvitation.mockResolvedValue({ id: "inv_old", status: "revoked" });
+      mockCreateInvitation.mockResolvedValue({ id: "inv_new" });
+
+      const result = await inviteUser("writer@example.com", "writer");
+
+      expect(result).toStrictEqual({ success: true });
+      expect(mockRevokeInvitation).toHaveBeenCalledWith("inv_old");
+      expect(mockCreateInvitation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          emailAddress: "writer@example.com",
+          ignoreExisting: true,
         }),
       );
     });

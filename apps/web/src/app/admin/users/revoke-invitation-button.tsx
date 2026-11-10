@@ -18,18 +18,19 @@ interface RevokeInvitationButtonProps {
 export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvitationButtonProps) {
   const [isRevoking, startRevokeTransition] = useTransition();
   const [isResending, startResendTransition] = useTransition();
+  const [activeUrl, setActiveUrl] = useState<string | null | undefined>(url);
   const [hasCopied, setHasCopied] = useState(false);
   const router = useRouter();
 
   const isBusy = isRevoking || isResending;
 
   const handleCopyLink = async () => {
-    if (!url) {
+    if (!activeUrl) {
       toast.error("Direct invitation link is not available for this record.");
       return;
     }
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(activeUrl);
       setHasCopied(true);
       toast.success(`Invitation link for ${email} copied to clipboard!`);
       setTimeout(() => setHasCopied(false), 2000);
@@ -43,6 +44,9 @@ export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvit
       try {
         const result = await resendInvitation(invitationId, email);
         if (result.success) {
+          if (result.url) {
+            setActiveUrl(result.url);
+          }
           toast.success(`Invitation resent to ${email}`);
           router.refresh();
         } else {
@@ -72,7 +76,7 @@ export function RevokeInvitationButton({ invitationId, email, url }: RevokeInvit
 
   return (
     <div className="flex items-center gap-2">
-      {url && (
+      {activeUrl && (
         <Button
           type="button"
           variant="outline"
