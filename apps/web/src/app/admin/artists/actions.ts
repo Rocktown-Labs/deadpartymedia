@@ -86,10 +86,28 @@ export async function createArtist(formData: FormData) {
 
   // If invitation is requested and email is provided, send invitation
   if (inviteArtist && validatedData.email) {
+    const artistEmail = validatedData.email.trim().toLowerCase();
     const client = await clerkClient();
     try {
+      try {
+        const existingList = await client.invitations.getInvitationList({
+          limit: 500,
+          status: "pending",
+        });
+        const pendingForEmail = existingList.data.filter(
+          (inv) => inv.emailAddress.toLowerCase() === artistEmail,
+        );
+        for (const inv of pendingForEmail) {
+          await client.invitations.revokeInvitation(inv.id);
+        }
+      } catch {
+        // Continue even if revoking prior invites fails
+      }
+
       await client.invitations.createInvitation({
         emailAddress: validatedData.email,
+        expiresInDays: 7,
+        ignoreExisting: true,
         publicMetadata: {
           artistId: artist.id.toString(),
           role: "artist",
@@ -203,8 +221,25 @@ export async function inviteArtistToClaim(artistId: number, email: string) {
   const client = await clerkClient();
 
   try {
+    try {
+      const existingList = await client.invitations.getInvitationList({
+        limit: 500,
+        status: "pending",
+      });
+      const pendingForEmail = existingList.data.filter(
+        (inv) => inv.emailAddress.toLowerCase() === email.toLowerCase(),
+      );
+      for (const inv of pendingForEmail) {
+        await client.invitations.revokeInvitation(inv.id);
+      }
+    } catch {
+      // Continue even if revoking prior invites fails
+    }
+
     await client.invitations.createInvitation({
       emailAddress: email,
+      expiresInDays: 7,
+      ignoreExisting: true,
       publicMetadata: {
         artistId: artistId.toString(),
         role: "artist",
