@@ -33,7 +33,7 @@ D1 stores relational data, JSON values as SQLite JSON text, timestamps as millis
 
 ## Current verification and rollout state
 
-The pending Cloudflare zone for `deadpartymedia.com` contains the Vercel and Clerk records from the authoritative Vercel DNS inventory. Vercel remains the authoritative DNS provider until the registrar delegates to Cloudflare. The migration has left the live Vercel deployments, Clerk, Neon data, and the existing production arts R2 bucket in place. No production SQL push or schema migration was performed.
+The `deadpartymedia.com` zone was seeded from the Vercel DNS inventory before Route 53 delegated it to Cloudflare. The Vercel deployments, Clerk instance, and Neon database are retained for rollback. The production Arts Worker uses the existing Arts R2 bucket.
 
 The invitation resend/copy-link changes from current `master` are retained with native delivery and app-scoped replacement of pending invitations. Stored tokens remain hashed; new links are returned only to the authorized inviter.
 
@@ -55,7 +55,7 @@ The complete source has 37 user rows; domain exports deliberately select relevan
 
 Verified behavior includes populated home pages on desktop/mobile, arts admin, music admin and article editor, an existing full article and canonical metadata, native password authentication, scoped access denial, invitations/replay checks, D1 editorial writes, native R2 upload/read bytes, and an empty native Workflow run. Tests run inside workerd for the API, including bcrypt credentials retaining original Clerk IDs. The request clock is serialized through root loaders to avoid Workers' epoch date during module evaluation.
 
-**Live cutover remains pending:** production Clerk exports and the scoped membership map are now prepared and imported into the isolated preview auth D1. Configure and verify Google/email credentials, import and verify production D1/R2, move Media DNS to Cloudflare, then attach domains. Production Clerk and Vercel hosting remain untouched. See [Better Auth UI and cross-domain sign-in](better-auth-ui.md). OAuth callbacks, outbound mail, paid AI inference, and live Fourthwall checkout need verification with their production configurations.
+**Live cutover completed November 10, 2026.** Production uses `www.deadpartymedia.com`, `deadpartyarts.com`, and `api.deadpartymedia.com`. Both app databases and the shared identity database passed their D1 foreign-key checks. The production Media R2 copy verified 131 assets, and the Arts legacy redirect preserves paths and query strings. See [Better Auth UI and cross-domain sign-in](better-auth-ui.md).
 
 ## Development and quality gates
 
@@ -146,7 +146,7 @@ Auth imports use conflict protection rather than overwriting an existing identit
 
 1. Keep the current Vercel/Clerk/Neon deployment available. Inventory the production plan and existing bucket settings. Use Alchemy's explicit `--adopt` only for the verified pre-existing arts R2 bucket; physical production names stay exact.
 2. Deploy stage `production` with `BIND_DOMAINS=false`. Import the final frozen domain snapshot, media, and reviewed identity/membership export. Verify row counts, IDs, representative content, private admin views, editor writes, R2 reads, login methods, email, and checkout. Verify that an arts-only role cannot authorize music writes.
-3. Attach domains only after those checks. `BIND_DOMAINS=true pnpm run deploy --stage production --adopt --yes` configures arts plus canonical `www.deadpartymedia.com`, with apex redirect. The API remains accessible for mobile; frontends use service bindings. Audit trusted origins and Google callback settings against final domains.
+3. Attach domains after the checks. Set `BIND_DOMAINS=true` in the private production environment file and pass it to Alchemy with `--env-file`. Cloudflare requires replacing an externally managed DNS record at any Worker custom hostname. Save that record before replacement so it can be restored if attachment fails. The production API is accessible for mobile and both frontends use service bindings.
 4. Keep source systems during a rollback window. Record the cutover time and freeze old writes. Do not dual-write auth credentials. If rolling back before new writes, restore the previous DNS/deployment. If Cloudflare has received writes, freeze writes, export D1/R2 changes and reconcile them into the old system before restoring write access; a DNS rollback alone would lose those writes. New Better Auth-only credentials require their own recovery plan before restoring Clerk.
 5. Decommission Vercel, Neon, Clerk, old Blob assets and the old `dpmedia-api` Worker only after reconciliation and the rollback window. Do not destroy retained production D1/R2 resources with a stack cleanup.
 

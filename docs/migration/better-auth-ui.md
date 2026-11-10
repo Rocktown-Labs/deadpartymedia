@@ -25,13 +25,13 @@ https://api.deadpartymedia.com/api/auth/callback/google
 
 Both apps' preview/production origins can be listed as authorized JavaScript origins; production uses `deadpartyarts.com`, `deadpartymedia.com`, and the existing `www.deadpartymedia.com` canonical host. In Google's branding settings, authorized domains are the two owned root domains. Keep the existing Clerk callbacks until the old production apps are cut over. Client secrets belong in the ignored infrastructure `.env`, never a frontend environment or git.
 
-Production domain attachment remains gated by `BIND_DOMAINS`. Move the `deadpartymedia.com` DNS zone to Cloudflare, preserving its mail and other records, before enabling it. Alchemy then configures `arts.deadpartymedia.com` to permanently redirect to `deadpartyarts.com`, preserving the path and query. Registrar transfer is not required for Cloudflare DNS/Workers hosting. The redirect is configured for cutover; preview deployment does not alter live DNS.
+Production uses `BIND_DOMAINS=true` in its private Alchemy environment file. Alchemy configures `arts.deadpartymedia.com` to permanently redirect to `deadpartyarts.com`, preserving the path and query. Route 53 remains the registrar and Cloudflare hosts DNS.
 
 ## Transactional email
 
 The shared API uses the Workers Email Sending binding for codes, verification, password resets, and invitations. PR #170 uses `accounts@auth-pr-167.deadpartyarts.com`, a dedicated Cloudflare sending subdomain. The preview environment must keep that `MAIL_FROM` and the Arts Cloudflare `MAIL_SENDING_ZONE_ID` on redeploys so Alchemy retains the preview sender configuration. Message content previews in Cloudflare's activity log are disabled.
 
-Use a separate production environment. Set `MAIL_FROM` to an address on an onboarded sending domain, or set `MAIL_SENDING_ZONE_ID` with a dedicated sending subdomain in `MAIL_FROM` to have Alchemy provision it. For a Media sender, onboard it after the Media zone is active on Cloudflare DNS. Verify delivery from the production API before attaching the site domains.
+Production uses the separate Alchemy-managed sender `accounts@auth.deadpartymedia.com`. Set `MAIL_FROM` to an address on an onboarded sending domain, or set `MAIL_SENDING_ZONE_ID` with a dedicated sending subdomain in `MAIL_FROM` to have Alchemy provision it.
 
 ## Clerk migration
 
