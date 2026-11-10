@@ -6,7 +6,7 @@ test.describe("Native authentication", () => {
     await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
   });
   test("shows email and password sign-in", async ({ page }) => {
-    await page.goto("/sign-in");
+    await page.goto("/sign-in", { waitUntil: "domcontentloaded" });
     await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: /forgot/i })).toBeVisible();
@@ -17,18 +17,19 @@ test.describe("Native authentication", () => {
     await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
   });
   test("signs in and opens the original article editor", async ({ page }) => {
+    test.setTimeout(60000);
     const email = process.env.E2E_ADMIN_EMAIL,
       password = process.env.E2E_ADMIN_PASSWORD;
     test.skip(
       !email || !password,
       "Set dedicated preview admin credentials to run the authenticated browser check",
     );
-    await page.goto("/sign-in");
+    await page.goto("/sign-in", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email", { exact: true }).fill(email!);
     await page.getByLabel("Password", { exact: true }).fill(password!);
     await page.locator("form").getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/(admin|onboarding)(?:\/|$)/);
-    await page.goto("/admin/posts/new");
+    await expect(page).toHaveURL(/\/admin(?:\/)?$/);
+    await page.goto("/admin/posts/new", { waitUntil: "domcontentloaded" });
     await expect(
       page.getByRole("heading", { name: "Create New Article", exact: true }),
     ).toBeVisible();

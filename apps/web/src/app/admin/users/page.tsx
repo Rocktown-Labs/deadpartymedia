@@ -177,7 +177,7 @@ export default function UsersPage({ data }: { data: Awaited<ReturnType<typeof lo
                         sortParam="inv_sort"
                       />
                     </TableHead>
-                    <TableHead className="w-[180px] text-xs font-bold uppercase tracking-wider text-gray-300">
+                    <TableHead className="w-[280px] text-xs font-bold uppercase tracking-wider text-gray-300">
                       Actions
                     </TableHead>
                   </TableRow>

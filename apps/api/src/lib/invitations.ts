@@ -1,7 +1,7 @@
 import { createIdentityDatabase } from "@dpmedia/auth";
 import { isAppRole } from "@dpmedia/auth/roles";
 import { invitation } from "@dpmedia/auth/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
 import type { Bindings } from "../bindings";
 export async function hashInvitationToken(token: string) {
@@ -24,25 +24,35 @@ export async function sendInvitation(
   const id = crypto.randomUUID(),
     token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
   const db = createIdentityDatabase(env.AUTH_DB);
-  await db.insert(invitation).values({
+  const values = {
     ...input,
     id,
     email: input.email.toLowerCase(),
     tokenHash: await hashInvitationToken(token),
     expiresAt: new Date(Date.now() + 7 * 86400000),
-  });
+  };
   const title = input.app === "arts" ? "Dead Party Arts" : "Dead Party Media";
   const origin = input.app === "arts" ? env.ARTS_APP_URL : env.WEB_APP_URL;
-  try {
-    await env.EMAIL.send({
-      from: env.MAIL_FROM,
-      to: input.email,
-      subject: `Your invitation to ${title}`,
-      text: `You have been invited to ${title} as ${input.role}. Accept your invitation: ${origin.replace(/\/$/, "")}/invitation/${token}\nThis invitation expires in seven days.`,
-    });
-  } catch (error) {
-    await db.delete(invitation).where(eq(invitation.id, id));
-    throw error;
-  }
-  return id;
+  const url = `${origin.replace(/\/$/, "")}/invitation/${token}`;
+  // Keep the previous invitation usable if delivery fails. After delivery, one
+  // atomic batch replaces pending invitations for this email in this app only.
+  await env.EMAIL.send({
+    from: env.MAIL_FROM,
+    to: input.email,
+    subject: `Your invitation to ${title}`,
+    text: `You have been invited to ${title} as ${input.role}. Accept your invitation: ${url}\nThis invitation expires in seven days.`,
+  });
+  await db.batch([
+    db
+      .delete(invitation)
+      .where(
+        and(
+          eq(invitation.app, input.app),
+          eq(invitation.email, values.email),
+          isNull(invitation.acceptedAt),
+        ),
+      ),
+    db.insert(invitation).values(values),
+  ]);
+  return { id, url };
 }

@@ -422,7 +422,7 @@ function AdminUsersActions(c: Context<AppEnv>) {
       .limit(1);
     if (!existing || existing.acceptedAt)
       return { success: false as const, error: "Pending invitation not found" };
-    await sendInvitation(c.env, {
+    const resent = await sendInvitation(c.env, {
       app: "music",
       email: email || existing.email,
       role: role || existing.role,
@@ -431,7 +431,7 @@ function AdminUsersActions(c: Context<AppEnv>) {
       localProfileId: existing.localProfileId ?? undefined,
     });
     await revokeInvitation(invitationId);
-    return { success: true as const };
+    return { success: true as const, ...resent };
   }
 
   async function updateUserRole(userId: string, role: Roles) {

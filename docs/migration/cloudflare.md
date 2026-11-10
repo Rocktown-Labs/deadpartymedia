@@ -35,6 +35,8 @@ D1 stores relational data, JSON values as SQLite JSON text, timestamps as millis
 
 Production DNS, Vercel deployments, Clerk, Neon data, and the existing production arts R2 bucket have not been changed by this migration. The other agent's empty plural Better Auth tables in Neon were inventoried and left untouched. No production SQL push or schema migration was performed.
 
+The invitation resend/copy-link changes from current `master` are retained with native delivery and app-scoped replacement of pending invitations. Stored tokens remain hashed; new links are returned only to the authorized inviter.
+
 An isolated `pr-167` Cloudflare stack is deployed:
 
 - [Music preview](https://deadpartymedia-pr-167.rocktown-labs.workers.dev)
