@@ -1,3 +1,4 @@
+import { safeImageUrl } from "@dpmedia/contracts";
 import { Button } from "#/components/ui/button.tsx";
 import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
@@ -513,7 +514,7 @@ function Onboarding() {
                     <div className="mt-3 flex flex-wrap items-center gap-4">
                       {profileImage ? (
                         <img
-                          src={profileImage}
+                          src={safeImageUrl(profileImage)}
                           alt=""
                           className="size-24 border border-neutral-800 object-cover"
                         />

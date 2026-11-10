@@ -7,3 +7,5 @@ export * from "./user";
 export * from "./venue";
 
 export * from "./jobs";
+
+export { decodeHtmlEntities, htmlText, safeImageUrl, sanitizeRichHtml } from "./html";

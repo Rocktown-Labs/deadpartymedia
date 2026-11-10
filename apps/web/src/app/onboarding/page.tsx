@@ -1,7 +1,7 @@
 import { useMusicSession } from "@/lib/auth-client";
 
 import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import posthog from "posthog-js";
 import { ArtistOnboarding } from "./artist-onboarding";
@@ -44,9 +44,8 @@ interface OnboardingProfilePayload {
 export default function OnboardingPage() {
   const router = useRouter();
   const navigate = useNavigate();
-  const searchParams = useLocation({
-    select: (location) => new URLSearchParams(location.searchStr),
-  });
+  const search = useLocation({ select: (location) => location.searchStr });
+  const searchParams = useMemo(() => new URLSearchParams(search), [search]);
   const { session: user, isPending: sessionPending } = useMusicSession();
   const isLoaded = !sessionPending;
   const [selectedRole, setSelectedRole] = useState<"fan" | "artist" | "venue" | undefined>();
@@ -85,37 +84,6 @@ export default function OnboardingPage() {
       });
     }
   }, [isLoaded, user, existingRole, roleFromUrl]);
-
-  // Check if onboarding is already complete or user has admin role
-  useEffect(() => {
-    if (isLoaded && user) {
-      const onboardingComplete = user.onboardingComplete;
-      const userRole = parseRole(user.roles[0]);
-
-      // Handle admin roles - redirect them immediately
-      if (userRole === "super_admin" || userRole === "writer") {
-        navigate({ to: "/admin" });
-        return;
-      }
-
-      // If onboarding is complete, redirect to appropriate dashboard or redirect_url
-      if (onboardingComplete) {
-        const rawRedirect = searchParams.get("redirect_url") || searchParams.get("redirect");
-        const destination =
-          rawRedirect &&
-          !rawRedirect.startsWith("/onboarding") &&
-          !rawRedirect.startsWith("/sign-in") &&
-          !rawRedirect.startsWith("/sign-up")
-            ? rawRedirect
-            : userRole === "artist"
-              ? "/artist-dashboard"
-              : userRole === "venue"
-                ? "/venues"
-                : "/dashboard";
-        navigate({ to: destination });
-      }
-    }
-  }, [isLoaded, user, router, searchParams]);
 
   useEffect(() => {
     if (!isLoaded || !user) {

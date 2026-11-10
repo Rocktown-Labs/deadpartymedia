@@ -1,3 +1,4 @@
+import { htmlText } from "@dpmedia/contracts";
 import type { PageMetadata as Metadata } from "@/lib/page-head";
 import type { Article } from "./api/articles";
 import type { Artist } from "./api/artists";
@@ -27,21 +28,7 @@ export function getAbsoluteUrl(path: string): string {
  * Strip HTML tags and decode HTML entities from a string
  */
 export function stripHtml(html: string | null | undefined): string {
-  if (!html) {
-    return "";
-  }
-  // Remove HTML tags
-  const text = html.replaceAll(/<[^>]*>/g, "");
-  // Decode common HTML entities
-  return text
-    .replaceAll("&nbsp;", " ")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&apos;", "'")
-    .trim();
+  return htmlText(html);
 }
 
 /**

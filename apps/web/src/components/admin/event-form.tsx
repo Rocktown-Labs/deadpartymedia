@@ -1,3 +1,4 @@
+import { safeImageUrl } from "@dpmedia/contracts";
 import { uploadMusicImage } from "@/lib/upload";
 
 import { useMemo, useRef, useState } from "react";
@@ -310,7 +311,7 @@ export function EventForm({
             {image && (
               <div className="relative w-full h-48 border border-gray-800 rounded-lg overflow-hidden bg-[#0A0A0A]">
                 <img
-                  src={image}
+                  src={safeImageUrl(image)}
                   alt="Event image preview"
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                   className="object-cover"

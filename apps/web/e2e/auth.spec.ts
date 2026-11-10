@@ -29,13 +29,16 @@ test.describe("Native authentication", () => {
     await page.getByLabel("Password", { exact: true }).fill(password!);
     await page.locator("form").getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL(/\/admin(?:\/)?$/);
-    await page.goto("/admin/posts/new", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Articles", exact: true }).click();
+    await page.getByRole("link", { name: "Create New Article", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Create New Article", exact: true }),
     ).toBeVisible();
     await expect(page.getByPlaceholder("Enter post title...")).toBeVisible();
     await page.getByRole("button", { name: "Sign Out", exact: true }).click();
-    await page.goto("/admin");
+    await expect(page).toHaveURL(/sign-in/);
+    await page.goto("/admin", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/sign-in/);
   });
 });

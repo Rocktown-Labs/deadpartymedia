@@ -416,7 +416,7 @@ export function ArtistOnboarding({ initialValues }: ArtistOnboardingProps) {
                                   : "border-gray-800 hover:border-gray-700"
                               }`}
                             >
-                              {genre.replace(" & ", " & ")}
+                              {genre}
                             </button>
                           ))}
                         </div>

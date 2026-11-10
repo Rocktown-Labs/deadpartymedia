@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.80",
     "@dpmedia/api-client": "workspace:*",
+    "@dpmedia/contracts": "workspace:*",
     "@faker-js/faker": "^10.3.0",
     "@sentry/tanstackstart-react": "^10.42.0",
     "@t3-oss/env-core": "^0.13.10",

@@ -1,3 +1,4 @@
+import { htmlText } from "@dpmedia/contracts";
 import { ArrowLeft, Filter } from "lucide-react";
 import { useState } from "react";
 
@@ -92,16 +93,9 @@ export default function MerchPageClient() {
                         {product.title}
                       </h3>
                       {product.descriptionHtml || product.description ? (
-                        <div
-                          className="text-sm text-gray-400 mb-4 line-clamp-2"
-                          dangerouslySetInnerHTML={{
-                            __html: (
-                              product.descriptionHtml ||
-                              product.description ||
-                              ""
-                            ).replaceAll(/<[^>]*>/g, ""),
-                          }}
-                        />
+                        <div className="text-sm text-gray-400 mb-4 line-clamp-2">
+                          {htmlText(product.descriptionHtml || product.description)}
+                        </div>
                       ) : null}
                       {product.variants.length > 1 && (
                         <div className="mb-4">

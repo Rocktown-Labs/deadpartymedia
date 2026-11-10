@@ -1,3 +1,4 @@
+import { safeImageUrl } from "@dpmedia/contracts";
 import { uploadMusicImage } from "@/lib/upload";
 
 import { Button } from "@/components/ui/button";
@@ -1176,7 +1177,7 @@ export function MusicReleaseEditor({
               {coverArt && (
                 <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
                   <img
-                    src={coverArt}
+                    src={safeImageUrl(coverArt)}
                     alt="Cover Art Preview"
                     style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                     className="object-cover"

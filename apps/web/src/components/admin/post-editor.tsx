@@ -1,3 +1,4 @@
+import { safeImageUrl } from "@dpmedia/contracts";
 import { uploadMusicImage } from "@/lib/upload";
 
 import { Badge } from "@/components/ui/badge";
@@ -962,7 +963,7 @@ export function PostEditor({
                 ) : (
                   <div className="relative aspect-video border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
                     <img
-                      src={coverImage}
+                      src={safeImageUrl(coverImage)}
                       alt="Cover preview"
                       style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
                       className="object-cover"

@@ -21,6 +21,7 @@
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@dpmedia/api-client": "workspace:*",
+    "@dpmedia/contracts": "workspace:*",
     "@dpmedia/env": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",

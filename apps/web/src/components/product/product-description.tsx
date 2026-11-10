@@ -1,3 +1,4 @@
+import { sanitizeRichHtml } from "@dpmedia/contracts";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import type { Product } from "@/lib/types";
 import { VariantSelector } from "./variant-selector";
@@ -25,7 +26,9 @@ export function ProductDescription({ product }: { product: Product }) {
       {product.descriptionHtml || product.description ? (
         <div
           className="mb-6 text-sm leading-relaxed text-gray-300 prose prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: product.descriptionHtml || product.description || "" }}
+          dangerouslySetInnerHTML={{
+            __html: sanitizeRichHtml(product.descriptionHtml || product.description),
+          }}
         />
       ) : null}
 

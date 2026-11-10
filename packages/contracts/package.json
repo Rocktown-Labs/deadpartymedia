@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "entities": "8.0.0",
+    "xss": "1.0.15",
     "zod": "catalog:"
   },
   "devDependencies": {
