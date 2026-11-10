@@ -27,6 +27,12 @@ Both apps' preview/production origins can be listed as authorized JavaScript ori
 
 Production domain attachment remains gated by `BIND_DOMAINS`. Move the `deadpartymedia.com` DNS zone to Cloudflare, preserving its mail and other records, before enabling it. Alchemy then configures `arts.deadpartymedia.com` to permanently redirect to `deadpartyarts.com`, preserving the path and query. Registrar transfer is not required for Cloudflare DNS/Workers hosting. The redirect is configured for cutover; preview deployment does not alter live DNS.
 
+## Transactional email
+
+The shared API uses the Workers Email Sending binding for codes, verification, password resets, and invitations. PR #170 uses `accounts@auth-pr-167.deadpartyarts.com`, a dedicated Cloudflare sending subdomain. The preview environment must keep that `MAIL_FROM` and the Arts Cloudflare `MAIL_SENDING_ZONE_ID` on redeploys so Alchemy retains the preview sender configuration. Message content previews in Cloudflare's activity log are disabled.
+
+Use a separate production environment. Set `MAIL_FROM` to an address on an onboarded sending domain, or set `MAIL_SENDING_ZONE_ID` with a dedicated sending subdomain in `MAIL_FROM` to have Alchemy provision it. For a Media sender, onboard it after the Media zone is active on Cloudflare DNS. Verify delivery from the production API before attaching the site domains.
+
 ## Clerk migration
 
 The production CSV and read-only Clerk snapshot are stored outside git. The reviewed preview plan imports 42 identities, 23 bcrypt credentials, 19 Google links, and 35 explicit app-role memberships. The owner receives `super_admin` in each app; Arts administrators do not acquire Media privileges. Ten accounts without app membership/role evidence receive no membership. Original Clerk IDs preserve domain profile links. All 42 exported primary-email verification flags agree with the API snapshot. No production Clerk user or production database was modified.

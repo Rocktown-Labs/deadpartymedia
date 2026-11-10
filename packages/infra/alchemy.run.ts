@@ -47,6 +47,23 @@ const domain = (app: "arts" | "music" | "api") =>
       : { name: "www.deadpartymedia.com", redirects: ["deadpartymedia.com"] };
   });
 
+const mailFrom = Config.String("MAIL_FROM").pipe(Config.withDefault("noreply@deadpartymedia.com"));
+const configureMailSender = Effect.gen(function* () {
+  const zoneId = yield* Config.String("MAIL_SENDING_ZONE_ID").pipe(Config.withDefault(""));
+  if (zoneId && (yield* Alchemy.ProviderMode.defaultProviderMode) !== "local") {
+    const from = yield* mailFrom;
+    const [mailbox, sendingDomain, extra] = from.split("@");
+    if (!mailbox || !sendingDomain || extra !== undefined) {
+      return yield* Effect.die(new Error("MAIL_FROM must be a single email address"));
+    }
+    yield* Cloudflare.Email.SendingSubdomain("auth-mail-sender", {
+      zoneId,
+      name: sendingDomain,
+      previewEnabled: false,
+    }).pipe(retainProduction);
+  }
+});
+
 export const artsDatabase = Cloudflare.D1.Database("arts-db", {
   name: name("deadpartyarts"),
   migrations: "../db/migrations/arts",
@@ -122,7 +139,7 @@ export const api = Cloudflare.Worker("api", {
     GOOGLE_CLIENT_ID: Config.String("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
     GOOGLE_CLIENT_SECRET: Config.Redacted("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault("")),
     EMAIL: Cloudflare.Email.SendEmail("EMAIL"),
-    MAIL_FROM: Config.String("MAIL_FROM").pipe(Config.withDefault("noreply@deadpartymedia.com")),
+    MAIL_FROM: mailFrom,
     ARTS_DB: artsDatabase,
     MUSIC_DB: musicDatabase,
     AUTH_DB: authDatabase,
@@ -175,6 +192,7 @@ export default Alchemy.Stack(
     state: Cloudflare.state(),
   },
   Effect.gen(function* () {
+    yield* configureMailSender;
     const backend = yield* api;
     const artsApp = yield* arts;
     const webApp = yield* web;

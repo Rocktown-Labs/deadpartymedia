@@ -33,7 +33,7 @@ D1 stores relational data, JSON values as SQLite JSON text, timestamps as millis
 
 ## Current verification and rollout state
 
-Production DNS, Vercel deployments, Clerk, Neon data, and the existing production arts R2 bucket have not been changed by this migration. The other agent's empty plural Better Auth tables in Neon were inventoried and left untouched. No production SQL push or schema migration was performed.
+The pending Cloudflare zone for `deadpartymedia.com` contains the Vercel and Clerk records from the authoritative Vercel DNS inventory. Vercel remains the authoritative DNS provider until the registrar delegates to Cloudflare. The migration has left the live Vercel deployments, Clerk, Neon data, and the existing production arts R2 bucket in place. No production SQL push or schema migration was performed.
 
 The invitation resend/copy-link changes from current `master` are retained with native delivery and app-scoped replacement of pending invitations. Stored tokens remain hashed; new links are returned only to the authorized inviter.
 
