@@ -4,6 +4,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 
+import { IdentityProvider } from "../components/identity-provider";
 import { SiteShell } from "../components/site-shell";
 import { loadArtsSession } from "../lib/session.functions";
 
@@ -108,7 +109,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <>
+        <IdentityProvider>
           <SiteShell issuedAt={data?.renderedAt}>{children}</SiteShell>
           <Toaster position="bottom-right" theme="dark" />
           {import.meta.env.DEV ? (
@@ -125,7 +126,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               ]}
             />
           ) : null}
-        </>
+        </IdentityProvider>
         <Scripts />
       </body>
     </html>

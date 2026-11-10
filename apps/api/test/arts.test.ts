@@ -3,28 +3,7 @@ import { beforeAll, describe, expect, it } from "vite-plus/test";
 import { hc } from "hono/client";
 import { app, type AppType } from "../src/index";
 
-async function signedIn(email: string) {
-  const response = await app.request(
-    "http://localhost:3000/api/auth/sign-up/email",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json", origin: "http://localhost:3000" },
-      body: JSON.stringify({
-        email,
-        name: "Test Artist",
-        password: "correct horse battery staple",
-      }),
-    },
-    env,
-  );
-  expect(response.status).toBe(200);
-  const data = (await response.json()) as { user: { id: string } };
-  const cookie = response.headers
-    .getSetCookie()
-    .map((value) => value.split(";")[0])
-    .join("; ");
-  return { userId: data.user.id, cookie };
-}
+import { signUp as signedIn } from "./helpers";
 function client(cookie = "") {
   return hc<AppType>("http://localhost:3000", {
     headers: { cookie },

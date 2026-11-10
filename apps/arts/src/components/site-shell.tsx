@@ -178,6 +178,8 @@ export function SiteShell({
     </>
   );
 
+  if (pathname.startsWith("/auth/")) return <>{children}</>;
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       <header className="fixed top-0 z-50 w-full border-gray-800 border-b bg-[#0A0A0A]/95 backdrop-blur-xl">

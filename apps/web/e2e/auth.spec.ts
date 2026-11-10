@@ -16,6 +16,22 @@ test.describe("Native authentication", () => {
     await expect(page.getByLabel("Name", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
   });
+  test("keeps credentials out of native form navigation before hydration", async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    try {
+      const page = await context.newPage();
+      await page.goto(`${baseURL}/sign-in`);
+      await expect(page.getByLabel("Email", { exact: true })).toBeDisabled();
+      await expect(page.getByLabel("Password", { exact: true })).toBeDisabled();
+      await expect(page.locator("form")).toHaveAttribute("method", "post");
+      expect(new URL(page.url()).searchParams.has("password")).toBe(false);
+    } finally {
+      await context.close();
+    }
+  });
   test("signs in and opens the original article editor", async ({ page }) => {
     test.setTimeout(60000);
     const email = process.env.E2E_ADMIN_EMAIL,
@@ -27,17 +43,28 @@ test.describe("Native authentication", () => {
     await page.goto("/sign-in", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email", { exact: true }).fill(email!);
     await page.getByLabel("Password", { exact: true }).fill(password!);
-    await page.locator("form").getByRole("button", { name: "Sign in", exact: true }).click();
+    const centralOrigin = new URL(page.url()).origin;
+    await page.locator("form").getByRole("button", { name: "Sign In", exact: true }).click();
     await expect(page).toHaveURL(/\/admin(?:\/)?$/);
     await expect(page.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign Out", exact: true }).first()).toBeEnabled();
     await page.getByRole("button", { name: "Articles", exact: true }).click();
     await page.getByRole("link", { name: "Create New Article", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Create New Article", exact: true }),
     ).toBeVisible();
     await expect(page.getByPlaceholder("Enter post title...")).toBeVisible();
-    await page.getByRole("button", { name: "Sign Out", exact: true }).click();
-    await expect(page).toHaveURL(/sign-in/);
+    const artsPage = await page.context().newPage();
+    await artsPage.goto(`${centralOrigin}/admin`);
+    await expect(artsPage.getByRole("heading", { name: "Dashboard", exact: true })).toBeVisible();
+    const logout = artsPage.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/auth/sign-out") && response.request().method() === "POST",
+    );
+    await artsPage.getByRole("button", { name: "Sign Out", exact: true }).click();
+    expect((await logout).ok()).toBe(true);
+    await expect(artsPage).toHaveURL(`${centralOrigin}/`);
+    await artsPage.close();
     await page.goto("/admin", { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/sign-in/);
   });

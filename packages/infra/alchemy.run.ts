@@ -22,7 +22,7 @@ const appUrl = (app: "arts" | "music") =>
     const fallback = local
       ? `http://localhost:${app === "arts" ? 3002 : 3001}`
       : stage === "production"
-        ? `https://${app === "arts" ? "arts.deadpartymedia.com" : "www.deadpartymedia.com"}`
+        ? `https://${app === "arts" ? "deadpartyarts.com" : "www.deadpartymedia.com"}`
         : `https://${resourceName(app === "arts" ? "deadpartyarts" : "deadpartymedia", stage)}.${subdomain}.workers.dev`;
     return yield* Config.String(app === "arts" ? "ARTS_APP_URL" : "WEB_APP_URL").pipe(
       Config.withDefault(fallback),
@@ -34,15 +34,16 @@ const trustedOrigins = Effect.gen(function* () {
   return yield* Config.String("TRUSTED_ORIGINS").pipe(Config.withDefault(fallback.join(",")));
 });
 // Domain attachment changes DNS. Enable only for the production cutover.
-const domain = (app: "arts" | "music") =>
+const domain = (app: "arts" | "music" | "api") =>
   Effect.gen(function* () {
     if (
       (yield* Alchemy.Stage) !== "production" ||
       !(yield* Config.Boolean("BIND_DOMAINS").pipe(Config.withDefault(false)))
     )
       return undefined;
+    if (app === "api") return { name: "api.deadpartymedia.com" };
     return app === "arts"
-      ? { name: "arts.deadpartymedia.com" }
+      ? { name: "deadpartyarts.com" }
       : { name: "www.deadpartymedia.com", redirects: ["deadpartymedia.com"] };
   });
 
@@ -72,7 +73,7 @@ export const artsMedia = Cloudflare.R2.Bucket("arts-media", {
   ),
   cors: [
     {
-      allowedOrigins: ["https://arts.deadpartymedia.com", "http://localhost:3000"],
+      allowedOrigins: ["https://deadpartyarts.com", "http://localhost:3000"],
       allowedMethods: ["GET", "PUT", "POST"],
       allowedHeaders: ["Content-Type", "x-amz-*"],
       maxAgeSeconds: 3600,
@@ -101,6 +102,7 @@ export const musicMedia = Cloudflare.R2.Bucket("music-media", {
 export const api = Cloudflare.Worker("api", {
   name: name("deadparty-api"),
   main: "../../apps/api/src/index.ts",
+  domain: Output.fromEffect(domain("api").pipe(Effect.orDie)),
   compatibility: { date: "2026-03-17", flags: ["nodejs_compat"] },
   env: {
     BACKFILL: Effect.map(Alchemy.Stage, (stage) =>

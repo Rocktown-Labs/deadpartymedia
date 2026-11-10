@@ -3,7 +3,8 @@ import { env } from "cloudflare:workers";
 async function proxyApi({ request }: { request: Request }) {
   const url = new URL(request.url);
   let path = url.pathname;
-  if (path.startsWith("/api/rpc/music/")) path = path.replace("/api/rpc/music", "/music");
+  if (path.startsWith("/api/sso/")) path = path.replace("/api/sso", "/sso");
+  else if (path.startsWith("/api/rpc/music/")) path = path.replace("/api/rpc/music", "/music");
   else if (path.startsWith("/api/auth/") && path !== "/api/auth/me") {
     /* Better Auth has its own handler. */
   } else {

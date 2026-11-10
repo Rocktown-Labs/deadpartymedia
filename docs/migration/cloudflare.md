@@ -55,7 +55,7 @@ The complete source has 37 user rows; domain exports deliberately select relevan
 
 Verified behavior includes populated home pages on desktop/mobile, arts admin, music admin and article editor, an existing full article and canonical metadata, native password authentication, scoped access denial, invitations/replay checks, D1 editorial writes, native R2 upload/read bytes, and an empty native Workflow run. Tests run inside workerd for the API, including bcrypt credentials retaining original Clerk IDs. The request clock is serialized through root loaders to avoid Workers' epoch date during module evaluation.
 
-**Live cutover remains pending:** obtain the production Clerk password CSV and production API metadata snapshot, review the per-app membership map, configure production Google/email/commerce credentials, import and verify production D1/R2, then attach domains. The locally available Clerk key belongs to a test instance and must not be used as the production user inventory. OAuth callbacks, outbound mail, paid AI inference, and live Fourthwall checkout need verification with their production configurations.
+**Live cutover remains pending:** production Clerk exports and the scoped membership map are now prepared and imported into the isolated preview auth D1. Configure and verify Google/email credentials, import and verify production D1/R2, move Media DNS to Cloudflare, then attach domains. Production Clerk and Vercel hosting remain untouched. See [Better Auth UI and cross-domain sign-in](better-auth-ui.md). OAuth callbacks, outbound mail, paid AI inference, and live Fourthwall checkout need verification with their production configurations.
 
 ## Development and quality gates
 
@@ -138,7 +138,7 @@ pnpm migration:clerk --csv /private/path/exported_users.csv --snapshot /private/
 # To write SQL, add --output /private/path/auth.data-import.sql
 ```
 
-The planner preserves Clerk user IDs and provider account IDs, verifies supported bcrypt formats, imports disabled flags, and refuses missing metadata/hashes, unsupported password formats, MFA downgrade, or implicit cross-app grants. Passwords remain usable through bcrypt verification; new Better Auth passwords use its native hashing. Existing Clerk sessions cannot become Better Auth sessions: users must sign in again. Google requires callback URLs for each frontend at `/api/auth/callback/google`. Configure and test reset/verification/change-email messages from the verified Cloudflare sending domain before switching authentication.
+The planner preserves Clerk user IDs and provider account IDs, verifies supported bcrypt formats, imports disabled flags, and refuses missing metadata/hashes, unsupported password formats, MFA downgrade, or implicit cross-app grants. Passwords remain usable through bcrypt verification; new Better Auth passwords use its native hashing. Existing Clerk sessions cannot become Better Auth sessions: users must sign in again. Google uses the central Arts callback at `<ARTS_APP_URL>/api/auth/callback/google`. Configure and test reset/verification/change-email messages from the verified Cloudflare sending domain before switching authentication.
 
 Auth imports use conflict protection rather than overwriting an existing identity's credentials. Rehearse on fresh auth D1, inspect counts and membership differences, and test representative migrated password/OAuth accounts before production. Do not edit the empty experimental production PostgreSQL auth tables as part of this import.
 

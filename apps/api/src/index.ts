@@ -6,6 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { sessionAuth } from "./auth";
 import type { AppEnv } from "./bindings";
 import { artsRouter } from "./routes/arts";
+import { ssoRouter } from "./routes/sso";
 import { musicRouter } from "./routes/music";
 
 const base = new Hono<AppEnv>()
@@ -35,7 +36,10 @@ const base = new Hono<AppEnv>()
   .use("/arts/*", sessionAuth("arts"))
   .use("/music/*", sessionAuth("music"));
 
-export const app = base.route("/arts", artsRouter).route("/music", musicRouter);
+export const app = base
+  .route("/sso", ssoRouter)
+  .route("/arts", artsRouter)
+  .route("/music", musicRouter);
 app.onError((error, c) => {
   if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
   console.error(

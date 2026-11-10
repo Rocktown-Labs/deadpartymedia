@@ -28,6 +28,7 @@ import { Route as AdminVenuesRouteImport } from './routes/admin.venues'
 import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as ArtmakersIndexRouteImport } from './routes/artmakers.index'
 import { Route as ArtmakersSlugRouteImport } from './routes/artmakers.$slug'
+import { Route as AuthPathRouteImport } from './routes/auth.$path'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardArtworksRouteImport } from './routes/dashboard.artworks'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
@@ -132,6 +133,11 @@ const ArtmakersSlugRoute = ArtmakersSlugRouteImport.update({
   path: '/artmakers/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthPathRoute = AuthPathRouteImport.update({
+  id: '/auth/$path',
+  path: '/auth/$path',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/admin/venues': typeof AdminVenuesRoute
   '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin/venues': typeof AdminVenuesRoute
   '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/admin/venues': typeof AdminVenuesRoute
   '/api/$': typeof ApiSplatRoute
   '/artmakers/$slug': typeof ArtmakersSlugRouteWithChildren
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/artworks': typeof DashboardArtworksRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/venues'
     | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/venues'
     | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/admin/venues'
     | '/api/$'
     | '/artmakers/$slug'
+    | '/auth/$path'
     | '/dashboard/artworks'
     | '/dashboard/events'
     | '/dashboard/profile'
@@ -359,6 +371,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ArtmakersSlugRoute: typeof ArtmakersSlugRouteWithChildren
+  AuthPathRoute: typeof AuthPathRoute
   InvitationTokenRoute: typeof InvitationTokenRoute
   MerchHandleRoute: typeof MerchHandleRoute
   ArtmakersIndexRoute: typeof ArtmakersIndexRoute
@@ -500,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtmakersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/$path': {
+      id: '/auth/$path'
+      path: '/auth/$path'
+      fullPath: '/auth/$path'
+      preLoaderRoute: typeof AuthPathRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -623,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiSplatRoute: ApiSplatRoute,
   ArtmakersSlugRoute: ArtmakersSlugRouteWithChildren,
+  AuthPathRoute: AuthPathRoute,
   InvitationTokenRoute: InvitationTokenRoute,
   MerchHandleRoute: MerchHandleRoute,
   ArtmakersIndexRoute: ArtmakersIndexRoute,

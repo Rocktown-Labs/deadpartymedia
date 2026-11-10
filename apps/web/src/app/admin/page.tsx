@@ -51,7 +51,10 @@ export default function AdminDashboard({ data }: { data: Awaited<ReturnType<type
                     </h3>
                   </Link>
                   <p className="text-sm text-gray-400">
-                    {post.status} • {new Date(post.createdAt).toLocaleDateString()}
+                    {post.status} •{" "}
+                    {new Date(post.createdAt).toLocaleDateString("en-US", {
+                      timeZone: "America/Chicago",
+                    })}
                   </p>
                 </div>
               ))
@@ -78,7 +81,10 @@ export default function AdminDashboard({ data }: { data: Awaited<ReturnType<type
                     </h3>
                   </Link>
                   <p className="text-sm text-gray-400">
-                    {event.status} • {new Date(event.createdAt).toLocaleDateString()}
+                    {event.status} •{" "}
+                    {new Date(event.createdAt).toLocaleDateString("en-US", {
+                      timeZone: "America/Chicago",
+                    })}
                   </p>
                 </div>
               ))

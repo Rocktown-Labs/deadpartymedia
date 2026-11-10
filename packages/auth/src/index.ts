@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { APIError } from "better-auth/api";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
+import { emailOTP, oneTimeToken } from "better-auth/plugins";
 import { createD1Database } from "@dpmedia/db/d1";
 import { users } from "@dpmedia/db/schema";
 
@@ -53,6 +54,7 @@ export function createAuth(env: AuthConfig, request?: Request) {
         : {},
     emailAndPassword: {
       enabled: true,
+      requireEmailVerification: true,
       sendResetPassword: async ({ user, url }) => {
         await env.EMAIL.send({
           from: env.MAIL_FROM,
@@ -68,15 +70,8 @@ export function createAuth(env: AuthConfig, request?: Request) {
       },
     },
     emailVerification: {
-      sendOnSignUp: false,
-      sendVerificationEmail: async ({ user, url }) => {
-        await env.EMAIL.send({
-          from: env.MAIL_FROM,
-          to: user.email,
-          subject: "Verify your Dead Party email",
-          text: `Verify your email: ${url}`,
-        });
-      },
+      sendOnSignUp: true,
+      autoSignInAfterVerification: true,
     },
     user: {
       additionalFields: { disabled: { type: "boolean", defaultValue: false, input: false } },
@@ -134,7 +129,27 @@ export function createAuth(env: AuthConfig, request?: Request) {
         },
       },
     },
-    plugins: [expo()],
+    disabledPaths: ["/one-time-token/generate", "/one-time-token/verify"],
+    plugins: [
+      expo(),
+      oneTimeToken({ disableClientRequest: true, storeToken: "hashed", expiresIn: 1 }),
+      emailOTP({
+        disableSignUp: true,
+        overrideDefaultEmailVerification: true,
+        storeOTP: "hashed",
+        sendVerificationOTP: async ({ email, otp, type }) => {
+          await env.EMAIL.send({
+            from: env.MAIL_FROM,
+            to: email,
+            subject:
+              type === "email-verification"
+                ? "Verify your Dead Party email"
+                : "Your Dead Party sign-in code",
+            text: `Your Dead Party code is ${otp}. It expires in 5 minutes.`,
+          });
+        },
+      }),
+    ],
   });
 }
 export type IdentityDatabase = ReturnType<typeof createIdentityDatabase>;

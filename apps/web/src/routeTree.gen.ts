@@ -39,6 +39,7 @@ import { Route as ArtistDashboardEventsRouteImport } from './routes/artist-dashb
 import { Route as ArtistDashboardProfileRouteImport } from './routes/artist-dashboard.profile'
 import { Route as ArtistsIndexRouteImport } from './routes/artists.index'
 import { Route as ArtistsSlugRouteImport } from './routes/artists.$slug'
+import { Route as AuthPathRouteImport } from './routes/auth.$path'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardCommentsRouteImport } from './routes/dashboard.comments'
 import { Route as DashboardHistoryRouteImport } from './routes/dashboard.history'
@@ -226,6 +227,11 @@ const ArtistsIndexRoute = ArtistsIndexRouteImport.update({
 const ArtistsSlugRoute = ArtistsSlugRouteImport.update({
   id: '/artists/$slug',
   path: '/artists/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthPathRoute = AuthPathRouteImport.update({
+  id: '/auth/$path',
+  path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -449,6 +455,7 @@ export interface FileRoutesByFullPath {
   '/artist-dashboard/events': typeof ArtistDashboardEventsRoute
   '/artist-dashboard/profile': typeof ArtistDashboardProfileRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/comments': typeof DashboardCommentsRoute
   '/dashboard/history': typeof DashboardHistoryRoute
   '/dashboard/saved': typeof DashboardSavedRoute
@@ -514,6 +521,7 @@ export interface FileRoutesByTo {
   '/artist-dashboard/events': typeof ArtistDashboardEventsRoute
   '/artist-dashboard/profile': typeof ArtistDashboardProfileRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/comments': typeof DashboardCommentsRoute
   '/dashboard/history': typeof DashboardHistoryRoute
   '/dashboard/saved': typeof DashboardSavedRoute
@@ -585,6 +593,7 @@ export interface FileRoutesById {
   '/artist-dashboard/events': typeof ArtistDashboardEventsRoute
   '/artist-dashboard/profile': typeof ArtistDashboardProfileRoute
   '/artists/$slug': typeof ArtistsSlugRoute
+  '/auth/$path': typeof AuthPathRoute
   '/dashboard/comments': typeof DashboardCommentsRoute
   '/dashboard/history': typeof DashboardHistoryRoute
   '/dashboard/saved': typeof DashboardSavedRoute
@@ -657,6 +666,7 @@ export interface FileRouteTypes {
     | '/artist-dashboard/events'
     | '/artist-dashboard/profile'
     | '/artists/$slug'
+    | '/auth/$path'
     | '/dashboard/comments'
     | '/dashboard/history'
     | '/dashboard/saved'
@@ -722,6 +732,7 @@ export interface FileRouteTypes {
     | '/artist-dashboard/events'
     | '/artist-dashboard/profile'
     | '/artists/$slug'
+    | '/auth/$path'
     | '/dashboard/comments'
     | '/dashboard/history'
     | '/dashboard/saved'
@@ -792,6 +803,7 @@ export interface FileRouteTypes {
     | '/artist-dashboard/events'
     | '/artist-dashboard/profile'
     | '/artists/$slug'
+    | '/auth/$path'
     | '/dashboard/comments'
     | '/dashboard/history'
     | '/dashboard/saved'
@@ -860,6 +872,7 @@ export interface RootRouteChildren {
   ApiSplatRoute: typeof ApiSplatRoute
   ArticleSlugRoute: typeof ArticleSlugRoute
   ArtistsSlugRoute: typeof ArtistsSlugRoute
+  AuthPathRoute: typeof AuthPathRoute
   EventsSlugRoute: typeof EventsSlugRoute
   InvitationTokenRoute: typeof InvitationTokenRoute
   MerchHandleRoute: typeof MerchHandleRoute
@@ -1080,6 +1093,13 @@ declare module '@tanstack/react-router' {
       path: '/artists/$slug'
       fullPath: '/artists/$slug'
       preLoaderRoute: typeof ArtistsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/$path': {
+      id: '/auth/$path'
+      path: '/auth/$path'
+      fullPath: '/auth/$path'
+      preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -1496,6 +1516,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSplatRoute: ApiSplatRoute,
   ArticleSlugRoute: ArticleSlugRoute,
   ArtistsSlugRoute: ArtistsSlugRoute,
+  AuthPathRoute: AuthPathRoute,
   EventsSlugRoute: EventsSlugRoute,
   InvitationTokenRoute: InvitationTokenRoute,
   MerchHandleRoute: MerchHandleRoute,
