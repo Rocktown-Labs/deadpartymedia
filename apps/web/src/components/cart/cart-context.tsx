@@ -1,6 +1,7 @@
 import type { Cart, CartItem, Product, ProductVariant } from "@/lib/types";
 import type React from "react";
-import { createContext, useContext, useMemo, useOptimistic } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { addItem, getCurrentCart, removeItem, updateItemQuantity } from "@/app/cart/actions";
 
 type UpdateType = "plus" | "minus" | "delete";
 
@@ -10,8 +11,9 @@ type CartAction =
 
 interface CartContextType {
   cart: Cart | undefined;
-  updateCartItem: (merchandiseId: string, updateType: UpdateType) => void;
-  addCartItem: (variant: ProductVariant, product: Product) => void;
+  error: string | null;
+  updateCartItem: (merchandiseId: string, updateType: UpdateType) => Promise<boolean>;
+  addCartItem: (variant: ProductVariant, product: Product) => Promise<boolean>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -154,23 +156,88 @@ export function CartProvider({
   children: React.ReactNode;
   initialCart: Cart | undefined;
 }) {
-  const [optimisticCart, updateOptimisticCart] = useOptimistic(initialCart, cartReducer);
+  const [cart, setCart] = useState(initialCart);
+  const [error, setError] = useState<string | null>(null);
+  const cartRef = useRef(initialCart);
+  const revision = useRef(0);
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
-  const updateCartItem = (merchandiseId: string, updateType: UpdateType) => {
-    updateOptimisticCart({ payload: { merchandiseId, updateType }, type: "UPDATE_ITEM" });
-  };
+  const enqueue = useCallback(
+    (operation: () => Promise<Cart | undefined>) => {
+      const operationRevision = ++revision.current;
+      setError(null);
+      let succeeded = true;
+      const pending = queue.current.then(async () => {
+        try {
+          const result = await operation();
+          if (operationRevision === revision.current && result) {
+            cartRef.current = result;
+            setCart(result);
+          }
+        } catch {
+          succeeded = false;
+          if (operationRevision === revision.current) {
+            try {
+              const current = (await getCurrentCart()) ?? createEmptyCart();
+              cartRef.current = current;
+              setCart(current);
+            } catch {
+              cartRef.current = initialCart;
+              setCart(initialCart);
+            }
+            setError("We couldn't update your cart. Please try again.");
+          }
+        }
+      });
+      queue.current = pending;
+      return pending.then(() => succeeded);
+    },
+    [initialCart],
+  );
 
-  const addCartItem = (variant: ProductVariant, product: Product) => {
-    updateOptimisticCart({ payload: { product, variant }, type: "ADD_ITEM" });
-  };
+  const updateCartItem = useCallback(
+    (merchandiseId: string, updateType: UpdateType) => {
+      const current = cartRef.current;
+      const item = current?.lines.find((line) => line.merchandise.id === merchandiseId);
+      if (!item) return Promise.resolve(false);
+      const nextQuantity =
+        updateType === "plus" ? item.quantity + 1 : updateType === "minus" ? item.quantity - 1 : 0;
+      const optimistic = cartReducer(current, {
+        payload: { merchandiseId, updateType },
+        type: "UPDATE_ITEM",
+      });
+      cartRef.current = optimistic;
+      setCart(optimistic);
+      return enqueue(() =>
+        nextQuantity <= 0
+          ? removeItem(null, merchandiseId)
+          : updateItemQuantity(null, { merchandiseId, quantity: nextQuantity }),
+      );
+    },
+    [enqueue],
+  );
+
+  const addCartItem = useCallback(
+    (variant: ProductVariant, product: Product) => {
+      const optimistic = cartReducer(cartRef.current, {
+        payload: { product, variant },
+        type: "ADD_ITEM",
+      });
+      cartRef.current = optimistic;
+      setCart(optimistic);
+      return enqueue(() => addItem(null, variant.id));
+    },
+    [enqueue],
+  );
 
   const value = useMemo(
     () => ({
       addCartItem,
-      cart: optimisticCart,
+      cart,
+      error,
       updateCartItem,
     }),
-    [optimisticCart],
+    [addCartItem, cart, error, updateCartItem],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

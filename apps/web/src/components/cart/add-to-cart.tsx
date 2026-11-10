@@ -1,4 +1,3 @@
-import { addItem } from "@/app/cart/actions";
 import type { Product, ProductVariant } from "@/lib/types";
 import { ShoppingCart } from "lucide-react";
 import posthog from "posthog-js";
@@ -53,8 +52,8 @@ export function AddToCart({ product }: { product: Product }) {
         if (!variant) {
           return;
         }
-        addCartItem(variant, product);
-        await addItem(null, variant.id);
+        const added = await addCartItem(variant, product);
+        if (!added) return;
 
         // Track add to cart event
         posthog.capture("product_added_to_cart", {

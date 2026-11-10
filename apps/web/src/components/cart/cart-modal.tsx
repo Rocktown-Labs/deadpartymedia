@@ -1,4 +1,4 @@
-import { redirectToCheckout, removeItem, updateItemQuantity } from "@/app/cart/actions";
+import { redirectToCheckout } from "@/app/cart/actions";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -23,7 +23,7 @@ function CheckoutButton() {
 }
 
 export default function CartModal() {
-  const { cart, updateCartItem } = useCart();
+  const { cart, error, updateCartItem } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
 
@@ -60,6 +60,11 @@ export default function CartModal() {
         <SheetHeader className="p-6 border-b border-gray-800">
           <SheetTitle className="text-xl font-bold">Cart</SheetTitle>
         </SheetHeader>
+        {error ? (
+          <p className="px-6 pt-4 text-sm text-red-400" role="alert">
+            {error}
+          </p>
+        ) : null}
 
         {/* Content */}
         {!cart || cart.lines.length === 0 ? (
@@ -98,26 +103,18 @@ export default function CartModal() {
                       <div className="flex items-center gap-3">
                         <div className="flex items-center border border-gray-800 rounded-lg">
                           <button
-                            onClick={() => {
-                              updateCartItem(item.merchandise.id, "minus");
-                              updateItemQuantity(null, {
-                                merchandiseId: item.merchandise.id,
-                                quantity: item.quantity - 1,
-                              });
-                            }}
+                            type="button"
+                            aria-label={`Decrease ${item.merchandise.product.title} quantity`}
+                            onClick={() => updateCartItem(item.merchandise.id, "minus")}
                             className="p-2 hover:bg-gray-900 transition-colors"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
                           <span className="px-3 text-sm font-medium">{item.quantity}</span>
                           <button
-                            onClick={() => {
-                              updateCartItem(item.merchandise.id, "plus");
-                              updateItemQuantity(null, {
-                                merchandiseId: item.merchandise.id,
-                                quantity: item.quantity + 1,
-                              });
-                            }}
+                            type="button"
+                            aria-label={`Increase ${item.merchandise.product.title} quantity`}
+                            onClick={() => updateCartItem(item.merchandise.id, "plus")}
                             className="p-2 hover:bg-gray-900 transition-colors"
                           >
                             <Plus className="h-3 w-3" />
@@ -125,10 +122,11 @@ export default function CartModal() {
                         </div>
 
                         <button
-                          onClick={() => {
-                            updateCartItem(item.merchandise.id, "delete");
-                            removeItem(null, item.merchandise.id);
-
+                          type="button"
+                          aria-label={`Remove ${item.merchandise.product.title} from cart`}
+                          onClick={async () => {
+                            const removed = await updateCartItem(item.merchandise.id, "delete");
+                            if (!removed) return;
                             // Track cart item removed event
                             posthog.capture("cart_item_removed", {
                               price: item.cost.totalAmount.amount,
