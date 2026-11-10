@@ -35,6 +35,18 @@ const clerkUser = z.object({
     )
     .default([]),
 });
+const scopedRoles = z.object({
+  arts: z.array(z.enum(appRoles.arts)).default([]),
+  music: z.array(z.enum(appRoles.music)).default([]),
+});
+const reservedIdentity = z.object({
+  id: z.string().regex(/^(wp_placeholder:|local_placeholder:).+/),
+  email: z.email().transform((email) => email.toLowerCase()),
+  name: z.string().min(1),
+  createdAt: z.number().int().nonnegative(),
+  updatedAt: z.number().int().nonnegative(),
+  memberships: scopedRoles,
+});
 const sqlValue = (value: string | number | null) =>
   value === null
     ? "NULL"
@@ -50,19 +62,13 @@ export function planClerkImport(
   apiSnapshot: unknown,
   apps: Application[],
   scopedMemberships?: unknown,
+  reservedIdentities: unknown = [],
 ) {
   const scoped =
     scopedMemberships === undefined
       ? undefined
-      : z
-          .record(
-            z.string(),
-            z.object({
-              arts: z.array(z.enum(appRoles.arts)).default([]),
-              music: z.array(z.enum(appRoles.music)).default([]),
-            }),
-          )
-          .parse(scopedMemberships);
+      : z.record(z.string(), scopedRoles).parse(scopedMemberships);
+  const reserved = z.array(reservedIdentity).parse(reservedIdentities);
   if (apps.length > 1 && !scoped)
     throw new Error(
       "Migrating both apps requires an explicit per-user membership map; legacy global roles cannot grant access to both apps implicitly",
@@ -164,6 +170,20 @@ export function planClerkImport(
         .filter((role): role is string => Boolean(role))
         .map((role) => (role === "admin" ? "super_admin" : role)),
     );
+    if (scoped) {
+      for (const role of roles) {
+        const applicable = apps.filter((app) =>
+          (appRoles[app] as readonly string[]).includes(role),
+        );
+        if (!applicable.length) continue;
+        if (
+          !applicable.some((app) =>
+            (scoped[row.id]?.[app] ?? []).some((assigned) => assigned === role),
+          )
+        )
+          throw new Error(`Scoped membership map drops Clerk role ${role} for ${row.id}`);
+      }
+    }
     for (const app of apps)
       for (const role of scoped ? (scoped[row.id]?.[app] ?? []) : roles) {
         if (!(appRoles[app] as readonly string[]).includes(role)) continue;
@@ -177,8 +197,48 @@ export function planClerkImport(
         memberships++;
       }
   }
+  const identityIds = new Set(rows.map((row) => row.id));
+  const identityEmails = new Set(rows.map((row) => row.primary_email_address.toLowerCase()));
+  for (const identity of reserved) {
+    if (identityIds.has(identity.id) || identityEmails.has(identity.email))
+      throw new Error("Reserved identity conflicts with another imported ID or email");
+    identityIds.add(identity.id);
+    identityEmails.add(identity.email);
+    statements.push(
+      insert(
+        "auth_user",
+        {
+          id: identity.id,
+          email: identity.email,
+          name: identity.name,
+          email_verified: 0,
+          disabled: 0,
+          created_at: identity.createdAt,
+          updated_at: identity.updatedAt,
+        },
+        "id",
+      ),
+    );
+    for (const app of apps) {
+      for (const role of new Set(identity.memberships[app])) {
+        statements.push(
+          insert(
+            "app_membership",
+            {
+              user_id: identity.id,
+              app,
+              role,
+              created_at: identity.createdAt,
+            },
+            "user_id, app, role",
+          ),
+        );
+        memberships++;
+      }
+    }
+  }
   return {
-    summary: { users: rows.length, credentials, oauth, memberships },
+    summary: { users: rows.length + reserved.length, credentials, oauth, memberships },
     sql: statements.join("\n") + "\n",
   };
 }

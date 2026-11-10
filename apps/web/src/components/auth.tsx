@@ -1,7 +1,7 @@
 import { authClient, musicSessionKey, useMusicSession } from "@/lib/auth-client";
 import { Slot } from "@radix-ui/react-slot";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocation, useRouter, useHydrated } from "@tanstack/react-router";
+import { useLocation, useHydrated } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up"; onComplete?: () => void }) {
@@ -31,8 +31,11 @@ export function AuthDialog({
   mode: "sign-in" | "sign-up";
   children: ReactNode;
 }) {
+  const hydrated = useHydrated();
   return (
     <Slot
+      aria-disabled={!hydrated || undefined}
+      className={hydrated ? undefined : "pointer-events-none opacity-60"}
       onClick={() => {
         const returnTo =
           mode === "sign-up"
@@ -52,7 +55,6 @@ export function AccountMenu() {
   const hydrated = useHydrated();
   const { session } = useMusicSession();
   const queryClient = useQueryClient();
-  const router = useRouter();
   return (
     <button
       type="button"
@@ -62,7 +64,7 @@ export function AccountMenu() {
       onClick={async () => {
         await authClient.signOut();
         queryClient.setQueryData(musicSessionKey, null);
-        await router.invalidate();
+        window.location.assign("/");
       }}
     >
       Sign Out

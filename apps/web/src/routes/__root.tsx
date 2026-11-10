@@ -7,12 +7,17 @@ import MobileBottomNav from "@/components/mobile-bottom-nav";
 import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
 import { getMusicApi } from "@/lib/api.server";
-import { loadMusicSession } from "@/lib/session.functions";
+import { loadAuthProviders, loadMusicSession } from "@/lib/session.functions";
 import { readResponse } from "@dpmedia/api-client";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Scripts,
+  useLocation,
+} from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
 const loadCart = createServerFn({ method: "GET" }).handler(async () =>
@@ -20,7 +25,10 @@ const loadCart = createServerFn({ method: "GET" }).handler(async () =>
 );
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: async () => ({ session: await loadMusicSession() }),
-  loader: async () => ({ cart: await loadCart(), renderedAt: Date.now() }),
+  loader: async () => {
+    const [cart, authProviders] = await Promise.all([loadCart(), loadAuthProviders()]);
+    return { cart, authProviders, renderedAt: Date.now() };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -51,6 +59,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 function RootDocument({ children }: { children: React.ReactNode }) {
   const data = Route.useLoaderData();
+  const authPage = useLocation({ select: (location) => location.pathname.startsWith("/auth/") });
   useEffect(() => {
     if (import.meta.env.PROD) void import("@/instrumentation-client");
   }, []);
@@ -60,16 +69,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="antialiased">
-        <Providers>
+        <Providers authProviders={data?.authProviders}>
           <CartProvider initialCart={data?.cart ?? undefined}>
-            <Navbar issuedAt={data?.renderedAt} />
+            {!authPage && <Navbar issuedAt={data?.renderedAt} />}
             <main id="main" className="pb-16 lg:pb-0">
               {children}
             </main>
-            <div className="pb-16 lg:pb-0">
-              <Footer />
-            </div>
-            <MobileBottomNav />
+            {!authPage && (
+              <>
+                <div className="pb-16 lg:pb-0">
+                  <Footer />
+                </div>
+                <MobileBottomNav />
+              </>
+            )}
           </CartProvider>
         </Providers>
         <Scripts />

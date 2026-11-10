@@ -1,5 +1,7 @@
 "use client";
 
+import { useHydrated } from "@tanstack/react-router";
+
 import {
   getAuthCallbackURL,
   type AuthSocialProvider,
@@ -48,6 +50,7 @@ export function ProviderButton({
   const { authClient, baseURL, localization, navigate, redirectTo, socialSignInMode } = useAuth();
 
   const callbackURL = getAuthCallbackURL(baseURL, redirectTo);
+  const hydrated = useHydrated();
   const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
   const { mutate: signInSocial, isPending: signInSocialPending } = useSignInSocial(authClient, {
@@ -91,7 +94,7 @@ export function ProviderButton({
     <Button
       type="button"
       variant={variant}
-      disabled={isPending}
+      disabled={isPending || !hydrated}
       onClick={handleSignIn}
       className={cn("relative overflow-visible", className)}
       {...props}

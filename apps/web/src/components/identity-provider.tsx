@@ -6,7 +6,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-export function IdentityProvider({ children }: { children: ReactNode }) {
+export function IdentityProvider({
+  children,
+  authProviders,
+}: {
+  children: ReactNode;
+  authProviders?: { google: boolean };
+}) {
   const queryClient = useQueryClient();
   const router = useRouter();
   useEffect(() => {
@@ -29,6 +35,8 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
   const brand = parameters.get("brand");
   const { data: providers } = useQuery({
     queryKey: ["identity", "providers"],
+    initialData: authProviders,
+    staleTime: 60000,
     queryFn: async () =>
       readResponse(await createMusicClient("/api/rpc/music").auth.providers.$get()),
   });

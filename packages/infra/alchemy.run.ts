@@ -43,7 +43,7 @@ const domain = (app: "arts" | "music" | "api") =>
       return undefined;
     if (app === "api") return { name: "api.deadpartymedia.com" };
     return app === "arts"
-      ? { name: "deadpartyarts.com" }
+      ? { name: "deadpartyarts.com", redirects: ["arts.deadpartymedia.com"] }
       : { name: "www.deadpartymedia.com", redirects: ["deadpartymedia.com"] };
   });
 

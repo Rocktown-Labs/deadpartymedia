@@ -6,7 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { sessionAuth } from "./auth";
 import type { AppEnv } from "./bindings";
 import { artsRouter } from "./routes/arts";
-import { ssoRouter } from "./routes/sso";
+import { googleSignInStart, ssoRouter } from "./routes/sso";
 import { musicRouter } from "./routes/music";
 
 const base = new Hono<AppEnv>()
@@ -31,7 +31,21 @@ const base = new Hono<AppEnv>()
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     })(c, next);
   })
-  .on(["GET", "POST"], "/api/auth/*", (c) => createAuth(c.env, c.req.raw).handler(c.req.raw))
+  .on(["GET", "POST"], "/api/auth/*", async (c) => {
+    if (
+      c.req.method === "POST" &&
+      c.req.path === "/api/auth/sign-in/social" &&
+      c.req.header("x-deadparty-origin")
+    ) {
+      const body = (await c.req.raw.clone().json()) as {
+        provider?: string;
+        callbackURL?: unknown;
+        idToken?: unknown;
+      };
+      if (body.provider === "google" && !body.idToken) return googleSignInStart(c, body);
+    }
+    return createAuth(c.env, c.req.raw).handler(c.req.raw);
+  })
   .get("/healthz", (c) => c.json({ status: "ok" as const }))
   .use("/arts/*", sessionAuth("arts"))
   .use("/music/*", sessionAuth("music"));

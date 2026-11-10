@@ -6,3 +6,7 @@ export const loadMusicSession = createServerFn({ method: "GET" }).handler(async 
   setResponseHeader("Cache-Control", "private, no-store");
   return readResponse(await getMusicApi().session.$get({ query: {} }));
 });
+
+export const loadAuthProviders = createServerFn({ method: "GET" }).handler(async () =>
+  readResponse(await getMusicApi().auth.providers.$get()),
+);

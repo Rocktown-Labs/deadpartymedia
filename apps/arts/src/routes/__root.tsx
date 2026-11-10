@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 
 import { IdentityProvider } from "../components/identity-provider";
 import { SiteShell } from "../components/site-shell";
-import { loadArtsSession } from "../lib/session.functions";
+import { loadArtsSession, loadAuthProviders } from "../lib/session.functions";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
@@ -20,7 +20,7 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   beforeLoad: async () => ({ session: await loadArtsSession() }),
-  loader: () => ({ renderedAt: Date.now() }),
+  loader: async () => ({ renderedAt: Date.now(), authProviders: await loadAuthProviders() }),
   head: () => ({
     meta: [
       {
@@ -109,7 +109,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <IdentityProvider>
+        <IdentityProvider authProviders={data?.authProviders}>
           <SiteShell issuedAt={data?.renderedAt}>{children}</SiteShell>
           <Toaster position="bottom-right" theme="dark" />
           {import.meta.env.DEV ? (

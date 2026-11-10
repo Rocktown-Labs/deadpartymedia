@@ -18,6 +18,8 @@ import { Route as ExhibitionsRouteImport } from './routes/exhibitions'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminArticlesRouteImport } from './routes/admin.articles'
 import { Route as AdminArtmakersRouteImport } from './routes/admin.artmakers'
@@ -81,6 +83,16 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -189,6 +201,8 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
@@ -217,6 +231,8 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
@@ -248,6 +264,8 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
   '/admin/articles': typeof AdminArticlesRoute
   '/admin/artmakers': typeof AdminArtmakersRoute
   '/admin/events': typeof AdminEventsRoute
@@ -280,6 +298,8 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/onboarding'
     | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
@@ -308,6 +328,8 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/onboarding'
     | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
@@ -338,6 +360,8 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/onboarding'
     | '/reset-password'
+    | '/sign-in'
+    | '/sign-up'
     | '/admin/articles'
     | '/admin/artmakers'
     | '/admin/events'
@@ -369,6 +393,8 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   OnboardingRoute: typeof OnboardingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
   ApiSplatRoute: typeof ApiSplatRoute
   ArtmakersSlugRoute: typeof ArtmakersSlugRouteWithChildren
   AuthPathRoute: typeof AuthPathRoute
@@ -441,6 +467,20 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -641,6 +681,8 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   OnboardingRoute: OnboardingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
   ApiSplatRoute: ApiSplatRoute,
   ArtmakersSlugRoute: ArtmakersSlugRouteWithChildren,
   AuthPathRoute: AuthPathRoute,
