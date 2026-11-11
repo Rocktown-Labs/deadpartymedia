@@ -12,6 +12,8 @@ type CartAction =
 interface CartContextType {
   cart: Cart | undefined;
   error: string | null;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
   updateCartItem: (merchandiseId: string, updateType: UpdateType) => Promise<boolean>;
   addCartItem: (variant: ProductVariant, product: Product) => Promise<boolean>;
 }
@@ -158,6 +160,7 @@ export function CartProvider({
 }) {
   const [cart, setCart] = useState(initialCart);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const cartRef = useRef(initialCart);
   const revision = useRef(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -225,6 +228,7 @@ export function CartProvider({
       });
       cartRef.current = optimistic;
       setCart(optimistic);
+      setIsOpen(true);
       return enqueue(() => addItem(null, variant.id));
     },
     [enqueue],
@@ -235,9 +239,11 @@ export function CartProvider({
       addCartItem,
       cart,
       error,
+      isOpen,
+      setIsOpen,
       updateCartItem,
     }),
-    [addCartItem, cart, error, updateCartItem],
+    [addCartItem, cart, error, isOpen, setIsOpen, updateCartItem],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

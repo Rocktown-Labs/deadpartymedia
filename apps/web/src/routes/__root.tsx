@@ -2,6 +2,7 @@ import ErrorPage from "@/app/error";
 import css from "@/app/globals.css?url";
 import NotFound from "@/app/not-found";
 import { CartProvider } from "@/components/cart/cart-context";
+import CartModal from "@/components/cart/cart-modal";
 import Footer from "@/components/footer";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 import Navbar from "@/components/navbar";
@@ -83,6 +84,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Providers authProviders={data?.authProviders}>
           <CartProvider initialCart={data?.cart ?? undefined}>
             {!authPage && <Navbar issuedAt={data?.renderedAt} />}
+            {!authPage && <CartModal />}
             <main id="main" className="pb-16 lg:pb-0">
               {children}
             </main>
