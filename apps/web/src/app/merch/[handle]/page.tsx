@@ -96,12 +96,12 @@ export default function ProductPage({ data }: { data: Awaited<ReturnType<typeof 
                 Back to Merch
               </Link>
 
-              <div className="flex flex-col rounded-lg border border-gray-800 bg-[#0A0A0A] p-8 md:p-12 lg:flex-row lg:gap-8">
-                <div className="h-full w-full basis-full lg:basis-4/6">
+              <div className="grid grid-cols-1 rounded-lg border border-gray-800 bg-[#0A0A0A] p-8 md:p-12 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,0.9fr)] lg:items-start lg:gap-8">
+                <div className="h-full min-w-0 w-full">
                   <Gallery product={product} />
                 </div>
 
-                <div className="basis-full lg:basis-2/6">
+                <div className="min-w-0">
                   <ProductDescription product={product} />
                 </div>
               </div>

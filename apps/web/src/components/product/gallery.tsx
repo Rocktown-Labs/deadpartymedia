@@ -28,7 +28,7 @@ export function Gallery({ product }: { product: Product }) {
 
   return (
     <>
-      <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden rounded-lg bg-black">
+      <div className="relative aspect-square h-full max-h-[550px] min-w-0 w-full overflow-hidden rounded-lg bg-black">
         {images[imageIndex] && (
           <img
             className="h-full w-full object-contain"
@@ -73,12 +73,12 @@ export function Gallery({ product }: { product: Product }) {
       </div>
 
       {images.length > 1 ? (
-        <ul className="my-8 flex items-center justify-center gap-2 overflow-auto py-1">
+        <ul className="my-8 flex min-w-0 items-center justify-start gap-2 overflow-x-auto overflow-y-hidden py-1">
           {images.map((image, index) => {
             const isActive = index === imageIndex;
 
             return (
-              <li key={image.url} className="h-20 w-20">
+              <li key={image.url} className="h-20 w-20 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
