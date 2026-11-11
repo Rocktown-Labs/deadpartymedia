@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { ChevronDown, LayoutDashboard } from "lucide-react";
-import CartModal from "./cart/cart-modal";
+import { CartTrigger } from "./cart/cart-modal";
 
 import { getDashboardRouteFromMetadata } from "@/lib/utils/dashboard";
 
@@ -62,7 +62,7 @@ export default function Navbar({ issuedAt = 0 }: { issuedAt?: number }) {
             />
           </Link>
           <div className="flex items-center gap-2">
-            <CartModal />
+            <CartTrigger />
             {!user ? (
               <>
                 <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export default function Navbar({ issuedAt = 0 }: { issuedAt?: number }) {
 
             {/* Desktop Actions */}
             <div className="flex items-center gap-3">
-              <CartModal />
+              <CartTrigger />
               {!user ? (
                 <>
                   <div className="flex items-center gap-2">

@@ -48,4 +48,21 @@ describe("native Fourthwall transport", () => {
       items: [{ variantId: "variant-with-hyphens" }],
     });
   });
+
+  it("treats a provider error as success when the cart confirms removal committed", async () => {
+    const transport = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json({ message: "Temporary provider error" }, { status: 500 }),
+      )
+      .mockResolvedValueOnce(Response.json({ id: "cart-with-hyphens", items: [] }));
+
+    const cart = await commerce({ ...env, FW_STOREFRONT_TOKEN: "fixture-only" }).removeFromCart(
+      "cart-with-hyphens",
+      ["variant-with-hyphens"],
+    );
+
+    expect(cart.lines).toEqual([]);
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
 });

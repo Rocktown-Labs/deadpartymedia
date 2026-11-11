@@ -456,12 +456,28 @@ export function commerce(env: Bindings) {
     // Provider IDs can contain hyphens; never derive them from presentation IDs.
     const items = variantIds.map((variantId) => ({ variantId }));
 
-    const data = await fourthwallMutate<FourthwallCart>({
-      body: { items },
-      path: `carts/${cartId}/remove?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
-    });
+    try {
+      const data = await fourthwallMutate<FourthwallCart>({
+        body: { items },
+        path: `carts/${cartId}/remove?storefront_token=${STOREFRONT_TOKEN}&currency=USD`,
+      });
 
-    return transformCart(data, "USD");
+      return transformCart(data, "USD");
+    } catch (error) {
+      // Fourthwall can apply a remove before returning an error. Reconcile once
+      // so the API reports success when the requested lines are already gone.
+      const currentCart = await getCart(cartId, "USD");
+      if (
+        currentCart &&
+        variantIds.every(
+          (variantId) => !currentCart.lines.some((line) => line.merchandise.id === variantId),
+        )
+      ) {
+        return currentCart;
+      }
+
+      throw error;
+    }
   }
 
   return { getProducts, getProduct, createCart, getCart, addToCart, updateCart, removeFromCart };

@@ -1,10 +1,9 @@
 import { redirectToCheckout } from "@/app/cart/actions";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useCart } from "./cart-context";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DEFAULT_OPTION } from "@/lib/constants";
 import posthog from "posthog-js";
 
@@ -23,36 +22,10 @@ function CheckoutButton() {
 }
 
 export default function CartModal() {
-  const { cart, error, updateCartItem } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
-  const quantityRef = useRef(cart?.totalQuantity);
-
-  useEffect(() => {
-    if (
-      cart?.totalQuantity &&
-      cart?.totalQuantity !== quantityRef.current &&
-      cart?.totalQuantity > 0
-    ) {
-      if (!isOpen) {
-        setIsOpen(true);
-      }
-      quantityRef.current = cart?.totalQuantity;
-    }
-  }, [isOpen, cart?.totalQuantity, quantityRef]);
+  const { cart, error, isOpen, setIsOpen, updateCartItem } = useCart();
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger
-        className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent p-0"
-        aria-label="Open cart"
-      >
-        <ShoppingBag className="h-5 w-5" />
-        {cart?.totalQuantity ? (
-          <div className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
-            {cart.totalQuantity}
-          </div>
-        ) : null}
-      </SheetTrigger>
       <SheetContent
         side="right"
         className="w-full md:w-[420px] bg-[#0A0A0A] border-l border-gray-800 flex flex-col p-0"
@@ -202,5 +175,25 @@ export default function CartModal() {
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+export function CartTrigger() {
+  const { cart, setIsOpen } = useCart();
+
+  return (
+    <button
+      type="button"
+      className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-gray-800 hover:border-[#7CFC00] transition-colors cursor-pointer bg-transparent p-0"
+      aria-label="Open cart"
+      onClick={() => setIsOpen(true)}
+    >
+      <ShoppingBag className="h-5 w-5" />
+      {cart?.totalQuantity ? (
+        <span className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-[#7CFC00] text-[11px] font-bold text-black flex items-center justify-center">
+          {cart.totalQuantity}
+        </span>
+      ) : null}
+    </button>
   );
 }

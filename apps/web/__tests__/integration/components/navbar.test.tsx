@@ -11,6 +11,7 @@ vi.mock<typeof import("@/components/cart/cart-modal")>(
   import("@/components/cart/cart-modal"),
   () => ({
     default: () => <div data-testid="cart-modal" />,
+    CartTrigger: () => <div data-testid="cart-trigger" />,
   }),
 );
 
