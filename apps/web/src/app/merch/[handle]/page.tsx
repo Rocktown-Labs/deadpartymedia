@@ -97,7 +97,7 @@ export default function ProductPage({ data }: { data: Awaited<ReturnType<typeof 
               </Link>
 
               <div className="grid grid-cols-1 rounded-lg border border-gray-800 bg-[#0A0A0A] p-8 md:p-12 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,0.9fr)] lg:items-start lg:gap-8">
-                <div className="h-full min-w-0 w-full">
+                <div className="min-w-0 w-full">
                   <Gallery product={product} />
                 </div>
 
