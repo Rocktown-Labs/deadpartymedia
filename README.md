@@ -39,31 +39,31 @@ Both frontends use the API through service bindings and same-origin proxies. Sha
 
 ### Technology
 
-| Layer | Technologies |
-| --- | --- |
-| Web applications | TanStack Start, React, TypeScript |
-| API | Hono RPC on Cloudflare Workers |
-| Data | Separate Cloudflare D1 schemas and migrations for arts and music |
-| Media | Cloudflare R2 |
-| Authentication | Better Auth, scoped memberships, and Clerk import tooling |
-| Background work | Cloudflare Workflows and queues |
-| Infrastructure | Alchemy |
-| Workspace | Node.js 24, pnpm 10.19, Turborepo |
+| Layer            | Technologies                                                     |
+| ---------------- | ---------------------------------------------------------------- |
+| Web applications | TanStack Start, React, TypeScript                                |
+| API              | Hono RPC on Cloudflare Workers                                   |
+| Data             | Separate Cloudflare D1 schemas and migrations for arts and music |
+| Media            | Cloudflare R2                                                    |
+| Authentication   | Better Auth, scoped memberships, and Clerk import tooling        |
+| Background work  | Cloudflare Workflows                                             |
+| Infrastructure   | Alchemy                                                          |
+| Workspace        | Node.js 24, pnpm 10.19, Turborepo                                |
 
 ## 3. Applications & Packages
 
-| Workspace | Responsibility |
-| --- | --- |
-| `apps/web` | Music discovery, publishing, editorial, and storefront experiences |
-| `apps/arts` | Arts articles, artmakers, events, exhibitions, and the arts dashboard |
-| `apps/api` | Shared Hono RPC, authorization, uploads, commerce, and background jobs |
-| `apps/native` | Expo scaffold; deeper mobile integration is a later deliverable |
-| `packages/api-client` | Inferred Hono clients for web and future native use |
-| `packages/contracts` | Shared validation schemas and job inputs |
-| `packages/db` | Separate arts/music D1 schemas, migrations, and PostgreSQL export utilities |
-| `packages/auth` | Better Auth, scoped memberships, and Clerk import planning |
-| `packages/infra` | Alchemy definitions for Workers, D1, R2, AI, Email, and Workflows |
-| `packages/env`, `packages/config` | Shared environment validation and TypeScript configuration |
+| Workspace                         | Responsibility                                                              |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `apps/web`                        | Music discovery, publishing, editorial, and storefront experiences          |
+| `apps/arts`                       | Arts articles, artmakers, events, exhibitions, and the arts dashboard       |
+| `apps/api`                        | Shared Hono RPC, authorization, uploads, commerce, and background jobs      |
+| `apps/native`                     | Expo scaffold; deeper mobile integration is a later deliverable             |
+| `packages/api-client`             | Inferred Hono clients for web and future native use                         |
+| `packages/contracts`              | Shared validation schemas and job inputs                                    |
+| `packages/db`                     | Separate arts/music D1 schemas, migrations, and PostgreSQL export utilities |
+| `packages/auth`                   | Better Auth, scoped memberships, and Clerk import planning                  |
+| `packages/infra`                  | Alchemy definitions for Workers, D1, R2, AI, Email, and Workflows           |
+| `packages/env`, `packages/config` | Shared environment validation and TypeScript configuration                  |
 
 ## 4. Product Areas
 
@@ -90,29 +90,34 @@ Arts and music have separate D1 schemas and migration histories. Media is stored
 - Node.js 24
 - pnpm 10.19.0
 
-Install the locked workspace dependencies and start the local stage:
+Install the locked workspace dependencies:
 
 ```bash
 pnpm install --frozen-lockfile
+```
+
+For local infrastructure configuration, copy `packages/infra/.env.example` to `packages/infra/.env` and set a stable `BETTER_AUTH_SECRET` of at least 32 characters before starting the local stage. Keep secrets and backend credentials in the backend environment; frontend example files are for public build settings.
+
+Start the local stage:
+
+```bash
 pnpm dev --stage local
 ```
 
 The local API runs on port 3000, the music app on 3001, and the arts app on 3002. The frontends call the API through service bindings and same-origin proxies.
 
-For local infrastructure configuration, copy `packages/infra/.env.example` to `packages/infra/.env` and set a stable `BETTER_AUTH_SECRET` of at least 32 characters. Keep secrets and backend credentials in the backend environment; frontend example files are for public build settings.
-
 ## 6. Workspace Commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev --stage local` | Start local services through the infrastructure workspace |
-| `pnpm --filter @dpmedia/infra plan --stage review` | Preview an isolated review deployment |
-| `pnpm run deploy --stage review --yes` | Deploy the review stage |
-| `pnpm check` | Run repository formatting and lint checks |
-| `pnpm typecheck` | Check TypeScript types |
-| `pnpm test` | Run configured package tests |
-| `pnpm --filter web build` | Build the music web application |
-| `pnpm --filter arts build` | Build the arts application |
+| Command                                            | Purpose                                                   |
+| -------------------------------------------------- | --------------------------------------------------------- |
+| `pnpm dev --stage local`                           | Start local services through the infrastructure workspace |
+| `pnpm --filter @dpmedia/infra plan --stage review` | Preview an isolated review deployment                     |
+| `pnpm run deploy --stage review --yes`             | Deploy the review stage                                   |
+| `pnpm check`                                       | Run repository formatting and lint checks                 |
+| `pnpm typecheck`                                   | Check TypeScript types                                    |
+| `pnpm test`                                        | Run configured package tests                              |
+| `pnpm --filter web build`                          | Build the music web application                           |
+| `pnpm --filter arts build`                         | Build the arts application                                |
 
 Database and migration utilities are available as `pnpm db:generate:arts`, `pnpm db:generate:music`, and `pnpm migration:export`.
 
@@ -120,7 +125,7 @@ Database and migration utilities are available as `pnpm db:generate:arts`, `pnpm
 
 Deploy isolated stages with Alchemy. Production resource names are `deadpartymedia`, `deadpartyarts`, and `deadparty-api`; preview resources use a stage suffix. Domain attachment is disabled by default, and production data resources are retained.
 
-The migration runbook at [docs/migration/cloudflare.md](docs/migration/cloudflare.md) documents the verified preview, source inventory, data and media tooling, Clerk migration requirements, production cutover, and rollback. The existing Vercel / Clerk / Neon system remains available until identity export and production cutover checks are complete.
+The migration runbook at [docs/migration/cloudflare.md](docs/migration/cloudflare.md) documents the verified preview, source inventory, data and media tooling, Clerk migration requirements, production cutover, and rollback. The live cutover completed on November 10, 2026. The previous Vercel / Clerk / Neon system is retained only for the documented rollback window.
 
 ## 8. Repository Layout
 
@@ -134,6 +139,7 @@ deadpartymedia/
 ├── packages/
 │   ├── api-client/          # Typed API clients
 │   ├── auth/                # Authentication and import tooling
+│   ├── config/              # Shared TypeScript configuration
 │   ├── contracts/           # Shared request and job schemas
 │   ├── db/                  # Product-specific database schemas
 │   ├── env/                 # Runtime environment validation
