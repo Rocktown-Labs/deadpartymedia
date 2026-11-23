@@ -333,9 +333,7 @@ export const artsContentRoutes = new Hono<AppEnv>()
       );
       if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
         throw new HTTPException(403, {
-          res: Response.json({
-            error: "Unauthorized: You don't have permission to edit this article",
-          }),
+          message: "Unauthorized: You don't have permission to edit this article",
         });
       }
 
@@ -388,9 +386,7 @@ export const artsContentRoutes = new Hono<AppEnv>()
     );
     if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
       throw new HTTPException(403, {
-        res: Response.json({
-          error: "Unauthorized: You don't have permission to edit this article",
-        }),
+        message: "Unauthorized: You don't have permission to edit this article",
       });
     }
 
@@ -427,9 +423,7 @@ export const artsContentRoutes = new Hono<AppEnv>()
     );
     if (!isSuperOrAdmin && existing.authorId !== auth.userId) {
       throw new HTTPException(403, {
-        res: Response.json({
-          error: "Unauthorized: You don't have permission to delete this article",
-        }),
+        message: "Unauthorized: You don't have permission to delete this article",
       });
     }
 

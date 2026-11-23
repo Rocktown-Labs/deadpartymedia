@@ -38,6 +38,20 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return parsed;
 }
 
+function buildPublicRequestUrl(
+  rawUrl: string,
+  originHeader: string | undefined,
+  fallbackOrigin: string,
+): URL {
+  const parsed = new URL(rawUrl);
+  const publicPath = parsed.pathname.replace(/^\/music(?=\/|$)/, "/api");
+  const baseOrigin =
+    originHeader || (parsed.host === "deadparty-api" ? fallbackOrigin : parsed.origin);
+  const publicUrl = new URL(publicPath, baseOrigin);
+  publicUrl.search = parsed.search;
+  return publicUrl;
+}
+
 function buildPaginationUrl(url: URL, page: number, pageSize: number): string {
   const nextUrl = new URL(url.toString());
   nextUrl.searchParams.set("page", String(page));
@@ -96,7 +110,11 @@ export const musicUserActivityRoutes = new Hono<AppEnv>()
     const auth = requireAuth(c);
     const userId = auth.userId;
 
-    const requestUrl = new URL(c.req.url);
+    const requestUrl = buildPublicRequestUrl(
+      c.req.url,
+      c.req.header("x-deadparty-origin"),
+      c.env.WEB_APP_URL,
+    );
     const page = parsePositiveInt(c.req.query("page"), 1);
     const pageSize = Math.min(
       parsePositiveInt(c.req.query("page_size"), DEFAULT_PAGE_SIZE),
@@ -228,7 +246,11 @@ export const musicUserActivityRoutes = new Hono<AppEnv>()
     const auth = requireAuth(c);
     const userId = auth.userId;
 
-    const requestUrl = new URL(c.req.url);
+    const requestUrl = buildPublicRequestUrl(
+      c.req.url,
+      c.req.header("x-deadparty-origin"),
+      c.env.WEB_APP_URL,
+    );
     const page = parsePositiveInt(c.req.query("page"), 1);
     const pageSize = Math.min(
       parsePositiveInt(c.req.query("page_size"), DEFAULT_PAGE_SIZE),
@@ -398,7 +420,11 @@ export const musicUserActivityRoutes = new Hono<AppEnv>()
     const auth = requireAuth(c);
     const userId = auth.userId;
 
-    const requestUrl = new URL(c.req.url);
+    const requestUrl = buildPublicRequestUrl(
+      c.req.url,
+      c.req.header("x-deadparty-origin"),
+      c.env.WEB_APP_URL,
+    );
     const page = parsePositiveInt(c.req.query("page"), 1);
     const pageSize = Math.min(
       parsePositiveInt(c.req.query("page_size"), DEFAULT_PAGE_SIZE),

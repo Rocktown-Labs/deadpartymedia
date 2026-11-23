@@ -112,6 +112,17 @@ describe("cross-domain sign-in", () => {
     expect(target.pathname).toBe("/auth/sign-in");
     expect(target.searchParams.get("brand")).toBe("music");
   });
+  it("accepts trusted alias origins and assigns the music brand", async () => {
+    const apex = "https://apex.deadpartymedia.example";
+    const aliasBindings = { ...bindings, TRUSTED_ORIGINS: `${arts},${music},${apex}` };
+    const start = await request(`${apex}/api/sso/start`, "", aliasBindings);
+    expect(start.status).toBe(302);
+    const authorize = await request(start.headers.get("location")!, "", aliasBindings);
+    expect(authorize.status).toBe(302);
+    const target = new URL(authorize.headers.get("location")!);
+    expect(target.origin).toBe(apex);
+    expect(target.searchParams.get("brand")).toBe("music");
+  });
   it("keeps raw token plugin endpoints private", async () => {
     expect(
       (

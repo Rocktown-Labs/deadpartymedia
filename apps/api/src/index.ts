@@ -55,7 +55,10 @@ export const app = base
   .route("/arts", artsRouter)
   .route("/music", musicRouter);
 app.onError((error, c) => {
-  if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
+  if (error instanceof HTTPException) {
+    if (error.res) return error.getResponse();
+    return c.json({ error: error.message }, error.status);
+  }
   console.error(
     JSON.stringify({
       event: "request_failed",

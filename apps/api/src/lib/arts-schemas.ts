@@ -102,6 +102,7 @@ export const artmakerOnboardingSchema = z.object({
     .min(2, "State is required")
     .max(2, "Use a two-letter state code")
     .transform((value) => value.trim().toUpperCase()),
+  status: z.enum(["draft", "published"]).optional(),
 });
 
 export type ArtmakerOnboardingInput = z.infer<typeof artmakerOnboardingSchema>;

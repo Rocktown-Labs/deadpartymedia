@@ -164,9 +164,7 @@ export const artsAdminRoutes = new Hono<AppEnv>()
 
       if (!caller.roles.includes("super_admin") && data.role === "super_admin") {
         throw new HTTPException(403, {
-          res: Response.json({
-            error: "Unauthorized: Only super admins can grant super_admin role",
-          }),
+          message: "Unauthorized: Only super admins can grant super_admin role",
         });
       }
 

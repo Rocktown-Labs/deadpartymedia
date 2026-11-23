@@ -98,6 +98,9 @@ function Onboarding() {
   const [profileUploadProgress, setProfileUploadProgress] = useState(0);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasArtmakerAccess, setHasArtmakerAccess] = useState(
+    Boolean(currentArtmaker || existingRoles.includes("artmaker")),
+  );
 
   const selectedMediumSet = useMemo(() => new Set(medium), [medium]);
   const progressPercent = ((step + 1) / STEPS.length) * 100;
@@ -241,7 +244,35 @@ function Onboarding() {
     return parsed.data;
   };
 
-  const goNext = () => {
+  const ensureArtmakerDraft = async () => {
+    const parsed = validateProfile();
+
+    if (!parsed) {
+      return false;
+    }
+
+    if (hasArtmakerAccess) {
+      return true;
+    }
+
+    setIsSaving(true);
+    try {
+      await saveArtmaker({ data: { ...parsed, status: "draft" } });
+      setHasArtmakerAccess(true);
+      return true;
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Could not save your artmaker profile draft.",
+      );
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const goNext = async () => {
     setError("");
 
     if (step === 0) {
@@ -261,7 +292,7 @@ function Onboarding() {
       }
     }
 
-    if (step === 1 && !validateProfile()) {
+    if (step === 1 && !(await ensureArtmakerDraft())) {
       return;
     }
 
@@ -285,7 +316,8 @@ function Onboarding() {
 
     setIsSaving(true);
     try {
-      const result = await saveArtmaker({ data: parsed });
+      const result = await saveArtmaker({ data: { ...parsed, status: "published" } });
+      setHasArtmakerAccess(true);
 
       for (const artwork of artworkResult.data) {
         await saveArt({
@@ -440,7 +472,14 @@ function Onboarding() {
                     <button
                       key={item.value}
                       type="button"
-                      onClick={() => setStep(item.value)}
+                      disabled={isSaving}
+                      onClick={async () => {
+                        setError("");
+                        if (item.value === 2 && !(await ensureArtmakerDraft())) {
+                          return;
+                        }
+                        setStep(item.value);
+                      }}
                       className={`min-h-11 border px-3 font-black text-xs uppercase tracking-[0.14em] transition-colors ${
                         step === item.value
                           ? "border-[#7CFC00] bg-[#7CFC00] text-black"
@@ -835,11 +874,13 @@ function Onboarding() {
                 {step < STEPS.length - 1 ? (
                   <Button
                     type="button"
+                    disabled={isSaving}
                     onClick={goNext}
                     className="h-12 rounded-none bg-[#7CFC00] px-6 font-black text-black text-xs uppercase tracking-[0.18em] hover:bg-[#a5ff43]"
                   >
-                    Continue
-                    <ArrowRight className="size-4" />
+                    {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
+                    {isSaving ? "Saving" : "Continue"}
+                    {isSaving ? null : <ArrowRight className="size-4" />}
                   </Button>
                 ) : (
                   <Button

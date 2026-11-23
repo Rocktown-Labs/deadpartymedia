@@ -92,6 +92,17 @@ describe("arts D1 and scoped Hono RPC", () => {
     expect(upload.status).toBe(200);
     const media = (await upload.json()) as { key: string };
     expect(await (await env.ARTS_MEDIA.get(media.key))?.text()).toBe("artwork-image");
+    const served = await app.request(`http://localhost:3000/arts/media/${media.key}`, {}, env);
+    expect(served.status).toBe(200);
+    expect(await served.text()).toBe("artwork-image");
+    const etag = served.headers.get("etag");
+    expect(etag).toBeTruthy();
+    const notModified = await app.request(
+      `http://localhost:3000/arts/media/${media.key}`,
+      { headers: { "if-none-match": etag! } },
+      env,
+    );
+    expect(notModified.status).toBe(304);
     const created = await client(artist.cookie).arts.dashboard.artworks.$post({
       json: {
         title: "Native Painting",
@@ -108,6 +119,54 @@ describe("arts D1 and scoped Hono RPC", () => {
     expect(body.artwork.priceCents).toBe(1250);
     const listed = await client(artist.cookie).arts.dashboard.artworks.$get();
     expect((await listed.json()).some((row) => row.title === "Native Painting")).toBe(true);
+  });
+  it("supports draft onboarding before step-2 artwork upload and preserves error messages", async () => {
+    const onboardingUser = await signedIn("draft-artmaker@example.test");
+    const draft = await client(onboardingUser.cookie).arts.artmakers.onboarding.artmaker.$post({
+      json: {
+        name: "Draft Artmaker",
+        city: "Fayetteville",
+        state: "AR",
+        phoneNumber: "+15015559999",
+        medium: ["Drawing"],
+        instagramUsername: "draftartmaker",
+        showPronouns: false,
+        status: "draft",
+      },
+    });
+    expect(draft.status).toBe(200);
+    const draftBody = await draft.json();
+    expect(draftBody.artmaker.status).toBe("draft");
+
+    const form = new FormData();
+    form.set("file", new File(["step-two"], "IMG_3602.jpeg", { type: "image/jpeg" }));
+    const upload = await app.request(
+      "http://localhost:3000/arts/uploads/artwork",
+      { method: "POST", headers: { cookie: onboardingUser.cookie }, body: form },
+      env,
+    );
+    expect(upload.status).toBe(200);
+
+    const publish = await client(onboardingUser.cookie).arts.artmakers.onboarding.artmaker.$post({
+      json: {
+        name: "Draft Artmaker",
+        city: "Fayetteville",
+        state: "AR",
+        phoneNumber: "+15015559999",
+        medium: ["Drawing"],
+        instagramUsername: "draftartmaker",
+        showPronouns: false,
+        status: "published",
+      },
+    });
+    expect(publish.status).toBe(200);
+    expect((await publish.json()).artmaker.status).toBe("published");
+
+    const missingDelete = await client(onboardingUser.cookie).arts.dashboard.artworks[
+      ":id"
+    ].$delete({ param: { id: "999999" } });
+    expect(missingDelete.status).toBe(404);
+    expect(await missingDelete.json()).toEqual({ error: "Artwork not found" });
   });
   it("does not permit anonymous writes", async () => {
     const response = await client().arts.admin.venues.$post({

@@ -1,6 +1,7 @@
 import { env, introspectWorkflowInstance } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vite-plus/test";
 import { app } from "../src/index";
+import { renderOgHtml } from "../src/routes/music/og";
 import { eq } from "drizzle-orm";
 import { getMusicDb } from "../src/db";
 import {
@@ -320,6 +321,64 @@ describe("music native D1 API", () => {
         })
       ).status,
     ).toBe(403);
+  });
+  it("allows venue onboarding photo uploads and artist audio uploads", async () => {
+    const newVenueUser = await signUp("new-venue@example.test");
+    const venuePhoto = await client(newVenueUser.cookie).music.upload.$post({
+      query: { type: "venue" },
+      form: { file: new File(["venue-img"], "venue.jpg", { type: "image/jpeg" }) },
+    });
+    expect(venuePhoto.status).toBe(200);
+
+    const audioBytes = new Uint8Array([73, 68, 51, 3, 0, 0, 0, 0]);
+    const audioUpload = await client(writer.cookie).music.upload.$post({
+      query: { type: "audio" },
+      form: { file: new File([audioBytes], "demo.mp3", { type: "audio/mpeg" }) },
+    });
+    expect(audioUpload.status).toBe(200);
+    const body = await audioUpload.json();
+    if (!("pathname" in body)) throw new Error("Audio upload failed");
+    const served = await app.request(`http://localhost:3000/music/media/${body.pathname}`, {}, env);
+    expect(served.status).toBe(200);
+    expect(served.headers.get("content-type")).toBe("audio/mpeg");
+    expect(new Uint8Array(await served.arrayBuffer())).toEqual(audioBytes);
+  });
+  it("renders flex-safe OG markup without printing false for empty venues", () => {
+    const html = renderOgHtml(env, {
+      date: "11/23/2026",
+      description: "Live show in Little Rock",
+      image: "",
+      title: "House Show & Benefit",
+      type: "event",
+      venue: "",
+    });
+    const divs = html.match(/<div\s+style="[^"]*"/g) ?? [];
+    expect(divs.length).toBeGreaterThan(0);
+    for (const div of divs) {
+      expect(div).toContain("display:flex");
+    }
+    expect(html).not.toContain("false");
+  });
+  it("uses public API origins in pagination URLs instead of the internal worker host", async () => {
+    const response = await app.request(
+      "https://deadparty-api/music/articles/published/comments?page=1&page_size=1",
+      { headers: { "x-deadparty-origin": "https://www.deadpartymedia.com" } },
+      env,
+    );
+    expect(response.status).toBe(200);
+    await client(fan.cookie).music.articles[":slug"].comments.$post({
+      param: { slug: "published" },
+      json: { content: "Second comment for pagination" },
+    });
+    const paged = await app.request(
+      "https://deadparty-api/music/articles/published/comments?page=1&page_size=1",
+      { headers: { "x-deadparty-origin": "https://www.deadpartymedia.com" } },
+      env,
+    );
+    const payload = (await paged.json()) as { next: string | null };
+    expect(payload.next).toBe(
+      "https://www.deadpartymedia.com/api/articles/published/comments?page=2&page_size=1",
+    );
   });
   it("merges artists atomically and deduplicates shared relations", async () => {
     const db = getMusicDb(env);

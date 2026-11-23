@@ -33,7 +33,7 @@ export const Route = createFileRoute("/admin/articles")({
     editor:
       search.editor === "new"
         ? "new"
-        : typeof search.editor === "string" && /^\\d+$/.test(search.editor)
+        : typeof search.editor === "string" && /^\d+$/.test(search.editor)
           ? Number(search.editor)
           : undefined,
   }),

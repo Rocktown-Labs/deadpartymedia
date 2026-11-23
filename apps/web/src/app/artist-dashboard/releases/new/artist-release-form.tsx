@@ -129,7 +129,7 @@ export function ArtistReleaseForm({
     const loadingId = toast.loading("Uploading audio track...");
 
     try {
-      const response = await uploadMusicImage(file, "content");
+      const response = await uploadMusicImage(file, "audio");
 
       const { url } = response;
       setAudioUrl(url);
