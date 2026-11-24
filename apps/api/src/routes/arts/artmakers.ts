@@ -151,7 +151,7 @@ export const artsArtmakersRoutes = new Hono<AppEnv>()
       const db = getDb(c.env);
 
       const [existing] = await db
-        .select({ id: artmakers.id, image: artmakers.image })
+        .select({ id: artmakers.id, image: artmakers.image, status: artmakers.status })
         .from(artmakers)
         .where(eq(artmakers.clerkUserId, auth.userId))
         .limit(1);
@@ -162,6 +162,12 @@ export const artsArtmakersRoutes = new Hono<AppEnv>()
       const instagramUsername = normalizeInstagramUsername(data.instagramUsername);
 
       const identity = await getIdentity(c.env, auth.userId);
+      const nextStatus: "draft" | "published" =
+        data.status === "draft"
+          ? existing?.status === "published"
+            ? "published"
+            : "draft"
+          : "published";
 
       const payload = {
         bio: data.bio?.trim() || null,
@@ -179,7 +185,7 @@ export const artsArtmakersRoutes = new Hono<AppEnv>()
         showPronouns: data.showPronouns,
         slug,
         state: data.state,
-        status: "published" as const,
+        status: nextStatus,
         updatedAt: new Date(),
       };
 
@@ -312,7 +318,12 @@ export const artsArtmakersRoutes = new Hono<AppEnv>()
       .orderBy(desc(artmakers.createdAt))
       .catch(() => []);
 
-    return c.json(rows);
+    return c.json(
+      rows.map((row) => ({
+        ...row,
+        image: normalizeStoredImageUrl(c.env, row.image),
+      })),
+    );
   })
   .post("/admin/artmakers", zValidator("json", artmakerStubSchema), async (c) => {
     requireRole(c, ARTS_STAFF_ROLES);

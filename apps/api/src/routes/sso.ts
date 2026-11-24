@@ -31,9 +31,22 @@ function localPath(value: string | undefined, fallback = "/onboarding") {
   const url = new URL(value, "https://local.invalid");
   return url.origin === "https://local.invalid" ? url.pathname + url.search + url.hash : fallback;
 }
+function allowedFrontendOrigins(env: AppEnv["Bindings"]) {
+  const origins = new Set<string>([env.ARTS_APP_URL, env.WEB_APP_URL]);
+  for (const raw of env.TRUSTED_ORIGINS.split(",")) {
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    try {
+      origins.add(new URL(trimmed).origin);
+    } catch {
+      // Ignore malformed origins.
+    }
+  }
+  return origins;
+}
 function frontend(c: Context<AppEnv>) {
   const origin = c.req.header("x-deadparty-origin") || new URL(c.req.url).origin;
-  if (![c.env.ARTS_APP_URL, c.env.WEB_APP_URL].includes(origin))
+  if (!allowedFrontendOrigins(c.env).has(origin))
     throw new HTTPException(403, { message: "Invalid sign-in origin" });
   return origin;
 }
@@ -53,7 +66,7 @@ async function load(c: Context<AppEnv>, state = c.req.query("state") || "") {
     .first<{ value: string }>();
   if (!row) throw new HTTPException(400, { message: "Sign-in expired. Please start again." });
   const transfer = JSON.parse(row.value) as Transfer;
-  if (![c.env.ARTS_APP_URL, c.env.WEB_APP_URL].includes(transfer.origin) || transfer.tokenHash)
+  if (!allowedFrontendOrigins(c.env).has(transfer.origin) || transfer.tokenHash)
     throw new HTTPException(400, { message: "Sign-in already authorized or invalid" });
   return { state, value: row.value, transfer };
 }
@@ -168,7 +181,7 @@ export const ssoRouter = new Hono<AppEnv>()
       );
       target.searchParams.set(
         "brand",
-        record.transfer.origin === c.env.WEB_APP_URL ? "music" : "arts",
+        record.transfer.origin === c.env.ARTS_APP_URL ? "arts" : "music",
       );
       return c.redirect(target.href, 302);
     }

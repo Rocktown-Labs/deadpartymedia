@@ -18,15 +18,15 @@ export function firstIssueMessage(error: z.ZodError): string {
 }
 
 export function invalid(message: string): HTTPException {
-  return new HTTPException(400, { res: Response.json({ error: message }) });
+  return new HTTPException(400, { message });
 }
 
 export function notFound(message: string): HTTPException {
-  return new HTTPException(404, { res: Response.json({ error: message }) });
+  return new HTTPException(404, { message });
 }
 
 export function forbidden(): HTTPException {
-  return new HTTPException(403, { res: Response.json({ error: "Forbidden" }) });
+  return new HTTPException(403, { message: "Forbidden" });
 }
 
 /**

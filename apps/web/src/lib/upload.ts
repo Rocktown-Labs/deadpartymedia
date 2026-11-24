@@ -2,7 +2,7 @@
  * Upload utility functions for file validation and path generation
  */
 
-export type UploadType = "cover" | "content" | "profile" | "event" | "venue" | "release";
+export type UploadType = "cover" | "content" | "profile" | "event" | "venue" | "release" | "audio";
 
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -12,8 +12,8 @@ export const ALLOWED_IMAGE_TYPES = [
   "image/gif",
 ] as const;
 
-// 4.5MB (Vercel server upload limit)
-export const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+// 12MB direct R2 upload limit
+export const MAX_FILE_SIZE = 12 * 1024 * 1024;
 
 /**
  * Validate if a file is an allowed image type
@@ -67,6 +67,10 @@ export function generateImagePathname(
       pathname = `music/covers/${timestamp}-${sanitizedFilename}`;
       break;
     }
+    case "audio": {
+      pathname = `music/audio/${timestamp}-${sanitizedFilename}`;
+      break;
+    }
     default: {
       pathname = `uploads/${timestamp}-${sanitizedFilename}`;
     }
@@ -101,10 +105,7 @@ export function validateImageFile(file: File): {
   return { valid: true };
 }
 
-export async function uploadMusicImage(
-  file: File,
-  type: "cover" | "content" | "profile" | "event" | "venue" | "release",
-) {
+export async function uploadMusicImage(file: File, type: UploadType) {
   const { musicApi } = await import("./music-client");
   const { readResponse } = await import("@dpmedia/api-client");
   return readResponse(await musicApi.upload.$post({ query: { type }, form: { file } }));

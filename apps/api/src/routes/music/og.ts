@@ -218,9 +218,106 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-const BADGE_STYLE = `background-color:${BRAND_COLOR};border-radius:4px;color:#000;font-size:18px;font-weight:bold;margin-bottom:20px;padding:8px 16px;text-transform:uppercase`;
+const BADGE_STYLE = `background-color:${BRAND_COLOR};border-radius:4px;color:#000;display:flex;font-size:18px;font-weight:bold;margin-bottom:20px;padding:8px 16px;text-transform:uppercase`;
 
-const META_STYLE = `color:${BRAND_COLOR};font-size:24px;font-weight:bold;margin-top:10px`;
+const META_STYLE = `color:${BRAND_COLOR};display:flex;font-size:24px;font-weight:bold;margin-top:10px`;
+
+const SATORI_IMAGE_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/svg+xml",
+]);
+
+const MAX_INLINE_OG_IMAGE_BYTES = 4 * 1024 * 1024;
+
+function inferImageMimeType(key: string): string | null {
+  const lower = key.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".svg")) return "image/svg+xml";
+  return null;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function extractMusicMediaKey(env: Bindings, imageUrl: string): string | null {
+  if (env.MUSIC_MEDIA_URL) {
+    const base = env.MUSIC_MEDIA_URL.replace(/\/$/, "");
+    if (imageUrl.startsWith(`${base}/`)) {
+      return imageUrl.slice(base.length + 1);
+    }
+  }
+  try {
+    const parsed = new URL(imageUrl);
+    const knownHosts = new Set<string>();
+    for (const candidate of [env.WEB_APP_URL, ...env.TRUSTED_ORIGINS.split(",")]) {
+      const trimmed = candidate.trim();
+      if (!trimmed) continue;
+      try {
+        knownHosts.add(new URL(trimmed).host);
+      } catch {
+        // Ignore malformed origins.
+      }
+    }
+    if (!knownHosts.has(parsed.host)) return null;
+    if (parsed.pathname.startsWith("/api/media/")) {
+      return parsed.pathname.slice("/api/media/".length);
+    }
+    if (parsed.pathname.startsWith("/media/")) {
+      return parsed.pathname.slice("/media/".length);
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+async function resolveOgBackgroundImage(env: Bindings, imageUrl: string): Promise<string> {
+  const { defaultOgImage } = getSiteDefaults(env);
+  if (!imageUrl || imageUrl === defaultOgImage) {
+    return "";
+  }
+  const rawKey = extractMusicMediaKey(env, imageUrl);
+  if (!rawKey) {
+    // Skip WebP/AVIF URLs that Satori cannot decode.
+    if (/\.(?:webp|avif)(?:[?#]|$)/i.test(imageUrl)) {
+      return "";
+    }
+    return imageUrl;
+  }
+  try {
+    const decodedKey = decodeURIComponent(rawKey);
+    const object =
+      (await env.MUSIC_MEDIA.get(decodedKey)) ??
+      (decodedKey !== rawKey ? await env.MUSIC_MEDIA.get(rawKey) : null);
+    if (!object || object.size === 0 || object.size > MAX_INLINE_OG_IMAGE_BYTES) {
+      return "";
+    }
+    const rawMime = (
+      object.httpMetadata?.contentType?.split(";")[0]?.trim().toLowerCase() ||
+      inferImageMimeType(decodedKey) ||
+      ""
+    ).replace("image/jpg", "image/jpeg");
+    if (!SATORI_IMAGE_MIME_TYPES.has(rawMime)) {
+      return "";
+    }
+    const base64 = arrayBufferToBase64(await object.arrayBuffer());
+    return `data:${rawMime};base64,${base64}`;
+  } catch {
+    return "";
+  }
+}
 
 /**
  * Builds the HTML equivalent of the source route's JSX tree — identical
@@ -284,7 +381,7 @@ export function renderOgHtml(
 
   // Event-specific info
   if (data.type === "event" && data.date) {
-    const eventInfo = `${data.date} ${data.venue && `• ${data.venue}`}`;
+    const eventInfo = data.venue ? `${data.date} • ${data.venue}` : data.date;
     content.push(`<div style="${META_STYLE}">${escapeHtml(eventInfo)}</div>`);
   }
 
@@ -295,13 +392,13 @@ export function renderOgHtml(
 
   // Site branding
   content.push(
-    `<div style="bottom:40px;color:${BRAND_COLOR};font-size:24px;font-weight:bold;position:absolute;right:60px">${SITE_NAME}</div>`,
+    `<div style="bottom:40px;color:${BRAND_COLOR};display:flex;font-size:24px;font-weight:bold;position:absolute;right:60px">${SITE_NAME}</div>`,
   );
 
   return (
     `<div style="${rootStyle}">` +
     // Overlay for better text readability
-    `<div style="background-color:rgba(10, 10, 10, 0.7);bottom:0;left:0;position:absolute;right:0;top:0"></div>` +
+    `<div style="background-color:rgba(10, 10, 10, 0.7);bottom:0;display:flex;left:0;position:absolute;right:0;top:0"></div>` +
     // Content
     `<div style="align-items:center;display:flex;flex-direction:column;justify-content:center;padding:60px;width:100%;z-index:1">${content.join("")}</div>` +
     `</div>`
@@ -324,13 +421,42 @@ export const musicOgRoutes = new Hono<AppEnv>().get(
       }
 
       const envRecord = c.env;
+      const resolvedImage = await resolveOgBackgroundImage(envRecord, data.image);
+      const resolvedData: OgData = { ...data, image: resolvedImage };
+
       // Lazy import: workers-og ships a wasm module that only resolves under
       // workerd (and is mocked in tests) — never load it eagerly.
       const { ImageResponse } = await import("workers-og");
-      return new ImageResponse(renderOgHtml(envRecord, data), {
-        height: 630,
-        width: 1200,
-      });
+      const renderPng = async (ogData: OgData) => {
+        const res = new ImageResponse(renderOgHtml(envRecord, ogData), {
+          height: 630,
+          width: 1200,
+        });
+        const bytes = await res.arrayBuffer();
+        if (bytes.byteLength === 0) {
+          throw new Error("Rendered empty OG image");
+        }
+        return new Response(bytes, {
+          headers: {
+            "Cache-Control": "public, max-age=3600",
+            "Content-Type": "image/png",
+          },
+        });
+      };
+
+      try {
+        return await renderPng(resolvedData);
+      } catch (renderError) {
+        if (!resolvedData.image) {
+          throw renderError;
+        }
+        console.warn("OG image render failed with background image, retrying without background:", {
+          error: renderError instanceof Error ? renderError.message : String(renderError),
+          slug,
+          type,
+        });
+        return await renderPng({ ...resolvedData, image: "" });
+      }
     } catch (error) {
       console.error("Error generating OG image:", error);
       return c.body("Error generating image", 500);

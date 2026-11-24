@@ -33,10 +33,26 @@ export async function uploadMedia({ files, route, onFileStateChange }: UploadOpt
           reject(new Error("The transfer to storage failed. Check your connection and try again."));
         xhr.onload = () => {
           try {
-            const body: unknown = JSON.parse(xhr.responseText);
+            let body: unknown = null;
+            if (xhr.responseText) {
+              try {
+                body = JSON.parse(xhr.responseText);
+              } catch {
+                body = null;
+              }
+            }
             if (xhr.status < 200 || xhr.status >= 300) {
-              const error = z.object({ error: z.string() }).safeParse(body);
-              throw new Error(error.success ? error.data.error : `Upload failed (${xhr.status})`);
+              const error = z.object({ error: z.string().min(1) }).safeParse(body);
+              if (error.success) {
+                throw new Error(error.data.error);
+              }
+              if (xhr.status === 413) {
+                throw new Error("File is too large. Keep uploads under 12 MB.");
+              }
+              if (xhr.status === 401 || xhr.status === 403) {
+                throw new Error("You don't have permission to upload this file.");
+              }
+              throw new Error(`Upload failed (${xhr.status})`);
             }
             resolve(uploadResponse.parse(body));
           } catch (error) {
