@@ -160,12 +160,16 @@ function Home() {
                     key={group.slug}
                     to="/exhibitions"
                     search={{ medium: group.slug }}
-                    className="min-h-20 rounded-lg border border-gray-800 bg-[#080808] p-3 transition-colors hover:border-[#7CFC00]/60"
+                    className={`min-h-20 rounded-lg border border-gray-800 bg-[#080808] p-3 transition-colors hover:border-[#7CFC00]/60 ${
+                      index === MEDIUM_GROUPS.length - 1 && MEDIUM_GROUPS.length % 2 === 1
+                        ? "col-span-2"
+                        : ""
+                    }`}
                   >
                     <span className="text-gray-600 text-[10px]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <p className="mt-3 font-black text-sm text-white uppercase tracking-[0.12em]">
+                    <p className="mt-3 break-words font-black text-sm leading-snug text-white uppercase tracking-[0.12em]">
                       {group.label}
                     </p>
                     <p className="mt-2 line-clamp-2 text-gray-500 text-xs">{group.description}</p>

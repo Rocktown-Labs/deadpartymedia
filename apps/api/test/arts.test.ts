@@ -119,6 +119,71 @@ describe("arts D1 and scoped Hono RPC", () => {
     expect(body.artwork.priceCents).toBe(1250);
     const listed = await client(artist.cookie).arts.dashboard.artworks.$get();
     expect((await listed.json()).some((row) => row.title === "Native Painting")).toBe(true);
+
+    const photoArtwork = await client(artist.cookie).arts.dashboard.artworks.$post({
+      json: {
+        title: "Little Rock Street Film",
+        imageKey: media.key,
+        forSale: false,
+        status: "published",
+        medium: "Photography / Videography",
+        videoUrl: "https://youtu.be/dQw4w9WgXcQ",
+        year: "2026",
+      },
+    });
+    expect(photoArtwork.status).toBe(200);
+    const createdPhotoBody = await photoArtwork.json();
+    expect(createdPhotoBody.artwork.videoUrl).toBe("https://youtu.be/dQw4w9WgXcQ");
+
+    const photoWall = await client().arts.artworks.$get({
+      query: { medium: "photography-videography" },
+    });
+    expect(photoWall.status).toBe(200);
+    const photoWallBody = await photoWall.json();
+    expect(photoWallBody.items.map((row) => row.title)).toEqual(["Little Rock Street Film"]);
+    expect(photoWallBody.items[0]?.videoUrl).toBe("https://youtu.be/dQw4w9WgXcQ");
+    expect(photoWallBody.groupCounts).toMatchObject({ "photography-videography": 1 });
+
+    const updatedPhoto = await client(artist.cookie).arts.dashboard.artworks[":id"].$patch({
+      param: { id: String(createdPhotoBody.artwork.id) },
+      json: {
+        title: "Little Rock Street Film",
+        forSale: false,
+        status: "published",
+        medium: "Photography / Videography",
+        videoUrl: "https://vimeo.com/123456789",
+        year: "2026",
+      },
+    });
+    expect(updatedPhoto.status).toBe(200);
+    expect((await updatedPhoto.json()).artwork.videoUrl).toBe("https://vimeo.com/123456789");
+
+    const clearedPhoto = await client(artist.cookie).arts.dashboard.artworks[":id"].$patch({
+      param: { id: String(createdPhotoBody.artwork.id) },
+      json: {
+        title: "Little Rock Street Film",
+        forSale: false,
+        status: "published",
+        medium: "Photography / Videography",
+        videoUrl: "",
+        year: "2026",
+      },
+    });
+    expect(clearedPhoto.status).toBe(200);
+    expect((await clearedPhoto.json()).artwork.videoUrl).toBeNull();
+
+    const unsafeVideo = await client(artist.cookie).arts.dashboard.artworks.$post({
+      json: {
+        title: "Bad Video Link",
+        imageKey: media.key,
+        forSale: false,
+        status: "published",
+        medium: "Photography / Videography",
+        videoUrl: "javascript:alert(1)",
+        year: "2026",
+      },
+    });
+    expect(unsafeVideo.status).toBe(400);
   });
   it("supports draft onboarding before step-2 artwork upload and preserves error messages", async () => {
     const onboardingUser = await signedIn("draft-artmaker@example.test");

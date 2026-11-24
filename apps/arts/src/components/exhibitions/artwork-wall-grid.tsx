@@ -5,7 +5,7 @@ import {
 } from "#/lib/artworks.functions.ts";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Image } from "@unpic/react";
-import { BadgeDollarSign, Sparkles } from "lucide-react";
+import { BadgeDollarSign, Play, Sparkles } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { ExhibitionSortOption } from "./exhibition-filter-bar.tsx";
 
@@ -106,6 +106,12 @@ export function ArtworkWallGrid({
                 height={480}
                 className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
+              {artwork.videoUrl ? (
+                <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                  <Play className="size-3 fill-current text-[#7CFC00]" />
+                  <span>Video</span>
+                </div>
+              ) : null}
               {artwork.forSale ? (
                 <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full border border-[#7CFC00]/50 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#7CFC00] backdrop-blur-md">
                   <BadgeDollarSign className="size-3" />

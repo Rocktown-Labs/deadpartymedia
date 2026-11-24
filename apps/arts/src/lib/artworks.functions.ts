@@ -2,6 +2,7 @@ import { readResponse } from "@dpmedia/api-client";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getArtsApi, listAllArtworks, withCreatedAt } from "./api.server";
+import { isValidVideoUrl } from "./video";
 
 export interface ArtworkListItem {
   id: number;
@@ -13,6 +14,7 @@ export interface ArtworkListItem {
   slug: string;
   title: string;
   image: string;
+  videoUrl: string | null;
   description: string | null;
   medium: string | null;
   year: string | null;
@@ -30,6 +32,15 @@ export interface PaginatedArtworksResult {
   groupCounts: Record<string, number>;
 }
 
+const optionalVideoUrlSchema = z
+  .string()
+  .trim()
+  .max(2048, "Video URL must stay under 2048 characters")
+  .refine((value) => !value || isValidVideoUrl(value), {
+    message: "Enter a valid http(s) video URL",
+  })
+  .optional();
+
 const artworkInputSchema = z
   .object({
     description: z.string().max(700, "Description must stay under 700 characters").optional(),
@@ -44,6 +55,7 @@ const artworkInputSchema = z
       .trim()
       .min(1, "Title is required")
       .max(120, "Title must stay under 120 characters"),
+    videoUrl: optionalVideoUrlSchema,
     year: z.string().max(20, "Year must stay under 20 characters").optional(),
   })
   .refine((value) => Boolean(value.imageKey || value.image), {
@@ -133,6 +145,7 @@ export const updateCurrentArtwork = createServerFn({ method: "POST" })
         .trim()
         .min(1, "Title is required")
         .max(120, "Title must stay under 120 characters"),
+      videoUrl: optionalVideoUrlSchema,
       year: z.string().max(20, "Year must stay under 20 characters").optional(),
     }),
   )
@@ -163,6 +176,7 @@ export const createArtsArtwork = createServerFn({ method: "POST" })
       priceCents: z.number().optional(),
       status: z.enum(["draft", "published", "archived"]).default("published"),
       title: z.string().min(1, "Title is required"),
+      videoUrl: optionalVideoUrlSchema,
       year: z.string().optional(),
     }),
   )
@@ -181,6 +195,7 @@ export const updateArtsArtwork = createServerFn({ method: "POST" })
       priceCents: z.number().optional(),
       status: z.enum(["draft", "published", "archived"]),
       title: z.string().min(1, "Title is required"),
+      videoUrl: optionalVideoUrlSchema,
       year: z.string().optional(),
     }),
   )

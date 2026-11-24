@@ -44,6 +44,7 @@ describe("Landing page carousels and search state", () => {
         state: "AR",
         status: "published",
         title: "Delta Bloom",
+        videoUrl: null,
         year: "2026",
       },
       {
@@ -62,6 +63,7 @@ describe("Landing page carousels and search state", () => {
         state: "AR",
         status: "published",
         title: "Mountain Fog",
+        videoUrl: null,
         year: null,
       },
     ];

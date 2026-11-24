@@ -109,7 +109,7 @@ function ExhibitionsPage() {
         <PageTitleHeader
           eyebrow="Exhibition Directory"
           title="EXHIBITIONS"
-          description="Explore Arkansas artwork and creators across mediums. Discover original paintings, prints, sculptures, digital works, and custom commissions."
+          description="Explore Arkansas artwork and creators across mediums. Discover original paintings, photography, videography, prints, sculptures, digital works, and custom commissions."
         />
 
         {/* Horizontal artist spotlight strip with Explore All */}

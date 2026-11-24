@@ -1,4 +1,4 @@
-import { Camera, Gem, Palette, Pen, Shirt, Sparkles } from "lucide-react";
+import { Camera, Gem, Monitor, Palette, Pen, Shirt, Sparkles } from "lucide-react";
 
 export const MEDIUM_GROUPS = [
   {
@@ -9,8 +9,24 @@ export const MEDIUM_GROUPS = [
     slug: "painting",
   },
   {
-    description: "Digital art, illustration, graphic design, photography, and video work.",
+    description: "Photography, videography, film, documentary, portraits, and motion work.",
     icon: Camera,
+    label: "Photography / Videography",
+    mediums: [
+      "Photography / Videography",
+      "Photography/Videography",
+      "Photography",
+      "Videography",
+      "Photo",
+      "Video",
+      "Film",
+      "Cinematography",
+    ],
+    slug: "photography-videography",
+  },
+  {
+    description: "Digital art, illustration, graphic design, 3D, and screen-based work.",
+    icon: Monitor,
     label: "Digital",
     mediums: [
       "Digital",
@@ -19,8 +35,6 @@ export const MEDIUM_GROUPS = [
       "Digital Painting",
       "Graphic Design",
       "Illustration",
-      "Photography",
-      "Videography",
     ],
     slug: "digital",
   },

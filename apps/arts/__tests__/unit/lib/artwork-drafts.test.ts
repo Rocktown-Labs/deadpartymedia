@@ -55,6 +55,7 @@ describe("artwork draft helpers", () => {
         price: "",
         status: "published",
         title: "Ceramic Vessel",
+        videoUrl: "",
         year: "",
       },
       {
@@ -68,6 +69,7 @@ describe("artwork draft helpers", () => {
         price: "",
         status: "published",
         title: "Artwork 3",
+        videoUrl: "",
         year: "",
       },
     ]);

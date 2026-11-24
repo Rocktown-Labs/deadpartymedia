@@ -19,6 +19,7 @@ describe("Artmaker profile and gallery filtering logic", () => {
       state: "AR",
       status: "published",
       title: "Floral Sleeve",
+      videoUrl: null,
       year: "2026",
     },
     {
@@ -37,6 +38,7 @@ describe("Artmaker profile and gallery filtering logic", () => {
       state: "AR",
       status: "published",
       title: "Delta Sunset",
+      videoUrl: null,
       year: "2025",
     },
     {
@@ -55,6 +57,7 @@ describe("Artmaker profile and gallery filtering logic", () => {
       state: "AR",
       status: "published",
       title: "Crow Study",
+      videoUrl: null,
       year: "2026",
     },
   ];

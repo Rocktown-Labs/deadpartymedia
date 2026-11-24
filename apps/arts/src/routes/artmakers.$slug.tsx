@@ -18,6 +18,7 @@ import {
   Instagram,
   Loader2,
   MapPin,
+  Play,
 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -306,6 +307,12 @@ function ArtmakerProfile() {
                       height={720}
                       className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                    {featuredArtwork.videoUrl ? (
+                      <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                        <Play className="size-3 fill-current text-[#7CFC00]" />
+                        <span>Video</span>
+                      </div>
+                    ) : null}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 backdrop-blur-xs">
                       <p className="font-black text-white text-xs group-hover:text-[#7CFC00]">
                         {featuredArtwork.title}
@@ -392,6 +399,12 @@ function ArtmakerProfile() {
                       height={480}
                       className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
+                    {item.videoUrl ? (
+                      <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                        <Play className="size-3 fill-current text-[#7CFC00]" />
+                        <span>Video</span>
+                      </div>
+                    ) : null}
                     {item.forSale ? (
                       <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full border border-[#7CFC00]/50 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#7CFC00] backdrop-blur-md">
                         <BadgeDollarSign className="size-3" />

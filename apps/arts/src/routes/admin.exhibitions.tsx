@@ -14,7 +14,9 @@ import {
   updateArtsArtwork,
   type ArtworkListItem,
 } from "#/lib/artworks.functions.ts";
+import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
 import { getMediumGroupForMedium, MEDIUM_GROUPS } from "#/lib/mediums.ts";
+import { isValidVideoUrl } from "#/lib/video.ts";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Image as UniImage } from "@unpic/react";
@@ -26,6 +28,7 @@ import {
   Eye,
   EyeOff,
   LayoutGrid,
+  Play,
   Plus,
   Trash2,
   UserPlus,
@@ -74,6 +77,12 @@ function ArtworkCard({ artwork, onToggleStatus, onEdit, onDelete }: ArtworkCardP
             height={640}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
+          {artwork.videoUrl ? (
+            <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+              <Play className="size-3 fill-current text-[#7CFC00]" />
+              <span>Video</span>
+            </div>
+          ) : null}
         </div>
 
         <div className="p-4 space-y-1">
@@ -157,6 +166,7 @@ function AdminExhibitions() {
   const [title, setTitle] = useState("");
   const [artmakerId, setArtmakerId] = useState<number>(artmakers[0]?.id ?? 0);
   const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [medium, setMedium] = useState("");
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [description, setDescription] = useState("");
@@ -207,6 +217,7 @@ function AdminExhibitions() {
     setTitle("");
     setArtmakerId(artmakers[0]?.id ?? 0);
     setImageUrl("");
+    setVideoUrl("");
     setMedium("Oil on Canvas");
     setYear(new Date().getFullYear().toString());
     setDescription("");
@@ -220,6 +231,7 @@ function AdminExhibitions() {
     setTitle(artwork.title);
     setArtmakerId(artwork.artmakerId);
     setImageUrl(artwork.image);
+    setVideoUrl(artwork.videoUrl || "");
     setMedium(artwork.medium || "");
     setYear(artwork.year || "");
     setDescription(artwork.description || "");
@@ -231,6 +243,11 @@ function AdminExhibitions() {
     e.preventDefault();
     if (!title.trim() || !imageUrl.trim()) {
       toast.error("Title and Image URL are required.");
+      return;
+    }
+
+    if (videoUrl.trim() && !isValidVideoUrl(videoUrl)) {
+      toast.error("Enter a valid http(s) video URL.");
       return;
     }
 
@@ -249,6 +266,7 @@ function AdminExhibitions() {
             priceCents,
             status: editingArtwork.status,
             title,
+            videoUrl: videoUrl.trim(),
             year,
           },
         });
@@ -264,6 +282,7 @@ function AdminExhibitions() {
             priceCents,
             status: "published",
             title,
+            videoUrl: videoUrl.trim(),
             year,
           },
         });
@@ -556,10 +575,16 @@ function AdminExhibitions() {
                 </Label>
                 <Input
                   id="artwork-medium"
+                  list="arts-medium-options"
                   value={medium}
                   onChange={(e) => setMedium(e.target.value)}
-                  placeholder="Acrylic on Canvas"
+                  placeholder="Photography / Videography"
                 />
+                <datalist id="arts-medium-options">
+                  {MEDIUM_OPTIONS.map((option) => (
+                    <option key={option} value={option} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label
@@ -575,6 +600,26 @@ function AdminExhibitions() {
                   placeholder="2026"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="artwork-video-url"
+                className="text-xs font-bold text-gray-400 uppercase tracking-wider"
+              >
+                Video Link (optional)
+              </Label>
+              <Input
+                id="artwork-video-url"
+                type="url"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+              />
+              <p className="text-gray-500 text-xs">
+                YouTube and Vimeo links embed directly in the artwork drawer; Instagram, TikTok, and
+                other links show a watch button.
+              </p>
             </div>
 
             <div className="flex items-center gap-3 py-2">

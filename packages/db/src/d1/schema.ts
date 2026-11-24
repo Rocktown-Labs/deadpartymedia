@@ -345,6 +345,7 @@ export const artworks = sqliteTable(
     slug: text("slug").notNull(),
     title: text("title").notNull(),
     image: text("image").notNull(),
+    videoUrl: text("video_url"),
     description: text("description"),
     medium: text("medium"),
     year: text("year"),
