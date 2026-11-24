@@ -44,7 +44,10 @@ function buildPublicRequestUrl(
   fallbackOrigin: string,
 ): URL {
   const parsed = new URL(rawUrl);
-  const publicPath = parsed.pathname.replace(/^\/music(?=\/|$)/, "/api");
+  const viaFrontend = Boolean(originHeader) || parsed.host === "deadparty-api";
+  const publicPath = viaFrontend
+    ? parsed.pathname.replace(/^\/music(?=\/|$)/, "/api")
+    : parsed.pathname;
   const baseOrigin =
     originHeader || (parsed.host === "deadparty-api" ? fallbackOrigin : parsed.origin);
   const publicUrl = new URL(publicPath, baseOrigin);

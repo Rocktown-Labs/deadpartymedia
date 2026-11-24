@@ -379,6 +379,15 @@ describe("music native D1 API", () => {
     expect(payload.next).toBe(
       "https://www.deadpartymedia.com/api/articles/published/comments?page=2&page_size=1",
     );
+    const direct = await app.request(
+      "https://api.deadpartymedia.com/music/articles/published/comments?page=1&page_size=1",
+      {},
+      env,
+    );
+    const directPayload = (await direct.json()) as { next: string | null };
+    expect(directPayload.next).toBe(
+      "https://api.deadpartymedia.com/music/articles/published/comments?page=2&page_size=1",
+    );
   });
   it("merges artists atomically and deduplicates shared relations", async () => {
     const db = getMusicDb(env);
