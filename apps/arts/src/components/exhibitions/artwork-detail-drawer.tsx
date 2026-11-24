@@ -1,7 +1,18 @@
 import { type ArtworkListItem, getArtworkByIdOrSlug } from "#/lib/artworks.functions.ts";
+import { parseVideoLink } from "#/lib/video.ts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowRight, BadgeDollarSign, Calendar, Layers, MapPin, Share2, X } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeDollarSign,
+  Calendar,
+  ExternalLink,
+  Layers,
+  MapPin,
+  Play,
+  Share2,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -99,6 +110,7 @@ export function ArtworkDetailDrawer({
     artwork?.priceCents && artwork.priceCents > 0
       ? `$${(artwork.priceCents / 100).toFixed(2)}`
       : null;
+  const parsedVideo = parseVideoLink(artwork?.videoUrl);
 
   return (
     <div
@@ -126,11 +138,17 @@ export function ArtworkDetailDrawer({
         </div>
 
         {/* Header bar with Close and Share */}
-        <div className="flex items-center justify-between border-b border-neutral-800/80 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2 border-b border-neutral-800/80 px-4 py-3 sm:px-6">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="font-black text-xs uppercase tracking-[0.22em] text-[#7CFC00]">
               {artwork?.medium ?? "Artwork View"}
             </span>
+            {parsedVideo ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-neutral-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                <Play className="size-3 fill-current text-[#7CFC00]" />
+                Video
+              </span>
+            ) : null}
             {artwork?.forSale ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#7CFC00]/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#7CFC00]">
                 <BadgeDollarSign className="size-3" />
@@ -168,15 +186,56 @@ export function ArtworkDetailDrawer({
           ) : artwork ? (
             <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
               {/* Artwork showcase visual */}
-              <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
-                <Image
-                  src={artwork.image}
-                  alt={artwork.title}
-                  width={960}
-                  height={960}
-                  className="max-h-[60vh] w-full object-contain md:max-h-[70vh]"
-                />
-              </div>
+              {parsedVideo?.kind === "embed" ? (
+                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
+                  <iframe
+                    src={parsedVideo.embedUrl}
+                    title={artwork.title}
+                    className="aspect-video w-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                  />
+                </div>
+              ) : parsedVideo?.kind === "external" ? (
+                <a
+                  href={parsedVideo.watchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative block overflow-hidden rounded-xl border border-neutral-800 bg-black"
+                  aria-label={
+                    parsedVideo.provider === "Video"
+                      ? `Watch ${artwork.title}`
+                      : `Watch ${artwork.title} on ${parsedVideo.provider}`
+                  }
+                >
+                  <Image
+                    src={artwork.image}
+                    alt={artwork.title}
+                    width={960}
+                    height={960}
+                    className="max-h-[60vh] w-full object-contain transition-transform duration-300 group-hover:scale-[1.02] md:max-h-[70vh]"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/35 transition-colors group-hover:bg-black/50">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#7CFC00] bg-black/85 px-5 py-3 font-black text-xs uppercase tracking-[0.18em] text-[#7CFC00] shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
+                      <Play className="size-4 fill-current" />
+                      {parsedVideo.provider === "Video"
+                        ? "Watch Video"
+                        : `Watch on ${parsedVideo.provider}`}
+                    </span>
+                  </div>
+                </a>
+              ) : (
+                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
+                  <Image
+                    src={artwork.image}
+                    alt={artwork.title}
+                    width={960}
+                    height={960}
+                    className="max-h-[60vh] w-full object-contain md:max-h-[70vh]"
+                  />
+                </div>
+              )}
 
               {/* Artwork details & metadata */}
               <div className="flex flex-col justify-between space-y-6">
@@ -206,6 +265,31 @@ export function ArtworkDetailDrawer({
                       <p className="mt-2 text-sm leading-relaxed text-neutral-300">
                         {artwork.description}
                       </p>
+                    </div>
+                  ) : null}
+
+                  {parsedVideo ? (
+                    <div className="mt-5">
+                      <a
+                        href={parsedVideo.watchUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={
+                          parsedVideo.kind === "external"
+                            ? "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#7CFC00] bg-[#7CFC00] px-4 py-3 font-black text-xs uppercase tracking-[0.16em] text-black no-underline transition-colors hover:bg-[#a5ff43] active:scale-[0.99]"
+                            : "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-2.5 font-black text-xs uppercase tracking-[0.16em] text-neutral-200 no-underline transition-colors hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                        }
+                      >
+                        <Play className="size-3.5 fill-current" />
+                        <span>
+                          {parsedVideo.kind === "embed"
+                            ? `Open on ${parsedVideo.provider}`
+                            : parsedVideo.provider === "Video"
+                              ? "Watch Video"
+                              : `Watch on ${parsedVideo.provider}`}
+                        </span>
+                        <ExternalLink className="size-3.5" />
+                      </a>
                     </div>
                   ) : null}
 

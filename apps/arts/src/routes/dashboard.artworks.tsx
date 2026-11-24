@@ -15,6 +15,7 @@ import {
 } from "#/lib/artworks.functions.ts";
 import { uploadMedia } from "#/lib/media-upload";
 import { describeUploadFailures } from "#/lib/upload.ts";
+import { isValidVideoUrl } from "#/lib/video.ts";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -27,6 +28,7 @@ import {
   ImageUp,
   Loader2,
   Pencil,
+  Play,
   Trash2,
   Upload,
   X,
@@ -49,6 +51,13 @@ const batchArtworkSchema = z.object({
         price: z.string(),
         status: z.enum(["draft", "published"]),
         title: z.string().min(1, "Title is required").max(120),
+        videoUrl: z
+          .string()
+          .trim()
+          .max(2048, "Video link must stay under 2048 characters")
+          .refine((value) => !value || isValidVideoUrl(value), {
+            message: "Enter a valid http(s) video link",
+          }),
         year: z.string().max(20),
       }),
     )
@@ -80,6 +89,7 @@ function DashboardArtworks() {
   const [editTitle, setEditTitle] = useState("");
   const [editMedium, setEditMedium] = useState("");
   const [editYear, setEditYear] = useState("");
+  const [editVideoUrl, setEditVideoUrl] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editForSale, setEditForSale] = useState(false);
   const [editPrice, setEditPrice] = useState("");
@@ -91,6 +101,7 @@ function DashboardArtworks() {
     setEditTitle(artwork.title);
     setEditMedium(artwork.medium || "");
     setEditYear(artwork.year || "");
+    setEditVideoUrl(artwork.videoUrl || "");
     setEditDescription(artwork.description || "");
     setEditForSale(artwork.forSale);
     setEditPrice(artwork.priceCents ? (artwork.priceCents / 100).toFixed(2) : "");
@@ -112,6 +123,11 @@ function DashboardArtworks() {
       return;
     }
 
+    if (editVideoUrl.trim() && !isValidVideoUrl(editVideoUrl)) {
+      setError("Enter a valid http(s) video link.");
+      return;
+    }
+
     setIsUpdating(true);
     setError("");
     try {
@@ -124,6 +140,7 @@ function DashboardArtworks() {
           price: editForSale ? editPrice : undefined,
           status: editStatus,
           title: editTitle.trim(),
+          videoUrl: editVideoUrl.trim(),
           year: editYear.trim() || undefined,
         },
       });
@@ -178,6 +195,7 @@ function DashboardArtworks() {
               price: item.price,
               status: item.status,
               title: item.title,
+              videoUrl: item.videoUrl,
               year: item.year,
             },
           });
@@ -440,6 +458,22 @@ function DashboardArtworks() {
                               </div>
                             </div>
                           </div>
+                          <Field label="Video link (optional)">
+                            <Input
+                              type="url"
+                              value={item.videoUrl}
+                              placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+                              onChange={(event) => {
+                                const next = [...field.state.value];
+                                next[index] = { ...item, videoUrl: event.target.value };
+                                field.handleChange(next);
+                              }}
+                            />
+                            <p className="text-gray-500 text-xs">
+                              For videography pieces, use your uploaded photo as the thumbnail and
+                              paste a YouTube, Vimeo, Instagram, or TikTok link.
+                            </p>
+                          </Field>
                           <Field label="About this piece">
                             <Textarea
                               value={item.description}
@@ -576,13 +610,21 @@ function DashboardArtworks() {
                   key={artwork.id}
                   className="grid gap-4 rounded-lg border border-gray-800 bg-[#080808] p-4 sm:grid-cols-[112px_minmax(0,1fr)]"
                 >
-                  <Image
-                    src={artwork.image}
-                    alt={artwork.title}
-                    width={112}
-                    height={112}
-                    className="aspect-square w-full rounded-md object-cover"
-                  />
+                  <div className="relative aspect-square w-full overflow-hidden rounded-md bg-neutral-950">
+                    <Image
+                      src={artwork.image}
+                      alt={artwork.title}
+                      width={112}
+                      height={112}
+                      className="size-full object-cover"
+                    />
+                    {artwork.videoUrl ? (
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                        <Play className="size-2.5 fill-current text-[#7CFC00]" />
+                        <span>Video</span>
+                      </div>
+                    ) : null}
+                  </div>
                   <div>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <h3 className="font-black text-lg">{artwork.title}</h3>
@@ -724,6 +766,18 @@ function DashboardArtworks() {
                   />
                 </Field>
               </div>
+
+              <Field label="Video link (optional)">
+                <Input
+                  type="url"
+                  value={editVideoUrl}
+                  onChange={(event) => setEditVideoUrl(event.target.value)}
+                  placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+                />
+                <p className="text-gray-500 text-xs">
+                  Paste a YouTube, Vimeo, Instagram, or TikTok link to embed or link a video.
+                </p>
+              </Field>
 
               <Field label="About this piece">
                 <Textarea

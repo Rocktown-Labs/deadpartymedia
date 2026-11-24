@@ -1,0 +1,89 @@
+import { isValidVideoUrl, parseVideoLink } from "#/lib/video.ts";
+import { describe, expect, it } from "vite-plus/test";
+
+describe("video link parsing", () => {
+  it("validates http(s) video URLs and rejects unsafe schemes", () => {
+    expect(isValidVideoUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(true);
+    expect(isValidVideoUrl("http://vimeo.com/123456789")).toBe(true);
+    expect(isValidVideoUrl("javascript:alert(1)")).toBe(false);
+    expect(isValidVideoUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
+    expect(isValidVideoUrl("not a url")).toBe(false);
+    expect(isValidVideoUrl("")).toBe(false);
+  });
+
+  it("converts YouTube links into privacy-enhanced embeds", () => {
+    const urls = [
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "https://youtu.be/dQw4w9WgXcQ",
+      "https://youtube.com/shorts/dQw4w9WgXcQ",
+      "https://m.youtube.com/live/dQw4w9WgXcQ?feature=share",
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+    ];
+
+    for (const url of urls) {
+      expect(parseVideoLink(url)).toEqual({
+        embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0",
+        kind: "embed",
+        provider: "YouTube",
+        watchUrl: url,
+      });
+    }
+  });
+
+  it("converts Vimeo links into embeds and preserves privacy hashes", () => {
+    expect(parseVideoLink("https://vimeo.com/123456789")).toEqual({
+      embedUrl: "https://player.vimeo.com/video/123456789?dnt=1",
+      kind: "embed",
+      provider: "Vimeo",
+      watchUrl: "https://vimeo.com/123456789",
+    });
+
+    expect(parseVideoLink("https://vimeo.com/channels/staffpicks/123456789")).toEqual({
+      embedUrl: "https://player.vimeo.com/video/123456789?dnt=1",
+      kind: "embed",
+      provider: "Vimeo",
+      watchUrl: "https://vimeo.com/channels/staffpicks/123456789",
+    });
+
+    expect(parseVideoLink("https://vimeo.com/123456789/abcdef1234")).toEqual({
+      embedUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234&dnt=1",
+      kind: "embed",
+      provider: "Vimeo",
+      watchUrl: "https://vimeo.com/123456789/abcdef1234",
+    });
+
+    expect(parseVideoLink("https://player.vimeo.com/video/123456789?h=abcdef1234")).toEqual({
+      embedUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234&dnt=1",
+      kind: "embed",
+      provider: "Vimeo",
+      watchUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234",
+    });
+  });
+
+  it("classifies Instagram, TikTok, and generic links as external watch links", () => {
+    expect(parseVideoLink("https://www.instagram.com/reel/C1234567890/")).toEqual({
+      kind: "external",
+      provider: "Instagram",
+      watchUrl: "https://www.instagram.com/reel/C1234567890/",
+    });
+
+    expect(parseVideoLink("https://www.tiktok.com/@deadparty/video/1234567890")).toEqual({
+      kind: "external",
+      provider: "TikTok",
+      watchUrl: "https://www.tiktok.com/@deadparty/video/1234567890",
+    });
+
+    expect(parseVideoLink("https://artist.example/film")).toEqual({
+      kind: "external",
+      provider: "Video",
+      watchUrl: "https://artist.example/film",
+    });
+  });
+
+  it("returns null for empty or invalid URLs", () => {
+    expect(parseVideoLink(null)).toBeNull();
+    expect(parseVideoLink(undefined)).toBeNull();
+    expect(parseVideoLink("   ")).toBeNull();
+    expect(parseVideoLink("javascript:alert(1)")).toBeNull();
+  });
+});

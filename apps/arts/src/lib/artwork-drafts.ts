@@ -8,6 +8,7 @@ export interface ArtworkDraft {
   title: string;
   medium: string;
   year: string;
+  videoUrl: string;
   description: string;
   forSale: boolean;
   price: string;
@@ -78,6 +79,7 @@ export function createArtworkDrafts(files: unknown[], metadata?: unknown) {
       price: "",
       status: "published",
       title: titleFromFileName(fileName),
+      videoUrl: "",
       year: "",
     });
   });

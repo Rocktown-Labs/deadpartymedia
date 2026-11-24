@@ -8,7 +8,7 @@ import { listPublishedArtworksByArtmakerSlug } from "#/lib/artworks.functions.ts
 import { createSeoMeta } from "#/lib/seo.ts";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowLeft, BadgeDollarSign, Sparkles } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, Play, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 
 export interface ArtmakerGallerySearch {
@@ -202,6 +202,12 @@ function ArtmakerGallery() {
                     height={480}
                     className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
+                  {item.videoUrl ? (
+                    <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full border border-white/25 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                      <Play className="size-3 fill-current text-[#7CFC00]" />
+                      <span>Video</span>
+                    </div>
+                  ) : null}
                   {item.forSale ? (
                     <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full border border-[#7CFC00]/50 bg-black/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#7CFC00] backdrop-blur-md">
                       <BadgeDollarSign className="size-3" />

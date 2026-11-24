@@ -1,7 +1,7 @@
 import type { ArtworkListItem } from "#/lib/artworks.functions.ts";
 import { Link } from "@tanstack/react-router";
 import { Image } from "@unpic/react";
-import { ArrowRight, BadgeDollarSign } from "lucide-react";
+import { ArrowRight, BadgeDollarSign, Play } from "lucide-react";
 
 interface RecentArtworksCarouselProps {
   artworks: ArtworkListItem[];
@@ -72,6 +72,12 @@ export function RecentArtworksCarousel({ artworks, onSelectArtwork }: RecentArtw
                     height={480}
                     className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
+                  {artwork.videoUrl ? (
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-full border border-white/25 bg-black/85 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white backdrop-blur-md">
+                      <Play className="size-3 fill-current text-[#7CFC00]" />
+                      <span>Video</span>
+                    </div>
+                  ) : null}
                   {artwork.forSale ? (
                     <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full border border-[#7CFC00]/60 bg-black/85 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#7CFC00] backdrop-blur-md">
                       <BadgeDollarSign className="size-3" />

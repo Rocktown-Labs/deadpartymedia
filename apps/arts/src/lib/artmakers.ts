@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-// Medium options are the same six groups the public site uses, so what
+// Medium options are the same seven groups the public site uses, so what
 // someone picks here always matches the exhibition categories (issue #140).
 export const MEDIUM_OPTIONS = [
   "Painting",
+  "Photography / Videography",
   "Digital",
   "Clothing",
   "Objects",

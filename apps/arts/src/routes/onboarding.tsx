@@ -19,6 +19,7 @@ import { saveArtwork } from "#/lib/artworks.functions.ts";
 import { useArtsSession } from "#/lib/auth-client";
 import { uploadMedia } from "#/lib/media-upload";
 import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
+import { isValidVideoUrl } from "#/lib/video.ts";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -53,6 +54,13 @@ const artworkDraftSchema = z.object({
   price: z.string(),
   status: z.enum(["draft", "published"]),
   title: z.string().min(1, "Artwork title is required").max(120),
+  videoUrl: z
+    .string()
+    .trim()
+    .max(2048, "Video link must stay under 2048 characters")
+    .refine((value) => !value || isValidVideoUrl(value), {
+      message: "Enter a valid http(s) video link",
+    }),
   year: z.string().max(20, "Artwork year must stay under 20 characters"),
 });
 
@@ -329,6 +337,7 @@ function Onboarding() {
             price: artwork.price,
             status: artwork.status,
             title: artwork.title,
+            videoUrl: artwork.videoUrl,
             year: artwork.year,
           },
         });
@@ -607,14 +616,14 @@ function Onboarding() {
                           key={option}
                           type="button"
                           onClick={() => toggleMedium(option)}
-                          className={`flex min-h-11 items-center justify-between gap-3 border px-3 text-left text-sm transition-colors ${
+                          className={`flex min-h-11 items-center justify-between gap-3 border px-3 py-2 text-left text-sm transition-colors ${
                             isSelected
                               ? "border-[#7CFC00] bg-[#7CFC00] text-black"
                               : "border-neutral-800 bg-[#080808] text-neutral-300 hover:border-neutral-600"
                           }`}
                         >
                           <span>{option}</span>
-                          {isSelected && <Check className="size-4" />}
+                          {isSelected && <Check className="size-4 shrink-0" />}
                         </button>
                       );
                     })}
@@ -756,15 +765,22 @@ function Onboarding() {
                                 </Field>
                                 <div className="grid gap-4 md:grid-cols-2">
                                   <Field label="Medium">
-                                    <Input
+                                    <select
                                       value={item.medium}
-                                      placeholder="e.g. Oil on Canvas"
                                       onChange={(event) => {
                                         const next = [...artworkDrafts];
                                         next[index] = { ...item, medium: event.target.value };
                                         setArtworkDrafts(next);
                                       }}
-                                    />
+                                      className="h-10 w-full border border-neutral-800 bg-[#0A0A0A] px-3 text-white"
+                                    >
+                                      <option value="">Choose a medium…</option>
+                                      {MEDIUM_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </Field>
                                   <Field label="Year">
                                     <Input
@@ -780,6 +796,22 @@ function Onboarding() {
                                 </div>
                               </div>
                             </div>
+                            <Field label="Video link (optional)">
+                              <Input
+                                type="url"
+                                value={item.videoUrl}
+                                placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+                                onChange={(event) => {
+                                  const next = [...artworkDrafts];
+                                  next[index] = { ...item, videoUrl: event.target.value };
+                                  setArtworkDrafts(next);
+                                }}
+                              />
+                              <p className="text-neutral-500 text-xs">
+                                Upload a still frame as the cover above, then paste a YouTube,
+                                Vimeo, Instagram, or TikTok link.
+                              </p>
+                            </Field>
                             <Field label="Description">
                               <Textarea
                                 value={item.description}

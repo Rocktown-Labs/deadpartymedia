@@ -151,6 +151,27 @@ export const slugParamSchema = z.object({ slug: z.string().min(1) });
 // getArtworkByIdOrSlug validator — the :id segment may be numeric or a slug.
 export const identifierParamSchema = z.object({ identifier: z.string().min(1) });
 
+// Optional http(s) video link attached to an artwork thumbnail (YouTube, Vimeo, Instagram, etc.).
+const optionalVideoUrlSchema = z
+  .string()
+  .max(2048, "Video link must stay under 2048 characters")
+  .transform((value) => value.trim())
+  .refine(
+    (value) => {
+      if (!value) {
+        return true;
+      }
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === "https:" || parsed.protocol === "http:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Use a valid http(s) video link" },
+  )
+  .optional();
+
 // saveArtwork (dashboard) validator.
 export const artworkInputSchema = z
   .object({
@@ -166,6 +187,7 @@ export const artworkInputSchema = z
       .trim()
       .min(1, "Title is required")
       .max(120, "Title must stay under 120 characters"),
+    videoUrl: optionalVideoUrlSchema,
     year: z.string().max(20, "Year must stay under 20 characters").optional(),
   })
   .refine((value) => Boolean(value.imageKey || value.image), {
@@ -187,6 +209,7 @@ export const artworkDashboardUpdateSchema = z.object({
     .trim()
     .min(1, "Title is required")
     .max(120, "Title must stay under 120 characters"),
+  videoUrl: optionalVideoUrlSchema,
   year: z.string().max(20, "Year must stay under 20 characters").optional(),
 });
 
@@ -200,6 +223,7 @@ export const adminArtworkCreateSchema = z.object({
   priceCents: z.number().optional(),
   status: z.enum(["draft", "published", "archived"]).default("published"),
   title: z.string().min(1, "Title is required"),
+  videoUrl: optionalVideoUrlSchema,
   year: z.string().optional(),
 });
 
@@ -214,6 +238,7 @@ export const adminArtworkUpdateSchema = z.object({
   priceCents: z.number().optional(),
   status: z.enum(["draft", "published", "archived"]),
   title: z.string().min(1, "Title is required"),
+  videoUrl: optionalVideoUrlSchema,
   year: z.string().optional(),
 });
 
@@ -257,6 +282,7 @@ export interface ArtworkListItem {
   slug: string;
   title: string;
   image: string;
+  videoUrl: string | null;
   description: string | null;
   medium: string | null;
   year: string | null;

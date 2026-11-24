@@ -79,6 +79,7 @@ function artworkSelect() {
     state: artmakers.state,
     status: artworks.status,
     title: artworks.title,
+    videoUrl: artworks.videoUrl,
     year: artworks.year,
   };
 }
@@ -287,6 +288,7 @@ export const artsArtworksRoutes = new Hono<AppEnv>()
         slug,
         status: data.status,
         title: data.title,
+        videoUrl: data.videoUrl || null,
         year: data.year?.trim() || null,
       })
       .returning();
@@ -334,6 +336,7 @@ export const artsArtworksRoutes = new Hono<AppEnv>()
           status: data.status,
           title: data.title,
           updatedAt: new Date(),
+          videoUrl: data.videoUrl || null,
           year: data.year?.trim() || null,
         })
         .where(eq(artworks.id, data.id));
@@ -411,6 +414,7 @@ export const artsArtworksRoutes = new Hono<AppEnv>()
         slug,
         status: data.status,
         title: data.title,
+        videoUrl: data.videoUrl || null,
         year: data.year || null,
       })
       .returning();
@@ -443,6 +447,7 @@ export const artsArtworksRoutes = new Hono<AppEnv>()
           status: data.status,
           title: data.title,
           updatedAt: new Date(),
+          videoUrl: data.videoUrl || null,
           year: data.year || null,
         })
         .where(eq(artworks.id, data.id))
