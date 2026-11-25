@@ -1,8 +1,10 @@
 import { buildPublicUploadUrl } from "#/lib/upload.ts";
+import { getDefaultVideoPosterUrl, parseVideoLink } from "#/lib/video.ts";
 
 export interface ArtworkDraft {
   id: string;
   fileName: string;
+  image?: string;
   imageKey: string;
   previewUrl?: string;
   title: string;
@@ -13,6 +15,31 @@ export interface ArtworkDraft {
   forSale: boolean;
   price: string;
   status: "draft" | "published";
+}
+
+export function createVideoArtworkDraft(videoUrl: string): ArtworkDraft | null {
+  const parsed = parseVideoLink(videoUrl);
+  if (!parsed) {
+    return null;
+  }
+
+  const defaultPoster = getDefaultVideoPosterUrl(parsed.watchUrl);
+
+  return {
+    description: "",
+    fileName: `${parsed.provider} video`,
+    forSale: false,
+    id: crypto.randomUUID(),
+    image: defaultPoster ?? undefined,
+    imageKey: "",
+    medium: "Photography / Videography",
+    previewUrl: defaultPoster ?? undefined,
+    price: "",
+    status: "published",
+    title: "",
+    videoUrl: parsed.watchUrl,
+    year: new Date().getFullYear().toString(),
+  };
 }
 
 export function getUploadedObjectKey(file: unknown) {

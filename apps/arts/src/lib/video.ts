@@ -1,18 +1,21 @@
-export type ParsedVideoLink =
-  | {
-      kind: "embed";
-      provider: "YouTube" | "Vimeo";
-      embedUrl: string;
-      watchUrl: string;
-    }
-  | {
-      kind: "external";
-      provider: "Instagram" | "TikTok" | "Video";
-      watchUrl: string;
-    };
+export type EmbeddableVideoLink = {
+  kind: "embed";
+  provider: "YouTube" | "Vimeo" | "Video";
+  playerSrc: string;
+  watchUrl: string;
+};
+
+export type ExternalVideoLink = {
+  kind: "external";
+  provider: "Instagram" | "TikTok" | "Video";
+  watchUrl: string;
+};
+
+export type ParsedVideoLink = EmbeddableVideoLink | ExternalVideoLink;
 
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID_PATTERN = /^\d+$/;
+const DIRECT_VIDEO_PATH_PATTERN = /\.(mp4|webm|m4v|ogv)$/i;
 
 export function isValidVideoUrl(value: string): boolean {
   const trimmed = value.trim();
@@ -45,8 +48,8 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
     const id = segments[0] ?? "";
     if (YOUTUBE_ID_PATTERN.test(id)) {
       return {
-        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
+        playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
         watchUrl: trimmed,
       };
@@ -64,8 +67,8 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
     }
     if (YOUTUBE_ID_PATTERN.test(id)) {
       return {
-        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
+        playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
         watchUrl: trimmed,
       };
@@ -87,18 +90,22 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
       const hashParam =
         url.searchParams.get("h") ??
         (nextSegment && /^[A-Za-z0-9]+$/.test(nextSegment) ? nextSegment : null);
-      const embedParams = new URLSearchParams();
-      if (hashParam) {
-        embedParams.set("h", hashParam);
-      }
-      embedParams.set("dnt", "1");
       return {
-        embedUrl: `https://player.vimeo.com/video/${id}?${embedParams.toString()}`,
         kind: "embed",
+        playerSrc: hashParam ? `https://vimeo.com/${id}?h=${hashParam}` : `https://vimeo.com/${id}`,
         provider: "Vimeo",
         watchUrl: trimmed,
       };
     }
+  }
+
+  if (DIRECT_VIDEO_PATH_PATTERN.test(url.pathname)) {
+    return {
+      kind: "embed",
+      playerSrc: trimmed,
+      provider: "Video",
+      watchUrl: trimmed,
+    };
   }
 
   if (host === "instagram.com" || host.endsWith(".instagram.com")) {
@@ -110,4 +117,15 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
   }
 
   return { kind: "external", provider: "Video", watchUrl: trimmed };
+}
+
+export function getDefaultVideoPosterUrl(value: string | null | undefined): string | null {
+  const parsed = parseVideoLink(value);
+  if (parsed?.kind === "embed" && parsed.provider === "YouTube") {
+    const id = parsed.playerSrc.split("/").pop() ?? "";
+    if (YOUTUBE_ID_PATTERN.test(id)) {
+      return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    }
+  }
+  return null;
 }

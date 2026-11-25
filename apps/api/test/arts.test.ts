@@ -239,4 +239,73 @@ describe("arts D1 and scoped Hono RPC", () => {
     });
     expect(response.status).toBe(401);
   });
+
+  it("rejects non-numeric phone numbers and enforces unique Better Auth usernames", async () => {
+    const badPhone = await client(artist.cookie).arts.artmakers.onboarding.artmaker.$post({
+      json: {
+        name: "Studio Artist",
+        city: "Little Rock",
+        state: "AR",
+        phoneNumber: "501-abc-1234",
+        medium: ["Painting"],
+        instagramUsername: "studioartist",
+        showPronouns: false,
+      },
+    });
+    expect(badPhone.status).toBe(400);
+
+    const checkFree = await app.request(
+      "http://localhost:3000/api/auth/is-username-available",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: "unique_maker" }),
+      },
+      env,
+    );
+    expect(checkFree.status).toBe(200);
+    expect(await checkFree.json()).toEqual({ available: true });
+
+    const claim = await app.request(
+      "http://localhost:3000/api/auth/update-user",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: artist.cookie,
+          origin: "http://localhost:3002",
+        },
+        body: JSON.stringify({ username: "unique_maker", displayUsername: "unique_maker" }),
+      },
+      env,
+    );
+    expect(claim.status).toBe(200);
+
+    const checkTaken = await app.request(
+      "http://localhost:3000/api/auth/is-username-available",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "http://localhost:3002" },
+        body: JSON.stringify({ username: "unique_maker" }),
+      },
+      env,
+    );
+    expect(checkTaken.status).toBe(200);
+    expect(await checkTaken.json()).toEqual({ available: false });
+
+    const duplicateClaim = await app.request(
+      "http://localhost:3000/api/auth/update-user",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: musicWriter.cookie,
+          origin: "http://localhost:3002",
+        },
+        body: JSON.stringify({ username: "unique_maker" }),
+      },
+      env,
+    );
+    expect(duplicateClaim.status).toBeGreaterThanOrEqual(400);
+  });
 });

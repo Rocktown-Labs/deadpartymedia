@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { APIError } from "better-auth/api";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
-import { emailOTP, oneTimeToken } from "better-auth/plugins";
+import { emailOTP, oneTimeToken, username } from "better-auth/plugins";
 import { createD1Database } from "@dpmedia/db/d1";
 import { users } from "@dpmedia/db/schema";
 
@@ -132,6 +132,10 @@ export function createAuth(env: AuthConfig, request?: Request) {
     disabledPaths: ["/one-time-token/generate", "/one-time-token/verify"],
     plugins: [
       expo(),
+      username({
+        minUsernameLength: 3,
+        maxUsernameLength: 30,
+      }),
       oneTimeToken({ disableClientRequest: true, storeToken: "hashed", expiresIn: 1 }),
       emailOTP({
         disableSignUp: true,

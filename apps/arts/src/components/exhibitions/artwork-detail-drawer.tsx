@@ -1,3 +1,4 @@
+import { ArtworkPosterPlaceholder } from "#/components/exhibitions/artwork-poster-placeholder.tsx";
 import { type ArtworkListItem, getArtworkByIdOrSlug } from "#/lib/artworks.functions.ts";
 import { parseVideoLink } from "#/lib/video.ts";
 import { Link } from "@tanstack/react-router";
@@ -13,8 +14,13 @@ import {
   Share2,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const ArtworkVideoPlayer = lazy(async () => {
+  const mod = await import("#/components/exhibitions/artwork-video-player.tsx");
+  return { default: mod.ArtworkVideoPlayer };
+});
 
 interface ArtworkDetailDrawerProps {
   artworkIdentifier?: string;
@@ -187,16 +193,17 @@ export function ArtworkDetailDrawer({
             <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
               {/* Artwork showcase visual */}
               {parsedVideo?.kind === "embed" ? (
-                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
-                  <iframe
-                    src={parsedVideo.embedUrl}
+                <Suspense
+                  fallback={
+                    <ArtworkPosterPlaceholder poster={artwork.image} title={artwork.title} />
+                  }
+                >
+                  <ArtworkVideoPlayer
+                    poster={artwork.image}
                     title={artwork.title}
-                    className="aspect-video w-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
+                    video={parsedVideo}
                   />
-                </div>
+                </Suspense>
               ) : parsedVideo?.kind === "external" ? (
                 <a
                   href={parsedVideo.watchUrl}
@@ -283,7 +290,9 @@ export function ArtworkDetailDrawer({
                         <Play className="size-3.5 fill-current" />
                         <span>
                           {parsedVideo.kind === "embed"
-                            ? `Open on ${parsedVideo.provider}`
+                            ? parsedVideo.provider === "Video"
+                              ? "Open Video"
+                              : `Open on ${parsedVideo.provider}`
                             : parsedVideo.provider === "Video"
                               ? "Watch Video"
                               : `Watch on ${parsedVideo.provider}`}
@@ -301,7 +310,7 @@ export function ArtworkDetailDrawer({
                           {formattedPrice}
                         </p>
                         <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-400">
-                          Available — asking price
+                          Available, asking price
                         </p>
                       </div>
                     </div>

@@ -10,16 +10,22 @@ const updatedAt = () =>
     .notNull()
     .default(sql`(unixepoch('subsec') * 1000)`);
 
-export const user = sqliteTable("auth_user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
-  image: text("image"),
-  disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const user = sqliteTable(
+  "auth_user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+    image: text("image"),
+    username: text("username"),
+    displayUsername: text("display_username"),
+    disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("auth_user_username_unique").on(table.username)],
+);
 export const session = sqliteTable("auth_session", {
   id: text("id").primaryKey(),
   userId: text("user_id")

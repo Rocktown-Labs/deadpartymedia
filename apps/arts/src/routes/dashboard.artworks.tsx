@@ -5,7 +5,12 @@ import { Label } from "#/components/ui/label.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
 import { getCurrentArtmaker, requireArtmakerDashboardUser } from "#/lib/artmakers.functions.ts";
 import { MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
-import { type ArtworkDraft, createArtworkDrafts } from "#/lib/artwork-drafts.ts";
+import {
+  type ArtworkDraft,
+  createArtworkDrafts,
+  createVideoArtworkDraft,
+  getUploadedObjectKey,
+} from "#/lib/artwork-drafts.ts";
 import {
   type ArtworkListItem,
   deleteCurrentArtwork,
@@ -14,7 +19,7 @@ import {
   updateCurrentArtwork,
 } from "#/lib/artworks.functions.ts";
 import { uploadMedia } from "#/lib/media-upload";
-import { describeUploadFailures } from "#/lib/upload.ts";
+import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { isValidVideoUrl } from "#/lib/video.ts";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
@@ -25,6 +30,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Film,
   ImageUp,
   Loader2,
   Pencil,
@@ -40,28 +46,34 @@ import { z } from "zod";
 const batchArtworkSchema = z.object({
   items: z
     .array(
-      z.object({
-        description: z.string().max(700),
-        fileName: z.string(),
-        forSale: z.boolean(),
-        id: z.string(),
-        imageKey: z.string().min(1),
-        medium: z.string().max(80),
-        previewUrl: z.string().optional(),
-        price: z.string(),
-        status: z.enum(["draft", "published"]),
-        title: z.string().min(1, "Title is required").max(120),
-        videoUrl: z
-          .string()
-          .trim()
-          .max(2048, "Video link must stay under 2048 characters")
-          .refine((value) => !value || isValidVideoUrl(value), {
-            message: "Enter a valid http(s) video link",
-          }),
-        year: z.string().max(20),
-      }),
+      z
+        .object({
+          description: z.string().max(700),
+          fileName: z.string(),
+          forSale: z.boolean(),
+          id: z.string(),
+          image: z.string().optional(),
+          imageKey: z.string(),
+          medium: z.string().max(80),
+          previewUrl: z.string().optional(),
+          price: z.string(),
+          status: z.enum(["draft", "published"]),
+          title: z.string().trim().min(1, "Title is required").max(120),
+          videoUrl: z
+            .string()
+            .trim()
+            .max(2048, "Video link must stay under 2048 characters")
+            .refine((value) => !value || isValidVideoUrl(value), {
+              message: "Enter a valid http(s) video link",
+            }),
+          year: z.string().max(20),
+        })
+        .refine((value) => Boolean(value.imageKey || value.image), {
+          message: "Upload a cover image for every piece before publishing.",
+          path: ["imageKey"],
+        }),
     )
-    .min(1, "Upload at least one artwork image."),
+    .min(1, "Add at least one photo or video link."),
 });
 
 export const Route = createFileRoute("/dashboard/artworks")({
@@ -82,6 +94,8 @@ function DashboardArtworks() {
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [videoLinkInput, setVideoLinkInput] = useState("");
+  const [coverUploadingId, setCoverUploadingId] = useState<string | null>(null);
   const uploadProgressRef = useRef(new Map<string, number>());
 
   // Edit artwork state
@@ -190,7 +204,8 @@ function DashboardArtworks() {
             data: {
               description: item.description,
               forSale: item.forSale,
-              imageKey: item.imageKey,
+              image: item.image,
+              imageKey: item.imageKey || undefined,
               medium: item.medium,
               price: item.price,
               status: item.status,
@@ -260,8 +275,49 @@ function DashboardArtworks() {
 
   const draftCount = form.state.values.items.length;
 
+  const handleAddVideoDraft = () => {
+    setError("");
+    const draft = createVideoArtworkDraft(videoLinkInput);
+    if (!draft) {
+      setError("Enter a valid YouTube, Vimeo, Instagram, TikTok, or video URL.");
+      return;
+    }
+    form.setFieldValue("items", [draft, ...form.state.values.items]);
+    setVideoLinkInput("");
+  };
+
+  const handleUploadDraftCover = async (draftId: string, files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+    setCoverUploadingId(draftId);
+    setError("");
+    try {
+      const result = await uploadMedia({ files: [files[0]], route: "artwork" });
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
+      const [uploaded] = result.files ?? [];
+      const key = uploaded ? getUploadedObjectKey(uploaded) : "";
+      if (!key) {
+        throw new Error("The cover image uploaded, but no object key came back from storage.");
+      }
+      const previewUrl = buildPublicUploadUrl(key, result.metadata);
+      form.setFieldValue(
+        "items",
+        form.state.values.items.map((draft) =>
+          draft.id === draftId ? { ...draft, image: undefined, imageKey: key, previewUrl } : draft,
+        ),
+      );
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Cover upload failed.");
+    } finally {
+      setCoverUploadingId(null);
+    }
+  };
+
   // Legacy artworks may hold a free-text medium that isn't one of the site
-  // groups — keep it selectable in the edit form instead of silently hiding it.
+  // groups. Keep it selectable in the edit form instead of silently hiding it.
   const editMediumOptions =
     editMedium && !(MEDIUM_OPTIONS as readonly string[]).includes(editMedium)
       ? [editMedium, ...MEDIUM_OPTIONS]
@@ -272,8 +328,8 @@ function DashboardArtworks() {
       <div className="mb-8">
         <h1 className="font-black text-4xl tracking-tight">Your artwork</h1>
         <p className="mt-3 max-w-2xl text-gray-400">
-          Add photos of your pieces, name them, and publish. Everything you publish shows up on your
-          public page and the exhibition wall.
+          Add photos or video links, name your pieces, and publish. Everything you publish shows up
+          on your public page and the exhibition wall.
         </p>
         {artmaker ? (
           <p className="mt-3 text-sm text-gray-500">
@@ -309,7 +365,7 @@ function DashboardArtworks() {
             <div>
               <h2 className="font-black text-xl">Add new pieces</h2>
               <p className="text-gray-500 text-sm">
-                Photos get a name automatically — edit anything before publishing.
+                Upload photos or add a video link, then edit details before publishing.
               </p>
             </div>
           </div>
@@ -324,7 +380,7 @@ function DashboardArtworks() {
               {uploadMutation.isPending ? "Adding your photos" : "Choose photos"}
             </span>
             <span className="mt-2 text-gray-500 text-sm">
-              JPG, PNG, WebP, GIF, or PDF — up to 12 at a time.
+              JPG, PNG, WebP, GIF, or PDF (up to 12 at a time).
             </span>
             {uploadMutation.isPending ? (
               <div className="mt-4 w-full max-w-xs">
@@ -335,7 +391,7 @@ function DashboardArtworks() {
                   />
                 </div>
                 <p className="mt-2 text-gray-400 text-xs">
-                  {Math.round(uploadProgress * 100)}% uploaded — keep this page open
+                  {Math.round(uploadProgress * 100)}% uploaded, keep this page open
                 </p>
               </div>
             ) : null}
@@ -354,6 +410,40 @@ function DashboardArtworks() {
               }}
             />
           </label>
+
+          <div className="mt-4 rounded-lg border border-gray-800 bg-[#080808] p-4">
+            <div className="flex items-center gap-2 font-black text-xs uppercase tracking-[0.18em] text-[#7CFC00]">
+              <Film className="size-4" />
+              <span>Or add a video link</span>
+            </div>
+            <p className="mt-1 text-gray-500 text-xs">
+              Paste a YouTube, Vimeo, Instagram, TikTok, or MP4 link. YouTube pulls a cover image
+              automatically, or upload your own below.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <Input
+                type="url"
+                value={videoLinkInput}
+                onChange={(event) => setVideoLinkInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleAddVideoDraft();
+                  }
+                }}
+                placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddVideoDraft}
+                disabled={!videoLinkInput.trim()}
+                className="shrink-0 border-[#7CFC00]/60 text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black"
+              >
+                Add video
+              </Button>
+            </div>
+          </div>
 
           <form
             className="mt-6"
@@ -401,18 +491,45 @@ function DashboardArtworks() {
                         </summary>
                         <div className="grid gap-4 border-gray-800 border-t p-4">
                           <div className="grid items-start gap-4 sm:grid-cols-[140px_minmax(0,1fr)]">
-                            {item.previewUrl ? (
-                              <div className="overflow-hidden rounded-lg border border-neutral-700 bg-neutral-950">
-                                <img
-                                  src={item.previewUrl}
-                                  alt={item.title || item.fileName}
-                                  className="aspect-square w-full object-cover"
+                            <div className="space-y-2">
+                              {item.previewUrl ? (
+                                <div className="overflow-hidden rounded-lg border border-neutral-700 bg-neutral-950">
+                                  <img
+                                    src={item.previewUrl}
+                                    alt={item.title || item.fileName}
+                                    className="aspect-square w-full object-cover"
+                                  />
+                                  <p className="p-1.5 text-center text-[10px] text-gray-400 font-mono truncate">
+                                    {item.fileName}
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="grid aspect-square w-full place-items-center rounded-lg border border-dashed border-neutral-700 bg-neutral-950 p-3 text-center text-gray-400 text-xs">
+                                  <span>Cover image required</span>
+                                </div>
+                              )}
+                              <label className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-700 px-2 py-1.5 font-bold text-[10px] text-gray-200 uppercase tracking-wider hover:border-[#7CFC00] hover:text-[#7CFC00]">
+                                {coverUploadingId === item.id ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <Upload className="size-3" />
+                                )}
+                                {item.previewUrl ? "Replace cover" : "Upload cover"}
+                                <input
+                                  type="file"
+                                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                                  className="sr-only"
+                                  disabled={coverUploadingId === item.id}
+                                  onChange={(event) => {
+                                    const files = [...(event.target.files ?? [])];
+                                    if (files.length > 0) {
+                                      void handleUploadDraftCover(item.id, files);
+                                    }
+                                    event.target.value = "";
+                                  }}
                                 />
-                                <p className="p-1.5 text-center text-[10px] text-gray-400 font-mono truncate">
-                                  {item.fileName}
-                                </p>
-                              </div>
-                            ) : null}
+                              </label>
+                            </div>
                             <div className="grid flex-1 gap-4">
                               <Field label="Title">
                                 <Input
@@ -527,8 +644,8 @@ function DashboardArtworks() {
                               }}
                               className="h-10 rounded-md border border-gray-800 bg-[#0A0A0A] px-3 text-white"
                             >
-                              <option value="published">Publish now — visible on my page</option>
-                              <option value="draft">Keep as draft — only I can see it</option>
+                              <option value="published">Publish now (visible on my page)</option>
+                              <option value="draft">Keep as draft (only I can see it)</option>
                             </select>
                           </Field>
                         </div>
@@ -536,8 +653,8 @@ function DashboardArtworks() {
                     ))
                   ) : (
                     <p className="rounded-lg border border-gray-800 bg-[#080808] p-5 text-gray-400">
-                      No photos yet. Choose your first piece above and it'll show up here, ready to
-                      name.
+                      No pieces queued yet. Choose photos or paste a video link above and they'll
+                      show up here, ready to name and publish.
                     </p>
                   )}
                 </div>
@@ -815,8 +932,8 @@ function DashboardArtworks() {
                   onChange={(event) => setEditStatus(event.target.value as "draft" | "published")}
                   className="h-10 rounded-md border border-neutral-800 bg-[#0A0A0A] px-3 text-white"
                 >
-                  <option value="published">Publish now — visible on my page</option>
-                  <option value="draft">Keep as draft — only I can see it</option>
+                  <option value="published">Publish now (visible on my page)</option>
+                  <option value="draft">Keep as draft (only I can see it)</option>
                 </select>
               </Field>
 

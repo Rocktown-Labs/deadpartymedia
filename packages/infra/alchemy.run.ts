@@ -1,9 +1,11 @@
 import type { BackfillInput, DedupeInput } from "@dpmedia/contracts";
 import * as Cloudflare from "@alchemy.run/cloudflare";
+import * as GitHub from "@alchemy.run/github";
 import * as Alchemy from "alchemy";
 import * as Output from "alchemy/Output";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import { resourceName } from "./resources";
 
 const name = (base: string) =>
@@ -11,6 +13,15 @@ const name = (base: string) =>
 const retainProduction = Alchemy.RemovalPolicy.retain(
   Effect.map(Alchemy.Stage, (stage) => stage === "production"),
 );
+const bindDomains = Config.Boolean("BIND_DOMAINS").pipe(Config.withDefault(false));
+
+const previewHostname = (app: "arts" | "music" | "api", stage: string) => {
+  // Single-level subdomains so Cloudflare Universal SSL covers preview stages
+  // automatically (*.deadpartyarts.com and *.deadpartymedia.com).
+  if (app === "arts") return `${stage}.deadpartyarts.com`;
+  if (app === "api") return `${stage}-api.deadpartymedia.com`;
+  return `${stage}.deadpartymedia.com`;
+};
 
 const appUrl = (app: "arts" | "music") =>
   Effect.gen(function* () {
@@ -19,11 +30,14 @@ const appUrl = (app: "arts" | "music") =>
     const subdomain = yield* Config.String("WORKERS_SUBDOMAIN").pipe(
       Config.withDefault("rocktown-labs"),
     );
+    const useCustomDomains = yield* bindDomains;
     const fallback = local
       ? `http://localhost:${app === "arts" ? 3002 : 3001}`
       : stage === "production"
         ? `https://${app === "arts" ? "deadpartyarts.com" : "www.deadpartymedia.com"}`
-        : `https://${resourceName(app === "arts" ? "deadpartyarts" : "deadpartymedia", stage)}.${subdomain}.workers.dev`;
+        : useCustomDomains
+          ? `https://${previewHostname(app, stage)}`
+          : `https://${resourceName(app === "arts" ? "deadpartyarts" : "deadpartymedia", stage)}.${subdomain}.workers.dev`;
     return yield* Config.String(app === "arts" ? "ARTS_APP_URL" : "WEB_APP_URL").pipe(
       Config.withDefault(fallback),
     );
@@ -33,14 +47,16 @@ const trustedOrigins = Effect.gen(function* () {
   if ((yield* Alchemy.Stage) === "production") fallback.push("https://deadpartymedia.com");
   return yield* Config.String("TRUSTED_ORIGINS").pipe(Config.withDefault(fallback.join(",")));
 });
-// Domain attachment changes DNS. Enable only for the production cutover.
+// Domain attachment changes DNS. Disabled in local dev; enabled via BIND_DOMAINS=true
+// for production and isolated single-level preview subdomains.
 const domain = (app: "arts" | "music" | "api") =>
   Effect.gen(function* () {
-    if (
-      (yield* Alchemy.Stage) !== "production" ||
-      !(yield* Config.Boolean("BIND_DOMAINS").pipe(Config.withDefault(false)))
-    )
-      return undefined;
+    const local = (yield* Alchemy.ProviderMode.defaultProviderMode) === "local";
+    if (local || !(yield* bindDomains)) return undefined;
+    const stage = yield* Alchemy.Stage;
+    if (stage !== "production") {
+      return { name: previewHostname(app, stage) };
+    }
     if (app === "api") return { name: "api.deadpartymedia.com" };
     return app === "arts"
       ? { name: "deadpartyarts.com", redirects: ["arts.deadpartymedia.com"] }
@@ -50,7 +66,13 @@ const domain = (app: "arts" | "music" | "api") =>
 const mailFrom = Config.String("MAIL_FROM").pipe(Config.withDefault("noreply@deadpartymedia.com"));
 const configureMailSender = Effect.gen(function* () {
   const zoneId = yield* Config.String("MAIL_SENDING_ZONE_ID").pipe(Config.withDefault(""));
-  if (zoneId && (yield* Alchemy.ProviderMode.defaultProviderMode) !== "local") {
+  // Only manage the production sending subdomain so preview deploy/destroy
+  // cycles never collide with or remove production email DNS records.
+  if (
+    zoneId &&
+    (yield* Alchemy.Stage) === "production" &&
+    (yield* Alchemy.ProviderMode.defaultProviderMode) !== "local"
+  ) {
     const from = yield* mailFrom;
     const [mailbox, sendingDomain, extra] = from.split("@");
     if (!mailbox || !sendingDomain || extra !== undefined) {
@@ -88,14 +110,20 @@ export const artsMedia = Cloudflare.R2.Bucket("arts-media", {
       return resourceName(base, yield* Alchemy.Stage);
     }).pipe(Effect.orDie),
   ),
-  cors: [
-    {
-      allowedOrigins: ["https://deadpartyarts.com", "http://localhost:3000"],
-      allowedMethods: ["GET", "PUT", "POST"],
-      allowedHeaders: ["Content-Type", "x-amz-*"],
-      maxAgeSeconds: 3600,
-    },
-  ],
+  cors: Output.fromEffect(
+    Effect.gen(function* () {
+      const origin = yield* appUrl("arts");
+      const allowedOrigins = Array.from(new Set([origin, "http://localhost:3000"]));
+      return [
+        {
+          allowedOrigins,
+          allowedMethods: ["GET", "PUT", "POST"] as ("GET" | "PUT" | "POST")[],
+          allowedHeaders: ["Content-Type", "x-amz-*"],
+          maxAgeSeconds: 3600,
+        },
+      ];
+    }).pipe(Effect.orDie),
+  ),
   publicAccess: true,
   lifecycleRules: [
     {
@@ -198,14 +226,57 @@ export type WebEnv = Cloudflare.InferEnv<typeof web>;
 export default Alchemy.Stack(
   "deadparty",
   {
-    providers: Cloudflare.providers(),
+    providers: Layer.mergeAll(Cloudflare.providers(), GitHub.providers()),
     state: Cloudflare.state(),
   },
   Effect.gen(function* () {
     yield* configureMailSender;
+    const stage = yield* Alchemy.Stage;
+    const local = (yield* Alchemy.ProviderMode.defaultProviderMode) === "local";
+    const deployAppsRaw = yield* Config.String("DEPLOY_APPS").pipe(Config.withDefault("all"));
+    const selectedApps = new Set(
+      deployAppsRaw
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    );
+    const deployAll = local || stage === "production" || selectedApps.has("all");
+    const shouldDeployArts = deployAll || selectedApps.has("arts");
+    const shouldDeployWeb = deployAll || selectedApps.has("web");
+
     const backend = yield* api;
-    const artsApp = yield* arts;
-    const webApp = yield* web;
-    return { api: backend.url, arts: artsApp.url, web: webApp?.url };
+    const artsApp = shouldDeployArts ? yield* arts : undefined;
+    const webApp = shouldDeployWeb ? yield* web : undefined;
+    const github = yield* GitHub.GitHubEnv;
+
+    if (github?.pr) {
+      const artsLine = artsApp
+        ? Output.interpolate`| **Dead Party Arts** | ${artsApp.url} |\n`
+        : "";
+      const webLine = webApp ? Output.interpolate`| **Dead Party Media** | ${webApp.url} |\n` : "";
+      yield* GitHub.Comment("preview-comment", {
+        owner: github.owner,
+        repository: github.repository,
+        issueNumber: github.pr,
+        body: Output.interpolate`
+          ## Preview Deployed (\`${stage}\`)
+
+          | App | Preview URL |
+          | --- | --- |
+          ${artsLine}${webLine}| **API** | ${backend.url} |
+
+          Built from commit \`${github.sha.slice(0, 7)}\`.
+
+          ---
+          _Updates automatically on each push. Preview resources are destroyed when this PR closes._
+        `,
+      });
+    }
+
+    return {
+      api: backend.url,
+      ...(artsApp ? { arts: artsApp.url } : {}),
+      ...(webApp ? { web: webApp.url } : {}),
+    };
   }),
 );

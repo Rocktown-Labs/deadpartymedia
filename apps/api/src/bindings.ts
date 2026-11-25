@@ -6,6 +6,7 @@ export interface AuthContext {
   name: string;
   email: string;
   image: string | null;
+  username: string | null;
 }
 export interface AppEnv {
   Bindings: Bindings;

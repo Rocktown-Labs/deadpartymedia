@@ -177,7 +177,9 @@ export const artsArtmakersRoutes = new Hono<AppEnv>()
         instagramUsername,
         image: data.imageKey
           ? getPublicUploadUrl(c.env, data.imageKey)
-          : data.image?.trim() || existing?.image || identity.image || null,
+          : data.image === undefined
+            ? existing?.image || identity.image || null
+            : data.image.trim() || null,
         medium,
         name: data.name,
         phoneNumber: data.phoneNumber,

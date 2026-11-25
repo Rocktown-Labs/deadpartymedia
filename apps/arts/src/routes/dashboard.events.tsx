@@ -77,7 +77,7 @@ function DashboardEvents() {
       <div className="mb-8">
         <h1 className="font-black text-4xl tracking-tight">Events</h1>
         <p className="mt-3 max-w-2xl text-gray-400">
-          Where your work is showing up — gallery nights, pop-ups, and markets that feature you.
+          Where your work is showing up: gallery nights, pop-ups, and markets that feature you.
         </p>
       </div>
 
@@ -87,7 +87,7 @@ function DashboardEvents() {
           <h2 className="mt-5 font-black text-2xl">Nothing on the calendar yet</h2>
           <p className="mx-auto mt-3 max-w-md text-gray-400">
             When we publish an event that includes you, it appears here automatically. In the
-            meantime, keep making — we'll spread the word.
+            meantime, keep making, and we'll spread the word.
           </p>
         </div>
       ) : (
@@ -98,7 +98,7 @@ function DashboardEvents() {
             </h2>
             {upcoming.length === 0 ? (
               <p className="rounded-xl border border-gray-800 bg-[#111111] p-5 text-gray-500">
-                No upcoming shows right now — past appearances are listed below.
+                No upcoming shows right now. Past appearances are listed below.
               </p>
             ) : (
               <div className="grid gap-3">
