@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@alchemy.run/cloudflare": "2.0.0-beta.84",
+    "@alchemy.run/github": "2.0.0-beta.84",
     "@alchemy.run/sql": "2.0.0-beta.84",
     "@cloudflare/workers-types": "^5.20260906.1",
     "@dpmedia/config": "workspace:*",

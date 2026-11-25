@@ -13,8 +13,13 @@ import {
   Share2,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const ArtworkVideoPlayer = lazy(async () => {
+  const mod = await import("#/components/exhibitions/artwork-video-player.tsx");
+  return { default: mod.ArtworkVideoPlayer };
+});
 
 interface ArtworkDetailDrawerProps {
   artworkIdentifier?: string;
@@ -187,16 +192,30 @@ export function ArtworkDetailDrawer({
             <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
               {/* Artwork showcase visual */}
               {parsedVideo?.kind === "embed" ? (
-                <div className="overflow-hidden rounded-xl border border-neutral-800 bg-black">
-                  <iframe
-                    src={parsedVideo.embedUrl}
+                <Suspense
+                  fallback={
+                    <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-neutral-800 bg-black">
+                      <Image
+                        src={artwork.image}
+                        alt={artwork.title}
+                        width={960}
+                        height={540}
+                        className="size-full object-contain"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <span className="grid size-14 place-items-center rounded-full border border-[#7CFC00] bg-black/80 text-[#7CFC00]">
+                          <Play className="size-6 fill-current" />
+                        </span>
+                      </div>
+                    </div>
+                  }
+                >
+                  <ArtworkVideoPlayer
+                    poster={artwork.image}
                     title={artwork.title}
-                    className="aspect-video w-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
+                    video={parsedVideo}
                   />
-                </div>
+                </Suspense>
               ) : parsedVideo?.kind === "external" ? (
                 <a
                   href={parsedVideo.watchUrl}
@@ -283,7 +302,9 @@ export function ArtworkDetailDrawer({
                         <Play className="size-3.5 fill-current" />
                         <span>
                           {parsedVideo.kind === "embed"
-                            ? `Open on ${parsedVideo.provider}`
+                            ? parsedVideo.provider === "Video"
+                              ? "Open Video"
+                              : `Open on ${parsedVideo.provider}`
                             : parsedVideo.provider === "Video"
                               ? "Watch Video"
                               : `Watch on ${parsedVideo.provider}`}

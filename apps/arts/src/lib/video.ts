@@ -1,18 +1,22 @@
-export type ParsedVideoLink =
-  | {
-      kind: "embed";
-      provider: "YouTube" | "Vimeo";
-      embedUrl: string;
-      watchUrl: string;
-    }
-  | {
-      kind: "external";
-      provider: "Instagram" | "TikTok" | "Video";
-      watchUrl: string;
-    };
+export type EmbeddableVideoLink = {
+  kind: "embed";
+  provider: "YouTube" | "Vimeo" | "Video";
+  embedUrl: string;
+  playerSrc: string;
+  watchUrl: string;
+};
+
+export type ExternalVideoLink = {
+  kind: "external";
+  provider: "Instagram" | "TikTok" | "Video";
+  watchUrl: string;
+};
+
+export type ParsedVideoLink = EmbeddableVideoLink | ExternalVideoLink;
 
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID_PATTERN = /^\d+$/;
+const DIRECT_VIDEO_PATH_PATTERN = /\.(mp4|webm|m4v|ogv)$/i;
 
 export function isValidVideoUrl(value: string): boolean {
   const trimmed = value.trim();
@@ -47,6 +51,7 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
       return {
         embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
+        playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
         watchUrl: trimmed,
       };
@@ -66,6 +71,7 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
       return {
         embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
+        playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
         watchUrl: trimmed,
       };
@@ -95,10 +101,21 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
       return {
         embedUrl: `https://player.vimeo.com/video/${id}?${embedParams.toString()}`,
         kind: "embed",
+        playerSrc: hashParam ? `https://vimeo.com/${id}?h=${hashParam}` : `https://vimeo.com/${id}`,
         provider: "Vimeo",
         watchUrl: trimmed,
       };
     }
+  }
+
+  if (DIRECT_VIDEO_PATH_PATTERN.test(url.pathname)) {
+    return {
+      embedUrl: trimmed,
+      kind: "embed",
+      playerSrc: trimmed,
+      provider: "Video",
+      watchUrl: trimmed,
+    };
   }
 
   if (host === "instagram.com" || host.endsWith(".instagram.com")) {

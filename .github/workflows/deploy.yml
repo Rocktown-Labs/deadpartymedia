@@ -1,0 +1,128 @@
+# Automatic Cloudflare deployments via Alchemy:
+# - Push to master (or manual dispatch) -> deploys stage `production`
+# - Open/update a same-repo pull request -> deploys isolated stage `pr-<number>`
+#   with single-level custom preview domains and an auto-updating PR comment
+# - Close a pull request -> destroys stage `pr-<number>` and cleans up its DNS
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref }}
+  cancel-in-progress: false
+
+env:
+  STAGE: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'production' }}
+
+jobs:
+  deploy:
+    if: >-
+      github.event.action != 'closed' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Cloudflare credentials
+        working-directory: packages/infra
+        run: pnpm exec alchemy provider check-env --provider Cloudflare
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy ${{ env.STAGE }}
+        working-directory: packages/infra
+        run: pnpm exec alchemy deploy --stage "$STAGE" --yes
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ github.event_name == 'pull_request' && (secrets.PREVIEW_BETTER_AUTH_SECRET || secrets.BETTER_AUTH_SECRET) || secrets.BETTER_AUTH_SECRET }}
+          BIND_DOMAINS: "true"
+          WORKERS_SUBDOMAIN: ${{ vars.WORKERS_SUBDOMAIN || 'rocktown-labs' }}
+          MAIL_FROM: ${{ vars.MAIL_FROM || secrets.MAIL_FROM || 'noreply@deadpartymedia.com' }}
+          MAIL_SENDING_ZONE_ID: ${{ github.event_name != 'pull_request' && (secrets.MAIL_SENDING_ZONE_ID || vars.MAIL_SENDING_ZONE_ID) || '' }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID || vars.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          FW_API_URL: ${{ vars.FW_API_URL || secrets.FW_API_URL || 'https://storefront-api.fourthwall.com/v1' }}
+          FW_CHECKOUT_URL: ${{ vars.FW_CHECKOUT_URL || secrets.FW_CHECKOUT_URL }}
+          FW_STOREFRONT_TOKEN: ${{ secrets.FW_STOREFRONT_TOKEN }}
+          VITE_POSTHOG_HOST: ${{ vars.VITE_POSTHOG_HOST || secrets.VITE_POSTHOG_HOST || 'https://us.posthog.com' }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY || vars.VITE_POSTHOG_KEY }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || vars.VITE_SENTRY_DSN }}
+          PULL_REQUEST: ${{ github.event_name == 'pull_request' && github.event.number || '' }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Safety check
+        run: |
+          if [[ "$STAGE" == "production" || ! "$STAGE" =~ ^pr-[0-9]+$ ]]; then
+            echo "ERROR: Refusing to destroy non-PR stage '$STAGE'"
+            exit 1
+          fi
+
+      - name: Destroy preview stage ${{ env.STAGE }}
+        working-directory: packages/infra
+        run: pnpm exec alchemy destroy --stage "$STAGE" --yes
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ github.event_name == 'pull_request' && (secrets.PREVIEW_BETTER_AUTH_SECRET || secrets.BETTER_AUTH_SECRET) || secrets.BETTER_AUTH_SECRET }}
+          BIND_DOMAINS: "true"
+          WORKERS_SUBDOMAIN: ${{ vars.WORKERS_SUBDOMAIN || 'rocktown-labs' }}
+          PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -24,6 +24,7 @@ describe("video link parsing", () => {
       expect(parseVideoLink(url)).toEqual({
         embedUrl: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0",
         kind: "embed",
+        playerSrc: "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
         provider: "YouTube",
         watchUrl: url,
       });
@@ -34,6 +35,7 @@ describe("video link parsing", () => {
     expect(parseVideoLink("https://vimeo.com/123456789")).toEqual({
       embedUrl: "https://player.vimeo.com/video/123456789?dnt=1",
       kind: "embed",
+      playerSrc: "https://vimeo.com/123456789",
       provider: "Vimeo",
       watchUrl: "https://vimeo.com/123456789",
     });
@@ -41,6 +43,7 @@ describe("video link parsing", () => {
     expect(parseVideoLink("https://vimeo.com/channels/staffpicks/123456789")).toEqual({
       embedUrl: "https://player.vimeo.com/video/123456789?dnt=1",
       kind: "embed",
+      playerSrc: "https://vimeo.com/123456789",
       provider: "Vimeo",
       watchUrl: "https://vimeo.com/channels/staffpicks/123456789",
     });
@@ -48,6 +51,7 @@ describe("video link parsing", () => {
     expect(parseVideoLink("https://vimeo.com/123456789/abcdef1234")).toEqual({
       embedUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234&dnt=1",
       kind: "embed",
+      playerSrc: "https://vimeo.com/123456789?h=abcdef1234",
       provider: "Vimeo",
       watchUrl: "https://vimeo.com/123456789/abcdef1234",
     });
@@ -55,8 +59,27 @@ describe("video link parsing", () => {
     expect(parseVideoLink("https://player.vimeo.com/video/123456789?h=abcdef1234")).toEqual({
       embedUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234&dnt=1",
       kind: "embed",
+      playerSrc: "https://vimeo.com/123456789?h=abcdef1234",
       provider: "Vimeo",
       watchUrl: "https://player.vimeo.com/video/123456789?h=abcdef1234",
+    });
+  });
+
+  it("plays direct video files inside the Video.js player", () => {
+    expect(parseVideoLink("https://cdn.example.com/reel.mp4")).toEqual({
+      embedUrl: "https://cdn.example.com/reel.mp4",
+      kind: "embed",
+      playerSrc: "https://cdn.example.com/reel.mp4",
+      provider: "Video",
+      watchUrl: "https://cdn.example.com/reel.mp4",
+    });
+
+    expect(parseVideoLink("https://cdn.example.com/clip.webm?token=abc")).toEqual({
+      embedUrl: "https://cdn.example.com/clip.webm?token=abc",
+      kind: "embed",
+      playerSrc: "https://cdn.example.com/clip.webm?token=abc",
+      provider: "Video",
+      watchUrl: "https://cdn.example.com/clip.webm?token=abc",
     });
   });
 
