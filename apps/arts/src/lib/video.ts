@@ -128,3 +128,14 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
 
   return { kind: "external", provider: "Video", watchUrl: trimmed };
 }
+
+export function getDefaultVideoPosterUrl(value: string | null | undefined): string | null {
+  const parsed = parseVideoLink(value);
+  if (parsed?.kind === "embed" && parsed.provider === "YouTube") {
+    const id = parsed.playerSrc.split("/").pop() ?? "";
+    if (YOUTUBE_ID_PATTERN.test(id)) {
+      return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    }
+  }
+  return null;
+}

@@ -8,6 +8,9 @@ import { z } from "zod";
  */
 
 const MAX_INSTAGRAM_USERNAME_LENGTH = 30;
+const ALLOWED_PHONE_CHARS = /^\+?[0-9\s().-]+$/;
+const US_STATE_PATTERN = /^[A-Z]{2}$/;
+const CITY_PATTERN = /^(?=.*[A-Za-z])[A-Za-z0-9\s.'-]+$/;
 
 function normalizeStringInput(input: unknown) {
   return typeof input === "string" ? input.trim() : "";
@@ -37,16 +40,16 @@ export function normalizeInstagramUsername(input: unknown) {
 function normalizePhoneNumber(input: unknown) {
   const raw = normalizeStringInput(input);
 
-  if (!raw) {
+  if (!raw || !ALLOWED_PHONE_CHARS.test(raw)) {
     return "";
   }
 
-  if (raw.startsWith("+")) {
-    const candidate = `+${raw.slice(1).replaceAll(/[^0-9]/g, "")}`;
-    return candidate === "+" ? "" : candidate;
-  }
-
   const digits = raw.replaceAll(/[^0-9]/g, "");
+
+  if (raw.startsWith("+")) {
+    const candidate = `+${digits}`;
+    return /^\+[1-9]\d{9,14}$/.test(candidate) ? candidate : "";
+  }
 
   if (digits.length === 10) {
     return `+1${digits}`;
@@ -56,16 +59,17 @@ function normalizePhoneNumber(input: unknown) {
     return `+${digits}`;
   }
 
-  return digits ? `+${digits}` : "";
+  return "";
 }
 
 export const artmakerOnboardingSchema = z.object({
   bio: z.string().max(500, "Bio must stay under 500 characters").optional().or(z.literal("")),
   city: z
     .string()
-    .min(1, "City is required")
-    .max(80, "City must stay under 80 characters")
-    .transform((value) => value.trim()),
+    .transform((value) => value.trim())
+    .refine((value) => value.length >= 2 && value.length <= 80 && CITY_PATTERN.test(value), {
+      message: "Enter a valid city name",
+    }),
   customMedium: z
     .string()
     .max(80, "Custom medium must stay under 80 characters")
@@ -75,21 +79,22 @@ export const artmakerOnboardingSchema = z.object({
     .string()
     .transform((value) => normalizeInstagramUsername(value))
     .refine((value) => value.length > 0, {
-      message: "Instagram username is required",
+      message: "Enter a valid Instagram username (letters, numbers, periods, or underscores)",
     }),
   image: z.string().optional().or(z.literal("")),
   imageKey: z.string().optional().or(z.literal("")),
   medium: z.array(z.string().min(1).max(80)).min(1, "Select at least one medium"),
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must stay under 100 characters")
-    .transform((value) => value.trim()),
+    .transform((value) => value.trim())
+    .refine((value) => value.length >= 2 && value.length <= 100, {
+      message: "Name must be between 2 and 100 characters",
+    }),
   phoneNumber: z
     .string()
     .transform((value) => normalizePhoneNumber(value))
-    .refine((value) => /^\+[1-9]\d{1,14}$/.test(value), {
-      message: "Use a valid phone number",
+    .refine((value) => /^\+[1-9]\d{9,14}$/.test(value), {
+      message: "Enter a valid 10-digit phone number (numbers only)",
     }),
   pronouns: z
     .string()
@@ -99,9 +104,10 @@ export const artmakerOnboardingSchema = z.object({
   showPronouns: z.boolean(),
   state: z
     .string()
-    .min(2, "State is required")
-    .max(2, "Use a two-letter state code")
-    .transform((value) => value.trim().toUpperCase()),
+    .transform((value) => value.trim().toUpperCase())
+    .refine((value) => US_STATE_PATTERN.test(value), {
+      message: "Enter a two-letter state code (for example, AR)",
+    }),
   status: z.enum(["draft", "published"]).optional(),
 });
 

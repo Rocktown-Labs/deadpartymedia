@@ -231,13 +231,29 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     yield* configureMailSender;
+    const stage = yield* Alchemy.Stage;
+    const local = (yield* Alchemy.ProviderMode.defaultProviderMode) === "local";
+    const deployAppsRaw = yield* Config.String("DEPLOY_APPS").pipe(Config.withDefault("all"));
+    const selectedApps = new Set(
+      deployAppsRaw
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    );
+    const deployAll = local || stage === "production" || selectedApps.has("all");
+    const shouldDeployArts = deployAll || selectedApps.has("arts");
+    const shouldDeployWeb = deployAll || selectedApps.has("web");
+
     const backend = yield* api;
-    const artsApp = yield* arts;
-    const webApp = yield* web;
+    const artsApp = shouldDeployArts ? yield* arts : undefined;
+    const webApp = shouldDeployWeb ? yield* web : undefined;
     const github = yield* GitHub.GitHubEnv;
 
     if (github?.pr) {
-      const stage = yield* Alchemy.Stage;
+      const artsLine = artsApp
+        ? Output.interpolate`| **Dead Party Arts** | ${artsApp.url} |\n`
+        : "";
+      const webLine = webApp ? Output.interpolate`| **Dead Party Media** | ${webApp.url} |\n` : "";
       yield* GitHub.Comment("preview-comment", {
         owner: github.owner,
         repository: github.repository,
@@ -247,9 +263,7 @@ export default Alchemy.Stack(
 
           | App | Preview URL |
           | --- | --- |
-          | **Dead Party Arts** | ${artsApp.url} |
-          | **Dead Party Media** | ${webApp.url} |
-          | **API** | ${backend.url} |
+          ${artsLine}${webLine}| **API** | ${backend.url} |
 
           Built from commit \`${github.sha.slice(0, 7)}\`.
 
@@ -259,6 +273,10 @@ export default Alchemy.Stack(
       });
     }
 
-    return { api: backend.url, arts: artsApp.url, web: webApp?.url };
+    return {
+      api: backend.url,
+      ...(artsApp ? { arts: artsApp.url } : {}),
+      ...(webApp ? { web: webApp.url } : {}),
+    };
   }),
 );

@@ -1,4 +1,4 @@
-import { isValidVideoUrl, parseVideoLink } from "#/lib/video.ts";
+import { getDefaultVideoPosterUrl, isValidVideoUrl, parseVideoLink } from "#/lib/video.ts";
 import { describe, expect, it } from "vite-plus/test";
 
 describe("video link parsing", () => {
@@ -108,5 +108,13 @@ describe("video link parsing", () => {
     expect(parseVideoLink(undefined)).toBeNull();
     expect(parseVideoLink("   ")).toBeNull();
     expect(parseVideoLink("javascript:alert(1)")).toBeNull();
+  });
+
+  it("derives a default thumbnail poster URL for YouTube links", () => {
+    expect(getDefaultVideoPosterUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(
+      "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+    );
+    expect(getDefaultVideoPosterUrl("https://vimeo.com/123456789")).toBeNull();
+    expect(getDefaultVideoPosterUrl("https://www.instagram.com/reel/C1234567890/")).toBeNull();
   });
 });

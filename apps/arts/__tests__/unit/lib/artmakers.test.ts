@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
-import { artmakerOnboardingSchema, fanOnboardingSchema } from "#/lib/artmakers.ts";
+import {
+  artmakerOnboardingSchema,
+  fanOnboardingSchema,
+  normalizePhoneNumber,
+  usernameSchema,
+} from "#/lib/artmakers.ts";
 import { createSlug } from "#/lib/slug.ts";
 
 describe("createSlug", () => {
@@ -43,5 +48,51 @@ describe("arts onboarding schemas", () => {
     expect(parsed.instagramUsername).toBe("studio.test");
     expect(parsed.phoneNumber).toBe("+15015550101");
     expect(parsed.state).toBe("AR");
+  });
+
+  it("should reject letters and too-short values in phone numbers", () => {
+    expect(normalizePhoneNumber("501-abc-1234")).toBe("");
+    expect(normalizePhoneNumber("not a phone")).toBe("");
+    expect(normalizePhoneNumber("12345")).toBe("");
+    expect(normalizePhoneNumber("(501) 555-0101")).toBe("+15015550101");
+    expect(normalizePhoneNumber("+44 20 7946 0958")).toBe("+442079460958");
+
+    const invalid = artmakerOnboardingSchema.safeParse({
+      bio: "",
+      city: "Little Rock",
+      customMedium: "",
+      image: "",
+      imageKey: "",
+      instagramUsername: "@studio.test",
+      medium: ["Painting"],
+      name: "Studio Test",
+      phoneNumber: "501-call-now",
+      pronouns: "",
+      showPronouns: false,
+      state: "AR",
+    });
+    expect(invalid.success).toBe(false);
+  });
+
+  it("should validate state codes and unique username format", () => {
+    const badState = artmakerOnboardingSchema.safeParse({
+      bio: "",
+      city: "Little Rock",
+      customMedium: "",
+      image: "",
+      imageKey: "",
+      instagramUsername: "@studio.test",
+      medium: ["Painting"],
+      name: "Studio Test",
+      phoneNumber: "5015550101",
+      pronouns: "",
+      showPronouns: false,
+      state: "12",
+    });
+    expect(badState.success).toBe(false);
+
+    expect(usernameSchema.parse("@babyface_cam")).toBe("babyface_cam");
+    expect(usernameSchema.safeParse("ab").success).toBe(false);
+    expect(usernameSchema.safeParse("bad name!").success).toBe(false);
   });
 });

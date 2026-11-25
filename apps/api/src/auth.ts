@@ -19,6 +19,7 @@ export function sessionAuth(app: Application): MiddlewareHandler<AppEnv> {
         name: result.user.name,
         email: result.user.email,
         image: result.user.image ?? null,
+        username: result.user.username ?? null,
       });
     }
     await next();

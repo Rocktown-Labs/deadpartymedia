@@ -7,6 +7,7 @@ import { ArrowRight, BadgeCheck, CalendarDays, Eye, Images } from "lucide-react"
 
 export const Route = createFileRoute("/dashboard/")({
   component: Dashboard,
+  staleTime: 0,
   loader: async () => {
     const artmaker = await getCurrentArtmaker();
     const artworks = artmaker ? await listCurrentArtworks() : [];
@@ -33,6 +34,27 @@ function Dashboard() {
           Manage the profile, artwork, events, and future commission tools tied to your public Dead
           Party Arts page.
         </p>
+        {artmaker && artmaker.medium.length > 0 ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="font-black text-[10px] text-gray-500 uppercase tracking-[0.22em]">
+              Your mediums:
+            </span>
+            {artmaker.medium.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-[#7CFC00]/40 bg-[#7CFC00]/10 px-3 py-1 font-bold text-[#7CFC00] text-xs"
+              >
+                {item}
+              </span>
+            ))}
+            <Link
+              to="/dashboard/profile"
+              className="ml-1 font-bold text-gray-400 text-xs underline-offset-4 hover:text-[#7CFC00] hover:underline"
+            >
+              Edit
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">

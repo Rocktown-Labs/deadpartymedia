@@ -32,22 +32,60 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: Detect changed apps
+        id: scope
+        run: |
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "deploy_apps=all" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          SHARED=false
+          ARTS=false
+          WEB=false
+          while IFS= read -r file; do
+            case "$file" in
+              apps/arts/*) ARTS=true ;;
+              apps/web/*) WEB=true ;;
+              apps/api/*|packages/*|package.json|pnpm-lock.yaml|.github/workflows/deploy.yml) SHARED=true ;;
+            esac
+          done <<< "$CHANGED"
+
+          if [[ "$SHARED" == "true" || ( "$ARTS" == "true" && "$WEB" == "true" ) ]]; then
+            echo "deploy_apps=all" >> "$GITHUB_OUTPUT"
+          elif [[ "$ARTS" == "true" ]]; then
+            echo "deploy_apps=arts" >> "$GITHUB_OUTPUT"
+          elif [[ "$WEB" == "true" ]]; then
+            echo "deploy_apps=web" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_apps=none" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: pnpm/action-setup@v4
+        if: steps.scope.outputs.deploy_apps != 'none'
         with:
           version: 10.19.0
 
       - name: Setup Node.js
+        if: steps.scope.outputs.deploy_apps != 'none'
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.scope.outputs.deploy_apps != 'none'
         run: pnpm install --frozen-lockfile
 
       - name: Verify Cloudflare credentials
+        if: steps.scope.outputs.deploy_apps != 'none'
         working-directory: packages/infra
         run: pnpm exec alchemy provider check-env --provider Cloudflare
         env:
@@ -55,9 +93,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Deploy ${{ env.STAGE }}
+        if: steps.scope.outputs.deploy_apps != 'none'
         working-directory: packages/infra
         run: pnpm exec alchemy deploy --stage "$STAGE" --yes
         env:
+          DEPLOY_APPS: ${{ steps.scope.outputs.deploy_apps }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           BETTER_AUTH_SECRET: ${{ github.event_name == 'pull_request' && (secrets.PREVIEW_BETTER_AUTH_SECRET || secrets.BETTER_AUTH_SECRET) || secrets.BETTER_AUTH_SECRET }}

@@ -9,34 +9,46 @@ import {
   saveArtmakerOnboarding,
   saveFanOnboarding,
 } from "#/lib/artmakers.functions.ts";
-import { artmakerOnboardingSchema, fanOnboardingSchema, MEDIUM_OPTIONS } from "#/lib/artmakers.ts";
+import {
+  artmakerIdentityStepSchema,
+  artmakerOnboardingSchema,
+  fanOnboardingSchema,
+  MEDIUM_OPTIONS,
+  normalizeUsername,
+  usernameSchema,
+} from "#/lib/artmakers.ts";
 import {
   type ArtworkDraft,
   createArtworkDrafts,
+  createVideoArtworkDraft,
   getUploadedObjectKey,
 } from "#/lib/artwork-drafts.ts";
 import { saveArtwork } from "#/lib/artworks.functions.ts";
-import { useArtsSession } from "#/lib/auth-client";
+import { authClient, useArtsSession } from "#/lib/auth-client";
 import { uploadMedia } from "#/lib/media-upload";
 import { buildPublicUploadUrl, describeUploadFailures } from "#/lib/upload.ts";
 import { isValidVideoUrl } from "#/lib/video.ts";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   CheckCircle2,
+  Film,
   ImageUp,
   Instagram,
   Loader2,
   MapPin,
   Phone,
+  Plus,
+  Trash2,
   Upload,
   UserRound,
+  X,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
 const STEPS = [
@@ -45,34 +57,42 @@ const STEPS = [
   { label: "Artwork", value: 2 },
 ] as const;
 
-const artworkDraftSchema = z.object({
-  description: z.string().max(700, "Artwork description must stay under 700 characters"),
-  forSale: z.boolean(),
-  imageKey: z.string().min(1),
-  medium: z.string().max(80, "Artwork medium must stay under 80 characters"),
-  previewUrl: z.string().optional(),
-  price: z.string(),
-  status: z.enum(["draft", "published"]),
-  title: z.string().min(1, "Artwork title is required").max(120),
-  videoUrl: z
-    .string()
-    .trim()
-    .max(2048, "Video link must stay under 2048 characters")
-    .refine((value) => !value || isValidVideoUrl(value), {
-      message: "Enter a valid http(s) video link",
-    }),
-  year: z.string().max(20, "Artwork year must stay under 20 characters"),
-});
+const artworkDraftSchema = z
+  .object({
+    description: z.string().max(700, "Artwork description must stay under 700 characters"),
+    forSale: z.boolean(),
+    image: z.string().optional(),
+    imageKey: z.string(),
+    medium: z.string().max(80, "Artwork medium must stay under 80 characters"),
+    previewUrl: z.string().optional(),
+    price: z.string(),
+    status: z.enum(["draft", "published"]),
+    title: z.string().trim().min(1, "Artwork title is required").max(120),
+    videoUrl: z
+      .string()
+      .trim()
+      .max(2048, "Video link must stay under 2048 characters")
+      .refine((value) => !value || isValidVideoUrl(value), {
+        message: "Enter a valid http(s) video link",
+      }),
+    year: z.string().max(20, "Artwork year must stay under 20 characters"),
+  })
+  .refine((value) => Boolean(value.imageKey || value.image), {
+    message: "Upload a cover image for every artwork piece",
+    path: ["imageKey"],
+  });
 
 export const Route = createFileRoute("/onboarding")({
   beforeLoad: () => requireUser(),
   component: Onboarding,
+  staleTime: 0,
   loader: () => getCurrentArtmaker(),
 });
 
 function Onboarding() {
   const currentArtmaker = Route.useLoaderData();
   const { session } = useArtsSession();
+  const router = useRouter();
   const saveArtmaker = useServerFn(saveArtmakerOnboarding);
   const saveFan = useServerFn(saveFanOnboarding);
   const saveArt = useServerFn(saveArtwork);
@@ -88,6 +108,10 @@ function Onboarding() {
   const [step, setStep] = useState(0);
   const [fanName, setFanName] = useState(session?.name ?? "");
   const [name, setName] = useState(currentArtmaker?.name ?? session?.name ?? "");
+  const [username, setUsername] = useState(session?.username ?? "");
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
   const [city, setCity] = useState(currentArtmaker?.city ?? "");
   const [state, setState] = useState(currentArtmaker?.state ?? "AR");
   const [pronouns, setPronouns] = useState(currentArtmaker?.pronouns ?? "");
@@ -102,6 +126,8 @@ function Onboarding() {
   const [profileImage, setProfileImage] = useState(currentArtmaker?.image ?? session?.image ?? "");
   const [profileImageKey, setProfileImageKey] = useState("");
   const [artworkDrafts, setArtworkDrafts] = useState<ArtworkDraft[]>([]);
+  const [videoLinkInput, setVideoLinkInput] = useState("");
+  const [coverUploadingId, setCoverUploadingId] = useState<string | null>(null);
   const [artworkUploadProgress, setArtworkUploadProgress] = useState(0);
   const [profileUploadProgress, setProfileUploadProgress] = useState(0);
   const [error, setError] = useState("");
@@ -109,6 +135,31 @@ function Onboarding() {
   const [hasArtmakerAccess, setHasArtmakerAccess] = useState(
     Boolean(currentArtmaker || existingRoles.includes("artmaker")),
   );
+
+  useEffect(() => {
+    if (!currentArtmaker) {
+      return;
+    }
+    setSelectedRole("artmaker");
+    setHasArtmakerAccess(true);
+    setName(currentArtmaker.name);
+    setCity(currentArtmaker.city);
+    setState(currentArtmaker.state);
+    setPronouns(currentArtmaker.pronouns ?? "");
+    setShowPronouns(currentArtmaker.showPronouns);
+    setPhoneNumber(currentArtmaker.phoneNumber);
+    setInstagramUsername(currentArtmaker.instagramUsername);
+    setMedium(currentArtmaker.medium);
+    setBio(currentArtmaker.bio ?? "");
+    setProfileImage(currentArtmaker.image ?? "");
+    setProfileImageKey("");
+  }, [currentArtmaker]);
+
+  useEffect(() => {
+    if (session?.username) {
+      setUsername(session.username);
+    }
+  }, [session?.username]);
 
   const selectedMediumSet = useMemo(() => new Set(medium), [medium]);
   const progressPercent = ((step + 1) / STEPS.length) * 100;
@@ -206,6 +257,113 @@ function Onboarding() {
     );
   };
 
+  const addCustomMediumTag = () => {
+    const trimmed = customMedium.trim();
+    if (!trimmed) {
+      return;
+    }
+    if (trimmed.length > 80) {
+      setError("Custom medium must stay under 80 characters.");
+      return;
+    }
+    setError("");
+    setMedium((current) => (current.includes(trimmed) ? current : [...current, trimmed]));
+    setCustomMedium("");
+  };
+
+  const checkUsernameAvailability = async (candidate: string) => {
+    const normalized = normalizeUsername(candidate);
+    if (!normalized) {
+      setUsernameStatus("invalid");
+      return false;
+    }
+    const parsed = usernameSchema.safeParse(normalized);
+    if (!parsed.success) {
+      setUsernameStatus("invalid");
+      return false;
+    }
+    if (session?.username && parsed.data.toLowerCase() === session.username.toLowerCase()) {
+      setUsernameStatus("available");
+      return true;
+    }
+    setUsernameStatus("checking");
+    const response = await authClient.isUsernameAvailable({ username: parsed.data });
+    if (response.error || !response.data?.available) {
+      setUsernameStatus("taken");
+      return false;
+    }
+    setUsernameStatus("available");
+    return true;
+  };
+
+  const syncAccountUsername = async () => {
+    const normalized = normalizeUsername(username);
+    const parsed = usernameSchema.safeParse(normalized);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Enter a valid username.");
+      setUsernameStatus("invalid");
+      return false;
+    }
+    if (session?.username && parsed.data.toLowerCase() === session.username.toLowerCase()) {
+      return true;
+    }
+    const available = await checkUsernameAvailability(parsed.data);
+    if (!available) {
+      setError("That username is already taken. Choose another one.");
+      return false;
+    }
+    const updated = await authClient.updateUser({
+      displayUsername: parsed.data,
+      username: parsed.data,
+    });
+    if (updated.error) {
+      setError(updated.error.message || "That username could not be claimed.");
+      setUsernameStatus("taken");
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddVideoDraft = () => {
+    setError("");
+    const draft = createVideoArtworkDraft(videoLinkInput);
+    if (!draft) {
+      setError("Enter a valid YouTube, Vimeo, Instagram, TikTok, or video URL.");
+      return;
+    }
+    setArtworkDrafts((current) => [draft, ...current]);
+    setVideoLinkInput("");
+  };
+
+  const handleUploadDraftCover = async (draftId: string, files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+    setCoverUploadingId(draftId);
+    setError("");
+    try {
+      const result = await uploadMedia({ files: [files[0]], route: "artwork" });
+      if (result.failedFiles.length > 0) {
+        throw new Error(describeUploadFailures(result.failedFiles));
+      }
+      const [uploaded] = result.files ?? [];
+      const key = uploaded ? getUploadedObjectKey(uploaded) : "";
+      if (!key) {
+        throw new Error("The cover image uploaded, but no object key came back from storage.");
+      }
+      const previewUrl = buildPublicUploadUrl(key, result.metadata);
+      setArtworkDrafts((current) =>
+        current.map((draft) =>
+          draft.id === draftId ? { ...draft, image: undefined, imageKey: key, previewUrl } : draft,
+        ),
+      );
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Cover upload failed.");
+    } finally {
+      setCoverUploadingId(null);
+    }
+  };
+
   const profilePayload = {
     bio,
     city,
@@ -233,6 +391,7 @@ function Onboarding() {
     setIsSaving(true);
     try {
       await saveFan({ data: parsed.data });
+      await router.invalidate();
       await navigate({ to: "/" });
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Could not save your profile.");
@@ -265,6 +424,9 @@ function Onboarding() {
 
     setIsSaving(true);
     try {
+      if (!(await syncAccountUsername())) {
+        return false;
+      }
       await saveArtmaker({ data: { ...parsed, status: "draft" } });
       setHasArtmakerAccess(true);
       return true;
@@ -284,18 +446,30 @@ function Onboarding() {
     setError("");
 
     if (step === 0) {
-      const partial = z
-        .object({
-          city: z.string().min(1, "City is required"),
-          instagramUsername: z.string().min(1, "Instagram username is required"),
-          name: z.string().min(1, "Name is required"),
-          phoneNumber: z.string().min(1, "Phone number is required"),
-          state: z.string().min(2, "State is required"),
-        })
-        .safeParse({ city, instagramUsername, name, phoneNumber, state });
+      const partial = artmakerIdentityStepSchema.safeParse({
+        city,
+        instagramUsername,
+        name,
+        phoneNumber,
+        pronouns,
+        state,
+      });
 
       if (!partial.success) {
         setError(partial.error.issues[0]?.message ?? "Finish this step to keep going.");
+        return;
+      }
+
+      const usernameParsed = usernameSchema.safeParse(username);
+      if (!usernameParsed.success) {
+        setError(usernameParsed.error.issues[0]?.message ?? "Enter a valid username.");
+        setUsernameStatus("invalid");
+        return;
+      }
+
+      const available = await checkUsernameAvailability(usernameParsed.data);
+      if (!available) {
+        setError("That username is already taken. Choose another one.");
         return;
       }
     }
@@ -324,6 +498,9 @@ function Onboarding() {
 
     setIsSaving(true);
     try {
+      if (!(await syncAccountUsername())) {
+        return;
+      }
       const result = await saveArtmaker({ data: { ...parsed, status: "published" } });
       setHasArtmakerAccess(true);
 
@@ -332,7 +509,8 @@ function Onboarding() {
           data: {
             description: artwork.description,
             forSale: artwork.forSale,
-            imageKey: artwork.imageKey,
+            image: artwork.image,
+            imageKey: artwork.imageKey || undefined,
             medium: artwork.medium,
             price: artwork.price,
             status: artwork.status,
@@ -343,6 +521,7 @@ function Onboarding() {
         });
       }
 
+      await router.invalidate();
       const slug = result.artmaker?.slug;
 
       if (slug) {
@@ -508,13 +687,57 @@ function Onboarding() {
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       placeholder="First name, full name, studio, or artist name"
+                      required
                     />
+                  </Field>
+                  <Field label="Username">
+                    <Input
+                      value={username}
+                      onChange={(event) => {
+                        setUsername(event.target.value);
+                        setUsernameStatus("idle");
+                      }}
+                      onBlur={() => {
+                        if (username.trim()) {
+                          void checkUsernameAvailability(username);
+                        }
+                      }}
+                      placeholder="unique_handle"
+                      autoComplete="username"
+                      required
+                    />
+                    {usernameStatus === "checking" ? (
+                      <p className="text-neutral-400 text-xs">Checking availability...</p>
+                    ) : usernameStatus === "available" ? (
+                      <p className="text-[#7CFC00] text-xs">Username is available.</p>
+                    ) : usernameStatus === "taken" ? (
+                      <p className="text-red-400 text-xs">That username is already taken.</p>
+                    ) : usernameStatus === "invalid" ? (
+                      <p className="text-red-400 text-xs">
+                        Use 3 to 30 characters: letters, numbers, periods, or underscores.
+                      </p>
+                    ) : (
+                      <p className="text-neutral-500 text-xs">
+                        Unique account handle (3 to 30 characters).
+                      </p>
+                    )}
                   </Field>
                   <Field label="Instagram username">
                     <Input
                       value={instagramUsername}
                       onChange={(event) => setInstagramUsername(event.target.value)}
                       placeholder="@yourhandle"
+                      required
+                    />
+                  </Field>
+                  <Field label="Phone number">
+                    <Input
+                      type="tel"
+                      inputMode="tel"
+                      value={phoneNumber}
+                      onChange={(event) => setPhoneNumber(event.target.value)}
+                      placeholder="(501) 555-0101"
+                      required
                     />
                   </Field>
                   <Field label="City">
@@ -522,21 +745,16 @@ function Onboarding() {
                       value={city}
                       onChange={(event) => setCity(event.target.value)}
                       placeholder="Little Rock"
+                      required
                     />
                   </Field>
                   <Field label="State">
                     <Input
                       value={state}
                       maxLength={2}
-                      onChange={(event) => setState(event.target.value)}
+                      onChange={(event) => setState(event.target.value.toUpperCase())}
                       placeholder="AR"
-                    />
-                  </Field>
-                  <Field label="Phone number">
-                    <Input
-                      value={phoneNumber}
-                      onChange={(event) => setPhoneNumber(event.target.value)}
-                      placeholder="(501) 555-0101"
+                      required
                     />
                   </Field>
                   <Field label="Pronouns">
@@ -546,7 +764,7 @@ function Onboarding() {
                       placeholder="Optional"
                     />
                   </Field>
-                  <label className="flex items-center gap-3 border border-neutral-800 bg-[#080808] p-3 text-neutral-300 text-sm md:col-span-2">
+                  <label className="flex items-center gap-3 self-end border border-neutral-800 bg-[#080808] p-3 text-neutral-300 text-sm">
                     <input
                       type="checkbox"
                       checked={showPronouns}
@@ -575,7 +793,9 @@ function Onboarding() {
                         )}
                         {profileImageUploadMutation.isPending
                           ? `Uploading ${Math.round(profileUploadProgress * 100)}%`
-                          : "Upload image"}
+                          : profileImage
+                            ? "Change image"
+                            : "Upload image"}
                         <input
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
@@ -590,15 +810,20 @@ function Onboarding() {
                           }}
                         />
                       </label>
-                      <Input
-                        value={profileImage}
-                        onChange={(event) => {
-                          setProfileImage(event.target.value);
-                          setProfileImageKey("");
-                        }}
-                        placeholder="Or paste an image URL"
-                        className="min-w-72 flex-1"
-                      />
+                      {profileImage ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setProfileImage("");
+                            setProfileImageKey("");
+                          }}
+                          className="h-11 rounded-none border-neutral-700 bg-transparent text-neutral-300 hover:border-red-500/60 hover:text-red-300"
+                        >
+                          <Trash2 className="mr-2 size-4" />
+                          Remove
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -607,6 +832,26 @@ function Onboarding() {
               {step === 1 ? (
                 <div>
                   <Label className="font-black text-xs uppercase tracking-[0.22em]">Mediums</Label>
+                  {medium.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {medium.map((item) => (
+                        <span
+                          key={item}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[#7CFC00]/50 bg-[#7CFC00]/15 px-3 py-1 font-bold text-[#7CFC00] text-xs"
+                        >
+                          {item}
+                          <button
+                            type="button"
+                            onClick={() => toggleMedium(item)}
+                            className="rounded-full p-0.5 hover:bg-black/40"
+                            aria-label={`Remove ${item}`}
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                     {MEDIUM_OPTIONS.map((option) => {
                       const isSelected = selectedMediumSet.has(option);
@@ -628,12 +873,28 @@ function Onboarding() {
                       );
                     })}
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-4 flex gap-2">
                     <Input
                       value={customMedium}
                       onChange={(event) => setCustomMedium(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addCustomMediumTag();
+                        }
+                      }}
                       placeholder="Something else? Add it here."
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addCustomMediumTag}
+                      disabled={!customMedium.trim()}
+                      className="shrink-0 rounded-none border-neutral-700 text-white hover:border-[#7CFC00] hover:text-[#7CFC00]"
+                    >
+                      <Plus className="mr-1 size-4" />
+                      Add
+                    </Button>
                   </div>
                   <div className="mt-8">
                     <Field label="Short bio">
@@ -642,6 +903,7 @@ function Onboarding() {
                         onChange={(event) => setBio(event.target.value)}
                         placeholder="Tell people what you make, where they may have seen it, or what you are working toward."
                         rows={5}
+                        maxLength={500}
                       />
                     </Field>
                   </div>
@@ -657,7 +919,8 @@ function Onboarding() {
                     <div>
                       <h2 className="font-black text-xl">First artwork batch</h2>
                       <p className="text-neutral-500 text-sm">
-                        Optional now. You can add or edit artwork later from the dashboard.
+                        Optional now. Upload photos or add a video link, or do it later from your
+                        dashboard.
                       </p>
                     </div>
                   </div>
@@ -683,7 +946,7 @@ function Onboarding() {
                           />
                         </div>
                         <p className="mt-2 text-neutral-400 text-xs">
-                          {Math.round(artworkUploadProgress * 100)}% uploaded — keep this open
+                          {Math.round(artworkUploadProgress * 100)}% uploaded, keep this open
                         </p>
                       </div>
                     ) : null}
@@ -702,6 +965,40 @@ function Onboarding() {
                       }}
                     />
                   </label>
+
+                  <div className="mt-4 border border-neutral-800 bg-[#080808] p-4">
+                    <div className="flex items-center gap-2 font-black text-xs uppercase tracking-[0.18em] text-[#7CFC00]">
+                      <Film className="size-4" />
+                      <span>Or add a video link</span>
+                    </div>
+                    <p className="mt-1 text-neutral-500 text-xs">
+                      Paste a YouTube, Vimeo, Instagram, TikTok, or MP4 link. YouTube pulls a cover
+                      automatically, or upload your own below.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        type="url"
+                        value={videoLinkInput}
+                        onChange={(event) => setVideoLinkInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            handleAddVideoDraft();
+                          }
+                        }}
+                        placeholder="https://youtu.be/... or Vimeo / Instagram / TikTok link"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddVideoDraft}
+                        disabled={!videoLinkInput.trim()}
+                        className="shrink-0 rounded-none border-[#7CFC00]/60 text-[#7CFC00] hover:bg-[#7CFC00] hover:text-black"
+                      >
+                        Add video
+                      </Button>
+                    </div>
+                  </div>
 
                   <div className="mt-6 grid gap-3">
                     {artworkDrafts.length > 0 ? (
@@ -739,18 +1036,45 @@ function Onboarding() {
                           </summary>
                           <div className="grid gap-4 border-neutral-800 border-t p-4">
                             <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)] items-start">
-                              {item.previewUrl ? (
-                                <div className="overflow-hidden rounded border border-neutral-700 bg-neutral-950">
-                                  <img
-                                    src={item.previewUrl}
-                                    alt={item.title || item.fileName}
-                                    className="aspect-square w-full object-cover"
+                              <div className="space-y-2">
+                                {item.previewUrl ? (
+                                  <div className="overflow-hidden rounded border border-neutral-700 bg-neutral-950">
+                                    <img
+                                      src={item.previewUrl}
+                                      alt={item.title || item.fileName}
+                                      className="aspect-square w-full object-cover"
+                                    />
+                                    <p className="p-1.5 text-center text-[10px] text-gray-400 font-mono truncate">
+                                      {item.fileName}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="grid aspect-square w-full place-items-center rounded border border-dashed border-neutral-700 bg-neutral-950 p-3 text-center text-neutral-400 text-xs">
+                                    <span>Cover image required</span>
+                                  </div>
+                                )}
+                                <label className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 border border-neutral-700 px-2 py-1.5 font-bold text-[10px] text-neutral-200 uppercase tracking-wider hover:border-[#7CFC00] hover:text-[#7CFC00]">
+                                  {coverUploadingId === item.id ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                  ) : (
+                                    <Upload className="size-3" />
+                                  )}
+                                  {item.previewUrl ? "Replace cover" : "Upload cover"}
+                                  <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                                    className="sr-only"
+                                    disabled={coverUploadingId === item.id}
+                                    onChange={(event) => {
+                                      const files = [...(event.target.files ?? [])];
+                                      if (files.length > 0) {
+                                        void handleUploadDraftCover(item.id, files);
+                                      }
+                                      event.target.value = "";
+                                    }}
                                   />
-                                  <p className="p-1.5 text-center text-[10px] text-gray-400 font-mono truncate">
-                                    {item.fileName}
-                                  </p>
-                                </div>
-                              ) : null}
+                                </label>
+                              </div>
                               <div className="grid gap-4 flex-1">
                                 <Field label="Title">
                                   <Input

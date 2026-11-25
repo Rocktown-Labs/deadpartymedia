@@ -322,7 +322,7 @@ export function ArtworkDetailDrawer({
                           {formattedPrice}
                         </p>
                         <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-neutral-400">
-                          Available — asking price
+                          Available, asking price
                         </p>
                       </div>
                     </div>
