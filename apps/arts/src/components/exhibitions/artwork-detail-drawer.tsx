@@ -1,3 +1,4 @@
+import { ArtworkPosterPlaceholder } from "#/components/exhibitions/artwork-poster-placeholder.tsx";
 import { type ArtworkListItem, getArtworkByIdOrSlug } from "#/lib/artworks.functions.ts";
 import { parseVideoLink } from "#/lib/video.ts";
 import { Link } from "@tanstack/react-router";
@@ -194,20 +195,7 @@ export function ArtworkDetailDrawer({
               {parsedVideo?.kind === "embed" ? (
                 <Suspense
                   fallback={
-                    <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-neutral-800 bg-black">
-                      <Image
-                        src={artwork.image}
-                        alt={artwork.title}
-                        width={960}
-                        height={540}
-                        className="size-full object-contain"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <span className="grid size-14 place-items-center rounded-full border border-[#7CFC00] bg-black/80 text-[#7CFC00]">
-                          <Play className="size-6 fill-current" />
-                        </span>
-                      </div>
-                    </div>
+                    <ArtworkPosterPlaceholder poster={artwork.image} title={artwork.title} />
                   }
                 >
                   <ArtworkVideoPlayer

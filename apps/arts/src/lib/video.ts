@@ -1,7 +1,6 @@
 export type EmbeddableVideoLink = {
   kind: "embed";
   provider: "YouTube" | "Vimeo" | "Video";
-  embedUrl: string;
   playerSrc: string;
   watchUrl: string;
 };
@@ -49,7 +48,6 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
     const id = segments[0] ?? "";
     if (YOUTUBE_ID_PATTERN.test(id)) {
       return {
-        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
         playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
@@ -69,7 +67,6 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
     }
     if (YOUTUBE_ID_PATTERN.test(id)) {
       return {
-        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0`,
         kind: "embed",
         playerSrc: `https://www.youtube-nocookie.com/embed/${id}`,
         provider: "YouTube",
@@ -93,13 +90,7 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
       const hashParam =
         url.searchParams.get("h") ??
         (nextSegment && /^[A-Za-z0-9]+$/.test(nextSegment) ? nextSegment : null);
-      const embedParams = new URLSearchParams();
-      if (hashParam) {
-        embedParams.set("h", hashParam);
-      }
-      embedParams.set("dnt", "1");
       return {
-        embedUrl: `https://player.vimeo.com/video/${id}?${embedParams.toString()}`,
         kind: "embed",
         playerSrc: hashParam ? `https://vimeo.com/${id}?h=${hashParam}` : `https://vimeo.com/${id}`,
         provider: "Vimeo",
@@ -110,7 +101,6 @@ export function parseVideoLink(value: string | null | undefined): ParsedVideoLin
 
   if (DIRECT_VIDEO_PATH_PATTERN.test(url.pathname)) {
     return {
-      embedUrl: trimmed,
       kind: "embed",
       playerSrc: trimmed,
       provider: "Video",
